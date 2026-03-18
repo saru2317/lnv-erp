@@ -1,0 +1,14 @@
+.kc {
+  background: var(--card-bg); border-radius: var(--card-radius);
+  padding: 13px 15px; border: 1px solid var(--odoo-border);
+  box-shadow: var(--card-shadow); cursor: pointer; transition: all .2s;
+  position: relative; overflow: hidden; animation: fadeUp .4s ease both;
+}
+.kc::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--ac); }
+.kc:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.kIc { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:24px; opacity:.07; }
+.kLb { font-size:9px; font-weight:700; color:var(--odoo-gray); text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+.kVl { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--odoo-dark); line-height:1; margin-bottom:3px; animation:countUp .5s ease both; }
+.kTr { font-size:10px; font-weight:600; margin-bottom:1px; }
+.kTr.up { color:#007A77; } .kTr.dn { color:#B03A37; } .kTr.wn { color:#B85A2E; }
+.kSb { font-size:10px; color:var(--odoo-gray); }

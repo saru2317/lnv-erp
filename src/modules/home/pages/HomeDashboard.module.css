@@ -1,0 +1,8 @@
+.page     { animation: fadeIn 0.2s ease; }
+.welcome  { background: linear-gradient(135deg, var(--clr-primary), #9B59B6); padding: 24px 28px; color: #fff; }
+.welcome h1 { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
+.welcome p  { opacity: 0.75; font-size: 13px; margin-top: 4px; }
+.kpiGrid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; padding: 16px; }
+.shortcuts{ padding: 0 16px 16px; }
+.shortcuts h3 { font-family: var(--font-display); font-size: 14px; margin-bottom: 12px; }
+.btns     { display: flex; gap: 8px; flex-wrap: wrap; }

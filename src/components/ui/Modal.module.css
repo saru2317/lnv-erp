@@ -1,0 +1,7 @@
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2500; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+.modal   { background: var(--clr-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: fadeIn 0.2s ease; max-height: 90vh; display: flex; flex-direction: column; }
+.header  { padding: 16px 20px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; justify-content: space-between; }
+.header h3 { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.close   { background: none; border: none; font-size: 16px; color: var(--clr-gray); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.close:hover { background: var(--clr-border); }
+.body    { padding: 20px; overflow-y: auto; }

@@ -1,0 +1,47 @@
+/* ═══════════════════════════════════════════════════
+   LNV ERP — Design Tokens (matches original HTML exactly)
+   Odoo Color System · SAP S/4HANA Navigation
+═══════════════════════════════════════════════════ */
+:root {
+  /* ODOO COLOR PALETTE */
+  --p:  #714B67;  --p2: #875A7B;  --pl:  #EDE0EA; --pl2: #F7F0F5; --pl3: #FBF7FA;
+  --o:  #E06F39;  --ol: #FDF0EA;  --od:  #B85A2E;
+  --g:  #00A09D;  --gl: #E6F7F7;  --gd:  #007A77;
+  --b:  #017E84;  --bl: #E6F4F5;  --bd:  #015E63;
+  --y:  #F0AD00;  --yl: #FEF8E6;  --yd:  #B7860B;
+  --r:  #D9534F;  --rl: #FDEDEC;  --rd:  #B03A37;
+  --vi: #8E44AD;  --vil:#F4ECF7;
+  --dk: #212529;  --gr: #6C757D;  --gr2: #ADB5BD;
+  --br: #DEE2E6;  --br2:#D0C4D8;  --bg:  #F0EEEB; --w:  #FFFFFF;
+
+  /* Named aliases for readability */
+  --odoo-purple:       #714B67;
+  --odoo-purple2:      #875A7B;
+  --odoo-purple-light: #EDE0EA;
+  --odoo-green:   #00A09D;
+  --odoo-orange:  #E06F39;
+  --odoo-blue:    #017E84;
+  --odoo-yellow:  #F0AD00;
+  --odoo-red:     #D9534F;
+  --odoo-dark:    #212529;
+  --odoo-gray:    #6C757D;
+  --odoo-light:   #F8F9FA;
+  --odoo-border:  #DEE2E6;
+  --odoo-bg:      #F0EEEB;
+  --odoo-white:   #FFFFFF;
+
+  /* LAYOUT */
+  --topbar-h:   44px;
+  --modbar-h:   46px;
+  --sidebar-w:  240px;
+
+  /* CARDS */
+  --card-bg:     #FFFFFF;
+  --card-radius: 8px;
+  --card-shadow: 0 1px 4px rgba(0,0,0,0.10);
+
+  /* TYPOGRAPHY */
+  --font-body:    'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+}

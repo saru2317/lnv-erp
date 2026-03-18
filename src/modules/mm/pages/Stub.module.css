@@ -1,0 +1,8 @@
+.page  { padding:0; }
+.hero  { background:linear-gradient(135deg,var(--odoo-purple) 0%,#875A7B 60%,var(--odoo-orange) 100%); border-radius:var(--card-radius); padding:22px 24px; margin-bottom:14px; position:relative; overflow:hidden; box-shadow:0 6px 24px rgba(113,75,103,.22); }
+.hero::before { content:''; position:absolute; top:-38px; right:-38px; width:120px; height:120px; background:rgba(255,255,255,.06); border-radius:50%; }
+.modBadge { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.22); color:#fff; padding:3px 12px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.5px; display:inline-block; margin-bottom:8px; }
+.heroTitle { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; margin-bottom:4px; }
+.heroSub { font-size:11px; color:rgba(255,255,255,.65); }
+.note { background:#fff; border:1px solid var(--odoo-border); border-radius:var(--card-radius); padding:20px; color:var(--odoo-gray); font-size:13px; line-height:1.7; border-left:4px solid var(--odoo-purple); }
+code  { font-family:'DM Mono',monospace; background:#F7F0F5; padding:2px 7px; border-radius:3px; color:var(--odoo-purple); font-size:12px; }

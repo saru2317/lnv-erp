@@ -1,0 +1,30 @@
+.shell { display:flex; flex-direction:column; height:100vh; }
+
+.topbar { height:var(--topbar-h); background:var(--odoo-purple); display:flex; align-items:center; padding:0 12px; gap:6px; position:sticky; top:0; z-index:1000; box-shadow:0 2px 8px rgba(0,0,0,.25); flex-shrink:0; }
+.topLeft { display:flex; align-items:center; }
+.logoWrap { display:flex; align-items:center; gap:8px; padding:0 10px 0 4px; border-right:1px solid rgba(255,255,255,.15); margin-right:4px; }
+.logoIcon { width:27px; height:27px; background:linear-gradient(135deg,var(--odoo-orange),#F5C518); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:10px; font-weight:800; color:#fff; }
+.logoName { font-family:'Syne',sans-serif; font-size:15px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+.logoSub  { font-size:9px; color:rgba(255,255,255,.45); margin-left:2px; vertical-align:top; margin-top:3px; }
+.topRight { display:flex; align-items:center; gap:4px; margin-left:auto; }
+.iconBtn  { width:34px; height:34px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:rgba(255,255,255,.78); font-size:15px; transition:all .15s; position:relative; border:none; background:transparent; }
+.iconBtn:hover { background:rgba(255,255,255,.12); color:#fff; }
+.notifBadge { position:absolute; top:4px; right:4px; width:14px; height:14px; background:var(--odoo-red); border-radius:50%; border:2px solid var(--odoo-purple); font-size:7px; color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.roleBadge { padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; border:1px solid rgba(255,255,255,.25); color:rgba(255,255,255,.85); }
+.userPill  { display:flex; align-items:center; gap:7px; padding:3px 9px; border-radius:4px; cursor:pointer; transition:all .15s; margin-left:4px; border:1px solid rgba(255,255,255,.15); }
+.userPill:hover { background:rgba(255,255,255,.1); }
+.userAvatar { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; font-family:'Syne',sans-serif; }
+.userTextName { font-size:11px; font-weight:600; color:#fff; line-height:1.2; }
+.userTextRole { font-size:9px; color:rgba(255,255,255,.48); }
+.shellDate { font-size:10px; color:rgba(255,255,255,.55); font-family:'DM Mono',monospace; padding:0 8px; border-left:1px solid rgba(255,255,255,.15); }
+
+.modNav { background:#fff; border-bottom:1px solid var(--odoo-border); display:flex; align-items:stretch; height:var(--modbar-h); padding:0 10px; gap:0; position:sticky; top:var(--topbar-h); z-index:900; box-shadow:0 2px 4px rgba(0,0,0,.05); overflow-x:auto; flex-shrink:0; }
+.modNav::-webkit-scrollbar { height:3px; }
+.modNav::-webkit-scrollbar-thumb { background:var(--odoo-purple-light); border-radius:3px; }
+.navItem { display:inline-flex; align-items:center; gap:5px; padding:0 13px; cursor:pointer; color:var(--odoo-gray); font-size:11.5px; font-weight:500; border-bottom:3px solid transparent; transition:all .15s; white-space:nowrap; height:var(--modbar-h); }
+.navItem:hover  { color:var(--odoo-purple); background:#FBF7FA; }
+.navItem.active { color:var(--odoo-purple); border-bottom-color:var(--odoo-purple); font-weight:700; }
+.modIcon { font-size:13px; }
+
+.body    { display:flex; flex:1; overflow:hidden; }
+.content { flex:1; overflow-y:auto; background:var(--odoo-bg); }
