@@ -31,14 +31,14 @@ export default function LeavePolicy() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Leave & Week-Off Policy <small>Company-defined rules</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => setModal('add')}>➕ Add Leave Type</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save Policy</button>
+          <button className="btn btn-s sd-bsm" onClick={() => setModal('add')}>Add Leave Type</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Policy</button>
         </div>
       </div>
 
-      {saved && <div className="pp-alert success">✅ Leave policy saved! Changes will apply from 1 April 2025 onwards.</div>}
+      {saved && <div className="pp-alert success">Leave policy saved! Changes will apply from 1 April 2025 onwards.</div>}
 
-      <div className="pp-alert info">🔧 <strong>Company-configurable:</strong> Enable/disable leave types, change entitlements, carry-forward rules. These policies apply to all employees. Department-specific overrides can be set per employee.</div>
+      <div className="pp-alert info"><strong>Company-configurable:</strong> Enable/disable leave types, change entitlements, carry-forward rules. These policies apply to all employees. Department-specific overrides can be set per employee.</div>
 
       {/* Leave Types */}
       <div className="fi-form-sec">

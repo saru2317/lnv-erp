@@ -15,7 +15,7 @@ export default function TargetSetting({ kpiMaster }) {
     <div>
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Annual Target Setting <small>Monthly targets per KPI — FY 2025-26</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">💾 Save Targets</button></div>
+        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">Save Targets</button></div>
       </div>
       <div style={{overflowX:'auto',background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <table style={{width:'100%',borderCollapse:'collapse',minWidth:1200}}>

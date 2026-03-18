@@ -40,7 +40,7 @@ export default function CRMReport() {
         <div className="fi-lv-title">CRM Report <small>Pipeline · Conversions · Revenue</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>FY 2025-26</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

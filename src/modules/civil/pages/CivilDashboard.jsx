@@ -50,8 +50,8 @@ export default function CivilDashboard() {
                 <td style={{padding:'10px 12px',fontSize:11}}>{p.end}</td>
                 <td style={{padding:'10px 12px'}}><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:st.bg,color:st.color}}>{st.label}</span></td>
                 <td style={{padding:'10px 12px'}}><div style={{display:'flex',gap:4}}>
-                  <button className="btn-xs" onClick={()=>nav('/civil/progress')}>📊 Progress</button>
-                  <button className="btn-xs" onClick={()=>nav('/civil/bills')}>🧾 Bills</button>
+                  <button className="btn-xs" onClick={()=>nav('/civil/progress')}>Progress</button>
+                  <button className="btn-xs" onClick={()=>nav('/civil/bills')}>Bills</button>
                 </div></td>
               </tr>)
             })}

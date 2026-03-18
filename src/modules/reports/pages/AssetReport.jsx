@@ -31,7 +31,7 @@ export default function AssetReport() {
         <div className="fi-lv-title">Asset Report <small>AM Module · Fixed Asset Analytics</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>FY 2025-26</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

@@ -21,7 +21,7 @@ export default function ProfitabilityReport() {
         <div className="fi-lv-title">Profitability Analysis <small>Feb 2025 · Customer & Product Wise</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
       <div className="fi-chips">

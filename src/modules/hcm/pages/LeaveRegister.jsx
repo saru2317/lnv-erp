@@ -24,9 +24,9 @@ export default function LeaveRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Leave Register <small>2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" style={{background:view==='balance'?'#EDE0EA':''}} onClick={()=>setView('balance')}>📊 Balances</button>
-          <button className="btn btn-s sd-bsm" style={{background:view==='applications'?'#EDE0EA':''}} onClick={()=>setView('applications')}>📋 Applications</button>
-          <button className="btn btn-p sd-bsm">➕ Apply Leave</button>
+          <button className="btn btn-s sd-bsm" style={{background:view==='balance'?'#EDE0EA':''}} onClick={()=>setView('balance')}>Balances</button>
+          <button className="btn btn-s sd-bsm" style={{background:view==='applications'?'#EDE0EA':''}} onClick={()=>setView('applications')}>Applications</button>
+          <button className="btn btn-p sd-bsm">Apply Leave</button>
         </div>
       </div>
 

@@ -31,8 +31,8 @@ export default function HCMDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">HCM Dashboard <small>{today}</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/attendance')}>📋 Mark Attendance</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/employees/new')}>➕ New Employee</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/attendance')}>Mark Attendance</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/employees/new')}>New Employee</button>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export default function HCMDashboard() {
         {/* Today's Attendance */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>📊 Attendance Today — Dept. Wise</h3>
+            <h3>Attendance Today — Dept. Wise</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/attendance')}>Full Register</button>
           </div>
           <div className="fi-panel-body">

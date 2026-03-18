@@ -25,7 +25,7 @@ export default function ReturnNew() {
         <div className="lv-ttl">New Sales Return / Credit Note</div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={()=>navigate('/sd/returns')}>✕ Cancel</button>
-          <button className="btn btn-p" onClick={save}>✅ Create Credit Note</button>
+          <button className="btn btn-p" onClick={save}>Create Credit Note</button>
         </div>
       </div>
       <div className="sd-fc"><div className="sd-fb2"><div className="sd-sec">

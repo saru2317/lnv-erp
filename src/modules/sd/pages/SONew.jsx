@@ -70,7 +70,7 @@ export default function SONew() {
         <div className="lv-ttl">New Sales Order <small>VA01 · Draft</small></div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={()=>navigate('/sd/orders')}>✕ Discard</button>
-          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft!')}>📋 Save Draft</button>
+          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft!')}>Save Draft</button>
           <button className="btn btn-p" onClick={confirm} disabled={saving}>{saving?'Saving…':'✅ Confirm Order'}</button>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function SONew() {
         <div className="sd-fb2">
           {/* Order Header */}
           <div className="sd-sec">
-            <div className="sd-stt">📋 Order Header</div>
+            <div className="sd-stt">Order Header</div>
             <div className="sd-fg3">
               <div className="sd-fg"><label>SO Number</label><input className="sd-fi" value={form.soNo} disabled/></div>
               <div className="sd-fg"><label>Order Date <span className="req">*</span></label><input className="sd-fi" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
@@ -110,7 +110,7 @@ export default function SONew() {
 
           {/* Line Items */}
           <div className="sd-sec">
-            <div className="sd-stt">📦 Order Line Items</div>
+            <div className="sd-stt">Order Line Items</div>
             <div style={{overflowX:'auto'}}>
               <table className="sd-li">
                 <thead>
@@ -142,7 +142,7 @@ export default function SONew() {
                 </tbody>
               </table>
             </div>
-            <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calcLine(newLine())])}>➕ Add Line Item</div>
+            <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calcLine(newLine())])}>Add Line Item</div>
 
             {/* Totals */}
             <div style={{display:'flex',justifyContent:'flex-end',marginTop:'12px'}}>

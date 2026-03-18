@@ -17,12 +17,12 @@ export default function VendorQuality() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Vendor Quality Rating <small>Supplier Performance — Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-s sd-bsm">📧 Send Reports</button>
         </div>
       </div>
 
-      <div className="pp-alert info">📊 Vendor ratings are calculated based on: Inspection pass rate (50%) + On-time delivery (30%) + NCR count (20%). Rating is auto-updated after each GRN inspection.</div>
+      <div className="pp-alert info">Vendor ratings are calculated based on: Inspection pass rate (50%) + On-time delivery (30%) + NCR count (20%). Rating is auto-updated after each GRN inspection.</div>
 
       {/* Score Cards */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'14px',marginBottom:'20px'}}>
@@ -46,7 +46,7 @@ export default function VendorQuality() {
               <div className="yield-fill" style={{width:`${v.rating}%`,background:v.clr}}></div>
             </div>
             <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'var(--odoo-gray)'}}>
-              <span>✅ {v.pass}/{v.lots} lots passed</span>
+              <span>{v.pass}/{v.lots} lots passed</span>
               <span style={{color:v.ncrs>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:'700'}}>
                 {v.ncrs>0?`❌ ${v.ncrs} NCR`:'✅ No NCR'}
               </span>

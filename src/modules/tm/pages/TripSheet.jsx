@@ -33,10 +33,10 @@ export default function TripSheet() {
           <button className="btn btn-s sd-bsm">Print</button>
           {stage==='entry' &&
             <button className="btn btn-p sd-bsm" style={{background:'var(--odoo-green)',color:'#fff'}}
-              onClick={()=>setStage('dispatched')}>🚚 Dispatch Vehicle</button>}
+              onClick={()=>setStage('dispatched')}>Dispatch Vehicle</button>}
           {stage==='dispatched' &&
             <button className="btn btn-p sd-bsm" style={{background:'var(--odoo-purple)',color:'#fff'}}
-              onClick={()=>setStage('closed')}>✅ Close Trip</button>}
+              onClick={()=>setStage('closed')}>Close Trip</button>}
           {stage==='closed' && !form.intimated &&
             <button className="btn btn-p sd-bsm" style={{background:'#856404',color:'#fff'}}
               onClick={()=>upd('intimated',true)}>📱 Intimate Requestor</button>}
@@ -105,7 +105,7 @@ export default function TripSheet() {
       {/* Close trip details */}
       {stage !== 'entry' && (
         <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:20,marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:14}}>⛽ Fuel & Expenses</div>
+          <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:14}}>Fuel & Expenses</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:14,marginBottom:14}}>
             <div><label style={lbl}>Fuel (Litres)</label><input type="number" value={form.fuelLtr} onChange={e=>upd('fuelLtr',e.target.value)} style={inp} placeholder="0"/></div>
             <div><label style={lbl}>Rate/Litre (₹)</label><input type="number" value={form.fuelRate} onChange={e=>upd('fuelRate',e.target.value)} style={inp} placeholder="0"/></div>

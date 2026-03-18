@@ -19,7 +19,7 @@ export default function CAPAList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">CAPA List <small>Corrective & Preventive Actions</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/capa/new')}>➕ New CAPA</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/capa/new')}>New CAPA</button>
         </div>
       </div>
 

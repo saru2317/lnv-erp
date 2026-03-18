@@ -16,8 +16,8 @@ export default function PFESIRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">PF & ESI Register <small>February 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Download Challan</button>
-          <button className="btn btn-p sd-bsm">📤 File ECR</button>
+          <button className="btn btn-s sd-bsm">Download Challan</button>
+          <button className="btn btn-p sd-bsm">File ECR</button>
         </div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'16px'}}>

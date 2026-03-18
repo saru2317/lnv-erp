@@ -31,7 +31,7 @@ export default function OpportunityList() {
         <div className="fi-lv-title">Opportunities <small>{filtered.length} total · Pipeline {fmt(totalPipeline)}</small></div>
         <div className="fi-lv-actions">
           <button className={`btn btn-s ${view==='kanban'?'btn-p':'sd-bsm'}`} onClick={()=>setView('kanban')}>⬜ Kanban</button>
-          <button className={`btn btn-s ${view==='list'?'btn-p':'sd-bsm'}`} onClick={()=>setView('list')}>☰ List</button>
+          <button className={`btn btn-s ${view==='list'?'btn-p':'sd-bsm'}`} onClick={()=>setView('list')}>List</button>
           <button className="btn btn-p btn-s" onClick={()=>nav('/crm/opportunities/new')}>+ New Opportunity</button>
         </div>
       </div>

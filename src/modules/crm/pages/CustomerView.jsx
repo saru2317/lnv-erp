@@ -27,7 +27,7 @@ export default function CustomerView() {
         <div className="fi-lv-actions">
           <span className={cust.status==='Active'?'crm-stage-won':'crm-badge-notq'} style={{padding:'4px 12px',fontSize:'12px'}}>{cust.status}</span>
           <button className="btn btn-p btn-s" onClick={()=>nav('/crm/leads/new')}>+ New Lead</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>📋 New Quotation</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>New Quotation</button>
         </div>
       </div>
 
@@ -41,7 +41,7 @@ export default function CustomerView() {
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:'20px',fontWeight:'800',fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)'}}>{cust.name}</div>
-              <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>🏭 {cust.industry} · 📍 {cust.city}, {cust.state} · Customer since {cust.since}</div>
+              <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>{cust.industry} · 📍 {cust.city}, {cust.state} · Customer since {cust.since}</div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',textAlign:'center'}}>
               {[['Annual Value',fmt(cust.annualValue),'var(--odoo-purple)'],['Won Deals',fmt(wonVal),'var(--odoo-green)'],['Lost Deals',fmt(lostVal),'var(--odoo-red)']].map(([l,v,c])=>(
@@ -86,7 +86,7 @@ export default function CustomerView() {
           </div>
           <div>
             <div className="fi-panel" style={{marginBottom:'14px'}}>
-              <div className="fi-panel-hdr"><h3>📊 Purchase Pattern</h3></div>
+              <div className="fi-panel-hdr"><h3>Purchase Pattern</h3></div>
               <div className="fi-panel-body">
                 {['Jan','Feb','Mar'].map((m,i)=>{
                   const val=[320000,450000,280000][i]

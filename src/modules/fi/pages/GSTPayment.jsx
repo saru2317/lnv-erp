@@ -5,11 +5,11 @@ export default function GSTPayment() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">GST Payment <small>Monthly Tax Payment — Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">💳 Pay via NEFT/RTGS</button>
+          <button className="btn btn-p sd-bsm">Pay via NEFT/RTGS</button>
         </div>
       </div>
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">💳 GST Payment Challan</div>
+        <div className="fi-form-sec-hdr">GST Payment Challan</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>GSTIN</label><input className="fi-form-ctrl" defaultValue="33AABLNV1234B1Z5" readOnly/></div>
@@ -38,7 +38,7 @@ export default function GSTPayment() {
         </div>
       </div>
       <div className="fi-form-acts">
-        <button className="btn btn-p sd-bsm">💳 Generate Challan & Pay</button>
+        <button className="btn btn-p sd-bsm">Generate Challan & Pay</button>
       </div>
     </div>
   )

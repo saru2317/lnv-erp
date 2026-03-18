@@ -102,7 +102,7 @@ export default function BranchConfig() {
               <div style={{fontFamily:'DM Mono,monospace',fontSize:'10px'}}>GST: {b.gstin}</div>
             </div>
             <div style={{display:'flex',gap:'6px'}}>
-              <button className="btn-act-edit" onClick={()=>handleEdit(b)}>✏️ Edit</button>
+              <button className="btn-act-edit" onClick={()=>handleEdit(b)}>Edit</button>
               <button className="btn-act-view" onClick={()=>setBranches(bs=>bs.map(x=>x.id===b.id?{...x,status:x.status==='Active'?'Inactive':'Active'}:x))}>
                 {b.status==='Active'?'🔒 Disable':'🔓 Enable'}
               </button>

@@ -23,7 +23,7 @@ export default function FuelLog() {
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Mar 2026</option><option>Feb 2026</option></select>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/fuellog')}>Print Report</button>
-          <button className="btn btn-p sd-bsm">⛽ Add Fuel Entry</button>
+          <button className="btn btn-p sd-bsm">Add Fuel Entry</button>
         </div>
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:16}}>

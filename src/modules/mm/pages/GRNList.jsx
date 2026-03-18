@@ -14,7 +14,7 @@ export default function GRNList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Goods Receipt Notes <small>MB51 · GRN Register</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>＋ Record GRN</button>
         </div>
       </div>

@@ -10,7 +10,7 @@ export default function GSTR2B() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">GSTR-2B <small>Inward Supply Register · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Download</button>
+          <button className="btn btn-s sd-bsm">Download</button>
           <button className="btn btn-p sd-bsm">🔄 Match ITC</button>
         </div>
       </div>

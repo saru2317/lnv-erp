@@ -32,9 +32,9 @@ export default function InvoiceList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Tax Invoices <small>VF01 · GST Invoices</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s btn-sm">⬇️ Export</button>
-          <button className="btn btn-s btn-sm">📊 GST Report</button>
-          <button className="btn btn-p" onClick={() => navigate('/sd/invoices/new')}>➕ New Invoice</button>
+          <button className="btn btn-s btn-sm">Export</button>
+          <button className="btn btn-s btn-sm">GST Report</button>
+          <button className="btn btn-p" onClick={() => navigate('/sd/invoices/new')}>New Invoice</button>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function InvoiceList() {
                 <td style={{display:'flex',gap:'4px'}}>
                   <button className="act-btn-view" onClick={()=>navigate(`/sd/invoices/${inv.id}`)}>👁 View</button>
                   {inv.status==='paid'    && <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/invoice')}}>🖨 Print</button>}
-                  {inv.status==='pending' && <button className="act-btn-green">💳 Payment</button>}
+                  {inv.status==='pending' && <button className="act-btn-green">Payment</button>}
                   {inv.status==='overdue' && <button className="act-btn-orange">📱 WhatsApp</button>}
                 </td>
               </tr>

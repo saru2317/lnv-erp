@@ -100,7 +100,7 @@ export default function EmailConfig() {
                         borderRadius:'50%',background:'#fff',transition:'all .2s'}}></div>
                     </div>
                   </label>
-                  <button className="btn-act-edit" style={{fontSize:'10px',padding:'3px 7px'}}>✏️ Edit</button>
+                  <button className="btn-act-edit" style={{fontSize:'10px',padding:'3px 7px'}}>Edit</button>
                 </div>
               </div>
             ))}
@@ -130,7 +130,7 @@ export default function EmailConfig() {
             </div>
             <div style={{marginTop:'16px',padding:'12px 14px',background:'#F8F9FA',borderRadius:'6px',fontSize:'12px'}}>
               <div style={{fontWeight:'700',marginBottom:'6px'}}>Last Test Result</div>
-              <div style={{color:'var(--odoo-green)',fontWeight:'600'}}>✅ Connected · Last tested: {config.lastTest}</div>
+              <div style={{color:'var(--odoo-green)',fontWeight:'600'}}>Connected · Last tested: {config.lastTest}</div>
               <div style={{color:'var(--odoo-gray)',fontSize:'11px',marginTop:'2px'}}>Server: {config.host}:{config.port} ({config.encryption})</div>
             </div>
           </div>

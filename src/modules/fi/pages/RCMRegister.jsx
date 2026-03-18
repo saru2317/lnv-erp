@@ -17,7 +17,7 @@ export default function RCMRegister() {
         <div className="fi-lv-title">RCM Register <small>Reverse Charge Mechanism · Self-Invoice Liability</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm">+ New RCM Entry</button>
-          <button className="btn btn-p sd-bsm">📤 Push to GSTR-3B</button>
+          <button className="btn btn-p sd-bsm">Push to GSTR-3B</button>
         </div>
       </div>
       <div className="fi-alert warn" style={{marginBottom:16}}>

@@ -77,8 +77,8 @@ export default function ReportsDashboard() {
             <option>Mar 2026</option><option>Feb 2026</option>
             <option>Q4 FY26</option><option>FY 2025-26</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export All</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export All</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
@@ -258,7 +258,7 @@ export default function ReportsDashboard() {
         <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           padding:18, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
           <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700,
-            color:'var(--odoo-dark)', marginBottom:14 }}>📋 Quick Reports</h4>
+            color:'var(--odoo-dark)', marginBottom:14 }}>Quick Reports</h4>
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {[
               { icon:'💰', label:'Sales Report',          sub:'Revenue · Customers · Trends',    path:'/reports/sales',      color:'#714B67' },

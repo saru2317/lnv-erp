@@ -61,7 +61,7 @@ export default function GeneralLedger() {
           <select className="fi-filter-select" value={acct} onChange={e => setAcct(e.target.value)}>
             {ACCOUNTS_LIST.map(a => <option key={a.code} value={a.code}>{a.code} · {a.name}</option>)}
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

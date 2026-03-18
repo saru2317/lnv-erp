@@ -19,8 +19,8 @@ export default function VendorLedger() {
           <select className="mm-fsel" style={{marginRight:'4px'}}>
             <option>Lakshmi Textile Mills</option><option>Coimbatore Spares Co.</option><option>Sri Murugan Traders</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">💳 Record Payment</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Record Payment</button>
         </div>
       </div>
 
@@ -62,8 +62,8 @@ export default function VendorLedger() {
       </table>
 
       <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
-        <button className="btn btn-p sd-bsm">💳 Pay ₹1,42,000 (Full)</button>
-        <button className="btn btn-s sd-bsm">💳 Partial Payment</button>
+        <button className="btn btn-p sd-bsm">Pay ₹1,42,000 (Full)</button>
+        <button className="btn btn-s sd-bsm">Partial Payment</button>
       </div>
     </div>
   )

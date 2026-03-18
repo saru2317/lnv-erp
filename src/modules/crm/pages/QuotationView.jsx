@@ -23,7 +23,7 @@ export default function QuotationView() {
         <div className="fi-lv-actions">
           <span className={`crm-badge ${QT_STATUS_COLORS[status]||'crm-badge-new'}`} style={{fontSize:'13px',padding:'4px 14px'}}>{status}</span>
           {status==='Draft'&&<button className="btn btn-p btn-s" onClick={()=>setStatus('Sent')}>📧 Send to Customer</button>}
-          {status==='Sent'&&<><button className="btn btn-s sd-bsm" onClick={()=>setShowRevise(true)}>✏️ Revise</button>
+          {status==='Sent'&&<><button className="btn btn-s sd-bsm" onClick={()=>setShowRevise(true)}>Revise</button>
           <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStatus('Won')}>✓ Mark Won</button>
           <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStatus('Lost')}>✗ Mark Lost</button></>}
           {status==='Won'&&<button className="btn btn-p btn-s" onClick={()=>nav('/crm/opportunities')}>→ Create Sales Order</button>}
@@ -35,7 +35,7 @@ export default function QuotationView() {
 
       {showRevise&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-orange)'}}>
-          <div className="fi-panel-hdr"><h3>✏️ Revise Quotation</h3></div>
+          <div className="fi-panel-hdr"><h3>Revise Quotation</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -58,7 +58,7 @@ export default function QuotationView() {
       <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
         {/* Quotation Document */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📄 Quotation Document</h3></div>
+          <div className="fi-panel-hdr"><h3>Quotation Document</h3></div>
           <div className="fi-panel-body">
             {/* Header */}
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:'20px',paddingBottom:'16px',borderBottom:'2px solid var(--odoo-purple)'}}>
@@ -127,7 +127,7 @@ export default function QuotationView() {
         {/* Right */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📊 Quote Details</h3></div>
+            <div className="fi-panel-hdr"><h3>Quote Details</h3></div>
             <div className="fi-panel-body">
               {[['Salesperson',qt.owner],['Opportunity',qt.oppId||'Direct'],['Discount',qt.discount+'%'],['Final Amount',fmtFull(qt.finalAmount)],['GST (18%)',fmtFull(tax)],['Total',fmtFull(total)]].map(([k,v])=>(
                 <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid var(--odoo-border)',fontSize:'12px'}}>
@@ -142,7 +142,7 @@ export default function QuotationView() {
             <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}}>🖨️ Print Quotation</button>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}}>📧 Email to Customer</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}}>⬇️ Download PDF</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}}>Download PDF</button>
               {status==='Won'&&<button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>nav('/crm/opportunities')}>→ Create Sales Order</button>}
             </div>
           </div>

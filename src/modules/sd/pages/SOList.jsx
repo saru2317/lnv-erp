@@ -35,19 +35,19 @@ export default function SOList() {
         <div className="lv-ttl">Sales Orders <small>VA05 · {filtered.length} Open</small></div>
         <div className="lv-acts">
           <button className="btn btn-s btn-sm" onClick={() => navigate('/sd/quotations/new')}>📝 New Quotation</button>
-          <button className="btn btn-p" onClick={() => navigate('/sd/orders/new')}>➕ New Sales Order</button>
+          <button className="btn btn-p" onClick={() => navigate('/sd/orders/new')}>New Sales Order</button>
         </div>
       </div>
 
       <div className="sd-fb">
-        <div className="sd-fs">🔍 <input placeholder="Search SO #, customer…" value={search} onChange={e=>setSearch(e.target.value)} /></div>
+        <div className="sd-fs"><input placeholder="Search SO #, customer…" value={search} onChange={e=>setSearch(e.target.value)} /></div>
         <select className="sd-fsel" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
           <option value="">All Status</option><option value="draft">Draft</option><option value="confirmed">Confirmed</option>
           <option value="delivered">Delivered</option><option value="paid">Invoiced</option>
         </select>
         <select className="sd-fsel"><option>All Dates</option><option>This Month</option><option>Last Month</option></select>
         <select className="sd-fsel"><option>All Customers</option><option>Sri Lakshmi Mills</option><option>Coimbatore Spinners</option></select>
-        <button className="btn btn-s btn-sm">⬇️ Export</button>
+        <button className="btn btn-s btn-sm">Export</button>
       </div>
 
       <div className="dc">

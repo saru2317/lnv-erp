@@ -34,7 +34,7 @@ export default function KPIEmployees({ employees, assignments }) {
               </td>
               <td style={{fontSize:11,color:'var(--odoo-gray)'}}>{getKPISet(e)}</td>
               <td><div style={{display:'flex',gap:4}}>
-                <button className="btn-xs">✏️ Edit</button>
+                <button className="btn-xs">Edit</button>
                 <button className="btn-xs" onClick={()=>setEmps(es=>es.filter(x=>x.code!==e.code))}>🗑️</button>
               </div></td>
             </tr>

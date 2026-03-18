@@ -45,8 +45,8 @@ export default function CRMReports() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">CRM Reports <small>Analytics & Intelligence</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function CRMReports() {
         <div>
           {activeReport==='pipeline'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>📊 Opportunity Pipeline Report</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>Opportunity Pipeline Report</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'16px'}}>
                 {[{l:'Total Pipeline',v:fmt(totalPipeline),c:'var(--odoo-purple)'},{l:'Won This Month',v:fmt(wonVal),c:'var(--odoo-green)'},{l:'Win Rate',v:winRate+'%',c:'var(--odoo-orange)'}].map(k=>(
                   <div key={k.l} style={{padding:'14px',background:'#fff',borderRadius:'8px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`4px solid ${k.c}`,textAlign:'center'}}>
@@ -108,7 +108,7 @@ export default function CRMReports() {
 
           {activeReport==='leads'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>🎯 Lead Source Analysis</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>Lead Source Analysis</div>
               <table className="sd-table">
                 <thead><tr><th>Lead Source</th><th>Total Leads</th><th>Converted</th><th>Conversion %</th><th>Performance</th></tr></thead>
                 <tbody>
@@ -242,7 +242,7 @@ export default function CRMReports() {
 
           {activeReport==='revenue'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>💰 Revenue Trend</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>Revenue Trend</div>
               <div style={{display:'flex',gap:'6px',alignItems:'flex-end',height:'120px',marginBottom:'8px'}}>
                 {MONTHS.map((m,i)=>{
                   const maxR = Math.max(...REVENUE)
@@ -264,7 +264,7 @@ export default function CRMReports() {
 
           {activeReport==='quotation'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>📄 Quotation Performance</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>Quotation Performance</div>
               <table className="sd-table">
                 <thead><tr><th>Salesperson</th><th>Total Quotes</th><th>Won</th><th>Lost</th><th>Pending</th><th>Conversion %</th></tr></thead>
                 <tbody>
@@ -305,7 +305,7 @@ export default function CRMReports() {
               <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>🤖 AI Sales Insights</div>
               <div style={{display:'grid',gap:'12px'}}>
                 <div style={{background:'linear-gradient(135deg,var(--odoo-purple),#875A7B)',borderRadius:'10px',padding:'16px',color:'#fff'}}>
-                  <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'8px'}}>🎯 Win Probability Scores</div>
+                  <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'8px'}}>Win Probability Scores</div>
                   {OPPORTUNITIES.filter(o=>o.stage!=='Won'&&o.stage!=='Lost').map(o=>(
                     <div key={o.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.2)',fontSize:'12px'}}>
                       <span>{o.company}</span>

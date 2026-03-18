@@ -76,7 +76,7 @@ export default function WHMap() {
         <div className="wh-map-title">
           <span>🏗️ Storage Layout — Click a bin to view stock</span>
           <div style={{display:'flex',gap:'8px'}}>
-            <span className="badge badge-ok">✅ Healthy: 28</span>
+            <span className="badge badge-ok">Healthy: 28</span>
             <span className="badge badge-low">⚠️ Low: 8</span>
             <span className="badge badge-critical">🔴 Critical: 4</span>
             <span className="badge badge-draft">Empty: 12</span>
@@ -110,14 +110,14 @@ export default function WHMap() {
       ) : (
         <div className="wm-panel">
           <div className="wm-panel-hdr">
-            <h3>📦 BIN {selected} — Stock Details</h3>
+            <h3>BIN {selected} — Stock Details</h3>
             <div style={{display:'flex',gap:'8px'}}>
               {isEmpty
                 ? <span className="badge badge-draft">Empty Bin</span>
                 : <span className="badge badge-ok">{stockRows.length} Material{stockRows.length>1?'s':''}</span>
               }
               <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/transfer')}>🔄 Transfer</button>
-              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>📤 Issue</button>
+              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>Issue</button>
               <button className="btn btn-s sd-bsm" onClick={() => setSelected(null)}>✕ Close</button>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function WHMap() {
                       </td>
                       <td><span className={`badge ${r.b}`}>{r.bl}</span></td>
                       <td onClick={e=>e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
-                        <button className="btn-xs" onClick={() => nav('/wm/goods-issue')}>📤 Issue</button>
+                        <button className="btn-xs" onClick={() => nav('/wm/goods-issue')}>Issue</button>
                         <button className="btn-xs" onClick={() => nav('/wm/transfer')}>🔄 Move</button>
                       </td>
                     </tr>

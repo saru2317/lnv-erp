@@ -86,8 +86,8 @@ export default function ITCReconciliation() {
           <select className="fi-filter-select">
             <option>Mar 2026</option><option>Feb 2026</option><option>Jan 2026</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setShowPrefiling(true)}>📋 Pre-Filing Check</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setShowPrefiling(true)}>Pre-Filing Check</button>
         </div>
       </div>
 
@@ -301,7 +301,7 @@ export default function ITCReconciliation() {
                 📊 Checklist Summary
               </div>
               <div style={{display:'flex',gap:20,fontSize:13}}>
-                <span style={{color:'#155724',fontWeight:600}}>✅ Pass: {prefilingChecks.filter(c=>c.ok).length}</span>
+                <span style={{color:'#155724',fontWeight:600}}>Pass: {prefilingChecks.filter(c=>c.ok).length}</span>
                 <span style={{color:'#856404',fontWeight:600}}>⚠️ Actions: {prefilingChecks.filter(c=>!c.ok).length}</span>
                 <span style={{color:'var(--odoo-purple)',fontWeight:700}}>
                   {prefilingChecks.filter(c=>!c.ok).length === 0 ? '🟢 READY TO FILE' : '🔴 NOT READY — Resolve pending items'}
@@ -317,7 +317,7 @@ export default function ITCReconciliation() {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           {/* ITC breakdown */}
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:18}}>
-            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,marginBottom:16}}>💰 ITC Filing Summary</h3>
+            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,marginBottom:16}}>ITC Filing Summary</h3>
             {[
               ['Total ITC in Books',         fmt(totalITC+blockedITC),  'var(--odoo-dark)'],
               ['Less: Blocked (Sec 17(5))',  `(${fmt(blockedITC)})`,    'var(--odoo-red)'],

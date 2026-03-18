@@ -9,12 +9,12 @@ export default function VendorInvNew() {
         <div className="lv-ttl">Enter Vendor Invoice <small>MIRO · Invoice Verification</small></div>
         <div className="lv-acts">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}>✕ Cancel</button>
-          <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>✅ Post Invoice</button>
+          <button className="btn btn-s sd-bsm">Save Draft</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>Post Invoice</button>
         </div>
       </div>
       <div className="mm-fs">
-        <div className="mm-fsh">🧾 Invoice Header</div>
+        <div className="mm-fsh">Invoice Header</div>
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>Invoice No. (Internal)</label><input className="mm-fc" defaultValue="VINV-2025-013" readOnly/></div>
@@ -41,7 +41,7 @@ export default function VendorInvNew() {
         </div>
       </div>
       <div className="mm-fs">
-        <div className="mm-fsh">📦 Invoice Line Items (from GRN)</div>
+        <div className="mm-fsh">Invoice Line Items (from GRN)</div>
         <div className="mm-fsb" style={{padding:'0'}}>
           <div className="mm-lt-wrap">
             <table className="mm-lt">
@@ -51,7 +51,7 @@ export default function VendorInvNew() {
                   <td>1</td><td>4819 10 10</td><td>Packing Boxes — Double Wall</td>
                   <td>1000</td><td>Nos</td><td>₹200</td><td>₹2,00,000</td><td>18%</td>
                   <td>₹18,000</td><td>₹18,000</td><td><strong>₹2,36,000</strong></td>
-                  <td><span className="mm-badge mm-bdg-approved">✅ Matched</span></td>
+                  <td><span className="mm-badge mm-bdg-approved">Matched</span></td>
                 </tr>
               </tbody>
             </table>
@@ -69,13 +69,13 @@ export default function VendorInvNew() {
       </div>
       <div className="mm-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}>✕ Cancel</button>
-        <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>✅ Post Invoice</button>
+        <button className="btn btn-s sd-bsm">Save Draft</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>Post Invoice</button>
         <div className="mm-flow">
-          <span className="mm-fs-step done">✅ GRN Done</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step act">🧾 Invoice Entry</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">✅ Verification</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">💳 Payment</span>
+          <span className="mm-fs-step done">GRN Done</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step act">Invoice Entry</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step">Verification</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step">Payment</span>
         </div>
       </div>
     </div>

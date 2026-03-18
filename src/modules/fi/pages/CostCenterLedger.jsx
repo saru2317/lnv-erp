@@ -50,7 +50,7 @@ export default function CostCenterLedger() {
           <select className="fi-filter-select" value={cc} onChange={e => setCC(e.target.value)}>
             {Object.keys(CC_DATA).map(c => <option key={c}>{c}</option>)}
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

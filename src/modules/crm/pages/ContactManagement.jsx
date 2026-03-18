@@ -43,7 +43,7 @@ export default function ContactManagement() {
 
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>➕ Add New Contact</h3></div>
+          <div className="fi-panel-hdr"><h3>Add New Contact</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Full Name</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contact name" /></div>

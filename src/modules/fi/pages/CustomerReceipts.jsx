@@ -12,12 +12,12 @@ export default function CustomerReceipts() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Customer Receipts <small>Incoming Payments Register</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>💰 Record Receipt</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>Record Receipt</button>
         </div>
       </div>
       {showForm && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">💰 New Receipt Entry</div>
+          <div className="fi-form-sec-hdr">New Receipt Entry</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>Receipt No.</label><input className="fi-form-ctrl" defaultValue="REC-2025-032" readOnly/></div>
@@ -43,7 +43,7 @@ export default function CustomerReceipts() {
             </div>
             <div className="fi-form-acts">
               <button className="btn btn-s sd-bsm" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>✅ Save Receipt</button>
+              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>Save Receipt</button>
             </div>
           </div>
         </div>

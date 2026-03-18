@@ -12,7 +12,7 @@ export default function NCRNew() {
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Assigned to QC team · Email notification sent</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>← NCR List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/capa/new')}>✅ Create CAPA</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/capa/new')}>Create CAPA</button>
       </div>
     </div>
   )
@@ -23,7 +23,7 @@ export default function NCRNew() {
         <div className="fi-lv-title">Raise NCR <small>Non-Conformance Report</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save NCR</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save NCR</button>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export default function NCRNew() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📊 Failed Parameters</div>
+        <div className="fi-form-sec-hdr">Failed Parameters</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Parameter</th><th>Specification</th><th>Actual Result</th><th>Deviation</th></tr></thead>
@@ -109,19 +109,19 @@ export default function NCRNew() {
             </tbody>
           </table>
           <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm">➕ Add Parameter</button>
+            <button className="btn btn-s sd-bsm">Add Parameter</button>
           </div>
         </div>
       </div>
 
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>✕ Cancel</button>
-        <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>📤 Submit NCR</button>
+        <button className="btn btn-s sd-bsm">Save Draft</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Submit NCR</button>
         <div className="fi-status-flow">
           <span className="fi-sf-step act">❌ NCR</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">🔍 Root Cause</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">✅ CAPA</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Root Cause</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">CAPA</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">🔒 Closed</span>
         </div>
       </div>

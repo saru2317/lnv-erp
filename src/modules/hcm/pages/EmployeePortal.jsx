@@ -80,7 +80,7 @@ export default function EmployeePortal() {
                 <div className="fi-form-grp"><label>Reason</label>
                   <textarea className="fi-form-ctrl" rows={3} placeholder="Reason for leave..." onChange={e=>setLeaveForm(f=>({...f,reason:e.target.value}))}></textarea>
                 </div>
-                <button className="btn btn-p sd-bsm" onClick={()=>setSubmitted(true)}>📤 Submit Application</button>
+                <button className="btn btn-p sd-bsm" onClick={()=>setSubmitted(true)}>Submit Application</button>
               </div>
             )}
           </div>
@@ -88,7 +88,7 @@ export default function EmployeePortal() {
       )}
 
       {tab==='payslip' && (
-        <div className="fi-panel"><div className="fi-panel-hdr"><h3>💰 My Payslips</h3></div>
+        <div className="fi-panel"><div className="fi-panel-hdr"><h3>My Payslips</h3></div>
           <div className="fi-panel-body">
             {PAYSLIPS.map(p=>(
               <div key={p.m} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 0',borderBottom:'1px solid var(--odoo-border)'}}>
@@ -97,7 +97,7 @@ export default function EmployeePortal() {
                 </div>
                 <div style={{display:'flex',gap:'8px'}}>
                   <button className="btn-xs" onClick={()=>nav('/hcm/pay/payslip')}>View</button>
-                  <button className="btn-xs">⬇️ PDF</button>
+                  <button className="btn-xs">PDF</button>
                 </div>
               </div>
             ))}
@@ -106,7 +106,7 @@ export default function EmployeePortal() {
       )}
 
       {tab==='attendance' && (
-        <div className="pp-alert info">📊 <strong>Feb 2025:</strong> Present 24/26 days · 0 Absent · 1 CL · 1 WFH · 3.5 hrs OT</div>
+        <div className="pp-alert info"><strong>Feb 2025:</strong> Present 24/26 days · 0 Absent · 1 CL · 1 WFH · 3.5 hrs OT</div>
       )}
     </div>
   )

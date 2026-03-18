@@ -21,7 +21,7 @@ export default function QualityPlan() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Quality Plans <small>Inspection Parameters per Product</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">➕ New Quality Plan</button>
+          <button className="btn btn-p sd-bsm">New Quality Plan</button>
         </div>
       </div>
 

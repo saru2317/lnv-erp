@@ -46,7 +46,7 @@ export default function InvoiceNew() {
         <div className="lv-ttl">New Tax Invoice <small>VF01 · GST Invoice</small></div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={()=>navigate('/sd/invoices')}>✕ Discard</button>
-          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft')}>📋 Draft</button>
+          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft')}>Draft</button>
           <button className="btn btn-sm" style={{background:'#00A09D',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}}>👁 Preview</button>
           <button className="btn btn-p" onClick={post} disabled={saving}>{saving?'Posting…':'✅ Post Invoice'}</button>
         </div>
@@ -62,7 +62,7 @@ export default function InvoiceNew() {
 
           {/* Invoice Header */}
           <div className="sd-sec">
-            <div className="sd-stt">🧾 Invoice Header</div>
+            <div className="sd-stt">Invoice Header</div>
             <div className="sd-fg3">
               <div className="sd-fg"><label>Invoice Number</label><input className="sd-fi" value={form.invNo} disabled/></div>
               <div className="sd-fg"><label>Invoice Date <span className="req">*</span></label><input className="sd-fi" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
@@ -83,7 +83,7 @@ export default function InvoiceNew() {
 
           {/* Line Items */}
           <div className="sd-sec">
-            <div className="sd-stt">📦 Invoice Line Items</div>
+            <div className="sd-stt">Invoice Line Items</div>
             <div style={{overflowX:'auto'}}>
               <table className="sd-li">
                 <thead>
@@ -115,7 +115,7 @@ export default function InvoiceNew() {
                 </tbody>
               </table>
             </div>
-            <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calc(newLine())])}>➕ Add Item</div>
+            <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calc(newLine())])}>Add Item</div>
 
             <div style={{display:'flex',justifyContent:'space-between',marginTop:'14px',flexWrap:'wrap',gap:'14px'}}>
               <div style={{flex:1,minWidth:'220px'}}>

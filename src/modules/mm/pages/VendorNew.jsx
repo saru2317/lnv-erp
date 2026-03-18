@@ -9,11 +9,11 @@ export default function VendorNew() {
         <div className="lv-ttl">New Vendor <small>MK01 · Create Vendor Master</small></div>
         <div className="lv-acts">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors')}>💾 Save Vendor</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors')}>Save Vendor</button>
         </div>
       </div>
       <div className="mm-fs">
-        <div className="mm-fsh">🏭 Basic Details</div>
+        <div className="mm-fsh">Basic Details</div>
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>Vendor Code</label><input className="mm-fc" defaultValue="V-006" readOnly/></div>
@@ -43,7 +43,7 @@ export default function VendorNew() {
         </div>
       </div>
       <div className="mm-fs">
-        <div className="mm-fsh">💳 Payment &amp; Banking</div>
+        <div className="mm-fsh">Payment &amp; Banking</div>
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>Payment Terms</label>
@@ -60,7 +60,7 @@ export default function VendorNew() {
       </div>
       <div className="mm-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors')}>💾 Save Vendor</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors')}>Save Vendor</button>
       </div>
     </div>
   )

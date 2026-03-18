@@ -15,7 +15,7 @@ export default function ReorderList() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Reorder Alerts <small>Below Minimum Stock Level</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-p sd-bsm">🛒 Create Reorder POs</button>
+          <button className="btn btn-p sd-bsm">Create Reorder POs</button>
         </div>
       </div>
 

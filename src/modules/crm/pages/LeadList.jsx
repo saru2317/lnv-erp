@@ -27,7 +27,7 @@ export default function LeadList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Lead Management <small>{filtered.length} leads</small></div>
         <div className="fi-lv-actions">
-          <button className={`btn btn-s ${view==='table'?'btn-p':'sd-bsm'}`} onClick={()=>setView('table')}>☰ Table</button>
+          <button className={`btn btn-s ${view==='table'?'btn-p':'sd-bsm'}`} onClick={()=>setView('table')}>Table</button>
           <button className={`btn btn-s ${view==='kanban'?'btn-p':'sd-bsm'}`} onClick={()=>setView('kanban')}>⬜ Kanban</button>
           <button className="btn btn-p btn-s" onClick={()=>nav('/crm/leads/new')}>+ New Lead</button>
         </div>

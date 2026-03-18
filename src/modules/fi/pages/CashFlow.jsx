@@ -9,7 +9,7 @@ export default function CashFlow() {
         <div className="fi-lv-title">Cash Flow Statement <small>February 2025</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option><option>FY 2024-25</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
       <div style={{maxWidth:'700px'}}>

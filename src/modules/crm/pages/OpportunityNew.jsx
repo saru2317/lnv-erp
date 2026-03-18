@@ -35,14 +35,14 @@ export default function OpportunityNew() {
         <div className="fi-lv-title">New Opportunity <small>Convert lead to sales opportunity</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/opportunities')}>Cancel</button>
-          <button className="btn btn-p btn-s" onClick={handleSave}>💾 Save Opportunity</button>
+          <button className="btn btn-p btn-s" onClick={handleSave}>Save Opportunity</button>
         </div>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📋 Opportunity Details</h3></div>
+            <div className="fi-panel-hdr"><h3>Opportunity Details</h3></div>
             <div className="fi-panel-body">
               <div className="sd-form-grid">
                 <div className="sd-field">
@@ -98,7 +98,7 @@ export default function OpportunityNew() {
 
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📊 Pipeline Stage</h3></div>
+            <div className="fi-panel-hdr"><h3>Pipeline Stage</h3></div>
             <div className="fi-panel-body">
               <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
                 {OPP_STAGES.filter(s=>s!=='Won'&&s!=='Lost').map((s,i)=>(
@@ -128,7 +128,7 @@ export default function OpportunityNew() {
                 </select>
               </div>
               <div style={{marginTop:'10px',padding:'10px',background:'#F0EEEB',borderRadius:'6px',fontSize:'12px'}}>
-                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'6px'}}>📊 Win Probability</div>
+                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'6px'}}>Win Probability</div>
                 <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                   <div style={{flex:1,background:'#e0e0e0',borderRadius:'4px',height:'8px'}}>
                     <div style={{width:`${form.winProb||0}%`,height:'100%',borderRadius:'4px',

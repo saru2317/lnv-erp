@@ -53,7 +53,7 @@ export default function QuotationNew() {
       <div style={{display:'flex',gap:'12px'}}>
         <button className="btn btn-p btn-s" onClick={()=>nav('/crm/quotations')}>← Quotations</button>
         <button className="btn btn-s sd-bsm">📧 Send to Customer</button>
-        <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations')}>🖨️ Print</button>
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations')}>Print</button>
       </div>
     </div>
   )
@@ -109,7 +109,7 @@ export default function QuotationNew() {
           </div>
 
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📦 Product / Service</h3></div>
+            <div className="fi-panel-hdr"><h3>Product / Service</h3></div>
             <div className="fi-panel-body">
               <div className="sd-form-grid">
                 <div className="sd-field" style={{gridColumn:'1/-1'}}>
@@ -171,7 +171,7 @@ export default function QuotationNew() {
         <div>
           <div className="fi-panel" style={{marginBottom:'14px',background:'linear-gradient(135deg,var(--odoo-purple),#875A7B)',color:'#fff'}}>
             <div className="fi-panel-hdr" style={{borderBottomColor:'rgba(255,255,255,.2)'}}>
-              <h3 style={{color:'#fff'}}>💰 Quote Summary</h3>
+              <h3 style={{color:'#fff'}}>Quote Summary</h3>
             </div>
             <div className="fi-panel-body">
               <div style={{textAlign:'center',padding:'10px 0'}}>

@@ -16,8 +16,8 @@ export default function Depreciation() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Depreciation Run <small>March 2026</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Download</button>
-          <button className="btn btn-p sd-bsm">📉 Post to GL (FI)</button>
+          <button className="btn btn-s sd-bsm">Download</button>
+          <button className="btn btn-p sd-bsm">Post to GL (FI)</button>
         </div>
       </div>
       <div className="fi-alert info" style={{marginBottom:14}}>ℹ️ Depreciation computed for all active assets. Click "Post to GL" to create journal entry in FI module (Dr. Depreciation Expense / Cr. Accumulated Depreciation).</div>

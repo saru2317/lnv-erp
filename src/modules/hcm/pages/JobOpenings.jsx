@@ -21,7 +21,7 @@ export default function JobOpenings() {
         <div className="fi-lv-title">Job Openings <small>Recruitment Pipeline</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/candidates')}>👥 Candidates</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>➕ New Position</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>New Position</button>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function JobOpenings() {
       {modal && (
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
-            <div className="fi-modal-hdr">➕ New Job Opening <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button></div>
+            <div className="fi-modal-hdr">New Job Opening <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button></div>
             <div className="fi-modal-body">
               <div className="fi-form-row"><div className="fi-form-grp"><label>Position Title <span>*</span></label><input className="fi-form-ctrl" placeholder="e.g. Ring Frame Operator"/></div>
               <div className="fi-form-grp"><label>Department</label>
@@ -96,7 +96,7 @@ export default function JobOpenings() {
               <div className="fi-form-grp"><label>Job Description</label><textarea className="fi-form-ctrl" rows={3} placeholder="Key responsibilities and requirements..."></textarea></div>
               <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
                 <button className="btn btn-s sd-bsm" onClick={()=>setModal(null)}>Cancel</button>
-                <button className="btn btn-p sd-bsm" onClick={()=>setModal(null)}>💾 Create Opening</button>
+                <button className="btn btn-p sd-bsm" onClick={()=>setModal(null)}>Create Opening</button>
               </div>
             </div>
           </div>

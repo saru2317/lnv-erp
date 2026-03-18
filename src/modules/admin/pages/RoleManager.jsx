@@ -25,7 +25,7 @@ export default function RoleManager() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Roles & Permissions <small>Module-wise access control</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">💾 Save Changes</button>
+          <button className="btn btn-p sd-bsm">Save Changes</button>
         </div>
       </div>
 

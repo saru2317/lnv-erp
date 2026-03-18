@@ -24,8 +24,8 @@ export default function JVList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Journal Entries <small>FB03 · All Postings</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>➕ New Journal</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>New Journal</button>
         </div>
       </div>
 

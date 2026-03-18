@@ -27,8 +27,8 @@ export default function PayrollProcess() {
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>View Payslips</button>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>Print Payslip</button>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/billcontrol')}>📊 Pay Bill Control</button>
-        <button className="btn btn-p sd-bsm" onClick={() => { setDone(false); setStep(0) }}>➕ New Month</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/billcontrol')}>Pay Bill Control</button>
+        <button className="btn btn-p sd-bsm" onClick={() => { setDone(false); setStep(0) }}>New Month</button>
       </div>
     </div>
   )
@@ -104,7 +104,7 @@ export default function PayrollProcess() {
           )}
           {step===3 && (
             <div>
-              <div className="pp-alert success">✅ Net pay calculated for all {EMPLOYEES.length} employees. Review before posting.</div>
+              <div className="pp-alert success">Net pay calculated for all {EMPLOYEES.length} employees. Review before posting.</div>
               <table className="fi-data-table">
                 <thead><tr><th>Emp</th><th>Gross</th><th>Deductions</th><th>Net Pay</th></tr></thead>
                 <tbody>

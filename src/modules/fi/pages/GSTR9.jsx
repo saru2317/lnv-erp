@@ -6,8 +6,8 @@ export default function GSTR9() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">GSTR-9 Annual Return <small>FY 2025–26 · Due: 31 Dec 2026</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Download</button>
-          <button className="btn btn-p sd-bsm">📤 File on Portal</button>
+          <button className="btn btn-s sd-bsm">Download</button>
+          <button className="btn btn-p sd-bsm">File on Portal</button>
         </div>
       </div>
       <div className="fi-alert info" style={{marginBottom:16}}>
@@ -16,7 +16,7 @@ export default function GSTR9() {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
         {/* Outward Supplies */}
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">📤 Outward Supplies (Sales)</div>
+          <div className="fi-form-sec-hdr">Outward Supplies (Sales)</div>
           <table className="fi-data-table" style={{fontSize:12}}>
             <thead><tr><th>Nature</th><th>Taxable Value</th><th>IGST</th><th>CGST</th><th>SGST</th></tr></thead>
             <tbody>
@@ -40,7 +40,7 @@ export default function GSTR9() {
         </div>
         {/* ITC Summary */}
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">📥 ITC Summary (Annual)</div>
+          <div className="fi-form-sec-hdr">ITC Summary (Annual)</div>
           <table className="fi-data-table" style={{fontSize:12}}>
             <thead><tr><th>Nature</th><th>IGST</th><th>CGST</th><th>SGST</th></tr></thead>
           <tbody>
@@ -64,7 +64,7 @@ export default function GSTR9() {
         </div>
         {/* Tax payable */}
         <div className="fi-form-sec" style={{gridColumn:'1/-1'}}>
-          <div className="fi-form-sec-hdr">💳 Net Tax Payable (Annual)</div>
+          <div className="fi-form-sec-hdr">Net Tax Payable (Annual)</div>
           <table className="fi-data-table" style={{fontSize:12}}>
             <thead><tr><th>Tax Head</th><th>Output Tax</th><th>ITC Available</th><th>Net Payable</th><th>Paid via Cash</th><th>Difference</th></tr></thead>
             <tbody>

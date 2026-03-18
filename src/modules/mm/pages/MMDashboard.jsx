@@ -8,7 +8,7 @@ export default function MMDashboard() {
       <div className="lv-hdr">
         <div className="lv-ttl">MM · Materials Management <small>Dashboard</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn/new')}>📦 Record GRN</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>＋ New PO</button>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function MMDashboard() {
       </div>
       <div className="mm-pg-grid">
         <div className="mm-panel">
-          <div className="mm-ph"><h3>📋 Recent Purchase Orders</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>View All</button></div>
+          <div className="mm-ph"><h3>Recent Purchase Orders</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>View All</button></div>
           <table className="mm-tbl">
             <thead><tr><th>PO No.</th><th>Vendor</th><th>Amount</th><th>Status</th><th></th></tr></thead>
             <tbody>
@@ -54,7 +54,7 @@ export default function MMDashboard() {
           </table>
         </div>
         <div className="mm-panel">
-          <div className="mm-ph"><h3>💳 Vendor Payables</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/ledger')}>View Ledger</button></div>
+          <div className="mm-ph"><h3>Vendor Payables</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/ledger')}>View Ledger</button></div>
           <div className="mm-pb">
             {[
               {n:'Lakshmi Textile Mills', p:80, c:'var(--odoo-red)',    b:'mm-bdg-overdue',l:'₹1,42,000'},
@@ -77,10 +77,10 @@ export default function MMDashboard() {
       <div className="mm-panel">
         <div className="mm-ph"><h3>⚡ Quick Actions</h3></div>
         <div className="mm-pb" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>📋 New Purchase Order</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>📦 Record GRN</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices/new')}>🧾 Enter Vendor Invoice</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/new')}>🏭 Add Vendor</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>New Purchase Order</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices/new')}>Enter Vendor Invoice</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/new')}>Add Vendor</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/rfq')}>📩 Create RFQ</button>
         </div>
       </div>

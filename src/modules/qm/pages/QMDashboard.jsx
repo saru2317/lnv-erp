@@ -103,7 +103,7 @@ export default function QMDashboard() {
 
       {/* Yield Trend by Product */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>📊 Yield by Product (Feb 2025)</h3></div>
+        <div className="fi-panel-hdr"><h3>Yield by Product (Feb 2025)</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'14px'}}>
             {[{prod:'Ring Yarn (30s)',yield:98.5,lots:18,clr:'var(--odoo-purple)'},
@@ -130,7 +130,7 @@ export default function QMDashboard() {
         <div className="fi-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>🔬 New Inspection</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr/new')}>❌ Raise NCR</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa/new')}>✅ New CAPA</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa/new')}>New CAPA</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/certificates')}>🏅 Issue Certificate</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/vendor')}>⭐ Vendor Rating</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}>📈 Quality Report</button>

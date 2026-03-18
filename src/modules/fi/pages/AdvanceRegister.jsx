@@ -14,7 +14,7 @@ export default function AdvanceRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Advance Register <small>Customer / Vendor / Employee Advances</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">➕ New Advance</button>
+          <button className="btn btn-p sd-bsm">New Advance</button>
         </div>
       </div>
       <div className="fi-chips">

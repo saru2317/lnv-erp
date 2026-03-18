@@ -22,7 +22,7 @@ export default function ProductionReport(){
     <div>
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Production Report <small>PP Module · Job Analytics</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-s sd-bsm">⬇️ Export</button></div>
+        <div className="fi-lv-actions"><button className="btn btn-s sd-bsm">Export</button></div>
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(5,1fr)',marginBottom:16}}>
         {[

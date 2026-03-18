@@ -138,7 +138,7 @@ export default function LeadView() {
         {/* Right */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📊 Lead Score</h3></div>
+            <div className="fi-panel-hdr"><h3>Lead Score</h3></div>
             <div className="fi-panel-body" style={{textAlign:'center'}}>
               <div style={{fontSize:'36px',fontWeight:'800',fontFamily:'Syne,sans-serif',
                 color:status==='Qualified'?'var(--odoo-green)':status==='Contacted'?'var(--odoo-orange)':'var(--odoo-red)'}}>

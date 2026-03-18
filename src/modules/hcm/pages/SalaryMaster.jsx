@@ -31,8 +31,8 @@ export default function SalaryMaster() {
         <div className="fi-lv-title">Salary Master <small>Employee-wise CTC Breakdown</small></div>
         <div className="fi-lv-actions">
           <input placeholder="🔍 Search employee..." className="fi-filter-select" style={{width:'200px'}} onChange={e=>setSearch(e.target.value)}/>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📤 Process Payroll</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Process Payroll</button>
         </div>
       </div>
 

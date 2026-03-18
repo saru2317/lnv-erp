@@ -9,7 +9,7 @@ export default function SecurityLog() {
   return (
     <div>
       <div className="fi-lv-hdr"><div className="fi-lv-title">Security & Gate Log <small>{new Date().toLocaleDateString()}</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">➕ Visitor Entry</button></div></div>
+        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">Visitor Entry</button></div></div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'16px'}}>
         {[['Visitors Today',records.length,'var(--odoo-purple)'],['Inside Now',records.filter(v=>v.out==='—').length,'var(--odoo-orange)'],['Exited',records.filter(v=>v.out!=='—').length,'var(--odoo-green)']].map(([l,v,c])=>(
           <div key={l} style={{background:'#fff',borderRadius:'8px',padding:'12px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`4px solid ${c}`,textAlign:'center'}}>

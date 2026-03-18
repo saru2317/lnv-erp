@@ -24,9 +24,9 @@ export default function EmployeeList() {
         <div className="fi-lv-title">Employee Register <small>{EMPLOYEES.length} employees · Active</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" style={{background:view==='card'?'#EDE0EA':''}} onClick={()=>setView('card')}>⊞ Cards</button>
-          <button className="btn btn-s sd-bsm" style={{background:view==='table'?'#EDE0EA':''}} onClick={()=>setView('table')}>☰ Table</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/employees/new')}>➕ New Employee</button>
+          <button className="btn btn-s sd-bsm" style={{background:view==='table'?'#EDE0EA':''}} onClick={()=>setView('table')}>Table</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/employees/new')}>New Employee</button>
         </div>
       </div>
 

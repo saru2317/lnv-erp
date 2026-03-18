@@ -18,7 +18,7 @@ export default function BudgetVsActual() {
         <div className="fi-lv-title">Budget vs Actual <small>February 2025 · Monthly Comparison</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>

@@ -26,7 +26,7 @@ export default function VehicleMaster() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Vehicle Master <small>Fleet Register & Compliance</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm">+ Add Vehicle</button>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function VehicleMaster() {
                 ))}
                 <td style={{fontFamily:'DM Mono,monospace',fontSize:11}}>{v.odo.toLocaleString('en-IN')} km</td>
                 <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:st.bg,color:st.color}}>{st.label}</span></td>
-                <td><div style={{display:'flex',gap:4}}><button className="btn-xs">✏️ Edit</button><button className="btn-xs">📋 History</button></div></td>
+                <td><div style={{display:'flex',gap:4}}><button className="btn-xs">Edit</button><button className="btn-xs">History</button></div></td>
               </tr>
             )
           })}

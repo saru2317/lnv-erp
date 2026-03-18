@@ -13,7 +13,7 @@ export default function FIDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">FI Dashboard <small>Finance Overview · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>📊 P&amp;L</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>P&amp;L</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}>⚖️ Balance Sheet</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>📓 New Journal</button>
         </div>
@@ -39,7 +39,7 @@ export default function FIDashboard() {
         {/* Revenue vs Expense Chart */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>📊 Revenue vs Expenses (Last 6 Months)</h3>
+            <h3>Revenue vs Expenses (Last 6 Months)</h3>
           </div>
           <div className="chart-wrap">
             <div style={{display:'flex',gap:'12px',marginBottom:'10px',fontSize:'11px'}}>
@@ -67,7 +67,7 @@ export default function FIDashboard() {
         {/* GST Summary */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>🧾 GST Summary · Feb 2025</h3>
+            <h3>GST Summary · Feb 2025</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/gstr3b')}>View GSTR-3B</button>
           </div>
           <div className="fi-panel-body">
@@ -87,7 +87,7 @@ export default function FIDashboard() {
                 </div>
               ))}
             </div>
-            <button className="btn btn-p sd-bsm" style={{width:'100%',marginTop:'10px'}} onClick={() => nav('/fi/gst-pay')}>💳 Pay GST Now</button>
+            <button className="btn btn-p sd-bsm" style={{width:'100%',marginTop:'10px'}} onClick={() => nav('/fi/gst-pay')}>Pay GST Now</button>
           </div>
         </div>
       </div>
@@ -111,13 +111,13 @@ export default function FIDashboard() {
         <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
         <div className="fi-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>📓 New Journal Entry</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>📊 View P&amp;L</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>View P&amp;L</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}>⚖️ Balance Sheet</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/gstr3b')}>🧾 GSTR-3B</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/gstr3b')}>GSTR-3B</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/ar-aging')}>👥 AR Aging</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bank-recon')}>🏦 Bank Recon</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/inter-module')}>🔗 Module Journals</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/cogm')}>🏭 COGM Report</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/cogm')}>COGM Report</button>
         </div>
       </div>
     </div>

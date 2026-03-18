@@ -16,8 +16,8 @@ export default function CustomerView() {
         <div className="lv-ttl">{c.name} <small>{c.id} · Profile</small></div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={() => navigate('/sd/customers')}>← Back</button>
-          <button className="btn btn-p" onClick={() => navigate('/sd/invoices/new')}>🧾 New Invoice</button>
-          <button className="btn btn-s" onClick={() => navigate('/sd/orders/new')}>📋 New Order</button>
+          <button className="btn btn-p" onClick={() => navigate('/sd/invoices/new')}>New Invoice</button>
+          <button className="btn btn-s" onClick={() => navigate('/sd/orders/new')}>New Order</button>
         </div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
@@ -37,7 +37,7 @@ export default function CustomerView() {
           </div>
         </div>
         <div className="dc">
-          <div className="dc-hd"><h4>📊 Transaction Summary</h4></div>
+          <div className="dc-hd"><h4>Transaction Summary</h4></div>
           <table className="sd-tbl">
             <thead><tr><th>Doc #</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody>

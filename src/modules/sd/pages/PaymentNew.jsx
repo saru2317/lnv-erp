@@ -26,11 +26,11 @@ export default function PaymentNew() {
         <div className="lv-ttl">Record Payment Receipt <small>F-28</small></div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={()=>navigate('/sd/payments')}>✕ Cancel</button>
-          <button className="btn btn-p" onClick={save}>💾 Save Payment</button>
+          <button className="btn btn-p" onClick={save}>Save Payment</button>
         </div>
       </div>
       <div className="sd-fc"><div className="sd-fb2"><div className="sd-sec">
-        <div className="sd-stt">💳 Payment Details</div>
+        <div className="sd-stt">Payment Details</div>
         <div className="sd-fg3">
           <div className="sd-fg"><label>Receipt Number</label><input className="sd-fi" value={form.pmt} disabled/></div>
           <div className="sd-fg"><label>Payment Date <span className="req">*</span></label><input className="sd-fi" type="date" {...F('date')}/></div>

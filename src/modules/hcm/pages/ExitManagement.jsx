@@ -9,7 +9,7 @@ export default function ExitManagement() {
   return (
     <div>
       <div className="fi-lv-hdr"><div className="fi-lv-title">Exit Management <small>F&F · Separation</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">➕ New Exit</button></div></div>
+        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">New Exit</button></div></div>
       <table className="fi-data-table" style={{marginBottom:'20px'}}>
         <thead><tr><th>Exit ID</th><th>Employee</th><th>Dept</th><th>Type</th><th>Last Working Day</th><th>Notice</th><th>F&F Status</th><th>Actions</th></tr></thead>
         <tbody>{EXIT_LIST.map(e=>(
@@ -22,7 +22,7 @@ export default function ExitManagement() {
           <td><button className="btn-xs pri">Process F&F</button></td></tr>
         ))}</tbody>
       </table>
-      <div className="fi-panel"><div className="fi-panel-hdr"><h3>✅ Exit Checklist — EMP-012 Ranjith S.</h3></div>
+      <div className="fi-panel"><div className="fi-panel-hdr"><h3>Exit Checklist — EMP-012 Ranjith S.</h3></div>
         <div className="fi-panel-body">
           <div style={{marginBottom:'8px',fontSize:'12px',color:'var(--odoo-gray)'}}>
             Completed: {checks.filter(c=>c.done).length}/{checks.length} items

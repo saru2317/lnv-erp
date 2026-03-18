@@ -52,8 +52,8 @@ export default function SalesReport() {
             <option value="quarterly">Quarterly</option>
             <option value="yearly">Year on Year</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export Excel</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export Excel</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 

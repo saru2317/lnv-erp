@@ -16,7 +16,7 @@ export default function VendorInvList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Vendor Invoices <small>MIRO · Invoice Verification</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices/new')}>＋ Enter Invoice</button>
         </div>
       </div>

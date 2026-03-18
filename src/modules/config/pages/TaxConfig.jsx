@@ -49,7 +49,7 @@ export default function TaxConfig() {
 
       {showForm && tab !== 'hsn' && (
         <div className="fi-panel" style={{ marginBottom:'16px', border:'2px solid var(--odoo-purple)' }}>
-          <div className="fi-panel-hdr"><h3>➕ New Tax Rate</h3></div>
+          <div className="fi-panel-hdr"><h3>New Tax Rate</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">

@@ -33,8 +33,8 @@ export default function CandidateTracker() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Candidate Pipeline <small>{total} candidates total</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">➕ Add Candidate</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Add Candidate</button>
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default function CandidateTracker() {
                     <button className="btn-xs">View</button>
                     {stage!=='Joined' && <button className="btn-xs pri">→ Move</button>}
                     {stage==='Interview' && <button className="btn-xs">📞 Schedule</button>}
-                    {stage==='Offer' && <button className="btn-xs">📄 Offer Letter</button>}
+                    {stage==='Offer' && <button className="btn-xs">Offer Letter</button>}
                   </div>
                 </div>
               ))}
@@ -71,7 +71,7 @@ export default function CandidateTracker() {
 
       {/* Funnel stats */}
       <div className="fi-panel" style={{marginTop:'16px'}}>
-        <div className="fi-panel-hdr"><h3>📊 Recruitment Funnel</h3></div>
+        <div className="fi-panel-hdr"><h3>Recruitment Funnel</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'grid',gridTemplateColumns:`repeat(${Object.keys(STAGES).length},1fr)`,gap:'10px'}}>
             {Object.entries(STAGES).map(([stage,list])=>(

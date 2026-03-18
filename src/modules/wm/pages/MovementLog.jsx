@@ -14,11 +14,11 @@ export default function MovementLog() {
     <div>
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Movement Log <small>MB51 · All Stock Movements</small></div>
-        <div className="wm-lv-actions"><button className="btn btn-s sd-bsm">⬇️ Export</button></div>
+        <div className="wm-lv-actions"><button className="btn btn-s sd-bsm">Export</button></div>
       </div>
       <div className="wm-filter-bar">
         <div className="wm-filter-search">🔍<input placeholder="Search material, document no..."/></div>
-        <select className="wm-filter-select"><option>All Types</option><option>📥 GR (101)</option><option>📤 GI (201/261)</option><option>🔄 Transfer (311)</option><option>⚖️ Adjustment</option></select>
+        <select className="wm-filter-select"><option>All Types</option><option>GR (101)</option><option>GI (201/261)</option><option>🔄 Transfer (311)</option><option>⚖️ Adjustment</option></select>
         <input type="date" className="wm-filter-select" defaultValue="2025-02-01"/>
         <input type="date" className="wm-filter-select" defaultValue="2025-02-28"/>
         <button className="btn btn-s sd-bsm">🔄 Reset</button>

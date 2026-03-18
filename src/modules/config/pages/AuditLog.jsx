@@ -57,7 +57,7 @@ export default function AuditLog() {
             <option value="All">All Actions</option>
             {actions.map(a=><option key={a}>{a}</option>)}
           </select>
-          <button className="btn btn-s sd-bsm">📤 Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

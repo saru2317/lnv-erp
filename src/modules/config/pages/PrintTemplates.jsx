@@ -75,7 +75,7 @@ export default function PrintTemplates() {
                     <button className="btn-act-edit" onClick={()=>toggleStatus(t.id)}>
                       {t.status==='Active'?'🔒':'🔓'}
                     </button>
-                    <button className="btn-act-view" style={{ fontSize:'10px' }}>👁️ Preview</button>
+                    <button className="btn-act-view" style={{ fontSize:'10px' }}>Preview</button>
                   </div>
                 </div>
               ))}

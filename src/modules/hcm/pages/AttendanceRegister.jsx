@@ -32,8 +32,8 @@ export default function AttendanceRegister() {
           <select className="fi-filter-select" onChange={e=>setDept(e.target.value)}>
             <option>All</option><option>Production</option><option>Quality</option><option>Maintenance</option><option>Accounts</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📤 Post to Payroll</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Post to Payroll</button>
         </div>
       </div>
 

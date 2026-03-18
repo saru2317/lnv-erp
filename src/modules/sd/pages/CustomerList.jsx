@@ -38,8 +38,8 @@ export default function CustomerList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Customer Master <small>{filtered.length} records</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s btn-sm">⬇️ Export</button>
-          <button className="btn btn-p" onClick={() => navigate('/sd/customers/new')}>➕ New Customer</button>
+          <button className="btn btn-s btn-sm">Export</button>
+          <button className="btn btn-p" onClick={() => navigate('/sd/customers/new')}>New Customer</button>
         </div>
       </div>
 

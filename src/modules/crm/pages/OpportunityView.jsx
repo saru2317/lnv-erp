@@ -24,7 +24,7 @@ export default function OpportunityView() {
         </div>
         <div className="fi-lv-actions">
           {!isWon&&!isLost&&<><button className="btn btn-s sd-bsm" onClick={()=>setActForm(f=>({...f,show:true}))}>+ Activity</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>📋 Create Quotation</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>Create Quotation</button>
           <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStage('Won')}>🏆 Mark Won</button>
           <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStage('Lost')}>✗ Mark Lost</button></>}
         </div>
@@ -51,7 +51,7 @@ export default function OpportunityView() {
         {/* Left */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📋 Opportunity Details</h3></div>
+            <div className="fi-panel-hdr"><h3>Opportunity Details</h3></div>
             <div className="fi-panel-body">
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px'}}>
                 {[
@@ -71,7 +71,7 @@ export default function OpportunityView() {
           {/* Quotations linked */}
           <div className="fi-panel" style={{marginBottom:'14px'}}>
             <div className="fi-panel-hdr">
-              <h3>📄 Linked Quotations</h3>
+              <h3>Linked Quotations</h3>
               <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>+ New Quotation</button>
             </div>
             <div className="fi-panel-body" style={{padding:'0'}}>
@@ -178,15 +178,15 @@ export default function OpportunityView() {
           <div className="fi-panel" style={{marginBottom:'14px'}}>
             <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
             <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              <button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>nav('/crm/quotations/new')}>📋 Create Quotation</button>
+              <button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>nav('/crm/quotations/new')}>Create Quotation</button>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Call'}))}>📞 Log Call</button>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Meeting'}))}>🤝 Log Meeting</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Demo'}))}>🎯 Log Demo</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Demo'}))}>Log Demo</button>
             </div>
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📊 Similar Wins</h3></div>
+            <div className="fi-panel-hdr"><h3>Similar Wins</h3></div>
             <div className="fi-panel-body">
               <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginBottom:'8px'}}>Deals similar to this in your history:</div>
               {OPPORTUNITIES.filter(o=>o.stage==='Won'&&o.id!==opp.id).map(w=>(

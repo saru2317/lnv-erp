@@ -23,7 +23,7 @@ export default function EInvoice() {
         <div className="fi-lv-title">E-Invoice (IRN) <small>Invoice Reference Number · GST Portal Integration</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm">🔄 Sync with Portal</button>
-          <button className="btn btn-p sd-bsm">⬇️ Bulk Download QR</button>
+          <button className="btn btn-p sd-bsm">Bulk Download QR</button>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function EInvoice() {
                   {inv.err && <div style={{fontSize:10,color:'var(--odoo-red)',marginTop:2}}>{inv.err}</div>}
                 </td>
                 <td>
-                  {inv.status==='generated' && <button className="btn-xs" style={{marginRight:4}}>📄 PDF</button>}
+                  {inv.status==='generated' && <button className="btn-xs" style={{marginRight:4}}>PDF</button>}
                   {inv.status==='pending'   && <button className="btn-xs pri">Generate IRN</button>}
                   {inv.status==='failed'    && <button className="btn-xs" style={{background:'var(--odoo-red)',color:'#fff'}}>Retry</button>}
                 </td>

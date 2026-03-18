@@ -24,7 +24,7 @@ export default function AMDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Asset Management Dashboard</div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/am/depreciation')}>📉 Run Depreciation</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/am/depreciation')}>Run Depreciation</button>
           <button className="btn btn-p sd-bsm" onClick={()=>nav('/am/assets')}>+ Add Asset</button>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function AMDashboard() {
       <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:16}}>
         {/* Asset category table */}
         <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}>🏭 Company Assets by Category</div>
+          <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}>Company Assets by Category</div>
           <table style={{width:'100%',borderCollapse:'collapse'}}>
             <thead><tr style={{background:'#F8F9FA'}}>{['Category','Count','Gross Value','Acc. Depr.','Net Value','Method'].map(h=>(<th key={h} style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:'var(--odoo-gray)',textAlign:'left',borderBottom:'1px solid var(--odoo-border)'}}>{h}</th>))}</tr></thead>
             <tbody>

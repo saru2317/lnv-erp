@@ -11,7 +11,7 @@ export default function APAging() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">AP Aging <small>Accounts Payable · Payment Due Analysis</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">💳 Record Payment</button>
+          <button className="btn btn-p sd-bsm">Record Payment</button>
         </div>
       </div>
       <div className="fi-kpi-grid">

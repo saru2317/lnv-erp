@@ -11,7 +11,7 @@ export default function CAPANew() {
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>CAPA-013 Created!</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>← CAPA List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>➕ New CAPA</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>New CAPA</button>
       </div>
     </div>
   )
@@ -22,12 +22,12 @@ export default function CAPANew() {
         <div className="fi-lv-title">New CAPA <small>Corrective / Preventive Action</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save CAPA</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save CAPA</button>
         </div>
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">✅ CAPA Details</div>
+        <div className="fi-form-sec-hdr">CAPA Details</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>CAPA No.</label><input className="fi-form-ctrl" defaultValue="CAPA-013" readOnly/></div>
@@ -78,7 +78,7 @@ export default function CAPANew() {
 
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save CAPA</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save CAPA</button>
       </div>
     </div>
   )

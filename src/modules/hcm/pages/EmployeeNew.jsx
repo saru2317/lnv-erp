@@ -27,7 +27,7 @@ export default function EmployeeNew() {
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}>✕ Cancel</button>
           {step<4 && <button className="btn btn-s sd-bsm" onClick={()=>setStep(s=>Math.min(s+1,4))}>Next →</button>}
-          {step===4 && <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>✅ Complete Onboarding</button>}
+          {step===4 && <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>Complete Onboarding</button>}
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function EmployeeNew() {
 
       {step===2 && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">💰 Salary & Bank Details</div>
+          <div className="fi-form-sec-hdr">Salary & Bank Details</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>Annual CTC <span>*</span></label>
@@ -159,7 +159,7 @@ export default function EmployeeNew() {
 
       {step===3 && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">📄 Documents</div>
+          <div className="fi-form-sec-hdr">Documents</div>
           <div className="fi-form-sec-body">
             {[['Aadhaar Card','aadhar'],['PAN Card','pan'],['Qualification Certificates','qual'],
               ['Previous Experience Letter','exp'],['Bank Passbook / Cancelled Cheque','bank'],
@@ -177,7 +177,7 @@ export default function EmployeeNew() {
 
       {step===4 && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">✅ Onboarding Checklist</div>
+          <div className="fi-form-sec-hdr">Onboarding Checklist</div>
           <div className="fi-form-sec-body">
             {[['ID Card issued','🪪'],['ESS login created (Employee Portal)','💻'],
               ['ESI/PF registration done','🏛️'],['Biometric enrollment done','👆'],
@@ -200,7 +200,7 @@ export default function EmployeeNew() {
         <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}>✕ Cancel</button>
         {step<4
           ? <button className="btn btn-p sd-bsm" onClick={()=>setStep(s=>s+1)}>Next Step →</button>
-          : <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>✅ Complete Onboarding</button>
+          : <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>Complete Onboarding</button>
         }
       </div>
     </div>

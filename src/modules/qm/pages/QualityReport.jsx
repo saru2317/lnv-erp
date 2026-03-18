@@ -32,7 +32,7 @@ export default function QualityReport() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>February 2025</option><option>January 2025</option><option>March 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default function QualityReport() {
       <div className="fi-panel-grid">
         {/* Yield by product */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 Yield by Product</h3></div>
+          <div className="fi-panel-hdr"><h3>Yield by Product</h3></div>
           <div className="fi-panel-body">
             {MONTHLY_DATA.map(r=>(
               <div key={r.prod} style={{marginBottom:'14px'}}>
@@ -73,7 +73,7 @@ export default function QualityReport() {
 
         {/* Defect Pareto */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📉 Defect Pareto Analysis</h3></div>
+          <div className="fi-panel-hdr"><h3>Defect Pareto Analysis</h3></div>
           <div className="fi-panel-body">
             {DEFECT_TYPES.map(d=>(
               <div key={d.type} style={{marginBottom:'12px'}}>
@@ -95,7 +95,7 @@ export default function QualityReport() {
 
       {/* Detail Table */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📋 Product-wise Quality Summary — {month}</div>
+        <div className="fi-form-sec-hdr">Product-wise Quality Summary — {month}</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>

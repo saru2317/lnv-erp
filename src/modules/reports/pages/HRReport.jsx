@@ -60,8 +60,8 @@ export default function HRReport() {
           <select className="fi-filter-select">
             <option>FY 2025-26</option><option>Q4 FY26</option>
           </select>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/payslip')}>🖨️ Print Payslip</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/payslip')}>Print Payslip</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

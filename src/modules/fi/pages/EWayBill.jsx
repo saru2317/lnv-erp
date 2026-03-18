@@ -62,7 +62,7 @@ export default function EWayBill() {
                 <td style={{display:'flex',gap:4}}>
                   {e.status==='active'&&<button className="btn-xs">Extend</button>}
                   {e.status==='expired'&&<button className="btn-xs pri">🔄 Renew</button>}
-                  <button className="btn-xs">📄 Print</button>
+                  <button className="btn-xs">Print</button>
                 </td>
               </tr>
             )

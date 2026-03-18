@@ -129,7 +129,7 @@ export default function SecurityConfig() {
                   ))}
                 </div>
               </div>
-              <button className="btn btn-p btn-s" style={{marginTop:'14px'}}>💾 Save Policy</button>
+              <button className="btn btn-p btn-s" style={{marginTop:'14px'}}>Save Policy</button>
             </div>
           </div>
 

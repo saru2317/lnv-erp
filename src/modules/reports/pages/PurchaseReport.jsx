@@ -35,7 +35,7 @@ export default function PurchaseReport() {
         <div className="fi-lv-title">Purchase Report <small>MM Module · Vendor Analytics</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>FY 2025-26</option><option>Q4 FY26</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function PurchaseReport() {
       {view==='monthly' && (
         <div>
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:18,marginBottom:14}}>
-            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:14}}>📦 Monthly Purchase Trend</h4>
+            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:14}}>Monthly Purchase Trend</h4>
             <div style={{display:'flex',gap:6,alignItems:'flex-end',height:110}}>
               {MONTHLY.map((m,i)=>{
                 const h=(m.pov/maxPov)*100

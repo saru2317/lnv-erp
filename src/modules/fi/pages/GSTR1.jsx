@@ -13,8 +13,8 @@ export default function GSTR1() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">GSTR-1 <small>Outward Supply Register · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Download JSON</button>
-          <button className="btn btn-p sd-bsm">📤 File GSTR-1</button>
+          <button className="btn btn-s sd-bsm">Download JSON</button>
+          <button className="btn btn-p sd-bsm">File GSTR-1</button>
         </div>
       </div>
       <div className="fi-kpi-grid">

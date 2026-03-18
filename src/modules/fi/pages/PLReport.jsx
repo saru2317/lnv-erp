@@ -10,15 +10,15 @@ export default function PLReport() {
         <div className="fi-lv-title">Profit & Loss Statement <small>February 2025</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Jan 2025</option><option>Q3 FY25</option><option>FY 2024-25</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
       <div className="fi-panel-eq">
         {/* P&L Statement */}
         <div className="fin-report">
-          <div className="fin-report-hdr"><h2>📊 Profit & Loss Account</h2><span>Month ended 28 Feb 2025</span></div>
+          <div className="fin-report-hdr"><h2>Profit & Loss Account</h2><span>Month ended 28 Feb 2025</span></div>
 
           {/* INCOME */}
           <div className="fin-section">
@@ -108,7 +108,7 @@ export default function PLReport() {
             </div>
           </div>
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📊 Cost Breakdown</h3></div>
+            <div className="fi-panel-hdr"><h3>Cost Breakdown</h3></div>
             <div className="fi-panel-body">
               {[
                 {l:'COGS',v:'54%',pct:54,c:'var(--odoo-purple)'},

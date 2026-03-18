@@ -13,8 +13,8 @@ export default function TDSRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">TDS Register <small>Tax Deducted at Source · Form 26Q</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Form 26Q Export</button>
-          <button className="btn btn-p sd-bsm">💳 Deposit TDS to IT Dept</button>
+          <button className="btn btn-s sd-bsm">Form 26Q Export</button>
+          <button className="btn btn-p sd-bsm">Deposit TDS to IT Dept</button>
         </div>
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>

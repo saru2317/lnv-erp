@@ -36,7 +36,7 @@ export default function HCMReport() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>February 2025</option><option>January 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
           <button className="btn btn-s sd-bsm">📧 Email to MD</button>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function HCMReport() {
 
         {/* Attendance Trend */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 Attendance Trend — Last 6 Months</h3></div>
+          <div className="fi-panel-hdr"><h3>Attendance Trend — Last 6 Months</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'100px',marginBottom:'8px'}}>
               {ATT_TREND.map(t => {
@@ -138,7 +138,7 @@ export default function HCMReport() {
         </div>
 
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 HR Summary Metrics</h3></div>
+          <div className="fi-panel-hdr"><h3>HR Summary Metrics</h3></div>
           <div className="fi-panel-body">
             {[['Average Tenure','4.2 years'],
               ['Gender Ratio','Male 76% · Female 24%'],
@@ -163,7 +163,7 @@ export default function HCMReport() {
 
       {/* E-Cost summary */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>💰 E-Cost by Department — Feb 2025</h3></div>
+        <div className="fi-panel-hdr"><h3>E-Cost by Department — Feb 2025</h3></div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Department</th><th>Headcount</th><th>Gross Pay</th><th>E-Cost (Total)</th><th>Avg E-Cost/Emp</th><th>vs Budget</th></tr></thead>

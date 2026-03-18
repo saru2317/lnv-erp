@@ -9,13 +9,13 @@ export default function GoodsReceipt() {
         <div className="wm-lv-title">Goods Receipt <small>MIGO · GR from GRN</small></div>
         <div className="wm-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Goods Receipt</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Receipt</button>
         </div>
       </div>
       <div className="wm-alert info">ℹ️ Goods Receipt auto-updates stock after GRN is posted from the MM module.</div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📥 Receipt Details</div>
+        <div className="wm-form-sec-hdr">Receipt Details</div>
         <div className="wm-form-sec-body">
           <div className="wm-form-row">
             <div className="wm-form-grp"><label>GR Number</label><input className="wm-form-ctrl" defaultValue="GR-2025-042" readOnly/></div>
@@ -38,7 +38,7 @@ export default function GoodsReceipt() {
       </div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📦 Items to Stock</div>
+        <div className="wm-form-sec-hdr">Items to Stock</div>
         <div className="wm-form-sec-body" style={{padding:'0'}}>
           <div className="wm-lt-wrap">
             <table className="wm-lt">
@@ -66,11 +66,11 @@ export default function GoodsReceipt() {
 
       <div className="wm-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post GR &amp; Update Stock</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post GR &amp; Update Stock</button>
         <div className="wm-status-flow">
-          <span className="wm-sf-step done">✅ GRN Posted</span><span className="wm-sf-arr">›</span>
-          <span className="wm-sf-step act">📥 GR to Stock</span><span className="wm-sf-arr">›</span>
-          <span className="wm-sf-step">🧾 Vendor Invoice</span>
+          <span className="wm-sf-step done">GRN Posted</span><span className="wm-sf-arr">›</span>
+          <span className="wm-sf-step act">GR to Stock</span><span className="wm-sf-arr">›</span>
+          <span className="wm-sf-step">Vendor Invoice</span>
         </div>
       </div>
     </div>

@@ -113,7 +113,7 @@ export default function PRList() {
                   background:pr_p.bg,color:pr_p.color}}>{pr.priority}</span></td>
                 <td style={{textAlign:'center'}}>
                   {pr.csReqd
-                    ? <span style={{color:'var(--odoo-purple)',fontWeight:700}}>✅ Yes</span>
+                    ? <span style={{color:'var(--odoo-purple)',fontWeight:700}}>Yes</span>
                     : <span style={{color:'var(--odoo-gray)'}}>— No</span>}
                 </td>
                 <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'var(--odoo-purple)'}}>
@@ -142,7 +142,7 @@ export default function PRList() {
                       <button className="btn-xs" onClick={()=>nav('/mm/pr/new')}>
                         ✏️ Edit
                       </button>}
-                    <button className="btn-xs">👁️ View</button>
+                    <button className="btn-xs">View</button>
                     <button className="btn-xs" onClick={() => nav('/print/pr')}>Print</button>
                   </div>
                 </td>

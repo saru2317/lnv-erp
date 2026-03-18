@@ -7,13 +7,13 @@ export default function SystemConfig() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">System Configuration <small>LNV ERP Settings</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save Config</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Config</button>
         </div>
       </div>
-      {saved && <div className="pp-alert success">✅ Configuration saved successfully!</div>}
+      {saved && <div className="pp-alert success">Configuration saved successfully!</div>}
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🏭 Company Info</div>
+        <div className="fi-form-sec-hdr">Company Info</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Company Name</label><input className="fi-form-ctrl" defaultValue="LNV Manufacturing Pvt. Ltd."/></div>
@@ -31,7 +31,7 @@ export default function SystemConfig() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔍 Audit Trail Settings</div>
+        <div className="fi-form-sec-hdr">Audit Trail Settings</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Audit Log Retention</label>

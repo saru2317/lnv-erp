@@ -46,14 +46,14 @@ export default function CustomerNew() {
 
       <div className="sd-fc">
         <div className="sd-ftb">
-          <button className="btn btn-p btn-sm" onClick={save} disabled={saving}>💾 Save</button>
+          <button className="btn btn-p btn-sm" onClick={save} disabled={saving}>Save</button>
           <button className="btn btn-s btn-sm" onClick={() => navigate('/sd/customers')}>✕ Discard</button>
         </div>
         <div className="sd-fb2">
 
           {/* Basic Info */}
           <div className="sd-sec">
-            <div className="sd-stt">📋 Basic Information</div>
+            <div className="sd-stt">Basic Information</div>
             <div className="sd-fg3">
               <div className="sd-fg"><label>Customer Name <span className="req">*</span></label><input className="sd-fi" placeholder="e.g. Sri Lakshmi Mills Pvt Ltd" {...F('name')} /></div>
               <div className="sd-fg"><label>Customer Code</label><input className="sd-fi" value={form.code} disabled /></div>
@@ -95,7 +95,7 @@ export default function CustomerNew() {
 
           {/* Credit & Payment */}
           <div className="sd-sec">
-            <div className="sd-stt">💳 Credit & Payment</div>
+            <div className="sd-stt">Credit & Payment</div>
             <div className="sd-fg3">
               <div className="sd-fg"><label>Credit Limit (₹)</label><input className="sd-fi" type="number" placeholder="500000" {...F('creditLimit')} /></div>
               <div className="sd-fg"><label>Credit Days</label><input className="sd-fi" type="number" {...F('creditDays')} /></div>

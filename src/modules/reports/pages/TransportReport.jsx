@@ -37,7 +37,7 @@ export default function TransportReport() {
         <div className="fi-lv-title">Transport Report <small>TM Module · Fleet Analytics</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>FY 2025-26</option><option>Q4 FY26</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

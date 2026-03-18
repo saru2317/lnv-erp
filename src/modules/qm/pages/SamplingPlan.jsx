@@ -18,7 +18,7 @@ export default function SamplingPlan() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Sampling Plans <small>AQL 1.5 — MIL-STD-1916 Level II</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">📋 Configure AQL</button>
+          <button className="btn btn-s sd-bsm">Configure AQL</button>
         </div>
       </div>
 
@@ -26,7 +26,7 @@ export default function SamplingPlan() {
 
       <div className="fi-panel-grid">
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 AQL Sampling Table (Level II · AQL 1.5)</h3></div>
+          <div className="fi-panel-hdr"><h3>AQL Sampling Table (Level II · AQL 1.5)</h3></div>
           <div style={{padding:'0'}}>
             <table className="fi-data-table" style={{margin:0}}>
               <thead><tr><th>Lot Size</th><th>Code</th><th>Sample Size (n)</th><th>Accept (Ac)</th><th>Reject (Re)</th></tr></thead>

@@ -48,9 +48,9 @@ export default function EmployeeProfile() {
               ))}
             </div>
           </div>
-          <div style={{display:'flex',gap:'8px',flexShrink:0'}}>
-            <button className="btn btn-s sd-bsm">✏️ Edit</button>
-            <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>💰 Payslip</button>
+          <div style={{display:'flex',gap:'8px',flexShrink:0}}>
+            <button className="btn btn-s sd-bsm">Edit</button>
+            <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>Payslip</button>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function EmployeeProfile() {
 
       {tab==='Payslips' && (
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>💰 Recent Payslips</h3></div>
+          <div className="fi-panel-hdr"><h3>Recent Payslips</h3></div>
           <div className="fi-panel-body">
             {['February 2025','January 2025','December 2024'].map(m=>(
               <div key={m} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
@@ -132,7 +132,7 @@ export default function EmployeeProfile() {
                 </div>
                 <div style={{display:'flex',gap:'8px'}}>
                   <button className="btn-xs" onClick={() => nav('/hcm/pay/payslip')}>View</button>
-                  <button className="btn-xs">⬇️ PDF</button>
+                  <button className="btn-xs">PDF</button>
                 </div>
               </div>
             ))}
@@ -142,9 +142,9 @@ export default function EmployeeProfile() {
 
       {(tab==='Attendance'||tab==='Leave'||tab==='Documents') && (
         <div className="pp-alert info">
-          {tab==='Attendance' && <>📊 <strong>Attendance:</strong> 24/26 days present · 1 late mark · 1 WFH (Feb 2025)</>}
+          {tab==='Attendance' && <><strong>Attendance:</strong> 24/26 days present · 1 late mark · 1 WFH (Feb 2025)</>}
           {tab==='Leave' && <>📅 <strong>Leave History:</strong> 3 EL taken (15-17 Jan), 1 SL (8 Feb). All approved.</>}
-          {tab==='Documents' && <>📄 <strong>Documents:</strong> Aadhaar ✅, PAN ✅, Passbook ✅, Photo ✅, Qualification ✅</>}
+          {tab==='Documents' && <><strong>Documents:</strong> Aadhaar ✅, PAN ✅, Passbook ✅, Photo ✅, Qualification ✅</>}
         </div>
       )}
     </div>

@@ -13,7 +13,7 @@ export default function ReturnList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Sales Returns / Credit Notes</div>
         <div className="lv-acts"><button className="btn btn-s" onClick={()=>navigate('/print/invoice')}>Print</button>
-          <button className="btn btn-p" onClick={()=>navigate('/sd/returns/new')}>➕ New Return</button></div>
+          <button className="btn btn-p" onClick={()=>navigate('/sd/returns/new')}>New Return</button></div>
       </div>
       <div className="dc">
         <table className="sd-tbl">

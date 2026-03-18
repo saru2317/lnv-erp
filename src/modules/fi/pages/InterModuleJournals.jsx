@@ -44,7 +44,7 @@ export default function InterModuleJournals() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Auto Journal Entries <small>Cross-Module Accounting Integration</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

@@ -18,9 +18,9 @@ export default function FixedAssetRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Fixed Asset Register <small>As of 28 Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">📋 Depreciation Schedule</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">➕ Add Asset</button>
+          <button className="btn btn-s sd-bsm">Depreciation Schedule</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Add Asset</button>
         </div>
       </div>
       <div className="fi-kpi-grid">
@@ -60,7 +60,7 @@ export default function FixedAssetRegister() {
         <div className="fi-modal-overlay" onClick={() => setSel(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              <h3>🏭 {sel.code} — {sel.name}</h3>
+              <h3>{sel.code} — {sel.name}</h3>
               <span className="fi-modal-close" onClick={() => setSel(null)}>✕</span>
             </div>
             <div className="fi-modal-body">
@@ -75,7 +75,7 @@ export default function FixedAssetRegister() {
               <div className="fi-alert info" style={{fontSize:'12px'}}>📓 Monthly depreciation JV auto-posted to: 6400 · Depreciation (Dr) / 1500 · Accumulated Depreciation (Cr)</div>
               <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setSel(null)}>Close</button>
-                <button className="btn btn-s sd-bsm">📋 Depreciation Schedule</button>
+                <button className="btn btn-s sd-bsm">Depreciation Schedule</button>
                 <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}}>🗑 Dispose Asset</button>
               </div>
             </div>

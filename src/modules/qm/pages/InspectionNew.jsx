@@ -70,7 +70,7 @@ export default function InspectionNew() {
       )}
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>← Inspection List</button>
-        <button className="btn btn-s sd-bsm" onClick={() => { setSaved(false); setTests(TEST_PARAMS[product].map((t,i)=>({...t,id:i,result:''}))) }}>➕ New Inspection</button>
+        <button className="btn btn-s sd-bsm" onClick={() => { setSaved(false); setTests(TEST_PARAMS[product].map((t,i)=>({...t,id:i,result:''}))) }}>New Inspection</button>
       </div>
     </div>
   )
@@ -81,7 +81,7 @@ export default function InspectionNew() {
         <div className="fi-lv-title">New Inspection Lot <small>QA01 · Inspection Recording</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save & Result</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export default function InspectionNew() {
                       />
                     </td>
                     <td>
-                      {status==='pass' && <span className="badge badge-pass">✅ Pass</span>}
+                      {status==='pass' && <span className="badge badge-pass">Pass</span>}
                       {status==='fail' && <span className="badge badge-fail">❌ Fail</span>}
                       {!status && <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>— Pending</span>}
                     </td>
@@ -205,10 +205,10 @@ export default function InspectionNew() {
 
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save & Result</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
         <div className="fi-status-flow">
           <span className="fi-sf-step act">🔬 Inspect</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">📋 Result</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Result</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">🏅 Certificate</span>
         </div>
       </div>

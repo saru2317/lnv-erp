@@ -9,7 +9,7 @@ export default function StockTransfer() {
         <div className="wm-lv-title">Stock Transfer <small>MB1B · Bin to Bin / Location to Location</small></div>
         <div className="wm-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Transfer</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Transfer</button>
         </div>
       </div>
 
@@ -36,7 +36,7 @@ export default function StockTransfer() {
       </div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📦 Items to Transfer</div>
+        <div className="wm-form-sec-hdr">Items to Transfer</div>
         <div className="wm-form-sec-body" style={{padding:'0'}}>
           <div className="wm-lt-wrap">
             <table className="wm-lt">
@@ -55,14 +55,14 @@ export default function StockTransfer() {
                 </tr>
               </tbody>
             </table>
-            <div className="wm-lt-add"><button className="btn btn-s sd-bsm">➕ Add Item</button></div>
+            <div className="wm-lt-add"><button className="btn btn-s sd-bsm">Add Item</button></div>
           </div>
         </div>
       </div>
 
       <div className="wm-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Transfer</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Transfer</button>
       </div>
     </div>
   )

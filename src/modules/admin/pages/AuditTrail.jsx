@@ -22,8 +22,8 @@ export default function AuditTrail() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Audit Trail <small>All module activity log</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export CSV</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export CSV</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function AuditTrail() {
           {/* Actions */}
           <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
             <button className="btn btn-s sd-bsm" style={{flex:1}} onClick={()=>setDetail(null)}>Close</button>
-            <button className="btn btn-s sd-bsm" style={{flex:1}}>⬇️ Export This</button>
+            <button className="btn btn-s sd-bsm" style={{flex:1}}>Export This</button>
           </div>
         </div>
       )}

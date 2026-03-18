@@ -292,7 +292,7 @@ export default function RolesPermissions() {
                 {/* Left: Module access */}
                 <div style={{padding:20, borderRight:'1px solid var(--odoo-border)'}}>
                   <div style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700,
-                    marginBottom:14, color:'var(--odoo-dark)'}}>📦 Module Access</div>
+                    marginBottom:14, color:'var(--odoo-dark)'}}>Module Access</div>
                   {modGroups.map(group => {
                     const gMods = ALL_MODULES.filter(m => m.group === group)
                     const gc = GROUP_COLORS[group]
@@ -392,7 +392,7 @@ export default function RolesPermissions() {
         <div style={{background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           padding:24, maxWidth:800, boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <h3 style={{fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:700,
-            marginBottom:20, color:'var(--odoo-dark)'}}>➕ Create New Role</h3>
+            marginBottom:20, color:'var(--odoo-dark)'}}>Create New Role</h3>
 
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:16}}>
             {[

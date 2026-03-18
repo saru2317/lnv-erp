@@ -23,8 +23,8 @@ export default function WMDashboard() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">WM Dashboard <small>Warehouse Overview</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-receipt')}>📥 Goods Receipt</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>📤 Goods Issue</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-receipt')}>Goods Receipt</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>Goods Issue</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/transfer')}>🔄 Transfer</button>
         </div>
       </div>
@@ -101,10 +101,10 @@ export default function WMDashboard() {
       <div className="wm-panel">
         <div className="wm-panel-hdr"><h3>⚡ Quick Actions</h3></div>
         <div className="wm-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-receipt')}>📥 Goods Receipt</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>📤 Goods Issue</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-receipt')}>Goods Receipt</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>Goods Issue</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/transfer')}>🔄 Stock Transfer</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/physical-inventory')}>📋 Physical Count</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/physical-inventory')}>Physical Count</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/wh-map')}>🗺️ Warehouse Map</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/adjustment')}>⚖️ Stock Adjustment</button>
         </div>

@@ -52,8 +52,8 @@ export default function Assignments({ assignments, kpiMaster }) {
                 </span>
               </td>
               <td><div style={{display:'flex',gap:4}}>
-                <button className="btn-xs">✏️ Edit</button>
-                <button className="btn-xs">🗑️ Del</button>
+                <button className="btn-xs">Edit</button>
+                <button className="btn-xs">Del</button>
               </div></td>
             </tr>
           ))}

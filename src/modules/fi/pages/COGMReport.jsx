@@ -15,7 +15,7 @@ export default function COGMReport() {
         <div className="fi-lv-title">COGM Report <small>Cost of Goods Manufactured · from PP Module</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Jan 2025</option><option>Q3 FY25</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function COGMReport() {
         <div className="fi-modal-overlay" onClick={() => setSel(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              <h3>🏭 {sel.wo} — Cost Drill-Down</h3>
+              <h3>{sel.wo} — Cost Drill-Down</h3>
               <span className="fi-modal-close" onClick={() => setSel(null)}>✕</span>
             </div>
             <div className="fi-modal-body">

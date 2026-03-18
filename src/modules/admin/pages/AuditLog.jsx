@@ -30,8 +30,8 @@ export default function AuditLog() {
           Audit Log <small>{filtered.length} records</small>
         </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export CSV</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
+          <button className="btn btn-s sd-bsm">Export CSV</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export default function AuditLog() {
                         <div style={{background:'#F0FFF8',borderRadius:'8px',padding:'12px',minWidth:'300px',
                           boxShadow:'0 1px 4px rgba(0,0,0,.06)',borderLeft:'3px solid var(--odoo-green)'}}>
                           <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-green)',
-                            textTransform:'uppercase',marginBottom:'8px'}}>✅ Created Data</div>
+                            textTransform:'uppercase',marginBottom:'8px'}}>Created Data</div>
                           {Object.entries(log.changes.new).map(([k,v]) => (
                             <div key={k} style={{display:'flex',gap:'8px',padding:'4px 0',
                               borderBottom:'1px solid #D4EDDA',fontSize:'12px'}}>
@@ -192,7 +192,7 @@ export default function AuditLog() {
                         <div style={{background:'#FFF5F5',borderRadius:'8px',padding:'12px',minWidth:'300px',
                           boxShadow:'0 1px 4px rgba(0,0,0,.06)',borderLeft:'3px solid var(--odoo-red)'}}>
                           <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-red)',
-                            textTransform:'uppercase',marginBottom:'8px'}}>🗑️ Deleted Data</div>
+                            textTransform:'uppercase',marginBottom:'8px'}}>Deleted Data</div>
                           {Object.entries(log.changes.old).map(([k,v]) => (
                             <div key={k} style={{display:'flex',gap:'8px',padding:'4px 0',
                               borderBottom:'1px solid #F8D7DA',fontSize:'12px'}}>

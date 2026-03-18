@@ -14,7 +14,7 @@ export default function BinMaster() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Bin / Location Master <small>Storage Location Configuration</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-p sd-bsm">➕ Add Bin</button>
+          <button className="btn btn-p sd-bsm">Add Bin</button>
         </div>
       </div>
       <table className="wm-data-table">

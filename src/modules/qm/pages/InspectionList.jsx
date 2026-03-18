@@ -30,8 +30,8 @@ export default function InspectionList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Inspection Lots <small>QA03 · Inspection Register</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>➕ New Inspection</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>New Inspection</button>
         </div>
       </div>
 

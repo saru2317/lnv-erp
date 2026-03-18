@@ -20,7 +20,7 @@ export default function InventoryReport() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Inventory Report <small>WM Module · Stock Analytics</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:16}}>

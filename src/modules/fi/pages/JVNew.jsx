@@ -90,7 +90,7 @@ export default function JVNew() {
         {roundOff.show && <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Auto Round-Off of {fmtDisp(roundOff.amt)} posted to {roundOff.acct}</div>}
         <div style={{display:'flex',gap:'10px',marginTop:'8px'}}>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}>← Back to Journal List</button>
-          <button className="btn btn-p sd-bsm" onClick={() => {setLines(INIT_LINES);setPosted(false)}}>➕ New Journal</button>
+          <button className="btn btn-p sd-bsm" onClick={() => {setLines(INIT_LINES);setPosted(false)}}>New Journal</button>
         </div>
       </div>
     )
@@ -102,7 +102,7 @@ export default function JVNew() {
         <div className="fi-lv-title">New Journal Entry <small>FB50 · Manual Journal Voucher</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}>✕ Cancel</button>
-          <button className="btn btn-s sd-bsm">💾 Save Draft</button>
+          <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm"
             disabled={!balanced}
             title={balanced ? 'Post Journal' : absDiff <= 1 ? 'Round-off will be auto-posted' : 'Difference > ₹1 — check entries'}
@@ -139,7 +139,7 @@ export default function JVNew() {
 
       {/* Line Items */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📒 Debit / Credit Lines</div>
+        <div className="fi-form-sec-hdr">Debit / Credit Lines</div>
         <div className="fi-form-sec-body" style={{padding:'0'}}>
           <div className="fi-lt-wrap">
             <table className="fi-lt">
@@ -258,7 +258,7 @@ export default function JVNew() {
               </tbody>
             </table>
             <div className="fi-lt-add">
-              <button className="btn btn-s sd-bsm" onClick={addLine}>➕ Add Line</button>
+              <button className="btn btn-s sd-bsm" onClick={addLine}>Add Line</button>
             </div>
           </div>
 
@@ -357,7 +357,7 @@ export default function JVNew() {
       {/* Footer Actions */}
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}>✕ Cancel</button>
-        <button className="btn btn-s sd-bsm">💾 Save Draft</button>
+        <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm"
           disabled={!balanced}
           onClick={() => setPosted(true)}>
@@ -366,7 +366,7 @@ export default function JVNew() {
         <div className="fi-status-flow">
           <span className="fi-sf-step act">📝 Entry</span>
           <span className="fi-sf-arr">›</span>
-          <span className={`fi-sf-step ${balanced?'done':''}`}>✅ Posted</span>
+          <span className={`fi-sf-step ${balanced?'done':''}`}>Posted</span>
           <span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">📜 In Ledger</span>
         </div>

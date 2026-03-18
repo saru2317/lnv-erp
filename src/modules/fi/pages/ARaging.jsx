@@ -15,8 +15,8 @@ export default function ARaging() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">AR Aging <small>Accounts Receivable · Overdue Analysis</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">💰 Record Receipt</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Record Receipt</button>
         </div>
       </div>
       <div className="fi-kpi-grid">
@@ -58,7 +58,7 @@ export default function ARaging() {
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              <h3>📋 {modal.inv} · {modal.cust}</h3>
+              <h3>{modal.inv} · {modal.cust}</h3>
               <span className="fi-modal-close" onClick={() => setModal(null)}>✕</span>
             </div>
             <div className="fi-modal-body">
@@ -69,7 +69,7 @@ export default function ARaging() {
               </div>
               <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Close</button>
-                <button className="btn btn-p sd-bsm">💰 Record Receipt</button>
+                <button className="btn btn-p sd-bsm">Record Receipt</button>
                 <button className="btn btn-s sd-bsm">📧 Send Reminder Email</button>
               </div>
             </div>

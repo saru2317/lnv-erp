@@ -18,15 +18,15 @@ export default function PhysicalInventory() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Physical Inventory <small>MI01 · Stock Count &amp; Variance</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm">📥 Download Count Sheet</button>
-          <button className="btn btn-s sd-bsm">💾 Save Count</button>
-          <button className="btn btn-p sd-bsm">✅ Post &amp; Adjust</button>
+          <button className="btn btn-s sd-bsm">Download Count Sheet</button>
+          <button className="btn btn-s sd-bsm">Save Count</button>
+          <button className="btn btn-p sd-bsm">Post &amp; Adjust</button>
         </div>
       </div>
       <div className="wm-alert warn">⚠️ Physical inventory count for Feb 2025. Enter actual counted quantities below. Variances will be auto-adjusted.</div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📋 PI Document — PI-2025-004 · 28 Feb 2025</div>
+        <div className="wm-form-sec-hdr">PI Document — PI-2025-004 · 28 Feb 2025</div>
         <div className="wm-form-sec-body" style={{padding:'0'}}>
           <div className="wm-lt-wrap">
             <table className="wm-lt">
@@ -68,9 +68,9 @@ export default function PhysicalInventory() {
       </div>
 
       <div className="wm-form-acts">
-        <button className="btn btn-s sd-bsm">📥 Download Sheet</button>
-        <button className="btn btn-s sd-bsm">💾 Save Count</button>
-        <button className="btn btn-p sd-bsm">✅ Post &amp; Adjust Stock</button>
+        <button className="btn btn-s sd-bsm">Download Sheet</button>
+        <button className="btn btn-s sd-bsm">Save Count</button>
+        <button className="btn btn-p sd-bsm">Post &amp; Adjust Stock</button>
       </div>
     </div>
   )

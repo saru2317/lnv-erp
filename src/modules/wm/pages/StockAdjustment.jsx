@@ -9,7 +9,7 @@ export default function StockAdjustment() {
         <div className="wm-lv-title">Stock Adjustment <small>Manual Correction Entry</small></div>
         <div className="wm-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Adjustment</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Adjustment</button>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default function StockAdjustment() {
             <div className="wm-form-grp"><label>Adjustment Type</label>
               <select className="wm-form-ctrl">
                 <option>➖ Negative (Reduce)</option>
-                <option>➕ Positive (Increase)</option>
+                <option>Positive (Increase)</option>
               </select>
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function StockAdjustment() {
 
       <div className="wm-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Adjustment</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Adjustment</button>
       </div>
     </div>
   )

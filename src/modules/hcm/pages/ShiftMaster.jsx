@@ -22,7 +22,7 @@ export default function ShiftMaster() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Shift Master <small>Shift Configuration & OT Rules</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">➕ Add Shift</button>
+          <button className="btn btn-p sd-bsm">Add Shift</button>
         </div>
       </div>
 

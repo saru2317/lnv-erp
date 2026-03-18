@@ -16,7 +16,7 @@ export default function VendorList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Vendor Master <small>MK03 · All Vendors</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors/new')}>＋ New Vendor</button>
         </div>
       </div>

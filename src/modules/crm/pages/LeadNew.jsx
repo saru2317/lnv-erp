@@ -37,7 +37,7 @@ export default function LeadNew() {
         <div className="fi-lv-title">New Lead <small>Capture lead information</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/leads')}>Cancel</button>
-          <button className="btn btn-p btn-s" onClick={handleSave}>💾 Save Lead</button>
+          <button className="btn btn-p btn-s" onClick={handleSave}>Save Lead</button>
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function LeadNew() {
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📋 Requirement</h3></div>
+            <div className="fi-panel-hdr"><h3>Requirement</h3></div>
             <div className="fi-panel-body">
               <div className="sd-field">
                 <label>Requirement / Inquiry Description</label>
@@ -157,7 +157,7 @@ export default function LeadNew() {
           </div>
 
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📊 Source Conversion Stats</h3></div>
+            <div className="fi-panel-hdr"><h3>Source Conversion Stats</h3></div>
             <div className="fi-panel-body">
               {[{s:'Referral',r:'50%'},{s:'Exhibition',r:'30%'},{s:'Website',r:'25%'},{s:'Cold Calling',r:'8%'}].map(x=>(
                 <div key={x.s} style={{display:'flex',justifyContent:'space-between',fontSize:'12px',padding:'4px 0',borderBottom:'1px solid var(--odoo-border)'}}>

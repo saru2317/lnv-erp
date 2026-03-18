@@ -25,7 +25,7 @@ export default function QuotNew() {
         <div className="lv-ttl">New Sales Quotation <small>VA21</small></div>
         <div className="lv-acts">
           <button className="btn btn-s" onClick={()=>navigate('/sd/quotations')}>✕ Cancel</button>
-          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Quotation saved as draft!')}>📋 Save Draft</button>
+          <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Quotation saved as draft!')}>Save Draft</button>
           <button className="btn btn-p" onClick={()=>{toast.success('QT-0032 Sent! 📧');navigate('/sd/quotations')}}>📧 Send Quotation</button>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function QuotNew() {
           </div>
         </div>
         <div className="sd-sec">
-          <div className="sd-stt">📦 Items</div>
+          <div className="sd-stt">Items</div>
           <div style={{overflowX:'auto'}}>
             <table className="sd-li">
               <thead><tr><th>#</th><th>HSN</th><th>Product</th><th>Qty</th><th>Unit</th><th>Rate</th><th>GST%</th><th>Total</th><th></th></tr></thead>
@@ -64,7 +64,7 @@ export default function QuotNew() {
               </tbody>
             </table>
           </div>
-          <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calc(newLine())])}>➕ Add Item</div>
+          <div className="sd-liadd" onClick={()=>setLines(ls=>[...ls,calc(newLine())])}>Add Item</div>
           <div style={{display:'flex',justifyContent:'flex-end',marginTop:'10px'}}>
             <div className="sd-totb">
               <div className="sd-tr"><span>Subtotal:</span><strong>{fmt(totals.taxable)}</strong></div>

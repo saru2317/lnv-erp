@@ -45,8 +45,8 @@ export default function KPIDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">KRA / KPI Dashboard <small>FY 2025-26 · As on {lastMth} 2026</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/kpi/entry')}>✏️ Enter Actuals</button>
-          <button className="btn btn-p sd-bsm" onClick={()=>nav('/kpi/report')}>📊 Full Report</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/kpi/entry')}>Enter Actuals</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/kpi/report')}>Full Report</button>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ export default function KPIDashboard() {
         overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--odoo-border)',
           display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-          <h4 style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}>💰 Incentive Preview — Eligible Employees</h4>
+          <h4 style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}>Incentive Preview — Eligible Employees</h4>
           <button onClick={()=>nav('/kpi/incentive')} style={{fontSize:11,color:'var(--odoo-purple)',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>
             Full Calculator →
           </button>

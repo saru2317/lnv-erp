@@ -12,12 +12,12 @@ export default function VendorPayments() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Vendor Payments <small>Outgoing Payments Register</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>💳 Record Payment</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>Record Payment</button>
         </div>
       </div>
       {showForm && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">💳 New Vendor Payment</div>
+          <div className="fi-form-sec-hdr">New Vendor Payment</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>Payment No.</label><input className="fi-form-ctrl" defaultValue="PAY-2025-023" readOnly/></div>
@@ -46,7 +46,7 @@ export default function VendorPayments() {
             </div>
             <div className="fi-form-acts">
               <button className="btn btn-s sd-bsm" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>✅ Save Payment</button>
+              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>Save Payment</button>
             </div>
           </div>
         </div>

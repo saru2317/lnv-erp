@@ -11,7 +11,7 @@ export default function HousekeepingLog() {
   return (
     <div>
       <div className="fi-lv-hdr"><div className="fi-lv-title">Housekeeping Log <small>Today — {new Date().toLocaleDateString()}</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">➕ Add Task</button></div></div>
+        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">Add Task</button></div></div>
       <table className="fi-data-table">
         <thead><tr><th>Task ID</th><th>Area</th><th>Task</th><th>Frequency</th><th>Assigned</th><th>Scheduled</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>{tasks.map(t=>(
@@ -20,7 +20,7 @@ export default function HousekeepingLog() {
             <td><strong>{t.area}</strong></td><td style={{fontSize:'12px'}}>{t.task}</td>
             <td style={{fontSize:'11px'}}>{t.freq}</td><td>{t.assign}</td><td style={{fontSize:'12px'}}>{t.time}</td>
             <td><span className={`badge ${t.sb}`}>{t.status}</span></td>
-            <td>{t.status==='Pending'&&<button className="btn-xs pri" onClick={()=>setTasks(ts=>ts.map(x=>x.id===t.id?{...x,status:'Done',sb:'badge-pass'}:x))}>✅ Mark Done</button>}</td>
+            <td>{t.status==='Pending'&&<button className="btn-xs pri" onClick={()=>setTasks(ts=>ts.map(x=>x.id===t.id?{...x,status:'Done',sb:'badge-pass'}:x))}>Mark Done</button>}</td>
           </tr>
         ))}</tbody>
       </table>

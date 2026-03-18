@@ -34,12 +34,12 @@ export default function TrialBalance() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Trial Balance <small>As of 28 Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export Excel</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export Excel</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
-      <div className="fi-alert success">✅ Trial Balance is balanced — Total Debits = Total Credits = <strong>₹1,97,32,000</strong></div>
+      <div className="fi-alert success">Trial Balance is balanced — Total Debits = Total Credits = <strong>₹1,97,32,000</strong></div>
 
       <table className="fi-data-table">
         <thead><tr>

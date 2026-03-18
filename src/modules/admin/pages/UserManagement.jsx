@@ -30,7 +30,7 @@ export default function UserManagement() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">User Management <small>RBAC — Role Based Access</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>➕ Add User</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>Add User</button>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function UserManagement() {
               </td>
               <td>
                 <div style={{display:'flex',gap:'4px'}}>
-                  <button className="btn-xs" onClick={() => setModal(u)}>✏️ Edit</button>
+                  <button className="btn-xs" onClick={() => setModal(u)}>Edit</button>
                   <button className="btn-xs" style={{color:u.status==='Active'?'var(--odoo-red)':'var(--odoo-green)'}}
                     onClick={() => toggleStatus(u.id)}>
                     {u.status==='Active'?'🔒 Disable':'🔓 Enable'}
@@ -120,7 +120,7 @@ export default function UserManagement() {
               </div>
               <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Cancel</button>
-                <button className="btn btn-p sd-bsm" onClick={() => setModal(null)}>💾 {modal==='new'?'Create User':'Save Changes'}</button>
+                <button className="btn btn-p sd-bsm" onClick={() => setModal(null)}>{modal==='new'?'Create User':'Save Changes'}</button>
               </div>
             </div>
           </div>

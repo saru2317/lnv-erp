@@ -10,7 +10,7 @@ export default function CanteenRegister() {
   return (
     <div>
       <div className="fi-lv-hdr"><div className="fi-lv-title">Canteen Register <small>Daily Meal Tracking</small></div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">📋 Mark Today</button></div></div>
+        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">Mark Today</button></div></div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'16px'}}>
         {[["Today's Meals",`${Object.values(DATA).flat().reduce((s,c)=>s+c,0)/3|0}`,'var(--odoo-purple)'],
           ['Monthly Cost',`₹${(total*cost_per*26/1000).toFixed(0)}K`,'var(--odoo-orange)'],

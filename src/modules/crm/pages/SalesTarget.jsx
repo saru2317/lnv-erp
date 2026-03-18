@@ -20,7 +20,7 @@ export default function SalesTarget() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Sales Targets <small>Rep-wise performance tracker</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p btn-s">+ Set Target</button>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function SalesTarget() {
 
       {/* Summary Table */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>📊 Team Summary</h3></div>
+        <div className="fi-panel-hdr"><h3>Team Summary</h3></div>
         <div className="fi-panel-body" style={{padding:'0'}}>
           <table className="sd-table">
             <thead><tr><th>Sales Rep</th><th>Region</th><th>Target</th><th>Achieved</th><th>%</th><th>Gap</th><th>Pipeline</th><th>Won Deals</th><th>Status</th></tr></thead>

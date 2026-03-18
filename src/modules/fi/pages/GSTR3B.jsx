@@ -9,8 +9,8 @@ export default function GSTR3B() {
         <div className="fi-lv-title">GSTR-3B Summary <small>February 2025 · Monthly Return</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Feb 2025</option><option>Jan 2025</option><option>Dec 2024</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Download JSON</button>
-          <button className="btn btn-p sd-bsm">📤 File on GST Portal</button>
+          <button className="btn btn-s sd-bsm">Download JSON</button>
+          <button className="btn btn-p sd-bsm">File on GST Portal</button>
         </div>
       </div>
       <div className="gst-sum-grid">
@@ -31,7 +31,7 @@ export default function GSTR3B() {
         <div className="itc-row tot"><span>Total ITC Available</span><strong style={{color:'var(--odoo-green)',fontSize:'18px'}}>₹2,24,000</strong></div>
       </div>
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🧾 Net Tax Computation</div>
+        <div className="fi-form-sec-hdr">Net Tax Computation</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Tax Head</th><th>Output Tax</th><th>ITC Available</th><th>Net Payable</th><th>Status</th></tr></thead>
@@ -42,7 +42,7 @@ export default function GSTR3B() {
               <tr style={{background:'#EDE0EA',fontWeight:'700',fontFamily:'Syne,sans-serif'}}>
                 <td>TOTAL GST PAYABLE</td><td>₹3,24,000</td><td className="cr">₹1,62,000</td>
                 <td style={{color:'var(--odoo-purple)',fontSize:'16px'}}>₹1,62,000</td>
-                <td><button className="btn-xs pri" onClick={() => nav('/fi/gst-pay')}>💳 Pay Now</button></td>
+                <td><button className="btn-xs pri" onClick={() => nav('/fi/gst-pay')}>Pay Now</button></td>
               </tr>
             </tbody>
           </table>

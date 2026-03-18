@@ -12,7 +12,7 @@ export default function POView() {
         <div className="lv-acts">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>← Back</button>
           <button className="btn btn-s sd-bsm">🖨️ Print PO</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>📦 Record GRN</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
         </div>
       </div>
       <div style={{background:'#fff',borderRadius:'8px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',padding:'20px',marginBottom:'14px'}}>

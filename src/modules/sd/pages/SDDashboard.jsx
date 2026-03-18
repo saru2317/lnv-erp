@@ -74,7 +74,7 @@ export default function SDDashboard() {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
         {/* Recent Orders */}
         <div className="dc" style={{cursor:'pointer'}} onClick={()=>navigate('/sd/orders')}>
-          <div className="dc-hd"><h4>📋 Recent Sales Orders</h4></div>
+          <div className="dc-hd"><h4>Recent Sales Orders</h4></div>
           <table className="sd-tbl">
             <thead><tr><th>SO #</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody>
@@ -92,7 +92,7 @@ export default function SDDashboard() {
 
         {/* Recent Invoices */}
         <div className="dc" style={{cursor:'pointer'}} onClick={()=>navigate('/sd/invoices')}>
-          <div className="dc-hd"><h4>🧾 Recent Invoices</h4></div>
+          <div className="dc-hd"><h4>Recent Invoices</h4></div>
           <table className="sd-tbl">
             <thead><tr><th>INV #</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody>

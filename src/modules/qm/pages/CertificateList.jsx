@@ -17,8 +17,8 @@ export default function CertificateList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">COC / Test Certificates <small>Quality Certificates Issued</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Bulk Export</button>
-          <button className="btn btn-p sd-bsm">➕ Issue Certificate</button>
+          <button className="btn btn-s sd-bsm">Bulk Export</button>
+          <button className="btn btn-p sd-bsm">Issue Certificate</button>
         </div>
       </div>
 
@@ -43,12 +43,12 @@ export default function CertificateList() {
             <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'4px'}}>{c.prod}</div>
             <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginBottom:'8px'}}>{c.cust}</div>
             <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px'}}>
-              <span>📦 {c.qty}</span>
+              <span>{c.qty}</span>
               <span style={{fontWeight:'700',color:'var(--odoo-green)'}}>Yield: {c.yield}</span>
             </div>
             <div style={{marginTop:'8px',display:'flex',gap:'6px'}}>
               <button className="btn-xs pri" onClick={e=>{e.stopPropagation();setModal(c)}}>👁 View</button>
-              <button className="btn-xs" onClick={e=>e.stopPropagation()}>⬇️ PDF</button>
+              <button className="btn-xs" onClick={e=>e.stopPropagation()}>PDF</button>
               <button className="btn-xs" onClick={e=>e.stopPropagation()}>📧 Send</button>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function CertificateList() {
                 </div>
               ))}
               <div style={{marginTop:'16px',display:'flex',gap:'10px'}}>
-                <button className="btn btn-p sd-bsm" style={{flex:1}}>⬇️ Download PDF</button>
+                <button className="btn btn-p sd-bsm" style={{flex:1}}>Download PDF</button>
                 <button className="btn btn-s sd-bsm" style={{flex:1}}>📧 Email to Customer</button>
               </div>
             </div>

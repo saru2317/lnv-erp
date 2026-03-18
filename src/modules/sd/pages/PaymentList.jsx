@@ -15,7 +15,7 @@ export default function PaymentList() {
     <div>
       <div className="lv-hdr">
         <div className="lv-ttl">Payment Receipts <small>F-28 · Customer Payments</small></div>
-        <div className="lv-acts"><button className="btn btn-p" onClick={()=>navigate('/sd/payments/new')}>➕ Record Payment</button></div>
+        <div className="lv-acts"><button className="btn btn-p" onClick={()=>navigate('/sd/payments/new')}>Record Payment</button></div>
       </div>
       <div className="dc">
         <table className="sd-tbl">

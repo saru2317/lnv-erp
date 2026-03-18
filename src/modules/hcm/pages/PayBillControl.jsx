@@ -43,7 +43,7 @@ export default function PayBillControl() {
           <select className="fi-filter-select" onChange={e=>setPeriod(e.target.value)}>
             <option>FY 2024-25</option><option>Feb 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export Report</button>
+          <button className="btn btn-s sd-bsm">Export Report</button>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function PayBillControl() {
 
       {/* Monthly trend chart (CSS bars) */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>📊 Monthly E-Cost Trend — FY 2024-25</h3></div>
+        <div className="fi-panel-hdr"><h3>Monthly E-Cost Trend — FY 2024-25</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'flex',gap:'6px',alignItems:'flex-end',height:'120px',paddingBottom:'24px',position:'relative'}}>
             {/* Target line */}

@@ -10,17 +10,17 @@ export default function BalanceSheet() {
         <div className="fi-lv-title">Balance Sheet <small>As of 28 Feb 2025</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>28 Feb 2025</option><option>31 Jan 2025</option><option>31 Mar 2024</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
-      <div className="fi-alert success">✅ Balance Sheet balanced — Total Assets = Liabilities + Equity = <strong>₹1,45,14,000</strong></div>
+      <div className="fi-alert success">Balance Sheet balanced — Total Assets = Liabilities + Equity = <strong>₹1,45,14,000</strong></div>
 
       <div className="fi-panel-eq">
         {/* ASSETS */}
         <div className="fin-report">
-          <div className="fin-report-hdr"><h2>📦 ASSETS</h2><span>As on 28 Feb 2025</span></div>
+          <div className="fin-report-hdr"><h2>ASSETS</h2><span>As on 28 Feb 2025</span></div>
           <div className="fin-section">
             <div className="fin-sec-title" onClick={() => tog('ca')}>{open.ca?'▾':'►'} CURRENT ASSETS</div>
             {open.ca && <>

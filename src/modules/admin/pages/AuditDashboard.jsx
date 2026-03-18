@@ -19,8 +19,8 @@ export default function AuditDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Audit Trail Dashboard <small>System-wide Activity Monitor</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/admin/audit/logs')}>📋 Full Audit Log</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/admin/audit/logs')}>Full Audit Log</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function AuditDashboard() {
                       color:'var(--odoo-purple)',fontWeight:'700'}}>{log.ref}</span>
                   </div>
                   <div style={{display:'flex',gap:'10px',fontSize:'10px',color:'var(--odoo-gray)'}}>
-                    <span>📦 {log.module}</span>
+                    <span>{log.module}</span>
                     <span>🕐 {log.ts.split(' ')[1]}</span>
                     <span>🌐 {log.ip}</span>
                   </div>
@@ -82,7 +82,7 @@ export default function AuditDashboard() {
         {/* Module activity */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📦 Activity by Module</h3></div>
+            <div className="fi-panel-hdr"><h3>Activity by Module</h3></div>
             <div className="fi-panel-body">
               {MODULE_COUNTS.filter(m=>m.count>0).map(m => (
                 <div key={m.m} style={{marginBottom:'10px'}}>

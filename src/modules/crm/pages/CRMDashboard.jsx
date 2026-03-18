@@ -109,7 +109,7 @@ export default function CRMDashboard() {
         {/* Pipeline Funnel */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>📊 Sales Pipeline</h3>
+            <h3>Sales Pipeline</h3>
             <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/opportunities')}>View All</button>
           </div>
           <div className="fi-panel-body">
@@ -141,7 +141,7 @@ export default function CRMDashboard() {
           {/* Recent Leads */}
           <div className="fi-panel" style={{marginBottom:'14px'}}>
             <div className="fi-panel-hdr">
-              <h3>🎯 Recent Leads</h3>
+              <h3>Recent Leads</h3>
               <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/leads')}>View All</button>
             </div>
             <div className="fi-panel-body" style={{padding:'0'}}>

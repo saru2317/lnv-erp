@@ -14,13 +14,13 @@ export default function KPIMaster({ kpiMaster, onUpdate }) {
         <div className="fi-lv-title">KPI Master Configuration <small>{master.length} KPIs defined</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>setAdding(!adding)}>+ Add KPI</button>
-          <button className="btn btn-p sd-bsm">💾 Save</button>
+          <button className="btn btn-p sd-bsm">Save</button>
         </div>
       </div>
 
       {adding && (
         <div style={{background:'#fff',borderRadius:8,border:'2px solid var(--odoo-purple)',padding:16,marginBottom:14}}>
-          <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:12}}>➕ New KPI</div>
+          <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:12}}>New KPI</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:10}}>
             {[['KPI Code','code'],['Description','desc'],['UoM','uom']].map(([l,k])=>(
               <div key={k}><label style={{fontSize:11,fontWeight:700,color:'var(--odoo-gray)',display:'block',marginBottom:4}}>{l}</label>
@@ -42,7 +42,7 @@ export default function KPIMaster({ kpiMaster, onUpdate }) {
             ))}
           </div>
           <div style={{display:'flex',gap:8}}>
-            <button className="btn btn-p sd-bsm" onClick={()=>{setMaster(m=>[...m,{...newKPI}]);setAdding(false)}}>✅ Add KPI</button>
+            <button className="btn btn-p sd-bsm" onClick={()=>{setMaster(m=>[...m,{...newKPI}]);setAdding(false)}}>Add KPI</button>
             <button className="btn btn-s sd-bsm" onClick={()=>setAdding(false)}>Cancel</button>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function KPIMaster({ kpiMaster, onUpdate }) {
               <td style={{textAlign:'center'}}>{k.threshold}%</td>
               <td style={{textAlign:'center'}}>{k.maxOver}%</td>
               <td style={{fontSize:11,color:'var(--odoo-gray)'}}>{k.scope}</td>
-              <td><button className="btn-xs" onClick={()=>setMaster(m=>m.filter((_,j)=>j!==i))}>🗑️ Del</button></td>
+              <td><button className="btn-xs" onClick={()=>setMaster(m=>m.filter((_,j)=>j!==i))}>Del</button></td>
             </tr>
           ))}
         </tbody>

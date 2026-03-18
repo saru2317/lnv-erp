@@ -24,7 +24,7 @@ export default function UserManager() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">User Management <small>{users.filter(u=>u.active).length} active users</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>➕ Add User</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>Add User</button>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function UserManager() {
               </td>
               <td>
                 <div style={{display:'flex',gap:'4px'}}>
-                  <button className="btn-xs" onClick={() => setModal(u)}>✏️ Edit</button>
+                  <button className="btn-xs" onClick={() => setModal(u)}>Edit</button>
                   <button className="btn-xs" style={{color:'var(--odoo-orange)'}}>🔑 Reset PW</button>
                   {u.sessions>0 && <button className="btn-xs" style={{color:'var(--odoo-red)'}}>⏏️ Logout</button>}
                 </div>
@@ -103,7 +103,7 @@ export default function UserManager() {
               )}
               <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Cancel</button>
-                <button className="btn btn-p sd-bsm" onClick={() => setModal(null)}>💾 {modal==='new'?'Create User':'Save Changes'}</button>
+                <button className="btn btn-p sd-bsm" onClick={() => setModal(null)}>{modal==='new'?'Create User':'Save Changes'}</button>
               </div>
             </div>
           </div>

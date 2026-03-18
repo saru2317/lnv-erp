@@ -14,15 +14,15 @@ export default function POReport() {
       <div className="lv-hdr">
         <div className="lv-ttl">Purchase Register <small>ME2N · Purchase Analytics</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export Excel</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print Report</button>
+          <button className="btn btn-s sd-bsm">Export Excel</button>
+          <button className="btn btn-s sd-bsm">Print Report</button>
         </div>
       </div>
       <div className="mm-filt">
         <select className="mm-fsel"><option>Feb 2025</option><option>Jan 2025</option><option>Dec 2024</option></select>
         <select className="mm-fsel"><option>All Vendors</option><option>Lakshmi Textile Mills</option><option>Coimbatore Spares Co.</option></select>
         <select className="mm-fsel"><option>All Categories</option><option>Raw Material</option><option>Spares</option></select>
-        <button className="btn btn-p sd-bsm">🔍 Generate Report</button>
+        <button className="btn btn-p sd-bsm">Generate Report</button>
       </div>
 
       <div className="mm-kpi-grid" style={{marginBottom:'14px'}}>

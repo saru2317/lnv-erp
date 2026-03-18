@@ -16,8 +16,8 @@ export default function HSNSummary() {
         <div className="fi-lv-title">HSN / SAC Summary <small>Mandatory in GSTR-1 from FY 2022-23 · 4-digit HSN for turnover &gt; ₹5Cr</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Mar 2026</option><option>Feb 2026</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📤 Push to GSTR-1</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Push to GSTR-1</button>
         </div>
       </div>
       <table className="fi-data-table">

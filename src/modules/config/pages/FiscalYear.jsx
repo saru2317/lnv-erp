@@ -71,7 +71,7 @@ export default function FiscalYear() {
 
       {showForm && (
         <div className="fi-panel" style={{ marginBottom:'16px', border:'2px solid var(--odoo-purple)' }}>
-          <div className="fi-panel-hdr"><h3>➕ New Fiscal Year</h3></div>
+          <div className="fi-panel-hdr"><h3>New Fiscal Year</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Label *</label><input value={form.label} onChange={e=>set('label',e.target.value)} placeholder="e.g. FY 2026-27" /></div>
@@ -109,7 +109,7 @@ export default function FiscalYear() {
               </div>
               <div style={{ display:'flex', gap:'8px' }}>
                 {y.status === 'Upcoming' && (
-                  <button className="btn btn-p btn-s" onClick={() => setActive(y.id)}>✅ Set Active</button>
+                  <button className="btn btn-p btn-s" onClick={() => setActive(y.id)}>Set Active</button>
                 )}
                 {y.status === 'Active' && !y.locked && (
                   <button className="btn btn-s sd-bsm" onClick={() => setYears(ys => ys.map(x => x.id===y.id ? {...x, locked:true} : x))}>

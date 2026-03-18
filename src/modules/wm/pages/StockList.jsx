@@ -17,10 +17,10 @@ export default function StockList() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Stock Overview <small>MB52 · Current Inventory</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/stn')}>Print</button>
-          <button className="btn btn-s sd-bsm">📊 Report</button>
-          <button className="btn btn-p sd-bsm">📤 Issue Stock</button>
+          <button className="btn btn-s sd-bsm">Report</button>
+          <button className="btn btn-p sd-bsm">Issue Stock</button>
         </div>
       </div>
       <div className="wm-chips">

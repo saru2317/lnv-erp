@@ -65,7 +65,7 @@ export default function TripBooking() {
         <div className="fi-lv-title">Trip Booking & Planning <small>Allocate vehicles to requests</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>setTab('new')}>+ New Booking</button>
-          <button className="btn btn-p sd-bsm" onClick={()=>nav('/tm/trip/new')}>🚚 Create Trip Sheet</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/tm/trip/new')}>Create Trip Sheet</button>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/tripsheet')}>Print</button>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function TripBooking() {
                     <td style={{fontSize:12,maxWidth:160}}>{bk.purpose}</td>
                     <td style={{fontSize:11,textAlign:'center'}}>
                       {bk.passengers && <span>👤 {bk.passengers}</span>}
-                      {bk.weight && <span>📦 {bk.weight}</span>}
+                      {bk.weight && <span>{bk.weight}</span>}
                     </td>
                     <td>
                       {allocVeh
@@ -164,7 +164,7 @@ export default function TripBooking() {
                             onClick={()=>setAllocating(bk.id)}>🚗 Allocate</button>}
                         {bk.status==='allocated' &&
                           <button className="btn-xs pri" style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}
-                            onClick={()=>nav('/tm/trip/new')}>🚚 Trip Sheet</button>}
+                            onClick={()=>nav('/tm/trip/new')}>Trip Sheet</button>}
                       </div>
                     </td>
                   </tr>

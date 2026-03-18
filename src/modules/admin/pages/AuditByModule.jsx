@@ -10,7 +10,7 @@ export default function AuditByModule() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Audit by Module <small>Module-wise activity breakdown</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function AuditByModule() {
       {/* Module logs */}
       <div className="fi-panel">
         <div className="fi-panel-hdr">
-          <h3>📦 {activeModule} Module — {logs.length} Events</h3>
+          <h3>{activeModule} Module — {logs.length} Events</h3>
           <div style={{display:'flex',gap:'8px'}}>
             {['CREATE','UPDATE','DELETE','APPROVE'].map(a => {
               const n = logs.filter(l=>l.action===a).length

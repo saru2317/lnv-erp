@@ -17,7 +17,7 @@ export default function POList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Purchase Orders <small>ME2M · All POs</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>＋ New PO</button>
         </div>
       </div>

@@ -12,8 +12,8 @@ export default function BankRecon() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Bank Reconciliation <small>HDFC Current Account · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">📥 Import Bank Statement</button>
-          <button className="btn btn-p sd-bsm">✅ Reconcile</button>
+          <button className="btn btn-s sd-bsm">Import Bank Statement</button>
+          <button className="btn btn-p sd-bsm">Reconcile</button>
         </div>
       </div>
       <div className="fi-panel-eq" style={{maxWidth:'700px'}}>

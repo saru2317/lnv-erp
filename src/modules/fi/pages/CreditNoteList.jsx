@@ -14,8 +14,8 @@ export default function CreditNoteList() {
         <div className="fi-lv-title">Debit / Credit Notes <small>Adjustments Register</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/invoice')}>Print</button>
-          <button className="btn btn-s sd-bsm">➕ New Credit Note</button>
-          <button className="btn btn-p sd-bsm">➕ New Debit Note</button>
+          <button className="btn btn-s sd-bsm">New Credit Note</button>
+          <button className="btn btn-p sd-bsm">New Debit Note</button>
         </div>
       </div>
       <div className="fi-chips">

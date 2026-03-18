@@ -77,8 +77,8 @@ export default function KPIReport({ kpiMaster, actuals, fy = '2025-26' }) {
             <option value="hr">HR Manager</option>
             <option value="production">Production</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print Report</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm">Print Report</button>
         </div>
       </div>
 

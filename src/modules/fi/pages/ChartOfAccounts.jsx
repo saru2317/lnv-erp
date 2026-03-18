@@ -62,14 +62,14 @@ export default function ChartOfAccounts() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Chart of Accounts <small>Account Master · LNV Manufacturing</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setShowAdd(!showAdd)}>➕ Add Account</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setShowAdd(!showAdd)}>Add Account</button>
         </div>
       </div>
 
       {showAdd && (
         <div className="fi-form-sec" style={{marginBottom:'14px'}}>
-          <div className="fi-form-sec-hdr">➕ New Account</div>
+          <div className="fi-form-sec-hdr">New Account</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>Account Code <span>*</span></label><input className="fi-form-ctrl" placeholder="e.g. 6910"/></div>
@@ -89,7 +89,7 @@ export default function ChartOfAccounts() {
                 <label>&nbsp;</label>
                 <div style={{display:'flex',gap:'8px'}}>
                   <button className="btn btn-s sd-bsm" onClick={() => setShowAdd(false)}>Cancel</button>
-                  <button className="btn btn-p sd-bsm">✅ Save Account</button>
+                  <button className="btn btn-p sd-bsm">Save Account</button>
                 </div>
               </div>
             </div>

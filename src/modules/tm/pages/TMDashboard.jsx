@@ -45,8 +45,8 @@ export default function TMDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Transport Dashboard <small>Today — {new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/tm/booking')}>📋 New Booking</button>
-          <button className="btn btn-p sd-bsm" onClick={()=>nav('/tm/trip/new')}>🚚 New Trip Sheet</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/tm/booking')}>New Booking</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/tm/trip/new')}>New Trip Sheet</button>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export default function TMDashboard() {
         {/* Today's trips */}
         <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,color:'var(--odoo-dark)'}}>🚚 Today's Trip Plan</h4>
+            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,color:'var(--odoo-dark)'}}>Today's Trip Plan</h4>
             <button onClick={()=>nav('/tm/trips')} style={{fontSize:11,color:'var(--odoo-purple)',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>View All →</button>
           </div>
           <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -111,8 +111,8 @@ export default function TMDashboard() {
                       <span style={{padding:'3px 8px',borderRadius:10,fontSize:10,fontWeight:600,background:st.bg,color:st.color}}>{st.label}</span>
                     </td>
                     <td style={{padding:'9px 12px'}}>
-                      {t.status==='transit' && <button className="btn-xs" onClick={()=>nav('/tm/trip/new')} style={{whiteSpace:'nowrap'}}>✅ Close</button>}
-                      {t.status==='planned' && <button className="btn-xs pri" style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}>🚚 Dispatch</button>}
+                      {t.status==='transit' && <button className="btn-xs" onClick={()=>nav('/tm/trip/new')} style={{whiteSpace:'nowrap'}}>Close</button>}
+                      {t.status==='planned' && <button className="btn-xs pri" style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}>Dispatch</button>}
                     </td>
                   </tr>
                 )

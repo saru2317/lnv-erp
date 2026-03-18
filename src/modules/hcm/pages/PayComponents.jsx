@@ -50,8 +50,8 @@ export default function PayComponents() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Pay Components & CTC Structure <small>Master Configuration</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">➕ Add Component</button>
-          <button className="btn btn-p sd-bsm">💾 Save Structure</button>
+          <button className="btn btn-s sd-bsm">Add Component</button>
+          <button className="btn btn-p sd-bsm">Save Structure</button>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function PayComponents() {
         {/* Structure table */}
         <div>
           <div className="fi-form-sec">
-            <div className="fi-form-sec-hdr">💰 Earnings Components</div>
+            <div className="fi-form-sec-hdr">Earnings Components</div>
             <div style={{padding:'0'}}>
               <table className="fi-data-table">
                 <thead><tr><th>Component</th><th>Basis</th><th>Formula</th><th>Taxable</th><th>PF</th><th>ESI</th></tr></thead>

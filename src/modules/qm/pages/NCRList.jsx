@@ -25,8 +25,8 @@ export default function NCRList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">NCR Register <small>Non-Conformance Reports</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/ncr/new')}>➕ Raise NCR</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/ncr/new')}>Raise NCR</button>
         </div>
       </div>
 

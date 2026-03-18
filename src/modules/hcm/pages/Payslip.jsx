@@ -32,7 +32,7 @@ export default function Payslip() {
             <option>February 2025</option><option>January 2025</option><option>December 2024</option>
           </select>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>Print</button>
-          <button className="btn btn-s sd-bsm">⬇️ Download PDF</button>
+          <button className="btn btn-s sd-bsm">Download PDF</button>
           <button className="btn btn-s sd-bsm">📧 Email</button>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function Payslip() {
       <div className="payslip-wrap">
         {/* Header */}
         <div className="payslip-hdr">
-          <div className="payslip-company">🏭 LNV Manufacturing Pvt. Ltd.</div>
+          <div className="payslip-company">LNV Manufacturing Pvt. Ltd.</div>
           <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginTop:'2px'}}>Ranipet, Tamil Nadu — 632 401</div>
           <div style={{fontFamily:'Syne,sans-serif',fontSize:'16px',fontWeight:'800',color:'var(--odoo-purple)',marginTop:'10px'}}>
             SALARY SLIP — {month.toUpperCase()}

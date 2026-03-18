@@ -33,8 +33,8 @@ export default function HRPolicy() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">HR Policies <small>Company Policy Documents</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export All</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setEditModal('new')}>➕ Add Policy</button>
+          <button className="btn btn-s sd-bsm">Export All</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setEditModal('new')}>Add Policy</button>
         </div>
       </div>
 
@@ -68,8 +68,8 @@ export default function HRPolicy() {
                 fontSize:'12px',color:'var(--odoo-dark)',lineHeight:'1.6',borderLeft:'3px solid var(--odoo-purple)'}}>
                 {p.summary}
                 <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-                  <button className="btn-xs pri" onClick={e=>{e.stopPropagation();setEditModal(p)}}>✏️ Edit</button>
-                  <button className="btn-xs" onClick={e=>e.stopPropagation()}>⬇️ PDF</button>
+                  <button className="btn-xs pri" onClick={e=>{e.stopPropagation();setEditModal(p)}}>Edit</button>
+                  <button className="btn-xs" onClick={e=>e.stopPropagation()}>PDF</button>
                   <button className="btn-xs" onClick={e=>e.stopPropagation()}>📧 Share</button>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export default function HRPolicy() {
       {editModal && editModal !== 'new' && (
         <div className="fi-modal-overlay" onClick={() => setEditModal(null)}>
           <div className="fi-modal-box" onClick={e => e.stopPropagation()}>
-            <div className="fi-modal-hdr">✏️ Edit — {editModal.title}
+            <div className="fi-modal-hdr">Edit — {editModal.title}
               <button className="fi-modal-close" onClick={() => setEditModal(null)}>✕</button>
             </div>
             <div className="fi-modal-body">
@@ -98,7 +98,7 @@ export default function HRPolicy() {
               </div>
               <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setEditModal(null)}>Cancel</button>
-                <button className="btn btn-p sd-bsm" onClick={() => setEditModal(null)}>💾 Save Policy</button>
+                <button className="btn btn-p sd-bsm" onClick={() => setEditModal(null)}>Save Policy</button>
               </div>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function HRPolicy() {
       {editModal === 'new' && (
         <div className="fi-modal-overlay" onClick={() => setEditModal(null)}>
           <div className="fi-modal-box" onClick={e => e.stopPropagation()}>
-            <div className="fi-modal-hdr">➕ New Policy <button className="fi-modal-close" onClick={() => setEditModal(null)}>✕</button></div>
+            <div className="fi-modal-hdr">New Policy <button className="fi-modal-close" onClick={() => setEditModal(null)}>✕</button></div>
             <div className="fi-modal-body">
               <div className="fi-form-grp"><label>Policy Title <span>*</span></label><input className="fi-form-ctrl" placeholder="e.g. Travel Reimbursement Policy"/></div>
               <div className="fi-form-row">
@@ -122,7 +122,7 @@ export default function HRPolicy() {
               </div>
               <div style={{display:'flex',gap:'10px',marginTop:'14px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setEditModal(null)}>Cancel</button>
-                <button className="btn btn-p sd-bsm" onClick={() => setEditModal(null)}>💾 Create Policy</button>
+                <button className="btn btn-p sd-bsm" onClick={() => setEditModal(null)}>Create Policy</button>
               </div>
             </div>
           </div>

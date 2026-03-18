@@ -15,15 +15,15 @@ export default function PONew() {
         <div className="lv-ttl">New Purchase Order <small>ME21N · Create PO</small></div>
         <div className="lv-acts">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>✕ Cancel</button>
-          <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>✅ Approve &amp; Send</button>
+          <button className="btn btn-s sd-bsm">Save Draft</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>Approve &amp; Send</button>
         </div>
       </div>
       <div className="mm-alert info">ℹ️ PO Number will be auto-generated on save. Reference: <strong>PO-2025-043</strong></div>
 
       {/* Header */}
       <div className="mm-fs">
-        <div className="mm-fsh">📋 Purchase Order Header</div>
+        <div className="mm-fsh">Purchase Order Header</div>
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>PO Number</label><input className="mm-fc" defaultValue="PO-2025-043" readOnly/></div>
@@ -49,7 +49,7 @@ export default function PONew() {
 
       {/* Vendor Details */}
       <div className="mm-fs">
-        <div className="mm-fsh">🏭 Vendor Details</div>
+        <div className="mm-fsh">Vendor Details</div>
         <div className="mm-fsb">
           <div className="mm-vc">
             <div className="mm-va">LT</div>
@@ -68,7 +68,7 @@ export default function PONew() {
 
       {/* Line Items */}
       <div className="mm-fs">
-        <div className="mm-fsh">📦 Line Items</div>
+        <div className="mm-fsh">Line Items</div>
         <div className="mm-fsb" style={{padding:'0'}}>
           <div className="mm-lt-wrap">
             <table className="mm-lt">
@@ -113,14 +113,14 @@ export default function PONew() {
       {/* Actions + Flow */}
       <div className="mm-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>✕ Cancel</button>
-        <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>✅ Approve &amp; Send</button>
+        <button className="btn btn-s sd-bsm">Save Draft</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>Approve &amp; Send</button>
         <div className="mm-flow">
           <span className="mm-fs-step act">📝 Draft</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">📤 Sent</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">✅ Approved</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">📦 GRN</span><span className="mm-fs-arr">›</span>
-          <span className="mm-fs-step">🧾 Invoiced</span>
+          <span className="mm-fs-step">Sent</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step">Approved</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step">GRN</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step">Invoiced</span>
         </div>
       </div>
     </div>

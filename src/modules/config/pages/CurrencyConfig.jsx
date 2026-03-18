@@ -101,7 +101,7 @@ export default function CurrencyConfig() {
                 1 {c.code} = ₹{(1/c.rate*base?.rate || 0).toFixed(4)}
               </div>
             </div>
-            <button className="btn-act-edit" onClick={() => handleEdit(c)} style={{ width:'100%', textAlign:'center', justifyContent:'center' }}>✏️ Update Rate</button>
+            <button className="btn-act-edit" onClick={() => handleEdit(c)} style={{ width:'100%', textAlign:'center', justifyContent:'center' }}>Update Rate</button>
           </div>
         ))}
       </div>

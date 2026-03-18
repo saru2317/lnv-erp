@@ -13,8 +13,8 @@ export default function StockReport() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Stock Report <small>Inventory Analytics</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export Excel</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print Report</button>
+          <button className="btn btn-s sd-bsm">Export Excel</button>
+          <button className="btn btn-s sd-bsm">Print Report</button>
         </div>
       </div>
 
@@ -22,7 +22,7 @@ export default function StockReport() {
         <select className="wm-filter-select"><option>Feb 2025</option><option>Jan 2025</option><option>Dec 2024</option></select>
         <select className="wm-filter-select"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option></select>
         <select className="wm-filter-select"><option>All Locations</option><option>Main Store</option><option>Warehouse B</option></select>
-        <button className="btn btn-p sd-bsm">🔍 Generate</button>
+        <button className="btn btn-p sd-bsm">Generate</button>
       </div>
 
       <div className="wm-kpi-grid">

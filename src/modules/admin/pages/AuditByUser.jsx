@@ -21,7 +21,7 @@ export default function AuditByUser() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Audit by User <small>Per-user activity trail</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
@@ -96,10 +96,10 @@ export default function AuditByUser() {
                         <span><strong>{log.changes.field}:</strong> <span className="diff-old">{log.changes.old}</span> → <span className="diff-new">{log.changes.new}</span></span>
                       )}
                       {log.action==='CREATE'&&<span style={{color:'var(--odoo-green)'}}>New record</span>}
-                      {log.action==='DELETE'&&<span style={{color:'var(--odoo-red)'}}>🗑️ {log.changes.old?.reason||'Deleted'}</span>}
+                      {log.action==='DELETE'&&<span style={{color:'var(--odoo-red)'}}>{log.changes.old?.reason||'Deleted'}</span>}
                       {log.action==='LOGIN'&&<span style={{color:'var(--odoo-blue)'}}>System login · {log.ip}</span>}
-                      {log.action==='EXPORT'&&<span style={{color:'var(--odoo-purple)'}}>📤 {log.changes.new?.format}</span>}
-                      {log.action==='APPROVE'&&<span className="diff-new">✅ Approved</span>}
+                      {log.action==='EXPORT'&&<span style={{color:'var(--odoo-purple)'}}>{log.changes.new?.format}</span>}
+                      {log.action==='APPROVE'&&<span className="diff-new">Approved</span>}
                     </td>
                   </tr>
                 ))}

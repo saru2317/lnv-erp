@@ -34,7 +34,7 @@ export default function AssetRegister() {
             {[...new Set(ASSETS.map(a=>a.cat))].map(c=><option key={c}>{c}</option>)}
           </select>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/invoice')}>Print Register</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm">+ Add Asset</button>
         </div>
       </div>

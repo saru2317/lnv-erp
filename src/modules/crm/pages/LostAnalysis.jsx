@@ -31,7 +31,7 @@ export default function LostAnalysis() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Lost Sales Analysis <small>Understand why deals are lost</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export Report</button>
+          <button className="btn btn-s sd-bsm">Export Report</button>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default function LostAnalysis() {
       <div className="fi-panel-grid">
         {/* Reason Breakdown */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 Loss Reason Analysis</h3></div>
+          <div className="fi-panel-hdr"><h3>Loss Reason Analysis</h3></div>
           <div className="fi-panel-body">
             {reasonCounts.sort((a,b)=>b.count-a.count).map(x=>{
               const pct = Math.round(x.count/LOST_DATA.length*100)
@@ -112,7 +112,7 @@ export default function LostAnalysis() {
       {/* Lost Deals Table */}
       <div className="fi-panel" style={{marginTop:'14px'}}>
         <div className="fi-panel-hdr">
-          <h3>📋 Lost Deals — {reason==='All'?'All Reasons':reason}</h3>
+          <h3>Lost Deals — {reason==='All'?'All Reasons':reason}</h3>
           {reason!=='All'&&<button className="btn btn-s sd-bsm" onClick={()=>setReason('All')}>Clear Filter</button>}
         </div>
         <div className="fi-panel-body" style={{padding:'0'}}>

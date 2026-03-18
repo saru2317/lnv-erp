@@ -41,7 +41,7 @@ export default function InventoryWMReport() {
         <div className="fi-lv-title">Inventory Report <small>WM Module · Stock Analytics</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Mar 2026</option><option>Feb 2026</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 

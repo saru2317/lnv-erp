@@ -49,7 +49,7 @@ export default function PRNew() {
         <div className="fi-lv-title">New Purchase Indent <small>{prNo}</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/pr')}>← Back</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Print</button>
           <button className="btn btn-p sd-bsm" onClick={handleSave}>
             {saved ? '✅ Saved!' : '💾 Save & Submit'}
           </button>
@@ -136,7 +136,7 @@ export default function PRNew() {
         <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-dark)',
           marginBottom:12,paddingBottom:8,borderBottom:'2px solid var(--odoo-border)',
           display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span>📦 Item Details</span>
+          <span>Item Details</span>
           <button onClick={addItem}
             style={{padding:'4px 12px',borderRadius:5,fontSize:11,fontWeight:700,
               background:'var(--odoo-purple)',color:'#fff',border:'none',cursor:'pointer'}}>

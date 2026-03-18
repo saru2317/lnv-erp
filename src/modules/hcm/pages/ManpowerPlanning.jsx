@@ -25,14 +25,14 @@ export default function ManpowerPlanning() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Manpower Planning <small>Department-wise Headcount 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📊 Plan New Year</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Plan New Year</button>
         </div>
       </div>
 
       {/* E-Cost Budget */}
       <div style={{background:'var(--odoo-purple)',borderRadius:'10px',padding:'18px',color:'#fff',marginBottom:'16px'}}>
-        <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'16px',marginBottom:'12px'}}>💰 Pay Bill Budget vs Actual — Feb 2025</div>
+        <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'16px',marginBottom:'12px'}}>Pay Bill Budget vs Actual — Feb 2025</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'14px'}}>
           {[['E-Cost Budget',`₹${(BUDGET.target_ecost/100000).toFixed(1)}L`,'month'],
             ['E-Cost Actual',`₹${(BUDGET.actual_ecost/100000).toFixed(1)}L`,'month'],

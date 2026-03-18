@@ -15,14 +15,14 @@ export default function GoodsIssue() {
         <div className="wm-lv-title">Goods Issue <small>MIGO · Issue Stock to Production / Sales</small></div>
         <div className="wm-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-          <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Goods Issue</button>
+          <button className="btn btn-s sd-bsm">Save Draft</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Issue</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
         </div>
       </div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📤 Issue Details</div>
+        <div className="wm-form-sec-hdr">Issue Details</div>
         <div className="wm-form-sec-body">
           <div className="wm-form-row">
             <div className="wm-form-grp"><label>GI Number</label><input className="wm-form-ctrl" defaultValue="GI-2025-043" readOnly/></div>
@@ -45,7 +45,7 @@ export default function GoodsIssue() {
       </div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">📦 Items to Issue</div>
+        <div className="wm-form-sec-hdr">Items to Issue</div>
         <div className="wm-form-sec-body" style={{padding:'0'}}>
           <div className="wm-lt-wrap">
             <table className="wm-lt">
@@ -77,12 +77,12 @@ export default function GoodsIssue() {
 
       <div className="wm-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Goods Issue</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Issue</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
         <div className="wm-status-flow">
-          <span className="wm-sf-step act">📤 Issue Entry</span><span className="wm-sf-arr">›</span>
-          <span className="wm-sf-step">✅ Stock Reduced</span><span className="wm-sf-arr">›</span>
-          <span className="wm-sf-step">📊 Cost Booked</span>
+          <span className="wm-sf-step act">Issue Entry</span><span className="wm-sf-arr">›</span>
+          <span className="wm-sf-step">Stock Reduced</span><span className="wm-sf-arr">›</span>
+          <span className="wm-sf-step">Cost Booked</span>
         </div>
       </div>
     </div>

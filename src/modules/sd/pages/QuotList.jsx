@@ -13,7 +13,7 @@ export default function QuotList() {
     <div>
       <div className="lv-hdr">
         <div className="lv-ttl">Sales Quotations <small>VA21</small></div>
-        <div className="lv-acts"><button className="btn btn-p" onClick={()=>navigate('/sd/quotations/new')}>➕ New Quotation</button></div>
+        <div className="lv-acts"><button className="btn btn-p" onClick={()=>navigate('/sd/quotations/new')}>New Quotation</button></div>
       </div>
       <div className="dc">
         <table className="sd-tbl">

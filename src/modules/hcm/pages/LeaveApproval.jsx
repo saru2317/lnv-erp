@@ -15,10 +15,10 @@ export default function LeaveApproval() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Leave Approval <small>{items.length} pending</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>setItems([])}>✅ Approve All</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>setItems([])}>Approve All</button>
         </div>
       </div>
-      {items.length===0 && <div className="pp-alert success">✅ No pending leave approvals! All cleared.</div>}
+      {items.length===0 && <div className="pp-alert success">No pending leave approvals! All cleared.</div>}
       {items.map(r=>(
         <div key={r.id} style={{background:'#fff',borderRadius:'10px',padding:'16px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',marginBottom:'12px',borderLeft:'4px solid var(--odoo-orange)'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:'10px'}}>
@@ -37,7 +37,7 @@ export default function LeaveApproval() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',flexShrink:0}}>
-              <button className="btn btn-p sd-bsm" onClick={()=>act(r.id,'approve')}>✅ Approve</button>
+              <button className="btn btn-p sd-bsm" onClick={()=>act(r.id,'approve')}>Approve</button>
               <button className="btn btn-s sd-bsm" style={{borderColor:'var(--odoo-red)',color:'var(--odoo-red)'}} onClick={()=>act(r.id,'reject')}>❌ Reject</button>
             </div>
           </div>

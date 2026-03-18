@@ -12,8 +12,8 @@ export default function PaymentList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Vendor Payments <small>Payment Register</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">💳 Record Payment</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Record Payment</button>
         </div>
       </div>
       <table className="mm-tbl">

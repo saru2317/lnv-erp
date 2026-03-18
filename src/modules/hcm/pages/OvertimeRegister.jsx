@@ -26,8 +26,8 @@ export default function OvertimeRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Overtime Register <small>February 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📤 Push to Payroll</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Push to Payroll</button>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export default function OvertimeRegister() {
               <td>
                 {r.status==='Pending' && (
                   <div style={{display:'flex',gap:'4px'}}>
-                    <button className="btn-xs pri" onClick={()=>approve(r.id)}>✅ Approve</button>
+                    <button className="btn-xs pri" onClick={()=>approve(r.id)}>Approve</button>
                     <button className="btn-xs" onClick={()=>reject(r.id)} style={{color:'var(--odoo-red)'}}>❌</button>
                   </div>
                 )}
