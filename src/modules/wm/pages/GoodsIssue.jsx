@@ -17,7 +17,7 @@ export default function GoodsIssue() {
           <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
           <button className="btn btn-s sd-bsm">💾 Save Draft</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Goods Issue</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>🖨️ Print MIS</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function GoodsIssue() {
       <div className="wm-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>✅ Post Goods Issue</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>🖨️ Print MIS</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
         <div className="wm-status-flow">
           <span className="wm-sf-step act">📤 Issue Entry</span><span className="wm-sf-arr">›</span>
           <span className="wm-sf-step">✅ Stock Reduced</span><span className="wm-sf-arr">›</span>

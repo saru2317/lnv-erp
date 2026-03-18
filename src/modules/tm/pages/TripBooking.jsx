@@ -66,7 +66,7 @@ export default function TripBooking() {
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>setTab('new')}>+ New Booking</button>
           <button className="btn btn-p sd-bsm" onClick={()=>nav('/tm/trip/new')}>🚚 Create Trip Sheet</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/tripsheet')}>🖨️ Print</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/tripsheet')}>Print</button>
         </div>
       </div>
 

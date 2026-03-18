@@ -61,7 +61,7 @@ export default function NCRList() {
               <td onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/ncr')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/ncr')}>Print</button>
                   {n.capa==='—' && <button className="btn-xs pri" onClick={() => nav('/qm/capa/new')}>CAPA</button>}
                 </div>
               </td>

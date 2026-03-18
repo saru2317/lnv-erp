@@ -25,8 +25,8 @@ export default function PayrollProcess() {
         {EMPLOYEES.length} payslips generated · Bank transfer initiated · FI journal posted
       </div>
       <div style={{display:'flex',gap:'10px'}}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>📄 View Payslips</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>🖨️ Print Payslip</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>View Payslips</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>Print Payslip</button>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/pay/billcontrol')}>📊 Pay Bill Control</button>
         <button className="btn btn-p sd-bsm" onClick={() => { setDone(false); setStep(0) }}>➕ New Month</button>
       </div>

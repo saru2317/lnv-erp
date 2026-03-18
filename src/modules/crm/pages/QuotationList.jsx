@@ -87,7 +87,7 @@ export default function QuotationList() {
                 <td style={{fontSize:'12px'}}>{q.owner}</td>
                 <td onClick={e=>e.stopPropagation()}>
                   <button className="btn-act-edit" onClick={()=>nav(`/crm/quotations/${q.id}`)}>View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/quotation')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/quotation')}>Print</button>
                   {(q.status==='Won')&&<button className="btn-act-view" onClick={e=>{e.stopPropagation()}}>→ SO</button>}
                 </td>
               </tr>

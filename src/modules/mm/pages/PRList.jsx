@@ -143,7 +143,7 @@ export default function PRList() {
                         ✏️ Edit
                       </button>}
                     <button className="btn-xs">👁️ View</button>
-                    <button className="btn-xs" onClick={() => nav('/print/pr')}>🖨️</button>
+                    <button className="btn-xs" onClick={() => nav('/print/pr')}>Print</button>
                   </div>
                 </td>
               </tr>

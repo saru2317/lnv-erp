@@ -67,7 +67,7 @@ export default function PMSchedule() {
                     {s.overdue>=0?'🔧 Start PM':'Schedule'}
                   </button>
                   <button className="btn-xs">Edit</button>
-                  <button className="btn-xs" onClick={()=>nav('/print/wo')}>🖨️</button>
+                  <button className="btn-xs" onClick={()=>nav('/print/wo')}>Print</button>
                 </div>
               </td>
             </tr>

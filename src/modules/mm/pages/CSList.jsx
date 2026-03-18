@@ -73,12 +73,12 @@ export default function CSList() {
                 <td>
                   <div style={{display:'flex',gap:4}}>
                     <button className="btn-xs" onClick={()=>nav('/mm/cs/new')}>✏️ Edit</button>
-                    <button className="btn-xs" onClick={() => nav('/print/cs')}>🖨️</button>
+                    <button className="btn-xs" onClick={() => nav('/print/cs')}>Print</button>
                     {cs.status==='approved'&&!cs.poNo&&
                       <button className="btn-xs pri"
                         style={{background:'var(--odoo-green)',color:'#fff'}}
                         onClick={()=>nav('/mm/po/new')}>📋 PO</button>}
-                    <button className="btn-xs">🖨️ Print</button>
+                    <button className="btn-xs">Print</button>
                   </div>
                 </td>
               </tr>

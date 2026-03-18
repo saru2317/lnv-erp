@@ -34,7 +34,7 @@ export default function GRNList() {
               <td>{g.vendor}</td><td>{g.date}</td><td>{g.mat}</td><td>{g.ord}</td><td>{g.recv}</td>
               <td><span className={`mm-badge ${g.qc}`}>{g.ql}</span></td>
               <td><span className={`mm-badge ${g.sb}`}>{g.sl}</span></td>
-              <td><div style={{display:'flex',gap:4}}><button className="btn-xs">View</button><button className="btn-xs" onClick={() => nav('/print/grn')}>🖨️</button></div></td>
+              <td><div style={{display:'flex',gap:4}}><button className="btn-xs">View</button><button className="btn-xs" onClick={() => nav('/print/grn')}>Print</button></div></td>
             </tr>
           ))}
         </tbody>

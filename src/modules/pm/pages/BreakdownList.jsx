@@ -73,7 +73,7 @@ export default function BreakdownList() {
               <td onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/breakdown')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/breakdown')}>Print</button>
                   {b.sl!=='Resolved'&&<button className="btn-xs pri">Resolve</button>}
                 </div>
               </td>

@@ -43,7 +43,7 @@ export default function PMWorkOrder() {
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>PMW-2025-012 Completed!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Checklist: {doneCount}/{checks.length} items · Next PM auto-scheduled</div>
       <div style={{display:'flex',gap:'10px'}}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/print/wo')}>🖨️ Print WO</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/print/wo')}>Print WO</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>← PM Schedule</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/log')}>📋 View Log</button>
       </div>

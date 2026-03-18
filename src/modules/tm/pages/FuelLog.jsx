@@ -22,7 +22,7 @@ export default function FuelLog() {
         <div className="fi-lv-title">Fuel Log <small>Monthly tracking & mileage</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>Mar 2026</option><option>Feb 2026</option></select>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/fuellog')}>🖨️ Print Report</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/fuellog')}>Print Report</button>
           <button className="btn btn-p sd-bsm">⛽ Add Fuel Entry</button>
         </div>
       </div>

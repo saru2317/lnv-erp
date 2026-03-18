@@ -66,7 +66,7 @@ export default function JVList() {
                   ? <button className="btn-xs pri" onClick={() => alert('Posted!')}>Post</button>
                   : <>
                     <button className="btn-xs" onClick={() => setModal(j)}>View</button>
-                    <button className="btn-xs" onClick={() => nav('/print/jv')}>🖨️</button>
+                    <button className="btn-xs" onClick={() => nav('/print/jv')}>Print</button>
                   </>
                 }
               </td>

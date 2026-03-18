@@ -100,7 +100,7 @@ export default function JobCardList() {
                   <td>
                     <div style={{display:'flex',gap:'4px'}}>
                       <button className="btn-act-view" onClick={()=>nav(`/pp/job-tracker?id=${j.id}`)}>🔍</button>
-                  <button className="btn-xs" onClick={()=>nav('/print/labourcard')}>🖨️</button>
+                  <button className="btn-xs" onClick={()=>nav('/print/labourcard')}>Print</button>
                       <button className="btn-act-edit" onClick={()=>nav(`/pp/process-execution?id=${j.id}`)}>⚙️</button>
                     </div>
                   </td>

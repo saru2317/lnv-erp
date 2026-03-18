@@ -28,7 +28,7 @@ export default function QuotList() {
                   {q.status !== 'overdue'
                     ? <button className="act-btn-green" onClick={()=>navigate('/sd/orders/new')}>→ Convert to SO</button>
                     : <button className="act-btn-view">View</button>}
-                    <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/quotation')}}>🖨️</button>
+                    <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/quotation')}}>Print</button>
                 </td>
               </tr>
             ))}

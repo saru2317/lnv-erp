@@ -73,7 +73,7 @@ export default function SOList() {
                 <td><Badge status={o.status}>{o.status.toUpperCase()}</Badge></td>
                 <td onClick={e=>e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
                   <button className="act-btn-view" onClick={()=>navigate(`/sd/orders/${o.id}`)}>View</button>
-                  <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/so')}}>🖨️</button>
+                  <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/so')}}>Print</button>
                   {o.status !== 'overdue' && o.status !== 'paid' && (
                     <button className="act-btn-green" onClick={()=>navigate('/sd/invoices/new')}>Invoice</button>
                   )}

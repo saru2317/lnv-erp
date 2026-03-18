@@ -62,7 +62,7 @@ export default function CalibrationList() {
               <td>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/wo')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/wo')}>Print</button>
                   {c.overdue>=0 && <button className="btn-xs pri">Schedule</button>}
                 </div>
               </td>

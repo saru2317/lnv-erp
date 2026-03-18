@@ -46,7 +46,7 @@ export default function POList() {
               <td><span className={`mm-badge ${p.b}`}>{p.l}</span></td>
               <td onClick={e=>e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
                 <button className="btn-xs" onClick={() => nav(`/mm/po/${p.id}`)}>View</button>
-                <button className="btn-xs" onClick={() => nav('/print/po')}>🖨️</button>
+                <button className="btn-xs" onClick={() => nav('/print/po')}>Print</button>
                 {p.grn    && <button className="btn-xs suc" onClick={() => nav('/mm/grn/new')}>GRN</button>}
                 {p.inv    && <button className="btn-xs" onClick={() => nav('/mm/invoices/new')}>Invoice</button>}
                 {p.approve&& <button className="btn-xs pri">Approve</button>}

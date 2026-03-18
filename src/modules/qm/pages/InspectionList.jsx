@@ -82,7 +82,7 @@ export default function InspectionList() {
               <td onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/ir')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/ir')}>Print</button>
                   {l.sl==='Review' && <button className="btn-xs pri" onClick={() => nav('/qm/ncr/new')}>Raise NCR</button>}
                   {l.sl==='Pass' && <button className="btn-xs" onClick={() => nav('/qm/certificates')}>🏅 Cert</button>}
                 </div>

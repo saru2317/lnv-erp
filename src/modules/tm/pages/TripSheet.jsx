@@ -30,7 +30,7 @@ export default function TripSheet() {
         <div className="fi-lv-title">Trip Sheet <small style={{fontFamily:'DM Mono,monospace'}}>{form.tripNo}</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/tm/booking')}>← Back</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print</button>
+          <button className="btn btn-s sd-bsm">Print</button>
           {stage==='entry' &&
             <button className="btn btn-p sd-bsm" style={{background:'var(--odoo-green)',color:'#fff'}}
               onClick={()=>setStage('dispatched')}>🚚 Dispatch Vehicle</button>}

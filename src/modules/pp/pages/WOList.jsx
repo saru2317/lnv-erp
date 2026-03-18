@@ -79,7 +79,7 @@ export default function WOList() {
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs pri" onClick={() => nav(w.act==='Entry'||w.act==='Start'?'/pp/entry':w.act==='Close'?'/pp/complete':'/pp/wo/new')}>{w.act}</button>
                   <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/jo')}>🖨️</button>
+                  <button className="btn-xs" onClick={() => nav('/print/jo')}>Print</button>
                 </div>
               </td>
             </tr>

@@ -13,7 +13,7 @@ export default function AssetIssue() {
     <div>
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Asset Issue / Return</div>
-        <div className="fi-lv-actions"><button className="btn btn-s sd-bsm" onClick={()=>nav('/print/invoice')}>🖨️ Print</button>
+        <div className="fi-lv-actions"><button className="btn btn-s sd-bsm" onClick={()=>nav('/print/invoice')}>Print</button>
           <button className="btn btn-p sd-bsm">+ Issue Asset</button></div>
       </div>
       <table className="fi-data-table">

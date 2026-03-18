@@ -31,7 +31,7 @@ export default function Payslip() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>February 2025</option><option>January 2025</option><option>December 2024</option>
           </select>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>🖨️ Print</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>Print</button>
           <button className="btn btn-s sd-bsm">⬇️ Download PDF</button>
           <button className="btn btn-s sd-bsm">📧 Email</button>
         </div>
