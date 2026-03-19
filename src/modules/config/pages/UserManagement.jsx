@@ -19,6 +19,7 @@ const MODULES_LIST = [
   {k:'cn',   icon:'🍽️', name:'Canteen'},
   {k:'civil',icon:'🏗️', name:'Civil'},
   {k:'config',icon:'🛠️',name:'Config'},
+  {k:'mdm',   icon:'🗂️', name:'MDM'},
 ]
 
 const PERMS_LIST = [

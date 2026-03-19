@@ -1,8 +1,11 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { JOB_CARDS, JOB_STEPS, PRIORITY_COLORS } from './_ppConfig'
 
 export default function JobCardList() {
+  const { viewMode, toggleView } = useListView('PP-JobCardList')
   const nav = useNavigate()
   const [search,   setSearch]   = useState('')
   const [statusF,  setStatusF]  = useState('All')

@@ -11,6 +11,7 @@ const STATIC_CUSTOMERS = [
   { id:'C-004', name:'ARS Cotton Mills',            gstin:'33AABCA5631B1Z2', city:'Salem, TN',      mobile:'9876541230', creditLimit:'₹4,00,000',  outstanding:'₹4,63,510', status:'overdue'  },
   { id:'C-005', name:'Vijay Fabrics',               gstin:'33AABCV6741B1Z9', city:'Erode, TN',      mobile:'9845123456', creditLimit:'₹2,00,000',  outstanding:'₹0',        status:'active'   },
   { id:'C-006', name:'MEC Spinning Systems',        gstin:'33AABCM7851B1Z3', city:'Chennai, TN',    mobile:'9876512345', creditLimit:'₹8,00,000',  outstanding:'₹0',        status:'active'   },
+  { id:'C-007', name:'Karthik Weavers',              gstin:'33AABCK8961B1Z6', city:'Karur, TN',      mobile:'9845098765', creditLimit:'₹1,00,000',  outstanding:'₹0',        status:'inactive' },
 ]
 
 export default function CustomerList() {
@@ -19,6 +20,7 @@ export default function CustomerList() {
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState('Tamil Nadu')
   const [loading, setLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('')
 
   useEffect(() => {
     setLoading(true)
@@ -29,8 +31,9 @@ export default function CustomerList() {
   }, [search, stateFilter])
 
   const filtered = customers.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.gstin.includes(search) || c.city.toLowerCase().includes(search.toLowerCase())
+    (c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.gstin.includes(search) || c.city.toLowerCase().includes(search.toLowerCase())) &&
+    (statusFilter === '' || c.status === statusFilter)
   )
 
   return (
@@ -58,10 +61,11 @@ export default function CustomerList() {
           <option>Manufacturing</option>
           <option>Textile</option>
         </select>
-        <select className="sd-fsel">
-          <option>All Status</option>
-          <option>Active</option>
-          <option>Overdue</option>
+        <select className="sd-fsel" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
+          <option value=''>All Status</option>
+          <option value='active'>Active</option>
+          <option value='overdue'>Overdue</option>
+          <option value='inactive'>Inactive</option>
         </select>
       </div>
 
@@ -90,9 +94,21 @@ export default function CustomerList() {
                 <td>{c.creditLimit}</td>
                 <td><strong style={{color: c.status === 'overdue' ? '#B03A37' : '#212529'}}>{c.outstanding}</strong></td>
                 <td><Badge status={c.status}>{c.status.toUpperCase()}</Badge></td>
-                <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
-                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'1px solid #DEE2E6',background:'#fff',color:'#714B67',cursor:'pointer',fontFamily:'DM Sans,sans-serif'}} onClick={() => navigate(`/sd/customers/${c.id}`)}>View</button>
-                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'none',background:'#714B67',color:'#fff',cursor:'pointer',fontFamily:'DM Sans,sans-serif'}} onClick={() => navigate('/sd/invoices/new')}>Invoice</button>
+                <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
+                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'1px solid #DEE2E6',background:'#fff',color:'#714B67',cursor:'pointer'}} onClick={() => navigate(`/sd/customers/${c.id}`)}>View</button>
+                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'1px solid #714B67',background:'#EDE0EA',color:'#714B67',cursor:'pointer'}}
+                    onClick={() => navigate(`/sd/customers/${c.id}?edit=true`)}>Edit</button>
+                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'none',
+                    background: c.status==='inactive'?'#00A09D':'#6C757D',color:'#fff',cursor:'pointer'}}
+                    onClick={() => {
+                      setCustomers(cs => cs.map(x => x.id===c.id ? {...x, status: x.status==='inactive'?'active':'inactive'} : x))
+                      toast.success(`${c.name} marked as ${c.status==='inactive'?'Active':'Inactive'}`)
+                    }}>
+                    {c.status==='inactive' ? 'Activate' : 'Deactivate'}
+                  </button>
+                  {c.status !== 'inactive' && (
+                    <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'none',background:'#714B67',color:'#fff',cursor:'pointer'}} onClick={() => navigate('/sd/invoices/new')}>Invoice</button>
+                  )}
                 </td>
               </tr>
             ))}

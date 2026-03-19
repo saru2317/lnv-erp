@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import ModuleLayout from '@components/layout/ModuleLayout'
 import PageLoader from '@components/ui/PageLoader'
 
+const ItemLedger = lazy(() => import('@modules/sd/pages/ItemLedger'))
 const WMDashboard      = lazy(() => import('./WMDashboard'))
 const StockList        = lazy(() => import('./StockList'))
 const BinStock         = lazy(() => import('./BinStock'))
@@ -20,7 +21,8 @@ const StockReport      = lazy(() => import('./StockReport'))
 
 const NAV_ITEMS = [
   { to: '/wm',             label: '🏠 Home' },
-  { to: '/wm/stock',       label: '📦 Stock' },
+  { to:'/wm/item-ledger', label:'Item Ledger' },
+    { to: '/wm/stock',       label: '📦 Stock' },
   { to: '/wm/goods-issue', label: '📤 Goods Issue' },
   { to: '/wm/transfer',    label: '🔄 Transfer' },
   { to: '/wm/report',      label: '📊 Reports' },
@@ -73,6 +75,7 @@ export default function WMLayout() {
     <ModuleLayout moduleName="WM" navItems={NAV_ITEMS} sidebarGroups={SIDEBAR_GROUPS}>
       <Suspense fallback={<PageLoader text="Loading WM page…" />}>
         <Routes>
+          <Route path="item-ledger" element={<ItemLedger />} />
           <Route index                    element={<WMDashboard />} />
           <Route path="stock"             element={<StockList />} />
           <Route path="bin-stock"         element={<BinStock />} />

@@ -1,3 +1,5 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -14,6 +16,7 @@ const JVS = [
 ]
 
 export default function JVList() {
+  const { viewMode, toggleView } = useListView('FI-JVList')
   const nav = useNavigate()
   const [chip, setChip] = useState('All')
   const [modal, setModal] = useState(null)

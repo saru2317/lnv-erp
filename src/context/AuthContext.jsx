@@ -10,9 +10,9 @@ export const AuthContext = createContext(null)
 // Role → accessible modules map
 export const ROLE_MODULES = {
   // ── Core Roles ────────────────────────────────────────
-  admin:      ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','vm','cn','admin','config','reports','kpi'],
-  manager:    ['home','pp','qm','pm','wm','mm','tm','am','vm','reports','kpi'],
-  accounts:   ['home','fi','sd','mm','am','reports','kpi'],
+  admin:      ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','vm','cn','admin','config','reports','kpi','mdm'],
+  manager:    ['home','pp','qm','pm','wm','mm','tm','am','vm','reports','kpi','mdm'],
+  accounts:   ['home','fi','sd','mm','am','reports','kpi','mdm'],
   operations: ['home','pp','qm','pm','wm','mm','tm','reports'],
   hr:         ['home','hcm','cn','vm','reports','kpi'],
   sales:      ['home','sd','crm','reports'],

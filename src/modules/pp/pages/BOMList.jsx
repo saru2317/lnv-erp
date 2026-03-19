@@ -1,3 +1,5 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -25,6 +27,7 @@ const BOMS = [
 ]
 
 export default function BOMList() {
+  const { viewMode, toggleView } = useListView('PP-BOMList')
   const nav = useNavigate()
   const [expanded, setExpanded] = useState(null)
 
@@ -33,8 +36,8 @@ export default function BOMList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Bill of Materials <small>CS03 · BOM List</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/bom/new')}>➕ Create BOM</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/bom/new')}>Create BOM</button>
         </div>
       </div>
 

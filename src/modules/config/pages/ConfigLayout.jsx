@@ -10,6 +10,7 @@ const UserManagement  = lazy(() => import('./UserManagement'))
 const RolesPermissions= lazy(() => import('./RolesPermissions'))
 const NumberSeries    = lazy(() => import('./NumberSeries'))
 const FiscalYear      = lazy(() => import('./FiscalYear'))
+const ApprovalConfig    = lazy(() => import('./ApprovalConfig'))
 const TaxConfig       = lazy(() => import('./TaxConfig'))
 const CurrencyConfig  = lazy(() => import('./CurrencyConfig'))
 const EmailConfig     = lazy(() => import('./EmailConfig'))
@@ -40,6 +41,7 @@ const SIDEBAR_GROUPS = [
     { to:'/config/email',        label:'Email Settings' },
     { to:'/config/print',        label:'Print Templates' },
     { to:'/config/audit',        label:'Audit Log' },
+    { to:'/config/approvals',    label:'Approval Workflows' },
   ]},
 ]
 
@@ -56,6 +58,7 @@ export default function ConfigLayout() {
           <Route path="security"        element={<SecurityConfig />} />
           <Route path="fiscal-year"     element={<FiscalYear />} />
           <Route path="number-series"   element={<NumberSeries />} />
+          <Route path="approvals" element={<ApprovalConfig />} />
           <Route path="tax"             element={<TaxConfig />} />
           <Route path="currency"        element={<CurrencyConfig />} />
           <Route path="email"           element={<EmailConfig />} />

@@ -28,12 +28,13 @@ const CivilModule     = lazy(() => import('@modules/civil/pages/CivilLayout'))
 const VMModule        = lazy(() => import('@modules/vm/pages/VMLayout'))
 const CNModule        = lazy(() => import('@modules/cn/pages/CNLayout'))
 const ReportsModule   = lazy(() => import('@modules/reports/pages/ReportsLayout'))
+const MDMModule       = lazy(() => import('@modules/mdm/pages/MDMLayout'))
 const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
 
 export default function App() {
   return (
-    <AuthProvider>
+      <AuthProvider>
       <ThemeProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/vm/*"       element={<VMModule />} />
               <Route path="/cn/*"       element={<CNModule />} />
               <Route path="/reports/*"  element={<ReportsModule />} />
+              <Route path="/mdm/*"      element={<MDMModule />} />
               <Route path="/kpi/*"      element={<KPIModule />} />
             </Route>
 

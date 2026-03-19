@@ -1,3 +1,5 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -13,6 +15,7 @@ const WOS = [
 const CHIPS = ['All','Draft','Released','In Progress','On Hold','Completed']
 
 export default function WOList() {
+  const { viewMode, toggleView } = useListView('PP-WOList')
   const nav = useNavigate()
   const [chip, setChip] = useState('All')
 
@@ -28,8 +31,8 @@ export default function WOList() {
         <div className="fi-lv-title">Work Orders <small>CO03 · Production Orders</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/gantt')}>📅 Gantt</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>➕ Create WO</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>Create WO</button>
         </div>
       </div>
 

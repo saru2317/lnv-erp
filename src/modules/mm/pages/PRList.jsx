@@ -1,3 +1,5 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -28,6 +30,7 @@ const PRIORITY = {
 }
 
 export default function PRList() {
+  const { viewMode, toggleView } = useListView('MM-PRList')
   const nav = useNavigate()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')

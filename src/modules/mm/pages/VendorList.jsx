@@ -16,6 +16,7 @@ export default function VendorList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Vendor Master <small>MK03 · All Vendors</small></div>
         <div className="lv-acts">
+          <ListViewToggle viewMode={viewMode} onToggle={toggleView} />
           <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/vendors/new')}>＋ New Vendor</button>
         </div>
@@ -25,6 +26,8 @@ export default function VendorList() {
         <select className="mm-fsel"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option><option>Services</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Active</option><option>Inactive</option><option>Blocked</option></select>
       </div>
+      
+      {viewMode === 'normal' && (
       <table className="mm-tbl">
         <thead><tr><th><input type="checkbox"/></th><th>Code</th><th>Vendor Name</th><th>GSTIN</th><th>City</th><th>Category</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
@@ -46,5 +49,15 @@ export default function VendorList() {
         </tbody>
       </table>
     </div>
+      )}
+
+      {viewMode === 'detail' && (
+        <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:4}}>
+          <div style={{padding:'12px 16px',background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:8,
+            color:'var(--odoo-gray)',fontSize:13,textAlign:'center'}}>
+            Detail view — select a record to expand full details
+          </div>
+        </div>
+      )}
   )
 }

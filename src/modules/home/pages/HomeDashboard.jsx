@@ -31,6 +31,7 @@ const SIDEBAR_GROUPS = [
   { key:'system', label:'System', color:'#714B67', items:[
     { label:'Admin',             icon:'🔐', path:'/admin',  desc:'Users · Roles' },
     { label:'Config',            icon:'⚙', path:'/config', desc:'Settings' },
+    { label:'MDM',               icon:'🗂️', path:'/mdm',   desc:'Master Data' },
   ]},
 ]
 

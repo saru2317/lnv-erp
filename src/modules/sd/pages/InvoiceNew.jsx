@@ -73,6 +73,16 @@ export default function InvoiceNew() {
                   {CUSTOMERS.map(c=><option key={c}>{c}</option>)}
                 </select>
               </div>
+              <div className="sd-fg sp2">
+                <label>Ship To (Delivery Address) <span className="req">*</span></label>
+                <select className="sd-fis" value={form.shipTo||''} onChange={e=>setForm(f=>({...f,shipTo:e.target.value}))}>
+                  <option value="">-- Same as Bill To --</option>
+                  <option value="Plant 1 — Hosur">Plant 1 — Hosur</option>
+                  <option value="Plant 2 — Chennai">Plant 2 — Chennai</option>
+                  <option value="Warehouse — Coimbatore">Warehouse — Coimbatore</option>
+                  <option value="3rd Party Delivery">3rd Party Delivery (specify below)</option>
+                </select>
+              </div>
               <div className="sd-fg"><label>Currency</label><select className="sd-fis"><option>INR — Indian Rupee</option></select></div>
               <div className="sd-fg"><label>Ref SO #</label><input className="sd-fi" value={form.soRef} onChange={e=>setForm(f=>({...f,soRef:e.target.value}))}/></div>
               <div className="sd-fg"><label>Place of Supply</label><select className="sd-fis"><option>Tamil Nadu (33)</option><option>Karnataka (29)</option></select></div>

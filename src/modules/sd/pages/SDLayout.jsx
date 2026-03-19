@@ -9,6 +9,8 @@ const CustomerNew  = lazy(() => import('./CustomerNew'))
 const CustomerView = lazy(() => import('./CustomerView'))
 const QuotList     = lazy(() => import('./QuotList'))
 const QuotNew      = lazy(() => import('./QuotNew'))
+const QuotView     = lazy(() => import('./QuotView'))
+const ItemLedger   = lazy(() => import('./ItemLedger'))
 const SOList       = lazy(() => import('./SOList'))
 const SONew        = lazy(() => import('./SONew'))
 const InvoiceList  = lazy(() => import('./InvoiceList'))
@@ -16,7 +18,9 @@ const InvoiceNew   = lazy(() => import('./InvoiceNew'))
 const PaymentList  = lazy(() => import('./PaymentList'))
 const PaymentNew   = lazy(() => import('./PaymentNew'))
 const ReturnList   = lazy(() => import('./ReturnList'))
-const ReturnNew    = lazy(() => import('./ReturnNew'))
+const ReturnNew          = lazy(() => import('./ReturnNew'))
+const PricingConditions  = lazy(() => import('./PricingConditions'))
+const PriceBook          = lazy(() => import('./PriceBook'))
 
 const NAV = [
   { to: '/sd',             label: '🏠 Home' },
@@ -32,7 +36,9 @@ const SIDEBAR = [
   { label: 'Master Data', icon: '👥', items: [
     { to: '/sd/customers',        label: 'Customer Master' },
     { to: '/sd/customers/new',    label: 'New Customer' },
+    { to: '/sd/item-ledger',      label: 'Item Ledger' },
     { to: '/sd/pricing',          label: 'Pricing Conditions' },
+    { to: '/sd/pricebook',        label: 'Price Book' },
   ]},
   { label: 'Transactions', icon: '💼', items: [
     { to: '/sd/quotations',       label: 'Quotations (VA21)' },
@@ -63,6 +69,7 @@ export default function SDLayout() {
           <Route path="customers/:id"   element={<CustomerView />} />
           <Route path="quotations"      element={<QuotList />} />
           <Route path="quotations/new"  element={<QuotNew />} />
+          <Route path="quotations/:id"  element={<QuotView />} />
           <Route path="orders"          element={<SOList />} />
           <Route path="orders/new"      element={<SONew />} />
           <Route path="orders/:id"      element={<SONew />} />
@@ -73,6 +80,9 @@ export default function SDLayout() {
           <Route path="payments/new"    element={<PaymentNew />} />
           <Route path="returns"         element={<ReturnList />} />
           <Route path="returns/new"     element={<ReturnNew />} />
+          <Route path="item-ledger"     element={<ItemLedger />} />
+          <Route path="pricing"         element={<PricingConditions />} />
+          <Route path="pricebook"       element={<PriceBook />} />
           <Route path="*"               element={<Navigate to="/sd" replace />} />
         </Routes>
       </Suspense>

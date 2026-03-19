@@ -25,6 +25,7 @@ const ALL_MODULES = [
   { key:'cn',      label:'Canteen',     icon:'🍽️' },
   { key:'reports', label:'Reports',     icon:'📊' },
   { key:'kpi',     label:'KPI / KRA',   icon:'🎯' },
+  { key:'mdm',     label:'MDM',         icon:'🗂️' },
 ]
 
 const ROLE_COLORS = {

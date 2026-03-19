@@ -14,6 +14,7 @@ export default function GRNList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Goods Receipt Notes <small>MB51 · GRN Register</small></div>
         <div className="lv-acts">
+          <ListViewToggle viewMode={viewMode} onToggle={toggleView} />
           <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>＋ Record GRN</button>
         </div>
@@ -23,6 +24,8 @@ export default function GRNList() {
         <select className="mm-fsel"><option>All Vendors</option><option>Lakshmi Textile Mills</option><option>Sri Murugan Traders</option><option>Aruna Industries</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Fully Received</option><option>Partial</option><option>Quality Hold</option></select>
       </div>
+      
+      {viewMode === 'normal' && (
       <table className="mm-tbl">
         <thead><tr><th><input type="checkbox"/></th><th>GRN No.</th><th>PO No.</th><th>Vendor</th><th>GRN Date</th><th>Material</th><th>Ordered Qty</th><th>Received Qty</th><th>Quality</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
@@ -40,5 +43,15 @@ export default function GRNList() {
         </tbody>
       </table>
     </div>
+      )}
+
+      {viewMode === 'detail' && (
+        <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:4}}>
+          <div style={{padding:'12px 16px',background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:8,
+            color:'var(--odoo-gray)',fontSize:13,textAlign:'center'}}>
+            Detail view — select a record to expand full details
+          </div>
+        </div>
+      )}
   )
 }

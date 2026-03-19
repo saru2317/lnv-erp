@@ -1,3 +1,5 @@
+import ListViewToggle from '@components/ui/ListViewToggle'
+import { useListView } from '@hooks/useListView'
 import React, { useState } from 'react'
 const NOTES = [
   {no:'CN-2025-003',type:'Credit Note',party:'ABC Textiles',  ref:'INV-2025-040',date:'25 Feb',amt:'₹18,000',reason:'Damaged goods return',gst:'₹3,240', net:'₹21,240',sb:'badge-posted',sl:'Posted'},
@@ -6,6 +8,7 @@ const NOTES = [
   {no:'DN-2025-001',type:'Debit Note', party:'Lakshmi Textiles',ref:'VINV-2025-009',date:'20 Feb',amt:'₹8,000',reason:'Short supply charged',   gst:'₹1,440', net:'₹9,440', sb:'badge-pending',sl:'Draft'},
 ]
 export default function CreditNoteList() {
+  const { viewMode, toggleView } = useListView('FI-CreditNoteList')
   const [tab, setTab] = useState('All')
   const filtered = tab==='All' ? NOTES : NOTES.filter(n=>n.type===tab+' Note')
   return (

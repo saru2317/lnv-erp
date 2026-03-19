@@ -15,8 +15,11 @@ export default function PaymentList() {
     <div>
       <div className="lv-hdr">
         <div className="lv-ttl">Payment Receipts <small>F-28 · Customer Payments</small></div>
-        <div className="lv-acts"><button className="btn btn-p" onClick={()=>navigate('/sd/payments/new')}>Record Payment</button></div>
+        <div className="lv-acts">
+          <ListViewToggle viewMode={viewMode} onToggle={toggleView} /><button className="btn btn-p" onClick={()=>navigate('/sd/payments/new')}>Record Payment</button></div>
       </div>
+      
+      {viewMode === 'normal' && (
       <div className="dc">
         <table className="sd-tbl">
           <thead><tr><th>PMT #</th><th>Date</th><th>Customer</th><th>Invoice Ref</th><th>Mode</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
@@ -37,5 +40,15 @@ export default function PaymentList() {
         </table>
       </div>
     </div>
+      )}
+
+      {viewMode === 'detail' && (
+        <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:4}}>
+          <div style={{padding:'12px 16px',background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:8,
+            color:'var(--odoo-gray)',fontSize:13,textAlign:'center'}}>
+            Detail view — select a record to expand full details
+          </div>
+        </div>
+      )}
   )
 }

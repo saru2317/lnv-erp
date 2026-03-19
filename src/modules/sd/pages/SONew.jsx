@@ -27,7 +27,7 @@ const calcLine = (l) => {
 export default function SONew() {
   const navigate = useNavigate()
   const today = new Date().toISOString().split('T')[0]
-  const [form, setForm] = useState({ soNo:'SO-0125', date:today, delivDate:'', customerId:'', currency:'INR', supply:'Tamil Nadu (33)', exec:'Admin', remarks:'' })
+  const [form, setForm] = useState({ soNo:'SO-0125', date:today, delivDate:'', customerId:'', currency:'INR', supply:'Tamil Nadu (33)', exec:'Admin', remarks:'', shipTo:'' })
   const [lines, setLines] = useState([calcLine(newLine())])
   const [saving, setSaving] = useState(false)
   const [custGSTIN, setCustGSTIN] = useState('')
@@ -98,6 +98,16 @@ export default function SONew() {
                 <select className="sd-fis" value={form.customerId} onChange={e=>setCustomer(e.target.value)}>
                   <option value="">-- Select Customer --</option>
                   {CUSTOMERS.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="sd-fg sp2">
+                <label>Ship To (Delivery Address)</label>
+                <select className="sd-fis" value={form.shipTo} onChange={e=>setForm(f=>({...f,shipTo:e.target.value}))}>
+                  <option value="">-- Same as Bill To (Default) --</option>
+                  <option value="Plant 1 — Hosur">Plant 1 — Hosur</option>
+                  <option value="Plant 2 — Chennai">Plant 2 — Chennai</option>
+                  <option value="Warehouse — Coimbatore">Warehouse — Coimbatore</option>
+                  <option value="3rd Party / Job Work Delivery">3rd Party / Job Work Delivery</option>
                 </select>
               </div>
               <div className="sd-fg"><label>Currency</label><select className="sd-fis"><option>INR — Indian Rupee</option><option>USD</option></select></div>
