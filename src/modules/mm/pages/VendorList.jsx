@@ -48,7 +48,7 @@ export default function VendorList() {
           ))}
         </tbody>
       </table>
-    </div>
+          </div>
       )}
 
       {viewMode === 'detail' && (

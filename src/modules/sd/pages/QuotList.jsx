@@ -71,7 +71,7 @@ export default function QuotList() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
       )}
 
       {/* DETAIL VIEW */}
