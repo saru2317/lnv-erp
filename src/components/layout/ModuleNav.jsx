@@ -25,7 +25,7 @@ export default function ModuleNav() {
           <button
             key={mod.key}
             onClick={() => allowed && navigate(mod.path)}
-            title={!allowed ? 'Access restricted for your role 🔒' : mod.label}
+            title={!allowed ? 'Access restricted for your role ' : mod.label}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '5px',
               padding: '0 13px', cursor: allowed ? 'pointer' : 'not-allowed',
@@ -42,7 +42,7 @@ export default function ModuleNav() {
           >
             <span style={{ fontSize: '13px' }}>{mod.icon}</span>
             {mod.label.split(' ')[0]}
-            {!allowed && ' 🔒'}
+            {!allowed && ' '}
           </button>
         )
       })}

@@ -315,14 +315,14 @@ export default function CSNew() {
         </div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/pr')}>← Back to PR</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/cs/view')}>🖨️ Print View</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/cs/view')}> Print View</button>
           <button className="btn btn-s sd-bsm" onClick={handleSave}>
-            {saved ? '✅ Saved' : '💾 Save Draft'}
+            {saved ? ' Saved' : ' Save Draft'}
           </button>
           <button className="btn btn-p sd-bsm"
             style={{background:approved?'#155724':'var(--odoo-green)',color:'#fff'}}
             onClick={handleApprove}>
-            {approved ? '✅ Approved! Raising PO…' : '✅ HOD Approve & Raise PO'}
+            {approved ? ' Approved! Raising PO…' : ' HOD Approve & Raise PO'}
           </button>
         </div>
       </div>
@@ -422,7 +422,7 @@ export default function CSNew() {
           padding:18,marginBottom:16,boxShadow:'0 2px 8px rgba(0,0,0,.08)'}}>
           <div style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:800,
             color:'var(--odoo-purple)',marginBottom:14,display:'flex',gap:10,alignItems:'center'}}>
-            📊 Landing Cost Comparison (WO GST)
+             Landing Cost Comparison (WO GST)
             <span style={{fontSize:11,fontWeight:400,color:'var(--odoo-gray)'}}>
               Green = Lowest cost (L1)
             </span>
@@ -465,7 +465,7 @@ export default function CSNew() {
                           fontWeight: isLowest ? 800 : 400,
                           color: isLowest ? '#155724' : 'var(--odoo-dark)'}}>
                           {c.landingCost > 0 ? fmt(c.landingCost) : '—'}
-                          {isLowest && <div style={{fontSize:10,color:'#155724',fontWeight:700}}>🏆 L1</div>}
+                          {isLowest && <div style={{fontSize:10,color:'#155724',fontWeight:700}}> L1</div>}
                         </td>
                       )
                     })}
@@ -482,7 +482,7 @@ export default function CSNew() {
         overflow:'hidden',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{background:'#856404',padding:'10px 16px',
           fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:800,color:'#fff'}}>
-          📅 Previous Purchase Reference
+           Previous Purchase Reference
         </div>
         <div style={{overflowX:'auto'}}>
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:900}}>

@@ -23,24 +23,24 @@ const PricingConditions  = lazy(() => import('./PricingConditions'))
 const PriceBook          = lazy(() => import('./PriceBook'))
 
 const NAV = [
-  { to: '/sd',             label: '🏠 Home' },
-  { to: '/sd/customers',   label: '👥 Customers' },
-  { to: '/sd/quotations',  label: '📝 Quotations' },
-  { to: '/sd/orders',      label: '📋 Sales Orders' },
-  { to: '/sd/invoices',    label: '🧾 Invoices' },
-  { to: '/sd/payments',    label: '💳 Payments' },
-  { to: '/sd/returns',     label: '↩️ Returns' },
+  { to: '/sd',             label: ' Home' },
+  { to: '/sd/customers',   label: ' Customers' },
+  { to: '/sd/quotations',  label: ' Quotations' },
+  { to: '/sd/orders',      label: ' Sales Orders' },
+  { to: '/sd/invoices',    label: ' Invoices' },
+  { to: '/sd/payments',    label: ' Payments' },
+  { to: '/sd/returns',     label: '↩ Returns' },
 ]
 
 const SIDEBAR = [
-  { label: 'Master Data', icon: '👥', items: [
+  { label: 'Master Data', icon: '', items: [
     { to: '/sd/customers',        label: 'Customer Master' },
     { to: '/sd/customers/new',    label: 'New Customer' },
     { to: '/sd/item-ledger',      label: 'Item Ledger' },
     { to: '/sd/pricing',          label: 'Pricing Conditions' },
     { to: '/sd/pricebook',        label: 'Price Book' },
   ]},
-  { label: 'Transactions', icon: '💼', items: [
+  { label: 'Transactions', icon: '', items: [
     { to: '/sd/quotations',       label: 'Quotations (VA21)' },
     { to: '/sd/quotations/new',   label: 'New Quotation' },
     { to: '/sd/orders',           label: 'Sales Orders (VA05)' },
@@ -50,7 +50,7 @@ const SIDEBAR = [
     { to: '/sd/payments',         label: 'Payment Receipts (F-28)' },
     { to: '/sd/returns',          label: 'Returns / Credit Note' },
   ]},
-  { label: 'Reports', icon: '📊', items: [
+  { label: 'Reports', icon: '', items: [
     { to: '/sd/reports/summary',  label: 'Sales Summary' },
     { to: '/sd/reports/ledger',   label: 'Customer Ledger' },
     { to: '/sd/reports/aging',    label: 'Receivables Aging' },

@@ -24,7 +24,7 @@ export default function TopBar({ onToggleSidebar }) {
       {/* Toggle */}
       <button onClick={onToggleSidebar}
         style={{ background: 'none', border: 'none', color: '#fff', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>
-        ☰
+        
       </button>
 
       {/* Logo */}
@@ -45,7 +45,7 @@ export default function TopBar({ onToggleSidebar }) {
         background: 'rgba(255,255,255,0.15)', borderRadius: '6px',
         display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px',
       }}>
-        <span style={{ fontSize: '13px', opacity: 0.7 }}>🔍</span>
+        <span style={{ fontSize: '13px', opacity: 0.7 }}></span>
         <input
           placeholder="Search modules, orders, employees…"
           style={{

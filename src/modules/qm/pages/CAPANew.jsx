@@ -7,7 +7,7 @@ export default function CAPANew() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>✅</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>CAPA-013 Created!</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>← CAPA List</button>
@@ -21,7 +21,7 @@ export default function CAPANew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">New CAPA <small>Corrective / Preventive Action</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}> Cancel</button>
           <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save CAPA</button>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function CAPANew() {
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa')}> Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save CAPA</button>
       </div>
     </div>

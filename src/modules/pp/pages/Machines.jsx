@@ -26,8 +26,8 @@ export default function Machines() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Machines / Work Centres <small>Capacity & Status</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">➕ Add Machine</button>
-          <button className="btn btn-s sd-bsm">📋 PM Schedule</button>
+          <button className="btn btn-s sd-bsm">Add Machine</button>
+          <button className="btn btn-s sd-bsm">PM Schedule</button>
         </div>
       </div>
 
@@ -43,7 +43,7 @@ export default function Machines() {
               <span className={`badge ${m.sb}`}>{m.status}</span>
             </div>
             <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginBottom:'6px'}}>
-              🏭 {m.wo}
+               {m.wo}
             </div>
             <div className="mc-util-bar">
               <div className="mc-util-fill" style={{

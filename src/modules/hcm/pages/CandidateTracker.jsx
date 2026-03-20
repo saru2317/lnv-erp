@@ -59,7 +59,7 @@ export default function CandidateTracker() {
                   <div style={{display:'flex',gap:'4px',marginTop:'6px'}}>
                     <button className="btn-xs">View</button>
                     {stage!=='Joined' && <button className="btn-xs pri">→ Move</button>}
-                    {stage==='Interview' && <button className="btn-xs">📞 Schedule</button>}
+                    {stage==='Interview' && <button className="btn-xs"> Schedule</button>}
                     {stage==='Offer' && <button className="btn-xs">Offer Letter</button>}
                   </div>
                 </div>

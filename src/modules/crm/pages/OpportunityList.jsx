@@ -38,7 +38,7 @@ export default function OpportunityList() {
 
       {/* Filters */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search opportunities…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search opportunities…" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="sd-select" value={owner} onChange={e=>setOwner(e.target.value)}>
           {owners.map(o=><option key={o}>{o}</option>)}
         </select>
@@ -73,7 +73,7 @@ export default function OpportunityList() {
                           <span style={{fontSize:'10px',fontWeight:'700'}}>{o.winProb}%</span>
                         </div>
                       </div>
-                      <div style={{fontSize:'10px',color:'var(--odoo-gray)',marginTop:'4px'}}>👤 {o.owner} · 📅 {o.closeDate}</div>
+                      <div style={{fontSize:'10px',color:'var(--odoo-gray)',marginTop:'4px'}}> {o.owner} ·  {o.closeDate}</div>
                     </div>
                   ))}
                   {opps.length===0&&<div style={{fontSize:'11px',color:'var(--odoo-gray)',textAlign:'center',padding:'20px 0'}}>No opportunities</div>}

@@ -45,14 +45,14 @@ export default function CurrencyConfig() {
             <div style={{ fontSize:'12px', opacity:.85 }}>All transactions stored in {base?.code}. Exchange rates are relative to 1 {base?.code}.</div>
           </div>
           <div style={{ marginLeft:'auto', padding:'6px 14px', background:'rgba(255,255,255,.2)', borderRadius:'8px', fontSize:'12px', fontWeight:'700' }}>
-            🔒 Cannot change base currency
+             Cannot change base currency
           </div>
         </div>
       </div>
 
       {showForm && (
         <div className="fi-panel" style={{ marginBottom:'16px', border:'2px solid var(--odoo-purple)' }}>
-          <div className="fi-panel-hdr"><h3>{editCode ? '✏️ Edit Currency' : '➕ Add Currency'}</h3></div>
+          <div className="fi-panel-hdr"><h3>{editCode ? ' Edit Currency' : ' Add Currency'}</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Currency Code *</label><input value={form.code} onChange={e=>set('code',e.target.value.toUpperCase())} placeholder="USD" maxLength={3} style={{fontFamily:'DM Mono,monospace',textTransform:'uppercase'}} disabled={!!editCode} /></div>
@@ -68,7 +68,7 @@ export default function CurrencyConfig() {
               </div>
             </div>
             <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editCode?'Update':'Add'}</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editCode?'Update':'Add'}</button>
               <button className="btn btn-s sd-bsm" onClick={() => { setShowForm(false); setEditCode(null) }}>Cancel</button>
             </div>
           </div>

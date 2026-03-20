@@ -38,7 +38,7 @@ export default function QuotList() {
       </div>
 
       <div className="sd-fb">
-        <div className="sd-fs">🔍 <input placeholder="Search QT #, customer..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <div className="sd-fs"> <input placeholder="Search QT #, customer..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="sd-fsel"><option>All Status</option><option>Pending</option><option>Won</option><option>Cancelled</option></select>
       </div>
 

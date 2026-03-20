@@ -31,10 +31,10 @@ export default function CustomerMaster() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Total Customers', v:CUSTOMERS.length,  clr:'var(--odoo-purple)',ic:'👥'},
-          {l:'Active',          v:activeCount,        clr:'var(--odoo-green)', ic:'✅'},
-          {l:'Annual Revenue',  v:fmt(totalRevenue),  clr:'var(--odoo-orange)',ic:'💰'},
-          {l:'Top Customer',    v:topCustomer.name.split(' ').slice(0,2).join(' '), clr:'var(--odoo-blue)',ic:'🏆'},
+          {l:'Total Customers', v:CUSTOMERS.length,  clr:'var(--odoo-purple)',ic:''},
+          {l:'Active',          v:activeCount,        clr:'var(--odoo-green)', ic:''},
+          {l:'Annual Revenue',  v:fmt(totalRevenue),  clr:'var(--odoo-orange)',ic:''},
+          {l:'Top Customer',    v:topCustomer.name.split(' ').slice(0,2).join(' '), clr:'var(--odoo-blue)',ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -58,7 +58,7 @@ export default function CustomerMaster() {
 
       {/* Filters */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search customer or contact…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search customer or contact…" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="sd-select" value={industry} onChange={e=>setIndustry(e.target.value)}>
           {industries.map(i=><option key={i}>{i}</option>)}
         </select>

@@ -93,7 +93,7 @@ export default function PayBillControl() {
 
       {/* Dept-wise */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🏢 Department-wise E-Cost Control — Feb 2025</div>
+        <div className="fi-form-sec-hdr"> Department-wise E-Cost Control — Feb 2025</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>

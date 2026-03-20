@@ -40,7 +40,7 @@ export default function JobCardNew() {
 
       {submitted && (
         <div style={{ padding:'12px 16px',background:'#E8F5E9',borderRadius:'8px',marginBottom:'14px',fontWeight:'700',color:'#2E7D32' }}>
-          ✅ Job Card created! Redirecting…
+           Job Card created! Redirecting…
         </div>
       )}
 
@@ -48,7 +48,7 @@ export default function JobCardNew() {
 
         {/* LEFT */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📋 Job Header</h3></div>
+          <div className="fi-panel-hdr"><h3>Job Header</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -75,7 +75,7 @@ export default function JobCardNew() {
             </div>
             {customer && (
               <div style={{ marginTop:'8px',padding:'8px 12px',background:'#F3F0FF',borderRadius:'6px',fontSize:'12px' }}>
-                👤 <strong>{customer.name}</strong> · {customer.entity} · 📞 {customer.phone} · Charge: <strong>{customer.chargeBy}</strong>
+                 <strong>{customer.name}</strong> · {customer.entity} ·  {customer.phone} · Charge: <strong>{customer.chargeBy}</strong>
               </div>
             )}
             <div className="sd-field" style={{ marginTop:'10px' }}>
@@ -87,7 +87,7 @@ export default function JobCardNew() {
 
         {/* RIGHT */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📦 Item & Quantity</h3></div>
+          <div className="fi-panel-hdr"><h3>Item & Quantity</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field" style={{ gridColumn:'1/-1' }}>
@@ -126,7 +126,7 @@ export default function JobCardNew() {
             {/* Shot calc */}
             {shotInfo && (
               <div style={{ marginTop:'10px',padding:'12px',background:'#FFF3CD',borderRadius:'8px',border:'1px solid #FFE082' }}>
-                <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}>💉 Shot Calculator</div>
+                <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}> Shot Calculator</div>
                 <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px' }}>
                   {[['Shots Needed',shotInfo.shots,'#E65100'],['Cavity',shotInfo.cavity,'#1A5276'],['Total Output',shotInfo.output,'var(--odoo-green)']].map(([l,v,c])=>(
                     <div key={l} style={{ textAlign:'center',padding:'6px',background:'#fff',borderRadius:'6px' }}>
@@ -161,7 +161,7 @@ export default function JobCardNew() {
       {item && routeStages.length > 0 && (
         <div className="fi-panel" style={{ marginTop:'14px' }}>
           <div className="fi-panel-hdr">
-            <h3>🗺️ Production Route — Loaded from Item ✅</h3>
+            <h3> Production Route — Loaded from Item </h3>
             <span style={{ fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'400' }}>Routing is item-specific · {routeStages.length} stages</span>
           </div>
           <div className="fi-panel-body">
@@ -199,7 +199,7 @@ export default function JobCardNew() {
       <div style={{ display:'flex',gap:'10px',marginTop:'16px',justifyContent:'flex-end' }}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/job-cards')}>Cancel</button>
         <button className="btn btn-p" onClick={handleSubmit} disabled={submitted}>
-          {submitted ? '✓ Creating…' : '✓ Create Job Card'}
+          {submitted ? ' Creating…' : ' Create Job Card'}
         </button>
       </div>
     </div>

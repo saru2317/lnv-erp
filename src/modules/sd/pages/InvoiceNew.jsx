@@ -32,10 +32,10 @@ export default function InvoiceNew() {
     setSaving(true)
     try {
       await sdApi.createInvoice({ ...form, lines })
-      toast.success('Invoice INV-0125 Created! 🎉')
+      toast.success('Invoice INV-0125 Created! ')
       navigate('/sd/invoices')
     } catch {
-      toast.success('Invoice INV-0125 Created (dev mode)! 🎉')
+      toast.success('Invoice INV-0125 Created (dev mode)! ')
       navigate('/sd/invoices')
     } finally { setSaving(false) }
   }
@@ -45,10 +45,10 @@ export default function InvoiceNew() {
       <div className="lv-hdr">
         <div className="lv-ttl">New Tax Invoice <small>VF01 · GST Invoice</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s" onClick={()=>navigate('/sd/invoices')}>✕ Discard</button>
+          <button className="btn btn-s" onClick={()=>navigate('/sd/invoices')}> Discard</button>
           <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft')}>Draft</button>
-          <button className="btn btn-sm" style={{background:'#00A09D',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}}>👁 Preview</button>
-          <button className="btn btn-p" onClick={post} disabled={saving}>{saving?'Posting…':'✅ Post Invoice'}</button>
+          <button className="btn btn-sm" style={{background:'#00A09D',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}}> Preview</button>
+          <button className="btn btn-p" onClick={post} disabled={saving}>{saving?'Posting…':' Post Invoice'}</button>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export default function InvoiceNew() {
                       <td><input value={fmt(l.sgst||0)} disabled style={{background:'#F8F9FA',width:'80px'}}/></td>
                       <td><input value="₹0" disabled style={{background:'#F8F9FA',width:'60px'}}/></td>
                       <td><input value={fmt(l.total||0)} disabled style={{background:'#F8F9FA',fontWeight:'700',width:'90px'}}/></td>
-                      <td><span style={{color:'#D9534F',cursor:'pointer'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}>🗑</span></td>
+                      <td><span style={{color:'#D9534F',cursor:'pointer'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}></span></td>
                     </tr>
                   ))}
                 </tbody>

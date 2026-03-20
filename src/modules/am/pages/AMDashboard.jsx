@@ -67,7 +67,7 @@ export default function AMDashboard() {
         {/* Property */}
         <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}>🏢 Company Properties</span>
+            <span style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}> Company Properties</span>
             <button onClick={()=>nav('/am/property')} style={{fontSize:11,color:'var(--odoo-purple)',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Manage →</button>
           </div>
           {PROPERTIES.map(p=>(<div key={p.name} style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)'}}>

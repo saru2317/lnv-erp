@@ -56,15 +56,15 @@ export default function RoutingTemplate() {
         <div className="fi-lv-title">Routing Template <small>Define process sequence per customer</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={resetToDefault}>↺ Reset to Default</button>
-          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}>💾 Save Route</button>
+          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}>Save Route</button>
         </div>
       </div>
 
-      {saved&&<div className="pp-alert" style={{marginBottom:'14px'}}>✅ Routing template saved for <strong>{custName}</strong>! New job cards will auto-use this route.</div>}
+      {saved&&<div className="pp-alert" style={{marginBottom:'14px'}}>Routing template saved for <strong>{custName}</strong>! New job cards will auto-use this route.</div>}
 
       {/* Customer selector */}
       <div className="fi-panel" style={{marginBottom:'14px'}}>
-        <div className="fi-panel-hdr"><h3>👥 Select Customer / Template</h3></div>
+        <div className="fi-panel-hdr"><h3> Select Customer / Template</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
             {[{id:'DEFAULT',name:'⭐ Default Template',desc:'Used when no customer-specific route exists'},...PP_CUSTOMERS.map(c=>({id:c.id,name:c.name,desc:c.entity+' · '+c.processes.length+' processes'}))].map(c=>(
@@ -83,7 +83,7 @@ export default function RoutingTemplate() {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
         {/* Available processes - toggle to add/remove */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>⚙️ Available Processes — Toggle to include/exclude</h3></div>
+          <div className="fi-panel-hdr"><h3> Available Processes — Toggle to include/exclude</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
               {ALL_PROCESSES.map(p=>{
@@ -100,7 +100,7 @@ export default function RoutingTemplate() {
                       {included?seqNum:'—'}
                     </div>
                     <span style={{flex:1,fontSize:'12px',fontWeight:'600',color:included?'var(--odoo-purple)':'var(--odoo-gray)'}}>{p}</span>
-                    <span style={{fontSize:'16px'}}>{included?'✅':'⬜'}</span>
+                    <span style={{fontSize:'16px'}}>{included?'':'⬜'}</span>
                   </div>
                 )
               })}
@@ -111,7 +111,7 @@ export default function RoutingTemplate() {
         {/* Route builder - drag to reorder */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>🗺️ Route for <span style={{color:'var(--odoo-purple)'}}>{custName}</span></h3>
+            <h3> Route for <span style={{color:'var(--odoo-purple)'}}>{custName}</span></h3>
             <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{currentRoute.length} steps · Drag to reorder</span>
           </div>
           <div className="fi-panel-body">

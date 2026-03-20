@@ -10,7 +10,7 @@ export default function EmployeeNew() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>🎉</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>EMP-011 Created! Welcome Onboard!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>ID card, email, ESI/PF registration initiated</div>
       <div style={{display:'flex',gap:'10px'}}>
@@ -25,7 +25,7 @@ export default function EmployeeNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">New Employee Onboarding <small>EMP-011</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}> Cancel</button>
           {step<4 && <button className="btn btn-s sd-bsm" onClick={()=>setStep(s=>Math.min(s+1,4))}>Next →</button>}
           {step===4 && <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>Complete Onboarding</button>}
         </div>
@@ -39,7 +39,7 @@ export default function EmployeeNew() {
             background:i===step?'var(--odoo-purple)':i<step?'var(--odoo-green)':'#fff',
             color:i<=step?'#fff':'var(--odoo-gray)',
             borderRight:'1px solid var(--odoo-border)',transition:'all .2s'}}>
-            <div>{i<step?'✅':i===step?'●':'○'}</div>
+            <div>{i<step?'':i===step?'●':'○'}</div>
             {s}
           </div>
         ))}
@@ -47,7 +47,7 @@ export default function EmployeeNew() {
 
       {step===0 && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">👤 Personal Information</div>
+          <div className="fi-form-sec-hdr"> Personal Information</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>First Name <span>*</span></label><input className="fi-form-ctrl" placeholder="First name"/></div>
@@ -84,7 +84,7 @@ export default function EmployeeNew() {
 
       {step===1 && (
         <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">🏢 Employment Details</div>
+          <div className="fi-form-sec-hdr"> Employment Details</div>
           <div className="fi-form-sec-body">
             <div className="fi-form-row">
               <div className="fi-form-grp"><label>Date of Joining <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-03-01"/></div>
@@ -168,7 +168,7 @@ export default function EmployeeNew() {
                 <div style={{flex:1,fontSize:'13px',fontWeight:'600'}}>{doc}</div>
                 <input type="checkbox" style={{width:'18px',height:'18px',accentColor:'var(--odoo-green)'}}/>
                 <span style={{fontSize:'11px',color:'var(--odoo-gray)',width:'70px'}}>Collected</span>
-                <button className="btn-xs">📎 Upload</button>
+                <button className="btn-xs"> Upload</button>
               </div>
             ))}
           </div>
@@ -179,11 +179,11 @@ export default function EmployeeNew() {
         <div className="fi-form-sec">
           <div className="fi-form-sec-hdr">Onboarding Checklist</div>
           <div className="fi-form-sec-body">
-            {[['ID Card issued','🪪'],['ESS login created (Employee Portal)','💻'],
-              ['ESI/PF registration done','🏛️'],['Biometric enrollment done','👆'],
-              ['Leave balance credited for year','📅'],['Email & system access given','📧'],
-              ['Plant induction completed','🏭'],['Supervisor informed','👤'],
-              ['Salary master entry done','💰'],['Emergency contact recorded','📞']
+            {[['ID Card issued','🪪'],['ESS login created (Employee Portal)',''],
+              ['ESI/PF registration done',''],['Biometric enrollment done',''],
+              ['Leave balance credited for year',''],['Email & system access given',''],
+              ['Plant induction completed',''],['Supervisor informed',''],
+              ['Salary master entry done',''],['Emergency contact recorded','']
             ].map(([task,ic])=>(
               <div key={task} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'1px solid var(--odoo-border)'}}>
                 <span style={{fontSize:'20px'}}>{ic}</span>
@@ -197,7 +197,7 @@ export default function EmployeeNew() {
 
       <div className="fi-form-acts">
         {step>0 && <button className="btn btn-s sd-bsm" onClick={()=>setStep(s=>s-1)}>← Back</button>}
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/employees')}> Cancel</button>
         {step<4
           ? <button className="btn btn-p sd-bsm" onClick={()=>setStep(s=>s+1)}>Next Step →</button>
           : <button className="btn btn-p sd-bsm" onClick={()=>setSaved(true)}>Complete Onboarding</button>

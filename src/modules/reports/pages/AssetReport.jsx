@@ -51,7 +51,7 @@ export default function AssetReport() {
       </div>
 
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {[['summary','📋 Category Summary'],['depreciation','📉 Depreciation Trend']].map(([k, l]) => (
+        {[['summary',' Category Summary'],['depreciation',' Depreciation Trend']].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
               cursor:'pointer', border:'1px solid var(--odoo-border)',
@@ -108,7 +108,7 @@ export default function AssetReport() {
           <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
             padding:18, marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, marginBottom:14 }}>
-              📉 Monthly Depreciation Charge
+               Monthly Depreciation Charge
             </h4>
             <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:110 }}>
               {DEPR_MONTHLY.map((d, i) => {
@@ -129,7 +129,7 @@ export default function AssetReport() {
             </div>
           </div>
           <div className="fi-alert info">
-            ℹ️ Total YTD Depreciation posted to GL: <strong>{fmtL(totalYTD)}</strong> · Dr. Depreciation Expense / Cr. Accumulated Depreciation
+            ℹ Total YTD Depreciation posted to GL: <strong>{fmtL(totalYTD)}</strong> · Dr. Depreciation Expense / Cr. Accumulated Depreciation
           </div>
         </div>
       )}

@@ -31,20 +31,20 @@ const CSList         = lazy(() => import('./CSList'))
 const CSNew          = lazy(() => import('./CSNew'))
 
 const NAV_ITEMS = [
-  { to: '/mm',             label: '🏠 Home',             icon: '' },
-  { to: '/mm/po',          label: '📋 Purchase Orders',   icon: '' },
-  { to: '/mm/grn',         label: '📦 GRN / Receipt',     icon: '' },
-  { to: '/mm/invoices',    label: '🧾 Vendor Invoice',    icon: '' },
-  { to: '/mm/vendors',     label: '🏭 Vendors',           icon: '' },
-  { to: '/mm/payments',    label: '💳 Payments',          icon: '' },
-  { to: '/mm/report',      label: '📊 Reports',           icon: '' },
-  { to: '/mm/pr',          label: '📝 Purchase Indent',  icon: '' },
-  { to: '/mm/cs',          label: '📊 Comparative',      icon: '' },
+  { to: '/mm',             label: ' Home',             icon: '' },
+  { to: '/mm/po',          label: ' Purchase Orders',   icon: '' },
+  { to: '/mm/grn',         label: ' GRN / Receipt',     icon: '' },
+  { to: '/mm/invoices',    label: ' Vendor Invoice',    icon: '' },
+  { to: '/mm/vendors',     label: ' Vendors',           icon: '' },
+  { to: '/mm/payments',    label: ' Payments',          icon: '' },
+  { to: '/mm/report',      label: ' Reports',           icon: '' },
+  { to: '/mm/pr',          label: ' Purchase Indent',  icon: '' },
+  { to: '/mm/cs',          label: ' Comparative',      icon: '' },
 ]
 
 const SIDEBAR_GROUPS = [
   {
-    label: 'Purchase Orders', icon: '📋',
+    label: 'Purchase Orders', icon: '',
     items: [
       { to: '/mm/po',           label: 'PO List (ME2M)' },
       { to: '/mm/po/new',       label: 'Create PO (ME21N)' },
@@ -53,7 +53,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Goods Receipt', icon: '📦',
+    label: 'Goods Receipt', icon: '',
     items: [
       { to: '/mm/grn',          label: 'GRN List (MB51)' },
       { to: '/mm/grn/new',      label: 'Record GRN (MIGO)' },
@@ -61,7 +61,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Vendor Invoice', icon: '🧾',
+    label: 'Vendor Invoice', icon: '',
     items: [
       { to: '/mm/invoices',     label: 'Invoice List (MIRO)' },
       { to: '/mm/invoices/new', label: 'Enter Invoice' },
@@ -70,7 +70,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Vendor Master', icon: '🏭',
+    label: 'Vendor Master', icon: '',
     items: [
       { to: '/mm/vendors',      label: 'Vendor List (MK03)' },
       { to: '/mm/vendors/new',  label: 'New Vendor' },
@@ -78,7 +78,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Purchase Indent & CS', icon: '📊',
+    label: 'Purchase Indent & CS', icon: '',
     items: [
       { to: '/mm/pr',           label: 'PR List (Purchase Indent)' },
       { to: '/mm/pr/new',       label: 'New Purchase Indent' },
@@ -87,7 +87,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Reports', icon: '📊',
+    label: 'Reports', icon: '',
     items: [
       { to: '/mm/report',       label: 'Purchase Register' },
       { to: '/mm/po/pending',   label: 'Pending POs' },

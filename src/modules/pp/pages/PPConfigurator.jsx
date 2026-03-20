@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { INDUSTRY_SUBTYPES, CHARGE_BASES } from './_ppConfig'
 
 const BUSINESS_TYPES = [
-  { key:'jobwork',  label:'Job Work / Processing Service', model:'Labour / Processing Charges', color:'var(--odoo-purple)', desc:'Customer sends material. You process and charge for service only. Most common for surface treatment, heat treatment, CNC, textile processing.', emoji:'🏭' },
-  { key:'mfg',      label:'Own Product Manufacturing',     model:'Own Inventory + Sales',        color:'var(--odoo-orange)',desc:'You buy raw material, manufacture finished goods, and sell. BOM-based production with inventory costing.',  emoji:'🔩' },
-  { key:'hybrid',   label:'Hybrid (Both)',                 model:'Job Work + Own Manufacturing', color:'var(--odoo-blue)',  desc:'You do both job work for customers AND manufacture your own products. Separate tracking for each.', emoji:'⚡' },
+  { key:'jobwork',  label:'Job Work / Processing Service', model:'Labour / Processing Charges', color:'var(--odoo-purple)', desc:'Customer sends material. You process and charge for service only. Most common for surface treatment, heat treatment, CNC, textile processing.', emoji:'' },
+  { key:'mfg',      label:'Own Product Manufacturing',     model:'Own Inventory + Sales',        color:'var(--odoo-orange)',desc:'You buy raw material, manufacture finished goods, and sell. BOM-based production with inventory costing.',  emoji:'' },
+  { key:'hybrid',   label:'Hybrid (Both)',                 model:'Job Work + Own Manufacturing', color:'var(--odoo-blue)',  desc:'You do both job work for customers AND manufacture your own products. Separate tracking for each.', emoji:'' },
 ]
 
 export default function PPConfigurator() {
@@ -34,16 +34,16 @@ export default function PPConfigurator() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'56px',marginBottom:'16px'}}>🚀</div>
+      <div style={{fontSize:'56px',marginBottom:'16px'}}></div>
       <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)',fontSize:'24px',marginBottom:'8px'}}>PP Module Configured!</h2>
       <div style={{color:'var(--odoo-gray)',marginBottom:'6px',fontSize:'14px'}}>{sub?.name} · {selProcesses.length} processes · Charge by {chargeBy}</div>
       <div style={{background:'#EDE0EA',borderRadius:'8px',padding:'12px 20px',marginBottom:'24px',fontSize:'12px',color:'var(--odoo-purple)',fontWeight:'600'}}>
         Your entire PP module — Work Centers, Job Cards, Scheduler, Rate Cards — now adapts to this configuration!
       </div>
       <div style={{display:'flex',gap:'12px',flexWrap:'wrap',justifyContent:'center'}}>
-        <button className="btn btn-p btn-s" onClick={()=>nav('/pp/work-centers')}>⚙️ Setup Work Centers →</button>
-        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/process-master')}>📋 Define Processes →</button>
-        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/customer-master')}>👥 Setup Customers →</button>
+        <button className="btn btn-p btn-s" onClick={()=>nav('/pp/work-centers')}> Setup Work Centers →</button>
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/process-master')}>Define Processes →</button>
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/customer-master')}> Setup Customers →</button>
       </div>
     </div>
   )
@@ -62,7 +62,7 @@ export default function PPConfigurator() {
             if(step===2&&(!subType||selProcesses.length===0)){alert('Select sub-type and at least one process');return}
             setStep(s=>s+1)
           }}>Next →</button>}
-          {step === 3 && <button className="btn btn-p btn-s" onClick={handleSave}>✅ Save Configuration</button>}
+          {step === 3 && <button className="btn btn-p btn-s" onClick={handleSave}>Save Configuration</button>}
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export default function PPConfigurator() {
             <div style={{width:'24px',height:'24px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
               background:step===i+1?'rgba(255,255,255,.3)':step>i+1?'var(--odoo-purple)':'var(--odoo-border)',
               color:step>i?'#fff':'var(--odoo-gray)',fontSize:'11px',fontWeight:'700',flexShrink:0}}>
-              {step>i+1?'✓':i+1}
+              {step>i+1?'':i+1}
             </div>
             <div>
               <div style={{fontSize:'12px',fontWeight:'700',color:step===i+1?'#fff':step>i+1?'var(--odoo-purple)':'var(--odoo-gray)'}}>{s}</div>
@@ -100,7 +100,7 @@ export default function PPConfigurator() {
                   boxShadow:bizType===b.key?`0 0 0 3px ${b.color}22`:'none',
                   position:'relative',overflow:'hidden'}}>
                 <div style={{position:'absolute',top:0,left:0,right:0,height:'4px',background:b.color,borderRadius:'12px 12px 0 0'}}></div>
-                {bizType===b.key&&<div style={{position:'absolute',top:'10px',right:'10px',width:'22px',height:'22px',borderRadius:'50%',background:b.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px'}}>✓</div>}
+                {bizType===b.key&&<div style={{position:'absolute',top:'10px',right:'10px',width:'22px',height:'22px',borderRadius:'50%',background:b.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px'}}></div>}
                 <div style={{fontSize:'28px',marginBottom:'10px'}}>{b.emoji}</div>
                 <div style={{fontSize:'11px',fontWeight:'700',padding:'3px 9px',borderRadius:'12px',display:'inline-block',marginBottom:'8px',
                   background:b.color+'22',color:b.color}}>{b.model}</div>
@@ -110,7 +110,7 @@ export default function PPConfigurator() {
             ))}
           </div>
           <div style={{marginTop:'16px',padding:'12px 14px',background:'#FFF3CD',borderRadius:'8px',fontSize:'12px',color:'#856404'}}>
-            💡 <strong>Most Tamil Nadu job work companies</strong> are <strong>Job Work / Processing Service</strong> — you receive customer's material, process it, and invoice for labour only.
+             <strong>Most Tamil Nadu job work companies</strong> are <strong>Job Work / Processing Service</strong> — you receive customer's material, process it, and invoice for labour only.
           </div>
         </div>
       )}
@@ -141,7 +141,7 @@ export default function PPConfigurator() {
           {sub&&(
             <div className="fi-panel" style={{marginBottom:'14px'}}>
               <div className="fi-panel-hdr">
-                <h3>⚙️ Processes Performed <span style={{fontSize:'10px',fontWeight:'400',color:'var(--odoo-gray)',marginLeft:'6px'}}>Select all that apply</span></h3>
+                <h3> Processes Performed <span style={{fontSize:'10px',fontWeight:'400',color:'var(--odoo-gray)',marginLeft:'6px'}}>Select all that apply</span></h3>
                 <div style={{display:'flex',gap:'8px'}}>
                   <button className="btn btn-s sd-bsm" onClick={loadDefaults}>Load Defaults</button>
                   <button className="btn btn-s sd-bsm" onClick={()=>setSelProcesses([])}>Clear All</button>
@@ -156,7 +156,7 @@ export default function PPConfigurator() {
                         borderColor:selProcesses.includes(p)?'var(--odoo-purple)':'var(--odoo-border)',
                         background:selProcesses.includes(p)?'var(--odoo-purple)':'#fff',
                         color:selProcesses.includes(p)?'#fff':'var(--odoo-text)'}}>
-                      {selProcesses.includes(p)&&<span style={{fontSize:'10px'}}>✓</span>}
+                      {selProcesses.includes(p)&&<span style={{fontSize:'10px'}}></span>}
                       {p}
                     </div>
                   ))}
@@ -164,7 +164,7 @@ export default function PPConfigurator() {
 
                 {/* Charge basis */}
                 <div style={{borderTop:'1px solid var(--odoo-border)',paddingTop:'14px'}}>
-                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)',marginBottom:'8px',textTransform:'uppercase'}}>💰 Charge Basis — How do you invoice the customer?</div>
+                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)',marginBottom:'8px',textTransform:'uppercase'}}>Charge Basis — How do you invoice the customer?</div>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
                     {sub.chargeBy.map(c=>(
                       <div key={c} onClick={()=>setChargeBy(c)}
@@ -183,7 +183,7 @@ export default function PPConfigurator() {
 
           {selProcesses.length>0&&(
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>📋 Selected Process Sequence Preview</h3></div>
+              <div className="fi-panel-hdr"><h3>Selected Process Sequence Preview</h3></div>
               <div className="fi-panel-body">
                 <div style={{display:'flex',flexWrap:'wrap',gap:'0',alignItems:'center'}}>
                   {selProcesses.map((p,i)=>(
@@ -193,7 +193,7 @@ export default function PPConfigurator() {
                     </React.Fragment>
                   ))}
                 </div>
-                <div style={{marginTop:'10px',fontSize:'11px',color:'var(--odoo-gray)'}}>💡 This is the default sequence. You can define custom routing per customer in the Routing Template.</div>
+                <div style={{marginTop:'10px',fontSize:'11px',color:'var(--odoo-gray)'}}> This is the default sequence. You can define custom routing per customer in the Routing Template.</div>
               </div>
             </div>
           )}
@@ -209,7 +209,7 @@ export default function PPConfigurator() {
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>✅ Configuration Summary</h3></div>
+              <div className="fi-panel-hdr"><h3>Configuration Summary</h3></div>
               <div className="fi-panel-body">
                 {[
                   ['Business Type', BUSINESS_TYPES.find(b=>b.key===bizType)?.label||'—'],
@@ -225,7 +225,7 @@ export default function PPConfigurator() {
               </div>
             </div>
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>⚙️ Process Flow</h3></div>
+              <div className="fi-panel-hdr"><h3> Process Flow</h3></div>
               <div className="fi-panel-body">
                 {selProcesses.map((p,i)=>(
                   <div key={p} style={{display:'flex',alignItems:'center',gap:'10px',padding:'6px 0',borderBottom:'1px solid var(--odoo-border)'}}>
@@ -239,12 +239,12 @@ export default function PPConfigurator() {
             </div>
           </div>
           <div style={{marginTop:'14px',padding:'14px',background:'linear-gradient(135deg,var(--odoo-purple),#875A7B)',borderRadius:'10px',color:'#fff',fontSize:'12px',lineHeight:'1.8'}}>
-            <div style={{fontWeight:'700',fontSize:'14px',marginBottom:'8px'}}>🚀 What happens after Save:</div>
-            <div>✅ Work Center Master — pre-loaded with your process list</div>
-            <div>✅ Job Card form — adapts to your process sequence</div>
-            <div>✅ Smart Scheduler — routes jobs through YOUR work centers</div>
-            <div>✅ Rate Card — configured per customer × per process</div>
-            <div>✅ AI Insights — loaded with your industry knowledge</div>
+            <div style={{fontWeight:'700',fontSize:'14px',marginBottom:'8px'}}> What happens after Save:</div>
+            <div>Work Center Master — pre-loaded with your process list</div>
+            <div>Job Card form — adapts to your process sequence</div>
+            <div>Smart Scheduler — routes jobs through YOUR work centers</div>
+            <div>Rate Card — configured per customer × per process</div>
+            <div>AI Insights — loaded with your industry knowledge</div>
           </div>
         </div>
       )}

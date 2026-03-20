@@ -20,7 +20,7 @@ export default function LeadNew() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}>🎯</div>
+      <div style={{fontSize:'48px',marginBottom:'16px'}}></div>
       <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)',marginBottom:'8px'}}>Lead Created!</h2>
       <div style={{color:'var(--odoo-gray)',marginBottom:'24px'}}>LEAD-{String(Math.floor(Math.random()*90)+10).padStart(4,'0')} — {form.company} has been added to your pipeline.</div>
       <div style={{display:'flex',gap:'12px'}}>
@@ -45,7 +45,7 @@ export default function LeadNew() {
         {/* Left — Company & Contact */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>🏢 Company Information</h3></div>
+            <div className="fi-panel-hdr"><h3> Company Information</h3></div>
             <div className="fi-panel-body">
               <div className="sd-form-grid">
                 <div className="sd-field">
@@ -80,7 +80,7 @@ export default function LeadNew() {
           </div>
 
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>👤 Contact Person</h3></div>
+            <div className="fi-panel-hdr"><h3> Contact Person</h3></div>
             <div className="fi-panel-body">
               <div className="sd-form-grid">
                 <div className="sd-field">
@@ -133,7 +133,7 @@ export default function LeadNew() {
         {/* Right — Lead Details */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>⚙️ Lead Details</h3></div>
+            <div className="fi-panel-hdr"><h3> Lead Details</h3></div>
             <div className="fi-panel-body">
               <div className="sd-field">
                 <label>Lead Source</label>
@@ -165,15 +165,15 @@ export default function LeadNew() {
                   <strong style={{color:'var(--odoo-green)'}}>{x.r} conv. rate</strong>
                 </div>
               ))}
-              <div style={{marginTop:'8px',fontSize:'11px',color:'var(--odoo-gray)'}}>💡 Referral leads have highest conversion</div>
+              <div style={{marginTop:'8px',fontSize:'11px',color:'var(--odoo-gray)'}}> Referral leads have highest conversion</div>
             </div>
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>🤖 AI Suggestion</h3></div>
+            <div className="fi-panel-hdr"><h3> AI Suggestion</h3></div>
             <div className="fi-panel-body">
               <div style={{background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px'}}>
-                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}>💡 Win Tips</div>
+                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}> Win Tips</div>
                 {form.industry==='Automotive'
                   ? <div>Auto industry leads close <strong>40% faster</strong> with a plant demo. Schedule within 5 days.</div>
                   : form.source==='Referral'

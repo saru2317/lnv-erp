@@ -19,7 +19,7 @@ export default function RoutingList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Routing List <small>CA03 · Production Routing</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/routing/new')}>➕ Create Routing</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/routing/new')}>Create Routing</button>
         </div>
       </div>
       <table className="fi-data-table">

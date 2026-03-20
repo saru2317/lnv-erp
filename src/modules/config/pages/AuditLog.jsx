@@ -48,7 +48,7 @@ export default function AuditLog() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Audit Log <small>All system changes tracked automatically</small></div>
         <div className="fi-lv-actions">
-          <input className="sd-search" placeholder="🔍 User / Document / Change…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:'200px'}} />
+          <input className="sd-search" placeholder=" User / Document / Change…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:'200px'}} />
           <select className="sd-select" value={moduleF} onChange={e=>setModuleF(e.target.value)}>
             <option value="All">All Modules</option>
             {modules.map(m=><option key={m}>{m}</option>)}
@@ -64,11 +64,11 @@ export default function AuditLog() {
       {/* Summary KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px',marginBottom:'14px'}}>
         {[
-          {l:'Total Entries',v:entries.length,c:'var(--odoo-purple)',i:'📋'},
+          {l:'Total Entries',v:entries.length,c:'var(--odoo-purple)',i:''},
           ...Object.entries(ACTION_COLORS).map(([a,col])=>({
             l:`${a[0]+a.slice(1).toLowerCase()}s`,
             v:entries.filter(e=>e.action===a).length,
-            c:col.c, i:a==='LOGIN'?'🔑':a==='CREATE'?'➕':a==='UPDATE'?'✏️':a==='DELETE'?'🗑️':'✅'
+            c:col.c, i:a==='LOGIN'?'':a==='CREATE'?'':a==='UPDATE'?'':a==='DELETE'?'':''
           }))
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
@@ -103,7 +103,7 @@ export default function AuditLog() {
               <div style={{flex:1}}>
                 <div style={{fontSize:'12px',fontWeight:'600'}}>{e.change}</div>
                 <div style={{fontSize:'10px',color:'var(--odoo-gray)',marginTop:'2px'}}>
-                  👤 {e.user} ({e.role}) &nbsp;·&nbsp; 🌐 {e.ip}
+                   {e.user} ({e.role}) &nbsp;·&nbsp;  {e.ip}
                 </div>
               </div>
               {/* Timestamp */}

@@ -34,10 +34,10 @@ export default function QuotationList() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Total Quotations',  v:QUOTATIONS.length,  clr:'var(--odoo-purple)',ic:'📄'},
+          {l:'Total Quotations',  v:QUOTATIONS.length,  clr:'var(--odoo-purple)',ic:''},
           {l:'Pending Value',     v:fmt(totalSent),      clr:'var(--odoo-orange)',ic:'⏳'},
-          {l:'Won Value',         v:fmt(totalWon),       clr:'var(--odoo-green)', ic:'🏆'},
-          {l:'Conversion Rate',   v:winRate+'%',         clr:'var(--odoo-blue)',  ic:'📊'},
+          {l:'Won Value',         v:fmt(totalWon),       clr:'var(--odoo-green)', ic:''},
+          {l:'Conversion Rate',   v:winRate+'%',         clr:'var(--odoo-blue)',  ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -61,7 +61,7 @@ export default function QuotationList() {
 
       {/* Filters */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search company or quotation ID…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search company or quotation ID…" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="sd-select" value={owner} onChange={e=>setOwner(e.target.value)}>
           {owners.map(o=><option key={o}>{o}</option>)}
         </select>

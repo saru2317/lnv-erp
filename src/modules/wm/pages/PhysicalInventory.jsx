@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 
 const INIT = [
-  {mat:'Cotton Sliver (MAT-001)',  bin:'BIN-A12',uom:'Kg',  sys:480, counted:480,  rate:850,  row:'pi-row-ok',  b:'badge-ok',       bl:'✅ Match'},
-  {mat:'Ring Yarn (MAT-002)',      bin:'BIN-B04',uom:'Kg',  sys:80,  counted:75,   rate:1200, row:'pi-row-diff', b:'badge-critical',  bl:'❌ Short'},
-  {mat:'Packing Boxes (MAT-004)', bin:'BIN-F06',uom:'Nos', sys:850, counted:862,  rate:200,  row:'pi-row-diff', b:'badge-new',       bl:'📈 Surplus'},
-  {mat:'Solvent Chemical (MAT-005)',bin:'BIN-E10',uom:'Litre',sys:25,counted:25,  rate:500,  row:'pi-row-ok',  b:'badge-ok',       bl:'✅ Match'},
-  {mat:'Lattice Aprons (MAT-003)',  bin:'BIN-C05',uom:'Nos', sys:35,  counted:35,   rate:1050, row:'pi-row-ok',  b:'badge-ok',       bl:'✅ Match'},
+  {mat:'Cotton Sliver (MAT-001)',  bin:'BIN-A12',uom:'Kg',  sys:480, counted:480,  rate:850,  row:'pi-row-ok',  b:'badge-ok',       bl:' Match'},
+  {mat:'Ring Yarn (MAT-002)',      bin:'BIN-B04',uom:'Kg',  sys:80,  counted:75,   rate:1200, row:'pi-row-diff', b:'badge-critical',  bl:' Short'},
+  {mat:'Packing Boxes (MAT-004)', bin:'BIN-F06',uom:'Nos', sys:850, counted:862,  rate:200,  row:'pi-row-diff', b:'badge-new',       bl:' Surplus'},
+  {mat:'Solvent Chemical (MAT-005)',bin:'BIN-E10',uom:'Litre',sys:25,counted:25,  rate:500,  row:'pi-row-ok',  b:'badge-ok',       bl:' Match'},
+  {mat:'Lattice Aprons (MAT-003)',  bin:'BIN-C05',uom:'Nos', sys:35,  counted:35,   rate:1050, row:'pi-row-ok',  b:'badge-ok',       bl:' Match'},
 ]
 
 export default function PhysicalInventory() {
@@ -23,7 +23,7 @@ export default function PhysicalInventory() {
           <button className="btn btn-p sd-bsm">Post &amp; Adjust</button>
         </div>
       </div>
-      <div className="wm-alert warn">⚠️ Physical inventory count for Feb 2025. Enter actual counted quantities below. Variances will be auto-adjusted.</div>
+      <div className="wm-alert warn"> Physical inventory count for Feb 2025. Enter actual counted quantities below. Variances will be auto-adjusted.</div>
 
       <div className="wm-form-sec">
         <div className="wm-form-sec-hdr">PI Document — PI-2025-004 · 28 Feb 2025</div>

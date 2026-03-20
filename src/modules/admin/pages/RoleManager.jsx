@@ -52,7 +52,7 @@ export default function RoleManager() {
         <div style={{flex:1}}>
           <div style={{background:'#fff',borderRadius:'10px',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.08)'}}>
             <div style={{background:role.color,color:'#fff',padding:'14px 18px',fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'15px'}}>
-              🔑 {activeRole} — Permissions Matrix
+               {activeRole} — Permissions Matrix
               <span style={{fontSize:'12px',fontWeight:'400',opacity:.8,marginLeft:'8px'}}>{role.desc}</span>
             </div>
             <div style={{overflowX:'auto'}}>
@@ -84,7 +84,7 @@ export default function RoleManager() {
                               background:has?`${role.color}20`:'#F0EEEB',
                               border:`2px solid ${has?role.color:'transparent'}`,
                               cursor:'pointer',transition:'all .15s',fontSize:'12px'}}>
-                              {has ? <span style={{color:role.color}}>✓</span> : <span style={{color:'#ccc'}}>—</span>}
+                              {has ? <span style={{color:role.color}}></span> : <span style={{color:'#ccc'}}>—</span>}
                             </div>
                           </td>
                         )

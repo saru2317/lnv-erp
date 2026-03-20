@@ -6,10 +6,10 @@ import { sdApi } from '../services/sdApi'
 // Fallback static data when API not ready
 const STATIC = {
   kpis: [
-    { icon:'💰', label:'Total Revenue',    value:'₹21.6Cr', trend:'▲ 18.2%', trendCls:'tup', bg:'#EDE0EA', onClick:'revenue' },
-    { icon:'📋', label:'Open Orders',      value:'67',      trend:'12 New',  trendCls:'tup', bg:'#FFF3CD', onClick:'orders'  },
-    { icon:'🧾', label:'Pending Invoices', value:'23',      trend:'3 Overdue',trendCls:'tdn',bg:'#D1ECF1', onClick:'invoices'},
-    { icon:'👥', label:'Customers',        value:'342',     trend:'▲ 28 New',trendCls:'tup', bg:'#D4EDDA', onClick:'customers'},
+    { icon:'', label:'Total Revenue',    value:'₹21.6Cr', trend:'▲ 18.2%', trendCls:'tup', bg:'#EDE0EA', onClick:'revenue' },
+    { icon:'', label:'Open Orders',      value:'67',      trend:'12 New',  trendCls:'tup', bg:'#FFF3CD', onClick:'orders'  },
+    { icon:'', label:'Pending Invoices', value:'23',      trend:'3 Overdue',trendCls:'tdn',bg:'#D1ECF1', onClick:'invoices'},
+    { icon:'', label:'Customers',        value:'342',     trend:'▲ 28 New',trendCls:'tup', bg:'#D4EDDA', onClick:'customers'},
     { icon:'⏰', label:'Overdue Amt',      value:'₹4.6L',  trend:'2 Customers',trendCls:'tdn',bg:'#F8D7DA',onClick:'invoices'},
   ],
   recentOrders: [
@@ -110,15 +110,15 @@ export default function SDDashboard() {
 
         {/* Quick Actions */}
         <div className="dc">
-          <div className="dc-hd"><h4>⚡ Quick Transactions</h4></div>
+          <div className="dc-hd"><h4> Quick Transactions</h4></div>
           <div style={{padding:'10px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'7px'}}>
             {[
-              {label:'📝 New Quotation', to:'/sd/quotations/new', cls:'btn-p'},
-              {label:'📋 New Sales Order',to:'/sd/orders/new',   cls:'btn-p'},
-              {label:'🧾 New Invoice',   to:'/sd/invoices/new',  cls:'btn-p'},
-              {label:'👥 Add Customer',  to:'/sd/customers/new', cls:'btn-s'},
-              {label:'💳 Record Payment',to:'/sd/payments/new',  cls:'btn-s'},
-              {label:'↩️ Sales Return',  to:'/sd/returns/new',   cls:'btn-s'},
+              {label:' New Quotation', to:'/sd/quotations/new', cls:'btn-p'},
+              {label:' New Sales Order',to:'/sd/orders/new',   cls:'btn-p'},
+              {label:' New Invoice',   to:'/sd/invoices/new',  cls:'btn-p'},
+              {label:' Add Customer',  to:'/sd/customers/new', cls:'btn-s'},
+              {label:' Record Payment',to:'/sd/payments/new',  cls:'btn-s'},
+              {label:'↩ Sales Return',  to:'/sd/returns/new',   cls:'btn-s'},
             ].map(a=>(
               <button key={a.label} className={`btn ${a.cls} btn-sm`} onClick={()=>navigate(a.to)}>{a.label}</button>
             ))}

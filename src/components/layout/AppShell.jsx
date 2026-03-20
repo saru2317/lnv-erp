@@ -6,26 +6,26 @@ import NotificationsPanel from '@components/ui/NotificationsPanel'
 import styles from './AppShell.module.css'
 
 const ALL_MODULES = [
-  { key:'home',    label:'Home',        icon:'🏠' },
-  { key:'sd',      label:'Sales',       icon:'💰' },
-  { key:'mm',      label:'Purchase',    icon:'🛒' },
-  { key:'wm',      label:'Warehouse',   icon:'📦' },
-  { key:'fi',      label:'Finance',     icon:'📒' },
-  { key:'pp',      label:'Production',  icon:'🏭' },
-  { key:'qm',      label:'Quality',     icon:'🔬' },
-  { key:'pm',      label:'Maintenance', icon:'🔧' },
-  { key:'hcm',     label:'HR',          icon:'👥' },
-  { key:'crm',     label:'CRM',         icon:'🤝' },
-  { key:'admin',   label:'Admin',       icon:'🔐' },
-  { key:'config',  label:'Config',      icon:'⚙️' },
-  { key:'tm',      label:'Transport',   icon:'🚚' },
-  { key:'am',      label:'Assets',      icon:'🏛️' },
-  { key:'civil',   label:'Civil',       icon:'🏗️' },
+  { key:'home',    label:'Home',        icon:'' },
+  { key:'sd',      label:'Sales',       icon:'' },
+  { key:'mm',      label:'Purchase',    icon:'' },
+  { key:'wm',      label:'Warehouse',   icon:'' },
+  { key:'fi',      label:'Finance',     icon:'' },
+  { key:'pp',      label:'Production',  icon:'' },
+  { key:'qm',      label:'Quality',     icon:'' },
+  { key:'pm',      label:'Maintenance', icon:'' },
+  { key:'hcm',     label:'HR',          icon:'' },
+  { key:'crm',     label:'CRM',         icon:'' },
+  { key:'admin',   label:'Admin',       icon:'' },
+  { key:'config',  label:'Config',      icon:'' },
+  { key:'tm',      label:'Transport',   icon:'' },
+  { key:'am',      label:'Assets',      icon:'' },
+  { key:'civil',   label:'Civil',       icon:'' },
   { key:'vm',      label:'Visitor',     icon:'🪪' },
-  { key:'cn',      label:'Canteen',     icon:'🍽️' },
-  { key:'reports', label:'Reports',     icon:'📊' },
-  { key:'kpi',     label:'KPI / KRA',   icon:'🎯' },
-  { key:'mdm',     label:'MDM',         icon:'🗂️' },
+  { key:'cn',      label:'Canteen',     icon:'' },
+  { key:'reports', label:'Reports',     icon:'' },
+  { key:'kpi',     label:'KPI / KRA',   icon:'' },
+  { key:'mdm',     label:'MDM',         icon:'' },
 ]
 
 const ROLE_COLORS = {
@@ -60,7 +60,7 @@ export default function AppShell() {
         <div className={styles.topRight}>
           <div className={styles.shellDate}>{now}</div>
           <NotificationsPanel />
-          <button className={styles.iconBtn} onClick={() => navigate('/config')}>⚙️</button>
+          <button className={styles.iconBtn} onClick={() => navigate('/config')}></button>
           <span className={styles.roleBadge} style={{ borderColor: ROLE_COLORS[user?.role] }}>
             {user?.role?.toUpperCase()}
           </span>

@@ -37,10 +37,10 @@ export default function QualityReport() {
       </div>
 
       <div className="qm-kpi-grid">
-        {[{cls:'green', ic:'🔬',l:'Avg Yield Rate',  v:`${avgYield}%`, s:`${totals.lots} lots · ${(totals.qty/1000).toFixed(1)} T inspected`},
-          {cls:'red',   ic:'❌',l:'Total Rejections', v:`${totals.fail} Kg`,s:`${(totals.fail/totals.qty*100).toFixed(2)}% rejection rate`},
-          {cls:'orange',ic:'📋',l:'NCRs Raised',      v:totals.ncrs,  s:'4 closed · 4 open'},
-          {cls:'blue',  ic:'🏅',l:'Certs Issued',     v:totals.certs, s:'COC + Test Reports'},
+        {[{cls:'green', ic:'',l:'Avg Yield Rate',  v:`${avgYield}%`, s:`${totals.lots} lots · ${(totals.qty/1000).toFixed(1)} T inspected`},
+          {cls:'red',   ic:'',l:'Total Rejections', v:`${totals.fail} Kg`,s:`${(totals.fail/totals.qty*100).toFixed(2)}% rejection rate`},
+          {cls:'orange',ic:'',l:'NCRs Raised',      v:totals.ncrs,  s:'4 closed · 4 open'},
+          {cls:'blue',  ic:'',l:'Certs Issued',     v:totals.certs, s:'COC + Test Reports'},
         ].map(k=>(
           <div key={k.l} className={`qm-kpi-card ${k.cls}`}>
             <div className="qm-kpi-icon">{k.ic}</div>
@@ -87,7 +87,7 @@ export default function QualityReport() {
               </div>
             ))}
             <div className="pp-alert info" style={{marginTop:'12px',padding:'8px 12px',fontSize:'11px'}}>
-              💡 Top 2 defects account for 71% of rejections → focus CAPA on twist variation & strength control
+               Top 2 defects account for 71% of rejections → focus CAPA on twist variation & strength control
             </div>
           </div>
         </div>

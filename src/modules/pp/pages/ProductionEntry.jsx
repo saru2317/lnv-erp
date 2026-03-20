@@ -73,7 +73,7 @@ export default function ProductionEntry() {
           {['job','batch','industry'].map(m => (
             <button key={m} onClick={() => { setEntryMode(m); setCurStep(0); setCompletedSteps(new Set()) }}
               className={`btn btn-s ${entryMode===m?'btn-p':'sd-bsm'}`}>
-              {m==='job'?'📋 Job Card':m==='batch'?'🪣 Batch':'🏭 Industry'}
+              {m==='job'?' Job Card':m==='batch'?'🪣 Batch':' Industry'}
             </button>
           ))}
         </div>
@@ -125,7 +125,7 @@ export default function ProductionEntry() {
                       <div style={{ fontSize:'10px',fontWeight:'700',color:selInd===k?v.color:'var(--odoo-text)' }}>{v.name}</div>
                       <div style={{ fontSize:'9px',color:'var(--odoo-gray)' }}>{v.desc}</div>
                     </div>
-                    {selInd===k&&<span style={{ marginLeft:'auto',color:v.color }}>✓</span>}
+                    {selInd===k&&<span style={{ marginLeft:'auto',color:v.color }}></span>}
                   </div>
                 ))}
               </div>
@@ -152,7 +152,7 @@ export default function ProductionEntry() {
       {/* Shot info bar (moulding) */}
       {isMould && shotInfo && (
         <div style={{ padding:'10px 14px',background:'#FFF3CD',borderRadius:'8px',marginBottom:'14px',display:'flex',gap:'20px',alignItems:'center',flexWrap:'wrap' }}>
-          <strong style={{ color:'#E65100' }}>💉 Shot Tracker</strong>
+          <strong style={{ color:'#E65100' }}> Shot Tracker</strong>
           <span>Job Qty: <strong>{job?.qty}</strong></span>
           <span>Cavity: <strong>{item?.cavity}</strong></span>
           <span>Shots Required: <strong>{shotInfo.shots}</strong></span>
@@ -192,13 +192,13 @@ export default function ProductionEntry() {
                 <div style={{ width:'24px',height:'24px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',fontWeight:'800',
                   background:completedSteps.has(i)?'var(--odoo-green)':i===curStep?ind?.color||'var(--odoo-purple)':'#E0E0E0',
                   color:completedSteps.has(i)||i===curStep?'#fff':'var(--odoo-gray)' }}>
-                  {completedSteps.has(i)?'✓':(i+1)}
+                  {completedSteps.has(i)?'':(i+1)}
                 </div>
                 <div style={{ flex:1,minWidth:0 }}>
                   <div style={{ fontSize:'11px',fontWeight:'700',color:i===curStep?ind?.color||'var(--odoo-purple)':'var(--odoo-text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{s.name}</div>
                   <div style={{ fontSize:'9px',color:'var(--odoo-gray)' }}>{s.machine}</div>
                 </div>
-                {completedSteps.has(i)&&<span style={{ fontSize:'12px',color:'var(--odoo-green)' }}>✅</span>}
+                {completedSteps.has(i)&&<span style={{ fontSize:'12px',color:'var(--odoo-green)' }}></span>}
               </div>
             ))}
           </div>
@@ -269,7 +269,7 @@ export default function ProductionEntry() {
                   {/* Shot counter display */}
                   {s.shotCounter && shotInfo && (
                     <div style={{ marginTop:'12px',padding:'10px 12px',background:'#FFF8E1',borderRadius:'8px',border:'1px solid #FFE082' }}>
-                      <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}>💉 Shot Counter for this stage</div>
+                      <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}> Shot Counter for this stage</div>
                       <div style={{ display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap' }}>
                         <div style={{ textAlign:'center',padding:'8px 12px',background:'#fff',borderRadius:'6px',minWidth:'80px' }}>
                           <div style={{ fontSize:'24px',fontWeight:'900',color:'#E65100' }}>{shotsFired}</div>
@@ -294,11 +294,11 @@ export default function ProductionEntry() {
                   {/* Ampere-hour auto-calc */}
                   {s.amperHourCalc && getField(curStep,'Calculated Thickness (µm)') && (
                     <div style={{ marginTop:'10px',padding:'10px 12px',background:'#E8EAF6',borderRadius:'8px',fontSize:'12px',color:'#283593' }}>
-                      ⚗️ <strong>Auto-calculated:</strong> Thickness = {getField(curStep,'Calculated Thickness (µm)')} µm
+                       <strong>Auto-calculated:</strong> Thickness = {getField(curStep,'Calculated Thickness (µm)')} µm
                       &nbsp;·&nbsp; Required: {getField(curStep,'Required Thickness (µm)')||'—'} µm
                       {getField(curStep,'Required Thickness (µm)') && (
                         <span style={{ marginLeft:'8px',fontWeight:'800',color: parseFloat(getField(curStep,'Calculated Thickness (µm)'))>=parseFloat(getField(curStep,'Required Thickness (µm)'))?'var(--odoo-green)':'var(--odoo-red)' }}>
-                          {parseFloat(getField(curStep,'Calculated Thickness (µm)'))>=parseFloat(getField(curStep,'Required Thickness (µm)'))?'✅ PASS':'❌ FAIL'}
+                          {parseFloat(getField(curStep,'Calculated Thickness (µm)'))>=parseFloat(getField(curStep,'Required Thickness (µm)'))?' PASS':' FAIL'}
                         </span>
                       )}
                     </div>
@@ -307,13 +307,13 @@ export default function ProductionEntry() {
                   {/* Actions */}
                   <div style={{ display:'flex',gap:'8px',marginTop:'14px',alignItems:'center' }}>
                     <button className="btn btn-p btn-s" onClick={markDone}>
-                      {completedSteps.has(curStep)?'✓ Re-save Stage':'✓ Mark Stage Done'}
+                      {completedSteps.has(curStep)?' Re-save Stage':' Mark Stage Done'}
                     </button>
                     {curStep>0&&<button className="btn btn-s sd-bsm" onClick={()=>setCurStep(curStep-1)}>← Prev</button>}
                     {curStep<stages.length-1&&<button className="btn btn-s sd-bsm" onClick={()=>setCurStep(curStep+1)}>Next →</button>}
                     {completedSteps.size===stages.length&&(
                       <button className="btn btn-p" style={{ marginLeft:'auto',background:'var(--odoo-green)' }} onClick={handleSave}>
-                        {saved?'✅ Saved!':'🎉 Complete All & Save'}
+                        {saved?' Saved!':' Complete All & Save'}
                       </button>
                     )}
                   </div>
@@ -326,7 +326,7 @@ export default function ProductionEntry() {
 
       {/* Recent entries */}
       <div className="fi-panel" style={{ marginTop:'16px' }}>
-        <div className="fi-panel-hdr"><h3>📄 Recent Entries</h3></div>
+        <div className="fi-panel-hdr"><h3>Recent Entries</h3></div>
         <div className="fi-panel-body" style={{ padding:'10px 14px' }}>
           <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'8px' }}>
             {JOB_CARDS.map(j=>{

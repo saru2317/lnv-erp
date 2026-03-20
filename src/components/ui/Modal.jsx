@@ -14,7 +14,7 @@ export default function Modal({ open, onClose, title, children, width = 480 }) {
       <div className={styles.modal} style={{ width }} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <h3>{title}</h3>
-          <button className={styles.close} onClick={onClose}>✕</button>
+          <button className={styles.close} onClick={onClose}></button>
         </div>
         <div className={styles.body}>{children}</div>
       </div>

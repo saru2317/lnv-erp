@@ -54,14 +54,14 @@ export default function ProcessMaster() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Process Master <small>{processes.length} processes · Drag to reorder</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing-template')}>🗺️ Routing Template</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing-template')}> Routing Template</button>
           <button className="btn btn-p btn-s" onClick={()=>setShowAdd(true)}>+ Add Process</button>
         </div>
       </div>
 
       {/* Industry badge */}
       <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px',padding:'10px 14px',background:'#EDE0EA',borderRadius:'8px'}}>
-        <span style={{fontSize:'20px'}}>🎨</span>
+        <span style={{fontSize:'20px'}}></span>
         <div>
           <div style={{fontWeight:'700',fontSize:'13px',color:'var(--odoo-purple)'}}>{DEMO_COMPANY_CONFIG.subType.replace('_',' ').toUpperCase()} — Process Configuration</div>
           <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>Drag rows to reorder sequence · Toggle mandatory/parallel/skip flags per process</div>
@@ -72,7 +72,7 @@ export default function ProcessMaster() {
       {/* Add form */}
       {showAdd&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>➕ Add New Process</h3></div>
+          <div className="fi-panel-hdr"><h3>Add New Process</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Process Name *</label><input value={newProc.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Zinc Phosphating" /></div>
@@ -98,7 +98,7 @@ export default function ProcessMaster() {
               ))}
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-              <button className="btn btn-p btn-s" onClick={handleAddProcess}>✓ Add Process</button>
+              <button className="btn btn-p btn-s" onClick={handleAddProcess}> Add Process</button>
               <button className="btn btn-s sd-bsm" onClick={()=>setShowAdd(false)}>Cancel</button>
             </div>
           </div>
@@ -131,13 +131,13 @@ export default function ProcessMaster() {
                 <td style={{fontSize:'12px'}}>{p.chargeBy}</td>
                 <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-purple)'}}>₹{p.defaultRate}</td>
                 <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'mandatory')} style={{cursor:'pointer',fontSize:'16px'}}>{p.mandatory?'✅':'⬜'}</span>
+                  <span onClick={()=>toggleField(p.id,'mandatory')} style={{cursor:'pointer',fontSize:'16px'}}>{p.mandatory?'':'⬜'}</span>
                 </td>
                 <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'canParallel')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canParallel?'✅':'⬜'}</span>
+                  <span onClick={()=>toggleField(p.id,'canParallel')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canParallel?'':'⬜'}</span>
                 </td>
                 <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'canSkip')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canSkip?'✅':'⬜'}</span>
+                  <span onClick={()=>toggleField(p.id,'canSkip')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canSkip?'':'⬜'}</span>
                 </td>
                 <td><span className={p.status==='Active'?'crm-stage-won':'crm-badge-notq'}>{p.status}</span></td>
                 <td>
@@ -152,7 +152,7 @@ export default function ProcessMaster() {
 
       {/* Sequence visual */}
       <div className="fi-panel" style={{marginTop:'14px'}}>
-        <div className="fi-panel-hdr"><h3>🗺️ Current Process Sequence</h3></div>
+        <div className="fi-panel-hdr"><h3> Current Process Sequence</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'flex',flexWrap:'wrap',gap:'0',alignItems:'center'}}>
             {processes.map((p,i)=>(

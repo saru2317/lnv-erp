@@ -70,7 +70,7 @@ export default function SalesReport() {
 
       {/* View tabs */}
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-        {[['summary','📊 Monthly Summary'],['customers','👥 Customer-wise'],['category','🏷️ Category-wise']].map(([k,l])=>(
+        {[['summary',' Monthly Summary'],['customers',' Customer-wise'],['category',' Category-wise']].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)}
             style={{padding:'6px 16px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
               border:'1px solid var(--odoo-border)',background:view===k?'var(--odoo-purple)':'#fff',
@@ -87,7 +87,7 @@ export default function SalesReport() {
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
             padding:18,marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
             <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:14}}>
-              📈 Monthly Revenue Trend — FY 2025-26
+               Monthly Revenue Trend — FY 2025-26
             </h4>
             <div style={{display:'flex',gap:6,alignItems:'flex-end',height:120}}>
               {MONTHLY.map((m,i)=>{
@@ -167,7 +167,7 @@ export default function SalesReport() {
                 <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)'}}>{fmtL(c.rev)}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>{fmtL(c.collected)}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:c.due>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:c.due>0?700:400}}>
-                  {c.due>0 ? fmtL(c.due) : '✅ Clear'}
+                  {c.due>0 ? fmtL(c.due) : ' Clear'}
                 </td>
                 <td style={{fontSize:11}}>{c.lastOrder}</td>
                 <td>

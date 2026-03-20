@@ -54,7 +54,7 @@ export default function InspectionNew() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>{overallResult==='Pass'?'✅':overallResult==='Review'?'⚠️':'❌'}</div>
+      <div style={{fontSize:'48px'}}>{overallResult==='Pass'?'':overallResult==='Review'?'':''}</div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',
         color:overallResult==='Pass'?'var(--odoo-green)':overallResult==='Review'?'var(--odoo-orange)':'var(--odoo-red)'}}>
         QIL-049 — {overallResult || 'Saved'}!
@@ -63,10 +63,10 @@ export default function InspectionNew() {
         {qty} Kg inspected · {failCount} tests failed · Result: <strong>{overallResult}</strong>
       </div>
       {(overallResult==='Fail'||overallResult==='Review') && (
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/ncr/new')}>❌ Raise NCR</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/ncr/new')}> Raise NCR</button>
       )}
       {overallResult==='Pass' && (
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/certificates')}>🏅 Issue Certificate</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/certificates')}> Issue Certificate</button>
       )}
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>← Inspection List</button>
@@ -80,14 +80,14 @@ export default function InspectionNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">New Inspection Lot <small>QA01 · Inspection Recording</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}> Cancel</button>
           <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
         </div>
       </div>
 
       {/* Header */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔬 Inspection Header</div>
+        <div className="fi-form-sec-hdr"> Inspection Header</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Lot No.</label><input className="fi-form-ctrl" defaultValue="QIL-049" readOnly/></div>
@@ -134,7 +134,7 @@ export default function InspectionNew() {
 
       {/* Test Parameters */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🧪 Test Parameters — {product}</div>
+        <div className="fi-form-sec-hdr"> Test Parameters — {product}</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>
@@ -165,7 +165,7 @@ export default function InspectionNew() {
                     </td>
                     <td>
                       {status==='pass' && <span className="badge badge-pass">Pass</span>}
-                      {status==='fail' && <span className="badge badge-fail">❌ Fail</span>}
+                      {status==='fail' && <span className="badge badge-fail"> Fail</span>}
                       {!status && <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>— Pending</span>}
                     </td>
                   </tr>
@@ -181,7 +181,7 @@ export default function InspectionNew() {
               background:overallResult==='Pass'?'#EAF9F6':overallResult==='Review'?'#FEF5E7':'#FDEDEC',
               border:`1px solid ${overallResult==='Pass'?'#A2DED0':overallResult==='Review'?'#FAD7A0':'#F5B7B1'}`
             }}>
-              <span style={{fontSize:'24px'}}>{overallResult==='Pass'?'✅':overallResult==='Review'?'⚠️':'❌'}</span>
+              <span style={{fontSize:'24px'}}>{overallResult==='Pass'?'':overallResult==='Review'?'':''}</span>
               <div>
                 <div style={{fontWeight:'700',fontSize:'14px',color:overallResult==='Pass'?'var(--odoo-green)':overallResult==='Review'?'var(--odoo-orange)':'var(--odoo-red)'}}>
                   Overall Result: {overallResult}
@@ -197,19 +197,19 @@ export default function InspectionNew() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📝 Remarks</div>
+        <div className="fi-form-sec-hdr"> Remarks</div>
         <div className="fi-form-sec-body">
           <textarea className="fi-form-ctrl" rows={3} placeholder="Inspection remarks, visual observations, deviation notes..."></textarea>
         </div>
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}> Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
         <div className="fi-status-flow">
-          <span className="fi-sf-step act">🔬 Inspect</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step act"> Inspect</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">Result</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">🏅 Certificate</span>
+          <span className="fi-sf-step"> Certificate</span>
         </div>
       </div>
     </div>

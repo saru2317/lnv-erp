@@ -33,10 +33,10 @@ export default function ComplaintTicket() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Open',       v:openCount,    clr:'var(--odoo-red)',   ic:'🔴'},
+          {l:'Open',       v:openCount,    clr:'var(--odoo-red)',   ic:''},
           {l:'In Progress',v:inProgCount,  clr:'var(--odoo-orange)',ic:'🟡'},
           {l:'Resolved',   v:resolvedCount,clr:'var(--odoo-green)', ic:'🟢'},
-          {l:'High Priority',v:highCount,  clr:'var(--odoo-red)',   ic:'⚠️'},
+          {l:'High Priority',v:highCount,  clr:'var(--odoo-red)',   ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -68,13 +68,13 @@ export default function ComplaintTicket() {
 
       {/* Filter */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search company or subject…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search company or subject…" value={search} onChange={e=>setSearch(e.target.value)} />
       </div>
 
       {/* New Ticket Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-orange)'}}>
-          <div className="fi-panel-hdr"><h3>🎫 New Complaint Ticket</h3></div>
+          <div className="fi-panel-hdr"><h3> New Complaint Ticket</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -111,7 +111,7 @@ export default function ComplaintTicket() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'8px'}}>
-              <button className="btn btn-p btn-s" onClick={()=>setShowForm(false)}>✓ Create Ticket</button>
+              <button className="btn btn-p btn-s" onClick={()=>setShowForm(false)}> Create Ticket</button>
               <button className="btn btn-s sd-bsm" onClick={()=>setShowForm(false)}>Cancel</button>
             </div>
           </div>
@@ -150,8 +150,8 @@ export default function ComplaintTicket() {
                           <div style={{fontSize:'12px',color:'var(--odoo-gray)'}}>No additional notes available.</div>
                         </div>
                         <div style={{display:'flex',gap:'8px'}}>
-                          <button className="btn btn-s sd-bsm">📝 Add Note</button>
-                          {t.status!=='Resolved'&&<button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}}>✓ Mark Resolved</button>}
+                          <button className="btn btn-s sd-bsm"> Add Note</button>
+                          {t.status!=='Resolved'&&<button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}}> Mark Resolved</button>}
                         </div>
                       </div>
                     </td>

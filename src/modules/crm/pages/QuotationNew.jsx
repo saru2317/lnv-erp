@@ -44,7 +44,7 @@ export default function QuotationNew() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}>📄</div>
+      <div style={{fontSize:'48px',marginBottom:'16px'}}></div>
       <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-blue)',marginBottom:'8px'}}>Quotation Created!</h2>
       <div style={{fontFamily:'DM Mono,monospace',fontSize:'18px',fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'8px'}}>
         QT-CRM-{String(Math.floor(Math.random()*90)+29).padStart(4,'0')}
@@ -52,7 +52,7 @@ export default function QuotationNew() {
       <div style={{color:'var(--odoo-gray)',marginBottom:'24px'}}>{form.company} — {fmtFull(total)} (incl. GST)</div>
       <div style={{display:'flex',gap:'12px'}}>
         <button className="btn btn-p btn-s" onClick={()=>nav('/crm/quotations')}>← Quotations</button>
-        <button className="btn btn-s sd-bsm">📧 Send to Customer</button>
+        <button className="btn btn-s sd-bsm"> Send to Customer</button>
         <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations')}>Print</button>
       </div>
     </div>
@@ -65,14 +65,14 @@ export default function QuotationNew() {
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations')}>Cancel</button>
           <button className="btn btn-s sd-bsm" onClick={handleSave => setSaved(true)}>Save Draft</button>
-          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}>📧 Save & Send</button>
+          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}> Save & Send</button>
         </div>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>🏢 Customer Details</h3></div>
+            <div className="fi-panel-hdr"><h3> Customer Details</h3></div>
             <div className="fi-panel-body">
               <div className="sd-form-grid">
                 <div className="sd-field">
@@ -156,7 +156,7 @@ export default function QuotationNew() {
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📝 Terms & Notes</h3></div>
+            <div className="fi-panel-hdr"><h3> Terms & Notes</h3></div>
             <div className="fi-panel-body">
               <div className="sd-field">
                 <label>Notes / Special Terms</label>
@@ -190,7 +190,7 @@ export default function QuotationNew() {
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>👤 Assigned To</h3></div>
+            <div className="fi-panel-hdr"><h3> Assigned To</h3></div>
             <div className="fi-panel-body">
               <div className="sd-field">
                 <label>Sales Rep</label>
@@ -199,7 +199,7 @@ export default function QuotationNew() {
                 </select>
               </div>
               <div style={{marginTop:'10px',background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px'}}>
-                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}>🤖 AI Pricing Insight</div>
+                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}> AI Pricing Insight</div>
                 <div>Average discount for similar deals: <strong>6-8%</strong></div>
                 <div style={{marginTop:'4px'}}>Win rate at {form.discount||0}% discount: <strong>{form.discount>=5?'68%':form.discount>=3?'52%':'40%'}</strong></div>
               </div>

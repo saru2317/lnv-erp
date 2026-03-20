@@ -61,7 +61,7 @@ export default function ProcessExecution() {
           <select className="sd-select" value={jobId} onChange={e=>loadJob(e.target.value)}>
             {JOB_CARDS.filter(j=>j.status!=='Completed').map(j=><option key={j.id} value={j.id}>{j.id} — {j.item} ({j.customerName})</option>)}
           </select>
-          {isComplete&&<button className="btn btn-p btn-s" style={{background:'var(--odoo-green)',borderColor:'var(--odoo-green)'}} onClick={()=>nav('/pp/job-work-invoice')}>📄 Create Invoice →</button>}
+          {isComplete&&<button className="btn btn-p btn-s" style={{background:'var(--odoo-green)',borderColor:'var(--odoo-green)'}} onClick={()=>nav('/pp/job-work-invoice')}>Create Invoice →</button>}
         </div>
       </div>
 
@@ -110,34 +110,34 @@ export default function ProcessExecution() {
                     {/* Step number circle */}
                     <div style={{width:'32px',height:'32px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
                       background:s.status==='Done'?'var(--odoo-green)':s.status==='Running'?'var(--odoo-orange)':'var(--odoo-border)',color:'#fff',fontWeight:'800',fontSize:'13px'}}>
-                      {s.status==='Done'?'✓':idx+1}
+                      {s.status==='Done'?'':idx+1}
                     </div>
 
                     {/* Step info */}
                     <div style={{flex:1}}>
                       <div style={{fontWeight:'700',fontSize:'14px',display:'flex',alignItems:'center',gap:'8px'}}>
                         {s.step}
-                        {!unlocked&&<span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>🔒 Locked — Step {idx} must complete first</span>}
+                        {!unlocked&&<span style={{fontSize:'11px',color:'var(--odoo-gray)'}}> Locked — Step {idx} must complete first</span>}
                         {s.status==='Running'&&<span style={{fontSize:'10px',background:'var(--odoo-orange)',color:'#fff',padding:'2px 8px',borderRadius:'8px',fontWeight:'700'}}>IN PROGRESS</span>}
                         {s.status==='Done'&&<span style={{fontSize:'10px',background:'var(--odoo-green)',color:'#fff',padding:'2px 8px',borderRadius:'8px',fontWeight:'700'}}>DONE</span>}
                       </div>
                       {(s.wcId||s.operator||s.startTime)&&(
                         <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginTop:'2px'}}>
-                          {wc&&<span>⚙️ {wc.name} · </span>}
-                          {s.operator&&<span>👤 {s.operator} · </span>}
-                          {s.startTime&&<span>🕐 Start: {s.startTime}</span>}
+                          {wc&&<span> {wc.name} · </span>}
+                          {s.operator&&<span> {s.operator} · </span>}
+                          {s.startTime&&<span> Start: {s.startTime}</span>}
                           {s.endTime&&<span> → End: {s.endTime}</span>}
-                          {s.qty>0&&<span> · ✅ {s.qty} {job.unit}</span>}
+                          {s.qty>0&&<span> ·  {s.qty} {job.unit}</span>}
                         </div>
                       )}
-                      {s.remarks&&<div style={{fontSize:'11px',color:'var(--odoo-gray)',fontStyle:'italic'}}>💬 {s.remarks}</div>}
+                      {s.remarks&&<div style={{fontSize:'11px',color:'var(--odoo-gray)',fontStyle:'italic'}}> {s.remarks}</div>}
                     </div>
 
                     {/* Action button */}
                     {s.status==='Running'&&unlocked&&(
                       <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)',borderColor:'var(--odoo-green)',flexShrink:0}}
                         onClick={()=>{setForm({wcId:s.wcId||'',operator:s.operator||'',qty:job?.qty||'',remarks:''});setShowModal(idx)}}>
-                        ✓ Mark Done
+                         Mark Done
                       </button>
                     )}
                     {s.status==='Waiting'&&unlocked&&(
@@ -170,11 +170,11 @@ export default function ProcessExecution() {
 
           {isComplete&&(
             <div style={{marginTop:'16px',padding:'16px',background:'linear-gradient(135deg,var(--odoo-green),#00C0B0)',borderRadius:'10px',color:'#fff',textAlign:'center'}}>
-              <div style={{fontSize:'28px',marginBottom:'6px'}}>🎉</div>
+              <div style={{fontSize:'28px',marginBottom:'6px'}}></div>
               <div style={{fontWeight:'800',fontSize:'16px',marginBottom:'4px'}}>All Steps Completed!</div>
               <div style={{fontSize:'12px',marginBottom:'12px',opacity:.9}}>Job {jobId} is ready for dispatch and invoicing</div>
               <button className="btn btn-p btn-s" style={{background:'#fff',color:'var(--odoo-green)',borderColor:'#fff'}} onClick={()=>nav('/pp/job-work-invoice')}>
-                📄 Create Invoice →
+                 Create Invoice →
               </button>
             </div>
           )}
@@ -185,7 +185,7 @@ export default function ProcessExecution() {
       {showModal!==null&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
           <div style={{background:'#fff',borderRadius:'12px',padding:'24px',width:'380px',boxShadow:'0 20px 60px rgba(0,0,0,.3)'}}>
-            <h3 style={{fontFamily:'Syne,sans-serif',marginBottom:'16px',color:'var(--odoo-purple)'}}>✓ Complete Step: {steps[showModal]?.step}</h3>
+            <h3 style={{fontFamily:'Syne,sans-serif',marginBottom:'16px',color:'var(--odoo-purple)'}}> Complete Step: {steps[showModal]?.step}</h3>
             <div className="sd-form-grid">
               <div className="sd-field"><label>Work Center</label>
                 <select value={form.wcId} onChange={e=>setForm(f=>({...f,wcId:e.target.value}))}>
@@ -198,7 +198,7 @@ export default function ProcessExecution() {
               <div className="sd-field"><label>Remarks</label><input value={form.remarks} onChange={e=>setForm(f=>({...f,remarks:e.target.value}))} placeholder="Optional" /></div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'14px'}}>
-              <button className="btn btn-p btn-s" style={{flex:1,background:'var(--odoo-green)',borderColor:'var(--odoo-green)'}} onClick={()=>markDone(showModal)}>✓ Confirm Done</button>
+              <button className="btn btn-p btn-s" style={{flex:1,background:'var(--odoo-green)',borderColor:'var(--odoo-green)'}} onClick={()=>markDone(showModal)}> Confirm Done</button>
               <button className="btn btn-s sd-bsm" onClick={()=>setShowModal(null)}>Cancel</button>
             </div>
           </div>

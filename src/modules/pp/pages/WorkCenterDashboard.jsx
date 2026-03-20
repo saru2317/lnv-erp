@@ -40,8 +40,8 @@ export default function WorkCenterDashboard() {
   }
 
   const statusLabel = w => {
-    if(w.status==='Under Maintenance') return '🔧 Maintenance'
-    if(getRunningJob(w)) return '🔵 Running'
+    if(w.status==='Under Maintenance') return ' Maintenance'
+    if(getRunningJob(w)) return ' Running'
     if(w.status!=='Active') return w.status
     return '🟢 Free'
   }
@@ -65,11 +65,11 @@ export default function WorkCenterDashboard() {
       {/* Summary KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px',marginBottom:'14px'}}>
         {[
-          {l:'Total WCs',    v:WORK_CENTERS.length,c:'var(--odoo-purple)',i:'⚙️'},
-          {l:'Active',       v:totalActive,         c:'var(--odoo-blue)',  i:'✅'},
-          {l:'Running',      v:totalBusy,           c:'var(--odoo-orange)',i:'🔵'},
+          {l:'Total WCs',    v:WORK_CENTERS.length,c:'var(--odoo-purple)',i:''},
+          {l:'Active',       v:totalActive,         c:'var(--odoo-blue)',  i:''},
+          {l:'Running',      v:totalBusy,           c:'var(--odoo-orange)',i:''},
           {l:'Free',         v:totalFree,           c:'var(--odoo-green)', i:'🟢'},
-          {l:'Maintenance',  v:totalMaint,          c:'var(--odoo-red)',   i:'🔧'},
+          {l:'Maintenance',  v:totalMaint,          c:'var(--odoo-red)',   i:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
             <div className="crm-kpi-icon">{k.i}</div>
@@ -106,9 +106,9 @@ export default function WorkCenterDashboard() {
 
                 {/* Capacity & Operator */}
                 <div style={{display:'flex',gap:'12px',marginBottom:'8px',fontSize:'11px',color:'var(--odoo-gray)'}}>
-                  <span>📦 {wc.capacity} {wc.unit}</span>
-                  <span>👤 {wc.operator||'Unassigned'}</span>
-                  <span>🕐 {wc.shift.split('(')[0].trim()}</span>
+                  <span>{wc.capacity} {wc.unit}</span>
+                  <span> {wc.operator||'Unassigned'}</span>
+                  <span> {wc.shift.split('(')[0].trim()}</span>
                 </div>
 
                 {/* Utilization bar */}

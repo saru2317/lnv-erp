@@ -49,7 +49,7 @@ export default function IncentiveCalc({ kpiMaster, actuals, employees, assignmen
         <div style={{background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'12px 16px', borderBottom:'1px solid var(--odoo-border)',
-            fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}>⚙️ Incentive Tiers</div>
+            fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}> Incentive Tiers</div>
           <div style={{padding:16}}>
             {incTiers.map((t,i) => (
               <div key={i} style={{display:'flex', alignItems:'center', gap:12, padding:'10px 14px',
@@ -73,7 +73,7 @@ export default function IncentiveCalc({ kpiMaster, actuals, employees, assignmen
         <div style={{background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'12px 16px', borderBottom:'1px solid var(--odoo-border)',
-            fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}>🧮 Live Incentive Calculator</div>
+            fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}> Live Incentive Calculator</div>
           <div style={{padding:20}}>
             <div style={{marginBottom:14}}>
               <label style={{fontSize:11, fontWeight:700, color:'var(--odoo-gray)', textTransform:'uppercase',
@@ -135,7 +135,7 @@ export default function IncentiveCalc({ kpiMaster, actuals, employees, assignmen
         overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--odoo-border)',
           fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700}}>
-          📋 Incentive Summary — All Employees
+           Incentive Summary — All Employees
         </div>
         <table style={{width:'100%', borderCollapse:'collapse'}}>
           <thead>
@@ -184,7 +184,7 @@ export default function IncentiveCalc({ kpiMaster, actuals, employees, assignmen
                     <span style={{padding:'3px 8px', borderRadius:10, fontSize:11, fontWeight:600,
                       background:e.incElig?'#D4EDDA':'#F8F9FA',
                       color:e.incElig?'#155724':'#999'}}>
-                      {e.incElig ? '✅ Eligible' : '— Not eligible'}
+                      {e.incElig ? ' Eligible' : '— Not eligible'}
                     </span>
                   </td>
                 </tr>

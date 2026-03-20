@@ -162,7 +162,7 @@ export default function ApprovalInbox() {
                     <span style={{color: item.daysWaiting >= 2 ? 'var(--odoo-red)' : 'var(--odoo-gray)',
                       fontWeight: item.daysWaiting >= 2 ? 700 : 400}}>
                       Waiting: <strong>{item.daysWaiting} day{item.daysWaiting!==1?'s':''}</strong>
-                      {item.daysWaiting >= 2 && ' ⚠️ Escalation threshold reached'}
+                      {item.daysWaiting >= 2 && '  Escalation threshold reached'}
                     </span>
                   </div>
 
@@ -172,13 +172,13 @@ export default function ApprovalInbox() {
                       style={{padding:'7px 20px', background:'var(--odoo-green)', color:'#fff',
                         border:'none', borderRadius:6, fontWeight:700, fontSize:13,
                         cursor:'pointer', display:'flex', alignItems:'center', gap:5}}>
-                      ✓ Approve
+                       Approve
                     </button>
                     <button onClick={() => reject(item.id)}
                       style={{padding:'7px 16px', background:'var(--odoo-red)', color:'#fff',
                         border:'none', borderRadius:6, fontWeight:700, fontSize:13,
                         cursor:'pointer'}}>
-                      ✕ Reject
+                       Reject
                     </button>
                     <button onClick={() => toast.success(`Opening ${item.id}...`)}
                       style={{padding:'7px 14px', background:'#fff', color:'var(--odoo-purple)',

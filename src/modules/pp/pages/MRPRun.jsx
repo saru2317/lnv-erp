@@ -16,16 +16,16 @@ export default function MRPRun() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">MRP Run <small>MD01 · Material Requirements Planning</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp/results')}>📋 View Last Results</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp/results')}>View Last Results</button>
           <button className="btn btn-p sd-bsm" onClick={run} disabled={running}>
-            {running ? '⏳ Running MRP...' : '▶️ Execute MRP'}
+            {running ? '⏳ Running MRP...' : '▶ Execute MRP'}
           </button>
         </div>
       </div>
 
       {done && (
         <div className="pp-alert success">
-          ✅ <strong>MRP Executed Successfully!</strong> 4 planned orders created · 2 urgent POs flagged.&nbsp;
+           <strong>MRP Executed Successfully!</strong> 4 planned orders created · 2 urgent POs flagged.&nbsp;
           <span style={{textDecoration:'underline',cursor:'pointer',fontWeight:'700'}} onClick={() => nav('/pp/mrp/results')}>View Results →</span>
         </div>
       )}
@@ -37,7 +37,7 @@ export default function MRPRun() {
       )}
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">⚙️ MRP Parameters</div>
+        <div className="fi-form-sec-hdr"> MRP Parameters</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Planning Horizon</label>
@@ -78,7 +78,7 @@ export default function MRPRun() {
       {/* What MRP Considers */}
       <div className="fi-panel-grid">
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📥 Demand Sources</h3></div>
+          <div className="fi-panel-hdr"><h3>Demand Sources</h3></div>
           <div className="fi-panel-body">
             {[['Active Work Orders','12 WOs','var(--odoo-purple)'],
               ['Open Sales Orders','8 SOs','var(--odoo-blue)'],
@@ -92,7 +92,7 @@ export default function MRPRun() {
           </div>
         </div>
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📤 Supply Sources</h3></div>
+          <div className="fi-panel-hdr"><h3>Supply Sources</h3></div>
           <div className="fi-panel-body">
             {[['Current Stock (WM)','14 materials','var(--odoo-green)'],
               ['Open Purchase Orders','5 POs in transit','var(--odoo-blue)'],
@@ -108,9 +108,9 @@ export default function MRPRun() {
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp/results')}>📋 Last Results</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp/results')}>Last Results</button>
         <button className="btn btn-p sd-bsm" onClick={run} disabled={running}>
-          {running ? '⏳ Running...' : '▶️ Execute MRP Now'}
+          {running ? '⏳ Running...' : '▶ Execute MRP Now'}
         </button>
       </div>
     </div>

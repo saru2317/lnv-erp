@@ -29,9 +29,9 @@ export default function ProductionPlan() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Production Plan <small>March 2025 Schedule</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/capacity')}>⚡ Capacity Check</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp')}>📊 MRP Run</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>➕ Create WO from Plan</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/capacity')}> Capacity Check</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp')}>MRP Run</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>Create WO from Plan</button>
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export default function ProductionPlan() {
         <div key={week} style={{marginBottom:'20px'}}>
           <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'14px',color:'var(--odoo-purple)',
             padding:'8px 14px',background:'#EDE0EA',borderRadius:'6px',marginBottom:'8px'}}>
-            📅 {week}
+             {week}
           </div>
           <table className="fi-data-table">
             <thead><tr>

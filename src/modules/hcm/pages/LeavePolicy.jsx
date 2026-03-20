@@ -42,7 +42,7 @@ export default function LeavePolicy() {
 
       {/* Leave Types */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📅 Leave Types Configuration</div>
+        <div className="fi-form-sec-hdr"> Leave Types Configuration</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>
@@ -66,14 +66,14 @@ export default function LeavePolicy() {
                         background:l.code==='LOP'?'#F8F9FA':'#fff'}}/>
                   </td>
                   <td style={{textAlign:'center'}}>
-                    <span style={{color:l.carry?'var(--odoo-green)':'var(--odoo-gray)',fontWeight:'700'}}>{l.carry?'✅ Yes':'✕ No'}</span>
+                    <span style={{color:l.carry?'var(--odoo-green)':'var(--odoo-gray)',fontWeight:'700'}}>{l.carry?' Yes':' No'}</span>
                   </td>
                   <td style={{textAlign:'center'}}>
-                    <span style={{color:l.encash?'var(--odoo-green)':'var(--odoo-gray)',fontWeight:'700'}}>{l.encash?'✅ Yes':'✕ No'}</span>
+                    <span style={{color:l.encash?'var(--odoo-green)':'var(--odoo-gray)',fontWeight:'700'}}>{l.encash?' Yes':' No'}</span>
                   </td>
                   <td style={{fontSize:'12px',color:'var(--odoo-gray)'}}>{l.accrual}</td>
                   <td style={{textAlign:'center'}}>
-                    <span style={{color:l.medical?'var(--odoo-orange)':'var(--odoo-gray)'}}>{l.medical?'⚠️ Yes':'—'}</span>
+                    <span style={{color:l.medical?'var(--odoo-orange)':'var(--odoo-gray)'}}>{l.medical?' Yes':'—'}</span>
                   </td>
                   <td style={{fontSize:'12px'}}>{l.notice}</td>
                 </tr>
@@ -85,12 +85,12 @@ export default function LeavePolicy() {
 
       {/* Week-Off Rules */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📅 Week-Off Configuration per Employee Category</div>
+        <div className="fi-form-sec-hdr"> Week-Off Configuration per Employee Category</div>
         <div className="fi-form-sec-body">
           {Object.entries(weekoff).map(([cat,selected])=>(
             <div key={cat} style={{marginBottom:'16px'}}>
               <div style={{fontWeight:'700',fontSize:'13px',color:'var(--odoo-dark)',marginBottom:'8px'}}>
-                {cat === 'Staff' ? '👔' : cat==='Worker'?'🔧':'🏗️'} {cat}
+                {cat === 'Staff' ? '' : cat==='Worker'?'':''} {cat}
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'8px'}}>
                 {WEEKOFF_OPTIONS.map(opt=>(
@@ -116,7 +116,7 @@ export default function LeavePolicy() {
 
       {/* Leave Year Settings */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">⚙️ Leave Year Settings</div>
+        <div className="fi-form-sec-hdr"> Leave Year Settings</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Leave Year</label>

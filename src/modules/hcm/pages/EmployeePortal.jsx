@@ -18,7 +18,7 @@ export default function EmployeePortal() {
           <div style={{width:'52px',height:'52px',borderRadius:'50%',background:'rgba(255,255,255,.2)',
             display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'20px'}}>RK</div>
           <div>
-            <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'18px'}}>Welcome, {ME.name}! 👋</div>
+            <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'18px'}}>Welcome, {ME.name}! </div>
             <div style={{fontSize:'12px',opacity:.8}}>{ME.desg} · {ME.dept} · {ME.grade} · Shift {ME.shift}</div>
             <div style={{fontSize:'11px',opacity:.6,marginTop:'2px'}}>{ME.id} · {new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
           </div>
@@ -26,7 +26,7 @@ export default function EmployeePortal() {
       </div>
 
       <div style={{display:'flex',gap:'4px',marginBottom:'16px',background:'#fff',borderRadius:'8px',padding:'6px',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-        {[['home','🏠 Home'],['leave','📅 Apply Leave'],['payslip','💰 Payslips'],['attendance','📊 Attendance']].map(([t,l])=>(
+        {[['home',' Home'],['leave',' Apply Leave'],['payslip',' Payslips'],['attendance',' Attendance']].map(([t,l])=>(
           <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'8px',border:'none',borderRadius:'6px',cursor:'pointer',
             fontSize:'12px',fontWeight:'700',background:tab===t?'var(--odoo-purple)':'transparent',
             color:tab===t?'#fff':'var(--odoo-gray)',transition:'all .2s'}}>{l}</button>
@@ -44,10 +44,10 @@ export default function EmployeePortal() {
               </div>
             ))}
           </div>
-          <div className="fi-panel"><div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
+          <div className="fi-panel"><div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
             <div className="fi-panel-body" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
-              {[['📅 Apply Leave',()=>setTab('leave')],['💰 View Payslip',()=>setTab('payslip')],
-                ['📊 Attendance',()=>setTab('attendance')],['📄 HR Policies',()=>nav('/hcm/policy')]].map(([l,fn])=>(
+              {[[' Apply Leave',()=>setTab('leave')],[' View Payslip',()=>setTab('payslip')],
+                [' Attendance',()=>setTab('attendance')],[' HR Policies',()=>nav('/hcm/policy')]].map(([l,fn])=>(
                 <button key={l} className="btn btn-s sd-bsm" style={{justifyContent:'flex-start'}} onClick={fn}>{l}</button>
               ))}
             </div>
@@ -57,11 +57,11 @@ export default function EmployeePortal() {
 
       {tab==='leave' && (
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📅 Apply for Leave</h3></div>
+          <div className="fi-panel-hdr"><h3> Apply for Leave</h3></div>
           <div className="fi-panel-body">
             {submitted ? (
               <div style={{textAlign:'center',padding:'20px'}}>
-                <div style={{fontSize:'36px',marginBottom:'10px'}}>✅</div>
+                <div style={{fontSize:'36px',marginBottom:'10px'}}></div>
                 <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',color:'var(--odoo-green)'}}>Leave Applied!</div>
                 <div style={{fontSize:'13px',color:'var(--odoo-gray)',margin:'8px 0'}}>Application sent to your supervisor for approval.</div>
                 <button className="btn btn-s sd-bsm" onClick={()=>setSubmitted(false)}>Apply Another</button>

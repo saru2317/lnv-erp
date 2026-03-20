@@ -81,7 +81,7 @@ export default function ApprovalConfig() {
       {/* Info banner */}
       <div style={{padding:'10px 14px', background:'#FFF8E1', border:'1px solid #F5C518',
         borderRadius:6, marginBottom:16, fontSize:12, color:'#856404', display:'flex', gap:8, alignItems:'flex-start'}}>
-        <span style={{fontSize:18}}>⚡</span>
+        <span style={{fontSize:18}}></span>
         <div>
           <strong>Auto-Escalation:</strong> If an approver does not act within the configured days,
           the approval request automatically escalates to the next level.
@@ -237,7 +237,7 @@ export default function ApprovalConfig() {
                           {li === cfg.levels.length-1 && (
                             <div style={{background:'#D4EDDA', padding:'4px 10px', borderRadius:4,
                               border:'1px solid #C3E6CB', color:'#155724'}}>
-                              ✓ Final Approval — Document gets approved
+                               Final Approval — Document gets approved
                             </div>
                           )}
                         </div>
@@ -251,7 +251,7 @@ export default function ApprovalConfig() {
                       background:'var(--odoo-red)', color:'#fff',
                       display:'flex', alignItems:'center', justifyContent:'center',
                       fontSize:16, fontWeight:800}}>
-                      ✕
+                      
                     </div>
                     <div style={{flex:1, background:'#FFF5F5', borderRadius:6,
                       padding:'10px 14px', border:'1px solid #F8D7DA',

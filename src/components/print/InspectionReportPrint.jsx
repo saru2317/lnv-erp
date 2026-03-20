@@ -9,7 +9,7 @@ const SAMPLE={irNo:'IR-2026-041',date:'17 Mar 2026',type:'Incoming',joRef:'JO-20
     {sl:2,param:'Adhesion (Cross-cut)',method:'Cross-cut test',spec:'≥ 4B (ISO 2409)',results:['5B','5B','4B','5B','5B'],avg:'4.8B',status:'Pass'},
     {sl:3,param:'Gloss Level',         method:'Glossmeter',  spec:'30–40 GU',results:['34','36','35','33','37'],avg:'35 GU',status:'Pass'},
     {sl:4,param:'Surface Defects',     method:'Visual',      spec:'Zero defects',results:['0','0','0','1','0'],avg:'0.2',  status:'Pass'},
-    {sl:5,param:'Colour Match',        method:'Visual/RAL',  spec:'RAL 9005',results:['✓','✓','✓','✓','✓'],avg:'100%', status:'Pass'},
+    {sl:5,param:'Colour Match',        method:'Visual/RAL',  spec:'RAL 9005',results:['','','','',''],avg:'100%', status:'Pass'},
   ],
   qtyOk:498, qtyRej:2, rejReason:'2 nos with pin-hole defects — sent for rework',
   verdict:'ACCEPTED', remarks:'Batch conforms to customer specification. 2 nos for rework.',

@@ -39,7 +39,7 @@ export default function EmployeeList() {
         <select className="fi-filter-select" onChange={e=>setDept(e.target.value)} style={{width:'160px'}}>
           {DEPTS.map(d=><option key={d}>{d}</option>)}
         </select>
-        <div className="fi-filter-search" style={{flex:1}}>🔍<input placeholder="Search name, ID, designation..."/></div>
+        <div className="fi-filter-search" style={{flex:1}}><input placeholder="Search name, ID, designation..."/></div>
       </div>
 
       {view==='card' ? (

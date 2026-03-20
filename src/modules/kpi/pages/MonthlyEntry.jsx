@@ -39,13 +39,13 @@ export default function MonthlyEntry({ kpiMaster, actuals, onSave }) {
           <button className="btn btn-p sd-bsm"
             style={saved ? {background:'#155724',color:'#fff'} : {}}
             onClick={handleSave}>
-            {saved ? '✅ Saved!' : '💾 Save Entry'}
+            {saved ? ' Saved!' : ' Save Entry'}
           </button>
         </div>
       </div>
 
       <div className="fi-alert info" style={{marginBottom:14}}>
-        ℹ️ Enter actual values for <strong>{MONTH_FULL[month]} 2026</strong>. Achievement % and Score are auto-calculated.
+        ℹ Enter actual values for <strong>{MONTH_FULL[month]} 2026</strong>. Achievement % and Score are auto-calculated.
         Blue cells = input. ↑ = Higher is better. ↓ = Lower is better.
       </div>
 
@@ -53,7 +53,7 @@ export default function MonthlyEntry({ kpiMaster, actuals, onSave }) {
         overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--odoo-border)',
           fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700}}>
-          📝 Actuals Entry — {MONTH_FULL[month]} 2026
+           Actuals Entry — {MONTH_FULL[month]} 2026
         </div>
         <div style={{overflowX:'auto'}}>
           <table style={{width:'100%', borderCollapse:'collapse'}}>
@@ -72,7 +72,7 @@ export default function MonthlyEntry({ kpiMaster, actuals, onSave }) {
               <tr>
                 <td colSpan={10} style={{padding:'7px 12px', background:'#1C1C1C',
                   color:'#fff', fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:11}}>
-                  📊 MAJOR KPIs
+                   MAJOR KPIs
                 </td>
               </tr>
               {master.filter(k=>k.cat==='Major').map((k,i) => {
@@ -127,7 +127,7 @@ export default function MonthlyEntry({ kpiMaster, actuals, onSave }) {
               <tr>
                 <td colSpan={10} style={{padding:'7px 12px', background:'#1A5276',
                   color:'#fff', fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:11}}>
-                  📋 MINOR KPIs — Tracking Only
+                   MINOR KPIs — Tracking Only
                 </td>
               </tr>
               {master.filter(k=>k.cat==='Minor').map((k,i) => {

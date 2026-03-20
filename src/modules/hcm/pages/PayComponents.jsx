@@ -76,8 +76,8 @@ export default function PayComponents() {
                       <td style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{e.basis}</td>
                       <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'var(--odoo-blue)'}}>{e.calc}</td>
                       <td style={{textAlign:'center',color:e.taxable?'var(--odoo-orange)':'var(--odoo-green)'}}>{e.taxable?'Yes':'No'}</td>
-                      <td style={{textAlign:'center',color:e.pf?'var(--odoo-green)':'var(--odoo-gray)'}}>{e.pf?'✅':'—'}</td>
-                      <td style={{textAlign:'center',color:e.esi?'var(--odoo-green)':'var(--odoo-gray)'}}>{e.esi?'✅':'—'}</td>
+                      <td style={{textAlign:'center',color:e.pf?'var(--odoo-green)':'var(--odoo-gray)'}}>{e.pf?'':'—'}</td>
+                      <td style={{textAlign:'center',color:e.esi?'var(--odoo-green)':'var(--odoo-gray)'}}>{e.esi?'':'—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -85,7 +85,7 @@ export default function PayComponents() {
             </div>
           </div>
           <div className="fi-form-sec" style={{marginTop:'14px'}}>
-            <div className="fi-form-sec-hdr">➖ Deductions</div>
+            <div className="fi-form-sec-hdr"> Deductions</div>
             <div style={{padding:'0'}}>
               <table className="fi-data-table">
                 <thead><tr><th>Component</th><th>Basis</th><th>Formula</th></tr></thead>
@@ -105,7 +105,7 @@ export default function PayComponents() {
 
         {/* Live CTC calculator */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🧮 CTC Calculator (Live Preview)</h3></div>
+          <div className="fi-panel-hdr"><h3> CTC Calculator (Live Preview)</h3></div>
           <div className="fi-panel-body">
             <div className="fi-form-grp" style={{marginBottom:'14px'}}>
               <label>Basic Wage / Month</label>

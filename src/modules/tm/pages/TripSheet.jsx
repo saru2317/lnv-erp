@@ -39,7 +39,7 @@ export default function TripSheet() {
               onClick={()=>setStage('closed')}>Close Trip</button>}
           {stage==='closed' && !form.intimated &&
             <button className="btn btn-p sd-bsm" style={{background:'#856404',color:'#fff'}}
-              onClick={()=>upd('intimated',true)}>📱 Intimate Requestor</button>}
+              onClick={()=>upd('intimated',true)}> Intimate Requestor</button>}
         </div>
       </div>
 
@@ -48,9 +48,9 @@ export default function TripSheet() {
         background: stage==='entry'?'#FFF3CD':stage==='dispatched'?'#D1ECF1':'#D4EDDA',
         color: stage==='entry'?'#856404':stage==='dispatched'?'#0C5460':'#155724',
         border:`1px solid ${stage==='entry'?'#FAD7A0':stage==='dispatched'?'#BEE5EB':'#C3E6CB'}`}}>
-        {stage==='entry' && '📋 Trip sheet ready — fill details and dispatch'}
-        {stage==='dispatched' && '🚚 Vehicle dispatched and on road — enter return details to close'}
-        {stage==='closed' && (form.intimated ? '✅ Trip closed and requestor intimated' : '✅ Trip closed — click "Intimate Requestor" to notify')}
+        {stage==='entry' && ' Trip sheet ready — fill details and dispatch'}
+        {stage==='dispatched' && ' Vehicle dispatched and on road — enter return details to close'}
+        {stage==='closed' && (form.intimated ? ' Trip closed and requestor intimated' : ' Trip closed — click "Intimate Requestor" to notify')}
       </div>
 
       {/* Trip Details */}

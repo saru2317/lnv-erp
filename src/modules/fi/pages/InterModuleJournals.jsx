@@ -48,7 +48,7 @@ export default function InterModuleJournals() {
         </div>
       </div>
 
-      <div className="fi-alert info">🔗 Every transaction in SD, MM, WM, PP, PM, HCM automatically posts a Journal Entry here. Finance team gets real-time accounting — no manual re-entry.</div>
+      <div className="fi-alert info"> Every transaction in SD, MM, WM, PP, PM, HCM automatically posts a Journal Entry here. Finance team gets real-time accounting — no manual re-entry.</div>
 
       <div className="fi-chips">
         {['All','SD','MM','WM','PP','PM','HCM'].map(s=>(
@@ -59,12 +59,12 @@ export default function InterModuleJournals() {
       {/* Module Integration Map */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'14px'}}>
         {[
-          {src:'SD',icon:'🛒',name:'Sales',ev:'Invoice → AR Dr / Revenue Cr\nReceipt → Bank Dr / AR Cr\nCredit Note → Revenue Dr / AR Cr'},
-          {src:'MM',icon:'📦',name:'Purchase',ev:'PO Receipt → Stock Dr / AP Cr\nVendor Pay → AP Dr / Bank Cr\nReturn → AP Dr / Stock Cr'},
-          {src:'WM',icon:'🏭',name:'Warehouse',ev:'Goods Issue → COGS Dr / Stock Cr\nGoods Receipt → Stock Dr / AP Cr\nAdjust → COGS Dr/Cr / Stock Cr/Dr'},
-          {src:'PP',icon:'⚙️',name:'Production',ev:'WO Close → COGM Dr / FG Dr / Stock Cr\nLabour → COGM Labour Dr\nOverhead → COGM Overhead Dr'},
-          {src:'PM',icon:'🔧',name:'Maintenance',ev:'Work Order → Maint Exp Dr / AP Cr\nCapex → FA Dr / AP Cr\nDepreciation → Dep Dr / Acc Dep Cr'},
-          {src:'HCM',icon:'👥',name:'Payroll',ev:'Payroll Run → Salary Dr / Bank Cr\nPF/ESI → PF Dr / PF Payable Cr\nTDS → TDS Payable Cr'},
+          {src:'SD',icon:'',name:'Sales',ev:'Invoice → AR Dr / Revenue Cr\nReceipt → Bank Dr / AR Cr\nCredit Note → Revenue Dr / AR Cr'},
+          {src:'MM',icon:'',name:'Purchase',ev:'PO Receipt → Stock Dr / AP Cr\nVendor Pay → AP Dr / Bank Cr\nReturn → AP Dr / Stock Cr'},
+          {src:'WM',icon:'',name:'Warehouse',ev:'Goods Issue → COGS Dr / Stock Cr\nGoods Receipt → Stock Dr / AP Cr\nAdjust → COGS Dr/Cr / Stock Cr/Dr'},
+          {src:'PP',icon:'',name:'Production',ev:'WO Close → COGM Dr / FG Dr / Stock Cr\nLabour → COGM Labour Dr\nOverhead → COGM Overhead Dr'},
+          {src:'PM',icon:'',name:'Maintenance',ev:'Work Order → Maint Exp Dr / AP Cr\nCapex → FA Dr / AP Cr\nDepreciation → Dep Dr / Acc Dep Cr'},
+          {src:'HCM',icon:'',name:'Payroll',ev:'Payroll Run → Salary Dr / Bank Cr\nPF/ESI → PF Dr / PF Payable Cr\nTDS → TDS Payable Cr'},
         ].map(m=>(
           <div key={m.src} style={{background:'#fff',borderRadius:'8px',padding:'12px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`4px solid ${SRC_COLORS[m.src]}`}}>
             <div style={{fontWeight:'700',marginBottom:'6px',display:'flex',gap:'6px',alignItems:'center'}}>
@@ -105,8 +105,8 @@ export default function InterModuleJournals() {
         <div className="fi-modal-overlay" onClick={() => setSel(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              <h3>📓 {sel.jv} · {sel.srcName} Auto-Journal</h3>
-              <span className="fi-modal-close" onClick={() => setSel(null)}>✕</span>
+              <h3> {sel.jv} · {sel.srcName} Auto-Journal</h3>
+              <span className="fi-modal-close" onClick={() => setSel(null)}></span>
             </div>
             <div className="fi-modal-body">
               <div style={{background:'#F8F9FA',padding:'10px 14px',borderRadius:'6px',marginBottom:'16px',fontSize:'13px'}}>
@@ -132,7 +132,7 @@ export default function InterModuleJournals() {
               </table>
               <div style={{display:'flex',gap:'8px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setSel(null)}>Close</button>
-                <button className="btn btn-p sd-bsm">📜 View in Ledger</button>
+                <button className="btn btn-p sd-bsm"> View in Ledger</button>
               </div>
             </div>
           </div>

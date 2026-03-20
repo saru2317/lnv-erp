@@ -20,22 +20,22 @@ export default function PMDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">PM Dashboard <small>Plant Maintenance Overview · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>📅 PM Schedule</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/breakdown/new')}>🔴 Report Breakdown</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}> PM Schedule</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/breakdown/new')}> Report Breakdown</button>
         </div>
       </div>
 
       {BREAKDOWNS.length > 0 && (
         <div className="pp-alert warn" style={{marginBottom:'14px'}}>
-          🔴 <strong>{BREAKDOWNS.length} Active Breakdowns!</strong> Total downtime: 22 hrs today — WND-01 & FB-02 down.
+           <strong>{BREAKDOWNS.length} Active Breakdowns!</strong> Total downtime: 22 hrs today — WND-01 & FB-02 down.
         </div>
       )}
 
       <div className="pm-kpi-grid">
-        {[{cls:'red',   ic:'🔴',l:'Active Breakdowns', v:'2', s:'WND-01 · 18 hrs downtime'},
-          {cls:'orange',ic:'🔧',l:'PM Overdue',         v:'2', s:'SPG-01 · CB-01 — urgent'},
-          {cls:'purple',ic:'🏭',l:'Machine Utilization',v:'76%',s:'Target: 85%'},
-          {cls:'blue',  ic:'💰',l:'Maint. Cost (MTD)',  v:'₹1.8L',s:'Budget: ₹2.0L · 90%'},
+        {[{cls:'red',   ic:'',l:'Active Breakdowns', v:'2', s:'WND-01 · 18 hrs downtime'},
+          {cls:'orange',ic:'',l:'PM Overdue',         v:'2', s:'SPG-01 · CB-01 — urgent'},
+          {cls:'purple',ic:'',l:'Machine Utilization',v:'76%',s:'Target: 85%'},
+          {cls:'blue',  ic:'',l:'Maint. Cost (MTD)',  v:'₹1.8L',s:'Budget: ₹2.0L · 90%'},
         ].map(k=>(
           <div key={k.l} className={`pm-kpi-card ${k.cls}`}>
             <div className="pm-kpi-icon">{k.ic}</div>
@@ -50,7 +50,7 @@ export default function PMDashboard() {
         {/* Active Breakdowns */}
         <div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
-            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:'15px',fontWeight:'700'}}>🔴 Active Breakdowns</h3>
+            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:'15px',fontWeight:'700'}}> Active Breakdowns</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}>View All</button>
           </div>
           {BREAKDOWNS.map(b=>(
@@ -60,29 +60,29 @@ export default function PMDashboard() {
                 <span className={`badge ${b.sb}`}>Active</span>
               </div>
               <div className="bd-meta">
-                <span>⚠️ {b.issue}</span>
+                <span> {b.issue}</span>
               </div>
               <div className="bd-meta" style={{marginTop:'6px'}}>
-                <span>⏱️ Downtime: <strong style={{color:'var(--odoo-red)'}}>{b.hrs} hrs</strong></span>
-                <span>👤 {b.tech}</span>
+                <span>⏱ Downtime: <strong style={{color:'var(--odoo-red)'}}>{b.hrs} hrs</strong></span>
+                <span> {b.tech}</span>
               </div>
             </div>
           ))}
           <button className="btn btn-p sd-bsm" style={{width:'100%',marginTop:'4px'}} onClick={() => nav('/pm/breakdown/new')}>
-            🔴 Report New Breakdown
+             Report New Breakdown
           </button>
         </div>
 
         {/* PM Schedule */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>⚠️ PM Schedule</h3>
+            <h3> PM Schedule</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>View All</button>
           </div>
           <div className="fi-panel-body">
             {PM_SCHEDULE.map(p=>(
               <div key={p.mc} className="pm-sched-row">
-                <div className="pm-sched-icon" style={{background:p.cls==='dn'?'#F8D7DA':p.cls==='wn'?'#FFF3CD':'#D4EDDA'}}>🔧</div>
+                <div className="pm-sched-icon" style={{background:p.cls==='dn'?'#F8D7DA':p.cls==='wn'?'#FFF3CD':'#D4EDDA'}}></div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:'13px',fontWeight:'700'}}>{p.mc}</div>
                   <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{p.type} · Last: {p.last}</div>
@@ -99,7 +99,7 @@ export default function PMDashboard() {
       {/* MTTR / MTBF Summary */}
       <div className="fi-panel-grid">
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 Reliability Metrics — Feb 2025</h3></div>
+          <div className="fi-panel-hdr"><h3>Reliability Metrics — Feb 2025</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
               {[['MTBF','134 hrs','Mean Time Between Failures','var(--odoo-green)'],
@@ -117,14 +117,14 @@ export default function PMDashboard() {
           </div>
         </div>
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
+          <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
           <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {[['🔴','Report Breakdown','/pm/breakdown/new','btn-p'],
-              ['🔧','Create PM Work Order','/pm/workorder','btn-s'],
-              ['📦','Issue Spare Parts','/pm/spares/issue','btn-s'],
-              ['📅','View PM Schedule','/pm/schedule','btn-s'],
-              ['📊','Calibration Due','/pm/calibration','btn-s'],
-              ['💰','Cost Report','/pm/cost','btn-s'],
+            {[['','Report Breakdown','/pm/breakdown/new','btn-p'],
+              ['','Create PM Work Order','/pm/workorder','btn-s'],
+              ['','Issue Spare Parts','/pm/spares/issue','btn-s'],
+              ['','View PM Schedule','/pm/schedule','btn-s'],
+              ['','Calibration Due','/pm/calibration','btn-s'],
+              ['','Cost Report','/pm/cost','btn-s'],
             ].map(([ic,l,to,cls])=>(
               <button key={l} className={`btn ${cls} sd-bsm`} style={{justifyContent:'flex-start',gap:'8px'}}
                 onClick={() => nav(to)}>{ic} {l}</button>

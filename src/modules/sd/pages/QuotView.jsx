@@ -308,7 +308,7 @@ export default function QuotView() {
         {quot.status === 'cancelled' && quot.cancelReason && (
           <div style={{padding:'12px 16px',background:'#FFF5F5',border:'1px solid #F8D7DA',
             borderRadius:6,marginBottom:12,display:'flex',gap:10,alignItems:'flex-start'}}>
-            <span style={{fontSize:18}}>❌</span>
+            <span style={{fontSize:18}}></span>
             <div>
               <div style={{fontWeight:700,color:'var(--odoo-red)',fontSize:13}}>Quotation Cancelled</div>
               <div style={{fontSize:12,color:'#721C24',marginTop:2}}>

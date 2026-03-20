@@ -43,7 +43,7 @@ export default function AuditByUser() {
                     color:activeUser===u?'var(--odoo-purple)':'var(--odoo-dark)'}}>{u}</div>
                   <div style={{fontSize:'11px',color:'var(--odoo-gray)',display:'flex',gap:'8px',marginTop:'2px'}}>
                     <span>{uLogs.length} events</span>
-                    {uDels>0&&<span style={{color:'var(--odoo-red)'}}>🗑️{uDels}</span>}
+                    {uDels>0&&<span style={{color:'var(--odoo-red)'}}>{uDels}</span>}
                   </div>
                 </div>
               )

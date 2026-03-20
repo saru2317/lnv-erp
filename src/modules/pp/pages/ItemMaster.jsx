@@ -56,7 +56,7 @@ export default function ItemMaster() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Item Master <small>{items.length} items · Routing linked per item</small></div>
         <div className="fi-lv-actions">
-          <input className="sd-search" placeholder="🔍 Item code / name…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:'180px'}} />
+          <input className="sd-search" placeholder=" Item code / name…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:'180px'}} />
           <select className="sd-select" value={indFilter} onChange={e=>setIndFilter(e.target.value)}>
             <option value="All">All Industries</option>
             {indList.map(([k,v])=><option key={k} value={k}>{v.icon} {v.name}</option>)}
@@ -68,7 +68,7 @@ export default function ItemMaster() {
       {/* Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'16px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>{editId?'✏️ Edit Item':'➕ New Item'}</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId?' Edit Item':' New Item'}</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'20px'}}>
               <div>
@@ -125,7 +125,7 @@ export default function ItemMaster() {
             {/* Auto-route preview */}
             {form.industry&&(
               <div style={{marginTop:'12px',padding:'12px',background:'#F8F9FA',borderRadius:'8px',border:'1px solid var(--odoo-border)'}}>
-                <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)',marginBottom:'8px'}}>🗺️ AUTO-ASSIGNED ROUTE (from industry stages)</div>
+                <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)',marginBottom:'8px'}}> AUTO-ASSIGNED ROUTE (from industry stages)</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:'0',alignItems:'center'}}>
                   {INDUSTRIES[form.industry]?.stages.map((s,i)=>(
                     <React.Fragment key={s.id}>
@@ -141,12 +141,12 @@ export default function ItemMaster() {
             {/* Mould calc preview */}
             {isMould&&form.cavity>0&&(
               <div style={{marginTop:'10px',padding:'10px 14px',background:'#FFF3CD',borderRadius:'6px',fontSize:'12px',color:'#856404'}}>
-                💉 <strong>Shot Calculator:</strong> For 1000 pcs with cavity {form.cavity} → <strong>{Math.ceil(1000/parseInt(form.cavity||1))} shots</strong> needed. Output = {Math.ceil(1000/parseInt(form.cavity||1))*parseInt(form.cavity||1)} pcs
+                 <strong>Shot Calculator:</strong> For 1000 pcs with cavity {form.cavity} → <strong>{Math.ceil(1000/parseInt(form.cavity||1))} shots</strong> needed. Output = {Math.ceil(1000/parseInt(form.cavity||1))*parseInt(form.cavity||1)} pcs
               </div>
             )}
 
             <div style={{display:'flex',gap:'8px',marginTop:'12px'}}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'} Item</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'} Item</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function ItemMaster() {
                   <td style={{fontSize:'11px'}}>
                     {item.prodType==='mould'&&item.cavity
                       ? <div>
-                          <div style={{fontWeight:'700',color:'var(--odoo-orange)'}}>🔲 Cavity: {item.cavity}</div>
+                          <div style={{fontWeight:'700',color:'var(--odoo-orange)'}}> Cavity: {item.cavity}</div>
                           {mld&&<div style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{mld.name}</div>}
                         </div>
                       : item.batchCapacity
@@ -202,8 +202,8 @@ export default function ItemMaster() {
                   </td>
                   <td>
                     <div style={{display:'flex',gap:'4px'}}>
-                      <button className="btn-act-edit" onClick={()=>handleEdit(item)}>✏️</button>
-                      <button className="btn-act-view" onClick={()=>nav(`/pp/item-routing?id=${item.id}`)}>🗺️ Route</button>
+                      <button className="btn-act-edit" onClick={()=>handleEdit(item)}></button>
+                      <button className="btn-act-view" onClick={()=>nav(`/pp/item-routing?id=${item.id}`)}> Route</button>
                     </div>
                   </td>
                 </tr>
@@ -216,11 +216,11 @@ export default function ItemMaster() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px',marginTop:'14px'}}>
         {[
-          {l:'Total Items',       v:items.length,                                    c:'var(--odoo-purple)',i:'📦'},
+          {l:'Total Items',       v:items.length,                                    c:'var(--odoo-purple)',i:''},
           {l:'Batch Process',     v:items.filter(i=>i.prodType==='batch').length,    c:'var(--odoo-blue)',  i:'🪣'},
-          {l:'Mould Type',        v:items.filter(i=>i.prodType==='mould').length,    c:'var(--odoo-orange)',i:'💉'},
-          {l:'Discrete',          v:items.filter(i=>i.prodType==='discrete').length, c:'var(--odoo-green)', i:'🔩'},
-          {l:'Industries Covered',v:[...new Set(items.map(i=>i.industry))].length,  c:'var(--odoo-red)',   i:'🏭'},
+          {l:'Mould Type',        v:items.filter(i=>i.prodType==='mould').length,    c:'var(--odoo-orange)',i:''},
+          {l:'Discrete',          v:items.filter(i=>i.prodType==='discrete').length, c:'var(--odoo-green)', i:''},
+          {l:'Industries Covered',v:[...new Set(items.map(i=>i.industry))].length,  c:'var(--odoo-red)',   i:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
             <div className="crm-kpi-icon">{k.i}</div>

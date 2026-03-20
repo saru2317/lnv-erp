@@ -7,7 +7,7 @@ export default function NCRNew() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>❌</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-orange)'}}>NCR-020 Raised!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Assigned to QC team · Email notification sent</div>
       <div style={{display:'flex',gap:'10px'}}>
@@ -22,13 +22,13 @@ export default function NCRNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Raise NCR <small>Non-Conformance Report</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}> Cancel</button>
           <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save NCR</button>
         </div>
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">❌ NCR Details</div>
+        <div className="fi-form-sec-hdr"> NCR Details</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>NCR Number</label><input className="fi-form-ctrl" defaultValue="NCR-020" readOnly/></div>
@@ -115,14 +115,14 @@ export default function NCRNew() {
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Submit NCR</button>
         <div className="fi-status-flow">
-          <span className="fi-sf-step act">❌ NCR</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step act"> NCR</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">Root Cause</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">CAPA</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">🔒 Closed</span>
+          <span className="fi-sf-step"> Closed</span>
         </div>
       </div>
     </div>

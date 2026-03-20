@@ -19,25 +19,25 @@ const SecurityConfig  = lazy(() => import('./SecurityConfig'))
 const AuditLog        = lazy(() => import('./AuditLog'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Overview', icon:'⚙️', items:[
+  { label:'Overview', icon:'', items:[
     { to:'/config',              label:'Config Dashboard' },
   ]},
-  { label:'Company', icon:'🏢', items:[
+  { label:'Company', icon:'', items:[
     { to:'/config/company',      label:'Company Profile' },
     { to:'/config/branches',     label:'Branches' },
   ]},
-  { label:'Users & Access', icon:'👥', items:[
+  { label:'Users & Access', icon:'', items:[
     { to:'/config/users',        label:'Users' },
     { to:'/config/roles',        label:'Roles & Permissions' },
     { to:'/config/security',     label:'Sessions & Security' },
   ]},
-  { label:'Accounting', icon:'💰', items:[
+  { label:'Accounting', icon:'', items:[
     { to:'/config/fiscal-year',  label:'Fiscal Years' },
     { to:'/config/number-series',label:'Number Series' },
     { to:'/config/tax',          label:'Tax & GST' },
     { to:'/config/currency',     label:'Currency' },
   ]},
-  { label:'System', icon:'🖥️', items:[
+  { label:'System', icon:'', items:[
     { to:'/config/email',        label:'Email Settings' },
     { to:'/config/print',        label:'Print Templates' },
     { to:'/config/audit',        label:'Audit Log' },

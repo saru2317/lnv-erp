@@ -20,10 +20,10 @@ export default function CompanyProfile() {
   }
 
   const TABS = [
-    { key:'basic',    label:'🏢 Basic Info'   },
-    { key:'address',  label:'📍 Address'      },
-    { key:'statutory',label:'📋 Statutory'    },
-    { key:'settings', label:'⚙️ Preferences'  },
+    { key:'basic',    label:' Basic Info'   },
+    { key:'address',  label:' Address'      },
+    { key:'statutory',label:' Statutory'    },
+    { key:'settings', label:' Preferences'  },
   ]
 
   return (
@@ -32,7 +32,7 @@ export default function CompanyProfile() {
         <div className="fi-lv-title">Company Profile <small>Legal entity, registration & preferences</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-p btn-s" onClick={handleSave}>
-            {saved ? '✅ Saved!' : '💾 Save Changes'}
+            {saved ? ' Saved!' : ' Save Changes'}
           </button>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function CompanyProfile() {
             {form.type} &nbsp;·&nbsp; {form.industry} &nbsp;·&nbsp; Est. {form.founded}
           </div>
         </div>
-        <button className="btn btn-s sd-bsm" style={{ marginLeft:'auto' }}>📷 Upload Logo</button>
+        <button className="btn btn-s sd-bsm" style={{ marginLeft:'auto' }}> Upload Logo</button>
       </div>
 
       {/* Tabs */}
@@ -154,7 +154,7 @@ export default function CompanyProfile() {
                 <input value={form.cin} onChange={e => set('cin', e.target.value)} style={{ fontFamily:'DM Mono,monospace' }} />
               </div>
               <div style={{ gridColumn:'1/-1', padding:'10px 14px', background:'#FFF3CD', borderRadius:'6px', fontSize:'12px', color:'#856404' }}>
-                💡 GSTIN format: 2-digit state code + PAN + entity number + Z + check digit (e.g. 33AABCL1234F1Z5)
+                 GSTIN format: 2-digit state code + PAN + entity number + Z + check digit (e.g. 33AABCL1234F1Z5)
               </div>
             </div>
           )}

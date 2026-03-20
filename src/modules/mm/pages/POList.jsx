@@ -19,7 +19,7 @@ export default function POList() {
         <div className="lv-acts">
           <ListViewToggle viewMode={viewMode} onToggle={toggleView} />
           <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>＋ New PO</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}> New PO</button>
         </div>
       </div>
       <div className="mm-chips">
@@ -30,7 +30,7 @@ export default function POList() {
         ))}
       </div>
       <div className="mm-filt">
-        <div className="mm-fs-input">🔍<input placeholder="Search PO No., Vendor, Material..." /></div>
+        <div className="mm-fs-input"><input placeholder="Search PO No., Vendor, Material..." /></div>
         <select className="mm-fsel"><option>All Vendors</option><option>Lakshmi Textile Mills</option><option>Coimbatore Spares Co.</option><option>Sri Murugan Traders</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Draft</option><option>Approved</option><option>GRN Done</option><option>Partial GRN</option></select>
         <select className="mm-fsel"><option>Feb 2025</option><option>Jan 2025</option><option>Dec 2024</option></select>

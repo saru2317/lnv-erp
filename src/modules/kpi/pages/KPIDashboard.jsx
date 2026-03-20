@@ -74,7 +74,7 @@ export default function KPIDashboard() {
               transition:'width 1s ease'}}/>
           </div>
           <div style={{display:'flex', gap:16}}>
-            {[['✅ Green',greenCt,'#00A09D'],['⚠️ Yellow',yellowCt,'#F5C518'],['🔴 Red',redCt,'#D9534F']].map(([l,v,c])=>(
+            {[[' Green',greenCt,'#00A09D'],[' Yellow',yellowCt,'#F5C518'],[' Red',redCt,'#D9534F']].map(([l,v,c])=>(
               <div key={l} style={{display:'flex',alignItems:'center',gap:5}}>
                 <div style={{width:10,height:10,borderRadius:2,background:c}}/>
                 <span style={{fontSize:11,color:'rgba(255,255,255,.8)'}}>{l}: <strong style={{color:'#fff'}}>{v}</strong></span>
@@ -88,7 +88,7 @@ export default function KPIDashboard() {
           background: tier?.color ? `${tier.color}33` : 'rgba(255,255,255,.1)',
           border:`2px solid ${tier?.color || 'rgba(255,255,255,.2)'}`,
           minWidth:140}}>
-          <div style={{fontSize:28, marginBottom:4}}>💰</div>
+          <div style={{fontSize:28, marginBottom:4}}></div>
           <div style={{fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800,
             color: tier?.color || 'rgba(255,255,255,.5)'}}>
             {tier?.label || '—'}
@@ -107,7 +107,7 @@ export default function KPIDashboard() {
           <div style={{padding:'10px 16px', borderBottom:'1px solid var(--odoo-border)',
             background:'#FDF0EA', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <h4 style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, color:'#721C24'}}>
-              🔴 KPIs Needing Attention
+               KPIs Needing Attention
             </h4>
             <span style={{fontSize:10, color:'var(--odoo-gray)'}}>Lowest achievement</span>
           </div>
@@ -140,7 +140,7 @@ export default function KPIDashboard() {
           <div style={{padding:'10px 16px', borderBottom:'1px solid var(--odoo-border)',
             background:'#F0FFF4', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <h4 style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, color:'#155724'}}>
-              ✅ KPIs On Track
+               KPIs On Track
             </h4>
             <span style={{fontSize:10, color:'var(--odoo-gray)'}}>Highest achievement</span>
           </div>

@@ -20,7 +20,7 @@ export default function Depreciation() {
           <button className="btn btn-p sd-bsm">Post to GL (FI)</button>
         </div>
       </div>
-      <div className="fi-alert info" style={{marginBottom:14}}>ℹ️ Depreciation computed for all active assets. Click "Post to GL" to create journal entry in FI module (Dr. Depreciation Expense / Cr. Accumulated Depreciation).</div>
+      <div className="fi-alert info" style={{marginBottom:14}}>ℹ Depreciation computed for all active assets. Click "Post to GL" to create journal entry in FI module (Dr. Depreciation Expense / Cr. Accumulated Depreciation).</div>
       <table className="fi-data-table">
         <thead><tr><th>Asset</th><th>Method</th><th>Gross Value</th><th>Acc. Depr. (Before)</th><th>This Month Depr.</th><th>Acc. Depr. (After)</th><th>Net Value</th></tr></thead>
         <tbody>

@@ -11,7 +11,7 @@ export default function POView() {
         <div><div className="lv-ttl">{poId} <span className="mm-badge mm-bdg-approved" style={{fontSize:'14px',marginLeft:'8px'}}>Approved</span></div></div>
         <div className="lv-acts">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>← Back</button>
-          <button className="btn btn-s sd-bsm">🖨️ Print PO</button>
+          <button className="btn btn-s sd-bsm"> Print PO</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
         </div>
       </div>

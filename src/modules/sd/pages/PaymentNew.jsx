@@ -13,9 +13,9 @@ export default function PaymentNew() {
     if (!form.amount) return toast.error('Enter amount received')
     try {
       await sdApi.createPayment(form)
-      toast.success('Payment PMT-0042 Recorded! 💳')
+      toast.success('Payment PMT-0042 Recorded! ')
     } catch {
-      toast.success('Payment PMT-0042 Recorded (dev mode)! 💳')
+      toast.success('Payment PMT-0042 Recorded (dev mode)! ')
     }
     navigate('/sd/payments')
   }
@@ -25,7 +25,7 @@ export default function PaymentNew() {
       <div className="lv-hdr">
         <div className="lv-ttl">Record Payment Receipt <small>F-28</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s" onClick={()=>navigate('/sd/payments')}>✕ Cancel</button>
+          <button className="btn btn-s" onClick={()=>navigate('/sd/payments')}> Cancel</button>
           <button className="btn btn-p" onClick={save}>Save Payment</button>
         </div>
       </div>

@@ -16,9 +16,9 @@ export default function Assignments({ assignments, kpiMaster }) {
         <div className="fi-lv-actions"><button className="btn btn-p sd-bsm">+ New Assignment</button></div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-        {[['👔','Role-Based','All employees of a role share same KPI set',roleCt,'var(--odoo-purple)','#EDE0EA'],
-          ['🧑','Employee-Based','Individual custom KPI set + incentive link',empCt,'var(--odoo-green)','#D4EDDA'],
-          ['🏭','Department/Model','Plant-level or division KPIs',deptCt,'var(--odoo-blue)','#D1ECF1']
+        {[['','Role-Based','All employees of a role share same KPI set',roleCt,'var(--odoo-purple)','#EDE0EA'],
+          ['','Employee-Based','Individual custom KPI set + incentive link',empCt,'var(--odoo-green)','#D4EDDA'],
+          ['','Department/Model','Plant-level or division KPIs',deptCt,'var(--odoo-blue)','#D1ECF1']
         ].map(([ic,title,sub,ct,c,bg])=>(
           <div key={title} style={{background:'#fff',borderRadius:8,border:`2px solid ${c}33`,
             padding:20,textAlign:'center',boxShadow:'0 1px 4px rgba(0,0,0,.06)',cursor:'pointer'}}
@@ -48,7 +48,7 @@ export default function Assignments({ assignments, kpiMaster }) {
               <td style={{textAlign:'center'}}>
                 <span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,
                   background:a.incLinked?'#D4EDDA':'#F8F9FA',color:a.incLinked?'#155724':'#999'}}>
-                  {a.incLinked?'✅ Yes':'— No'}
+                  {a.incLinked?' Yes':'— No'}
                 </span>
               </td>
               <td><div style={{display:'flex',gap:4}}>

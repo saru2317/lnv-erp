@@ -38,7 +38,7 @@ export default function ContactManagement() {
 
       {/* Filters */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search contact or company…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search contact or company…" value={search} onChange={e=>setSearch(e.target.value)} />
       </div>
 
       {showForm&&(
@@ -80,16 +80,16 @@ export default function ContactManagement() {
               </div>
               <span className={c.status==='Active'?'crm-stage-won':'crm-badge-notq'} style={{marginLeft:'auto',fontSize:'10px'}}>{c.status}</span>
             </div>
-            <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginBottom:'6px'}}>🏢 {c.company}</div>
+            <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginBottom:'6px'}}> {c.company}</div>
             <div style={{display:'flex',gap:'12px',fontSize:'12px'}}>
-              <span>📞 {c.phone}</span>
+              <span> {c.phone}</span>
             </div>
-            <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginTop:'4px'}}>📧 {c.email}</div>
+            <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginTop:'4px'}}> {c.email}</div>
             <div style={{marginTop:'8px',paddingTop:'8px',borderTop:'1px solid var(--odoo-border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>Last contact: {c.lastContact}</span>
               <div style={{display:'flex',gap:'6px'}}>
-                <button className="btn-act-edit" onClick={e=>e.stopPropagation()}>✏️</button>
-                <button className="btn-act-view" onClick={e=>{e.stopPropagation();nav('/crm/activities')}}>📞</button>
+                <button className="btn-act-edit" onClick={e=>e.stopPropagation()}></button>
+                <button className="btn-act-view" onClick={e=>{e.stopPropagation();nav('/crm/activities')}}></button>
               </div>
             </div>
           </div>

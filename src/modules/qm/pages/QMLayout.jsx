@@ -17,22 +17,22 @@ const VendorQuality    = lazy(() => import('./VendorQuality'))
 const QualityReport    = lazy(() => import('./QualityReport'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Inspection', icon:'🔬', items:[
+  { label:'Inspection', icon:'', items:[
     {to:'/qm',              label:'QM Dashboard'},
     {to:'/qm/inspection',   label:'Inspection Lot List'},
     {to:'/qm/inspection/new',label:'New Inspection (QA01)'},
   ]},
-  { label:'Non-Conformance', icon:'❌', items:[
+  { label:'Non-Conformance', icon:'', items:[
     {to:'/qm/ncr',          label:'NCR Register'},
     {to:'/qm/ncr/new',      label:'Raise NCR'},
     {to:'/qm/capa',         label:'CAPA List'},
     {to:'/qm/capa/new',     label:'New CAPA'},
   ]},
-  { label:'Planning', icon:'📋', items:[
+  { label:'Planning', icon:'', items:[
     {to:'/qm/plan',         label:'Quality Plans'},
     {to:'/qm/sampling',     label:'Sampling Plans (AQL)'},
   ]},
-  { label:'Certificates & Reports', icon:'🏅', items:[
+  { label:'Certificates & Reports', icon:'', items:[
     {to:'/qm/certificates', label:'COC / Test Certificates'},
     {to:'/qm/vendor',       label:'Vendor Quality Rating'},
     {to:'/qm/report',       label:'Quality Report'},

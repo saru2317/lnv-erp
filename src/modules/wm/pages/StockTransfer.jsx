@@ -8,13 +8,13 @@ export default function StockTransfer() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Stock Transfer <small>MB1B · Bin to Bin / Location to Location</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Transfer</button>
         </div>
       </div>
 
       <div className="wm-form-sec">
-        <div className="wm-form-sec-hdr">🔄 Transfer Details</div>
+        <div className="wm-form-sec-hdr"> Transfer Details</div>
         <div className="wm-form-sec-body">
           <div className="wm-form-row">
             <div className="wm-form-grp"><label>Transfer Ref No.</label><input className="wm-form-ctrl" defaultValue="TR-2025-018" readOnly/></div>
@@ -51,7 +51,7 @@ export default function StockTransfer() {
                   <td><select style={{width:'80px'}}><option>BIN-C05</option><option>BIN-C01</option></select></td>
                   <td><select style={{width:'80px'}}><option>BIN-D02</option><option>BIN-D01</option></select></td>
                   <td><input defaultValue="BTH-2025-01" style={{width:'100px'}}/></td>
-                  <td><span className="li-del">🗑</span></td>
+                  <td><span className="li-del"></span></td>
                 </tr>
               </tbody>
             </table>
@@ -61,7 +61,7 @@ export default function StockTransfer() {
       </div>
 
       <div className="wm-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Transfer</button>
       </div>
     </div>

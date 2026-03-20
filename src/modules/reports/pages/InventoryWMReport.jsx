@@ -61,7 +61,7 @@ export default function InventoryWMReport() {
       </div>
 
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {[['summary','📦 Category Summary'],['movement','📊 Stock Movement'],['slow','⚠️ Slow Moving']].map(([k, l]) => (
+        {[['summary',' Category Summary'],['movement',' Stock Movement'],['slow',' Slow Moving']].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
               cursor:'pointer', border:'1px solid var(--odoo-border)',
@@ -139,7 +139,7 @@ export default function InventoryWMReport() {
       {view === 'slow' && (
         <div>
           <div className="fi-alert warn" style={{ marginBottom:14 }}>
-            ⚠️ Items with no movement for more than 60 days. Review for disposal or return to supplier.
+             Items with no movement for more than 60 days. Review for disposal or return to supplier.
           </div>
           <table className="fi-data-table">
             <thead><tr><th>Code</th><th>Description</th><th>Category</th><th>Qty</th><th>Value</th><th>Days Since Last Use</th></tr></thead>

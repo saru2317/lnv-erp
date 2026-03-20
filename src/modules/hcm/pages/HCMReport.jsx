@@ -37,16 +37,16 @@ export default function HCMReport() {
             <option>February 2025</option><option>January 2025</option>
           </select>
           <button className="btn btn-s sd-bsm">Export PDF</button>
-          <button className="btn btn-s sd-bsm">📧 Email to MD</button>
+          <button className="btn btn-s sd-bsm"> Email to MD</button>
         </div>
       </div>
 
       {/* Top KPIs */}
       <div className="hcm-kpi-grid">
-        {[{cls:'purple',ic:'👥',l:'Total Headcount',    v:'148',         s:'↑ 2 vs Jan · Target: 160',tc:'up'},
-          {cls:'green', ic:'✅',l:'Attendance Rate',    v:'93.2%',       s:'Target: ≥ 95%',tc:'wn'},
-          {cls:'blue',  ic:'💰',l:'Gross Pay Bill',     v:'₹18.4L',      s:'E-cost: ₹21.8L/mo',tc:'up'},
-          {cls:'orange',ic:'📋',l:'Attrition (MTD)',    v:'0.67%',       s:'1 exit · Annualized: 8%',tc:'wn'},
+        {[{cls:'purple',ic:'',l:'Total Headcount',    v:'148',         s:'↑ 2 vs Jan · Target: 160',tc:'up'},
+          {cls:'green', ic:'',l:'Attendance Rate',    v:'93.2%',       s:'Target: ≥ 95%',tc:'wn'},
+          {cls:'blue',  ic:'',l:'Gross Pay Bill',     v:'₹18.4L',      s:'E-cost: ₹21.8L/mo',tc:'up'},
+          {cls:'orange',ic:'',l:'Attrition (MTD)',    v:'0.67%',       s:'1 exit · Annualized: 8%',tc:'wn'},
         ].map(k => (
           <div key={k.l} className={`hcm-kpi-card ${k.cls}`}>
             <div className="hcm-kpi-icon">{k.ic}</div>
@@ -61,7 +61,7 @@ export default function HCMReport() {
 
         {/* Headcount by Dept */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>👥 Headcount vs Target — Dept Wise</h3></div>
+          <div className="fi-panel-hdr"><h3> Headcount vs Target — Dept Wise</h3></div>
           <div className="fi-panel-body">
             {DEPT_HC.map(d => (
               <div key={d.dept} style={{marginBottom:'12px'}}>
@@ -108,7 +108,7 @@ export default function HCMReport() {
               })}
             </div>
             <div style={{background:'#FFF3CD',borderRadius:'6px',padding:'8px 10px',fontSize:'11px',color:'#856404'}}>
-              ⚠️ Feb at 93.2% — below 95% target. Top absentee dept: Production (14 abs days)
+               Feb at 93.2% — below 95% target. Top absentee dept: Production (14 abs days)
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function HCMReport() {
       {/* Turnover & Payroll Analysis */}
       <div className="fi-panel-grid">
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🔄 Joins vs Exits — Last 6 Months</h3></div>
+          <div className="fi-panel-hdr"><h3> Joins vs Exits — Last 6 Months</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'80px',marginBottom:'12px'}}>
               {TURNOVER.map(t => (
@@ -148,7 +148,7 @@ export default function HCMReport() {
               ['OT % of Workers','12.4% availed OT'],
               ['Training Hrs (YTD)','18 hrs/emp'],
               ['Open Positions','4 vacancies'],
-              ['Payroll Compliance','PF ✅ ESI ✅ PT ✅'],
+              ['Payroll Compliance','PF  ESI  PT '],
               ['Annual Attrition Rate','8.1% (industry: 12%)'],
             ].map(([l,v]) => (
               <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',
@@ -185,7 +185,7 @@ export default function HCMReport() {
                     <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-orange)'}}>₹{d.cost.toLocaleString()}</td>
                     <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'var(--odoo-gray)'}}>₹{avgCost.toLocaleString()}</td>
                     <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-green)'}}>
-                      +₹{variance.toLocaleString()} ✅
+                      +₹{variance.toLocaleString()} 
                     </td>
                   </tr>
                 )
@@ -198,7 +198,7 @@ export default function HCMReport() {
                 <td style={{fontFamily:'DM Mono,monospace'}}>₹{Math.round(totalCost*0.82).toLocaleString()}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-orange)'}}>₹{totalCost.toLocaleString()}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-gray)'}}>₹{Math.round(totalCost/totalHC).toLocaleString()}</td>
-                <td style={{color:'var(--odoo-green)'}}>Under Budget ✅</td>
+                <td style={{color:'var(--odoo-green)'}}>Under Budget </td>
               </tr>
             </tfoot>
           </table>

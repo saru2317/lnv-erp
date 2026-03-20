@@ -25,12 +25,12 @@ export default function PMSchedule() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">PM Schedule <small>IW31 · Preventive Maintenance Calendar</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">📅 Calendar View</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/workorder')}>🔧 Create PM Work Order</button>
+          <button className="btn btn-s sd-bsm"> Calendar View</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/workorder')}>Create PM Work Order</button>
         </div>
       </div>
 
-      <div className="pp-alert warn">⚠️ <strong>2 PMs Overdue</strong> — SPG-01 (28 days) and CB-01 (14 days) require immediate attention.</div>
+      <div className="pp-alert warn"> <strong>2 PMs Overdue</strong> — SPG-01 (28 days) and CB-01 (14 days) require immediate attention.</div>
 
       <div className="pp-chips">
         {['All','Overdue','Due Soon','Upcoming'].map(c=>(
@@ -59,12 +59,12 @@ export default function PMSchedule() {
               <td style={{fontWeight:'600',color:s.overdue>0?'var(--odoo-red)':s.overdue===0?'var(--odoo-orange)':'inherit'}}>{s.nextPM}</td>
               <td style={{textAlign:'center'}}>{s.checklist} items</td>
               <td><span className={`badge ${s.sb}`}>
-                {s.overdue>0?`⚠️ ${s.overdue}d Overdue`:s.overdue===0?'⏰ Due Today':s.status}
+                {s.overdue>0?` ${s.overdue}d Overdue`:s.overdue===0?'⏰ Due Today':s.status}
               </span></td>
               <td>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs pri" onClick={() => nav('/pm/workorder')}>
-                    {s.overdue>=0?'🔧 Start PM':'Schedule'}
+                    {s.overdue>=0?' Start PM':'Schedule'}
                   </button>
                   <button className="btn-xs">Edit</button>
                   <button className="btn-xs" onClick={()=>nav('/print/wo')}>Print</button>

@@ -28,7 +28,7 @@ export default function VendorInvList() {
         ))}
       </div>
       <div className="mm-filt">
-        <div className="mm-fs-input">🔍<input placeholder="Search Invoice No., Vendor, PO..."/></div>
+        <div className="mm-fs-input"><input placeholder="Search Invoice No., Vendor, PO..."/></div>
         <select className="mm-fsel"><option>All Vendors</option><option>Lakshmi Textile Mills</option><option>Coimbatore Spares Co.</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Pending</option><option>Paid</option><option>Overdue</option></select>
       </div>

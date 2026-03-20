@@ -1,10 +1,10 @@
 import React from 'react'
 const ROWS = [
-  {date:'26 Feb',desc:'Receipt from XYZ Industries',  bkDr:'',bkCr:'₹1,85,000',bnkDr:'',bnkCr:'₹1,85,000',sb:'badge-posted',sl:'✅ Matched'},
-  {date:'27 Feb',desc:'Payment to Aruna Industries',  bkDr:'₹48,500',bkCr:'',bnkDr:'₹48,500',bnkCr:'',sb:'badge-posted',sl:'✅ Matched'},
-  {date:'28 Feb',desc:'Bank charges (in ERP only)',   bkDr:'₹58,500',bkCr:'',bnkDr:'',bnkCr:'',sb:'badge-overdue',sl:'❌ Not in Bank'},
-  {date:'28 Feb',desc:'Interest credit (bank only)',  bkDr:'',bkCr:'',bnkDr:'',bnkCr:'₹17,000',sb:'badge-overdue',sl:'❌ Not in Books'},
-  {date:'20 Feb',desc:'Receipt from MNO Fabrics',     bkDr:'',bkCr:'₹8,50,000',bnkDr:'',bnkCr:'₹8,50,000',sb:'badge-posted',sl:'✅ Matched'},
+  {date:'26 Feb',desc:'Receipt from XYZ Industries',  bkDr:'',bkCr:'₹1,85,000',bnkDr:'',bnkCr:'₹1,85,000',sb:'badge-posted',sl:' Matched'},
+  {date:'27 Feb',desc:'Payment to Aruna Industries',  bkDr:'₹48,500',bkCr:'',bnkDr:'₹48,500',bnkCr:'',sb:'badge-posted',sl:' Matched'},
+  {date:'28 Feb',desc:'Bank charges (in ERP only)',   bkDr:'₹58,500',bkCr:'',bnkDr:'',bnkCr:'',sb:'badge-overdue',sl:' Not in Bank'},
+  {date:'28 Feb',desc:'Interest credit (bank only)',  bkDr:'',bkCr:'',bnkDr:'',bnkCr:'₹17,000',sb:'badge-overdue',sl:' Not in Books'},
+  {date:'20 Feb',desc:'Receipt from MNO Fabrics',     bkDr:'',bkCr:'₹8,50,000',bnkDr:'',bnkCr:'₹8,50,000',sb:'badge-posted',sl:' Matched'},
 ]
 export default function BankRecon() {
   return (
@@ -25,7 +25,7 @@ export default function BankRecon() {
           </div>
         ))}
       </div>
-      <div className="fi-alert warn">⚠️ Difference: <strong>₹41,500</strong> — 2 unmatched transactions. Please review and post adjusting entries.</div>
+      <div className="fi-alert warn"> Difference: <strong>₹41,500</strong> — 2 unmatched transactions. Please review and post adjusting entries.</div>
       <table className="fi-data-table">
         <thead><tr>
           <th>Date</th><th>Description</th>
@@ -40,7 +40,7 @@ export default function BankRecon() {
             <td className="dr">{r.bnkDr}</td><td className="cr">{r.bnkCr}</td>
             <td><span className={`badge ${r.sb}`}>{r.sl}</span></td>
             <td>
-              {r.sl.includes('❌') && <button className="btn-xs pri">Post JV</button>}
+              {r.sl.includes('') && <button className="btn-xs pri">Post JV</button>}
             </td>
           </tr>
         ))}</tbody>

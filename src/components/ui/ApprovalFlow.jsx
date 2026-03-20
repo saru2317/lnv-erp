@@ -192,8 +192,8 @@ export default function ApprovalFlow({
                   fontSize:13, fontWeight:700,
                   boxShadow: canAct ? '0 0 0 3px rgba(113,75,103,.3)' : 'none',
                   transition:'all .2s'}}>
-                  {lvStatus==='Approved' ? '✓' :
-                   lvStatus==='Rejected' ? '✕' :
+                  {lvStatus==='Approved' ? '' :
+                   lvStatus==='Rejected' ? '' :
                    lv.level}
                 </div>
 
@@ -242,13 +242,13 @@ export default function ApprovalFlow({
                         style={{padding:'5px 16px', background:'var(--odoo-green)', color:'#fff',
                           border:'none', borderRadius:6, fontWeight:700, fontSize:12,
                           cursor:'pointer', display:'flex', alignItems:'center', gap:5}}>
-                        ✓ Approve
+                         Approve
                       </button>
                       <button onClick={() => setShowReject(lv.level)}
                         style={{padding:'5px 14px', background:'var(--odoo-red)', color:'#fff',
                           border:'none', borderRadius:6, fontWeight:700, fontSize:12,
                           cursor:'pointer'}}>
-                        ✕ Reject
+                         Reject
                       </button>
                       <button onClick={() => toast.success('Forwarded to next level!')}
                         style={{padding:'5px 14px', background:'#fff', color:'var(--odoo-gray)',

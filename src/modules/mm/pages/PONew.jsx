@@ -14,12 +14,12 @@ export default function PONew() {
       <div className="lv-hdr">
         <div className="lv-ttl">New Purchase Order <small>ME21N · Create PO</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}> Cancel</button>
           <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>Approve &amp; Send</button>
         </div>
       </div>
-      <div className="mm-alert info">ℹ️ PO Number will be auto-generated on save. Reference: <strong>PO-2025-043</strong></div>
+      <div className="mm-alert info">ℹ PO Number will be auto-generated on save. Reference: <strong>PO-2025-043</strong></div>
 
       {/* Header */}
       <div className="mm-fs">
@@ -88,7 +88,7 @@ export default function PONew() {
                     <td><input defaultValue={l.cgst} readOnly style={{width:'72px'}}/></td>
                     <td><input defaultValue={l.sgst} readOnly style={{width:'72px'}}/></td>
                     <td><input defaultValue={l.total} readOnly style={{width:'92px',fontWeight:'700'}}/></td>
-                    <td><span className="li-del" onClick={() => setLines(lines.filter(x=>x.no!==l.no))}>🗑</span></td>
+                    <td><span className="li-del" onClick={() => setLines(lines.filter(x=>x.no!==l.no))}></span></td>
                   </tr>
                 ))}
               </tbody>
@@ -112,11 +112,11 @@ export default function PONew() {
 
       {/* Actions + Flow */}
       <div className="mm-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po')}>Approve &amp; Send</button>
         <div className="mm-flow">
-          <span className="mm-fs-step act">📝 Draft</span><span className="mm-fs-arr">›</span>
+          <span className="mm-fs-step act"> Draft</span><span className="mm-fs-arr">›</span>
           <span className="mm-fs-step">Sent</span><span className="mm-fs-arr">›</span>
           <span className="mm-fs-step">Approved</span><span className="mm-fs-arr">›</span>
           <span className="mm-fs-step">GRN</span><span className="mm-fs-arr">›</span>

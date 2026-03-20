@@ -14,7 +14,7 @@ export default function GoodsIssue() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Goods Issue <small>MIGO · Issue Stock to Production / Sales</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
           <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Issue</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
@@ -61,14 +61,14 @@ export default function GoodsIssue() {
                     <td><select style={{width:'80px'}}><option>{l.bin}</option><option>BIN-A01</option></select></td>
                     <td><input defaultValue={l.batch} style={{width:'100px'}}/></td>
                     <td><input placeholder="Notes..." style={{width:'110px'}}/></td>
-                    <td><span className="li-del" onClick={() => setLines(lines.filter(x=>x.no!==l.no))}>🗑</span></td>
+                    <td><span className="li-del" onClick={() => setLines(lines.filter(x=>x.no!==l.no))}></span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <div className="wm-lt-add">
               <button className="btn btn-s sd-bsm" onClick={() => setLines([...lines,{no:lines.length+1,mat:'MAT-001 · Cotton Sliver',avail:'480 Kg',qty:10,uom:'Kg',bin:'BIN-A12',batch:'BTH-2025-01',avc:'var(--odoo-green)'}])}>
-                ➕ Add Item
+                 Add Item
               </button>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function GoodsIssue() {
       </div>
 
       <div className="wm-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Issue</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/print/mis')}>Print MIS</button>
         <div className="wm-status-flow">

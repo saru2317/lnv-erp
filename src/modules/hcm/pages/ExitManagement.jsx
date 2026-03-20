@@ -36,7 +36,7 @@ export default function ExitManagement() {
               <input type="checkbox" checked={c.done} onChange={()=>setChecks(cs=>cs.map((x,j)=>j===i?{...x,done:!x.done}:x))}
                 style={{width:'18px',height:'18px',accentColor:'var(--odoo-green)',cursor:'pointer'}}/>
               <span style={{fontSize:'13px',fontWeight:'600',textDecoration:c.done?'line-through':'none',color:c.done?'var(--odoo-gray)':'var(--odoo-dark)'}}>{c.label}</span>
-              {c.done&&<span style={{marginLeft:'auto',color:'var(--odoo-green)'}}>✅</span>}
+              {c.done&&<span style={{marginLeft:'auto',color:'var(--odoo-green)'}}></span>}
             </div>
           ))}
         </div>

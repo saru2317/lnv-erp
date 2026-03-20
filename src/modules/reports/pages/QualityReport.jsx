@@ -64,7 +64,7 @@ export default function QualityReport() {
       </div>
 
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {[['monthly','📊 Monthly Trend'],['defects','🔴 Defect Analysis'],['ncr','📋 NCR Register']].map(([k, l]) => (
+        {[['monthly',' Monthly Trend'],['defects',' Defect Analysis'],['ncr',' NCR Register']].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
               cursor:'pointer', border:'1px solid var(--odoo-border)',
@@ -80,7 +80,7 @@ export default function QualityReport() {
           <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
             padding:18, marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, marginBottom:14 }}>
-              📈 Rejection Trend (PPM)
+               Rejection Trend (PPM)
             </h4>
             <div style={{ display:'flex', gap:8, alignItems:'flex-end', height:110 }}>
               {MONTHLY.map((m, i) => {

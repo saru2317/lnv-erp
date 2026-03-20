@@ -19,7 +19,7 @@ export default function COGMReport() {
         </div>
       </div>
 
-      <div className="fi-alert info">ℹ️ COGM data auto-captured from PP Work Orders. Each closed work order posts a Journal Entry to account 6110 · COGM — Manufacturing Cost.</div>
+      <div className="fi-alert info">ℹ COGM data auto-captured from PP Work Orders. Each closed work order posts a Journal Entry to account 6110 · COGM — Manufacturing Cost.</div>
 
       <div className="fi-kpi-grid">
         {[{cls:'purple',l:'Total COGM (Feb 2025)',v:'₹37,54,000',s:'4 work orders'},
@@ -65,7 +65,7 @@ export default function COGMReport() {
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
               <h3>{sel.wo} — Cost Drill-Down</h3>
-              <span className="fi-modal-close" onClick={() => setSel(null)}>✕</span>
+              <span className="fi-modal-close" onClick={() => setSel(null)}></span>
             </div>
             <div className="fi-modal-body">
               <div style={{background:'#F8F9FA',padding:'10px 14px',borderRadius:'6px',marginBottom:'16px'}}>
@@ -87,7 +87,7 @@ export default function COGMReport() {
                 </tbody>
               </table>
               <div className="fi-alert info" style={{fontSize:'12px'}}>
-                📓 Auto-posted as JV when Work Order closed. View in Journal List — Source: PP
+                 Auto-posted as JV when Work Order closed. View in Journal List — Source: PP
               </div>
             </div>
           </div>

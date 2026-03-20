@@ -53,7 +53,7 @@ export default function BalanceSheet() {
 
         {/* LIABILITIES + EQUITY */}
         <div className="fin-report">
-          <div className="fin-report-hdr"><h2>⚖️ LIABILITIES & EQUITY</h2><span>As on 28 Feb 2025</span></div>
+          <div className="fin-report-hdr"><h2> LIABILITIES & EQUITY</h2><span>As on 28 Feb 2025</span></div>
           <div className="fin-section">
             <div className="fin-sec-title" onClick={() => tog('cl')}>{open.cl?'▾':'►'} CURRENT LIABILITIES</div>
             {open.cl && <>

@@ -154,7 +154,7 @@ export default function CSPrint({ cs, onClose }) {
                         fontWeight: (vi===5&&isL1)?800:400,
                         color: (vi===5&&isL1)?'#155724':'inherit',
                         border:isL1?'1px solid #C3E6CB':'1px solid #ddd'}}>
-                        {vi===5&&isL1 ? <span>🏆{v}</span> : v}
+                        {vi===5&&isL1 ? <span>{v}</span> : v}
                       </td>
                     ))
                   })}

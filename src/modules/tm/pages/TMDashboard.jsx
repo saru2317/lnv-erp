@@ -18,24 +18,24 @@ const VEHICLES = [
 ]
 
 const TRIP_STATUS = {
-  completed: {label:'✅ Completed',  bg:'#D4EDDA', color:'#155724'},
-  transit:   {label:'🚚 In Transit', bg:'#D1ECF1', color:'#0C5460'},
-  planned:   {label:'📋 Planned',    bg:'#FFF3CD', color:'#856404'},
-  cancelled: {label:'❌ Cancelled',  bg:'#F8D7DA', color:'#721C24'},
+  completed: {label:' Completed',  bg:'#D4EDDA', color:'#155724'},
+  transit:   {label:' In Transit', bg:'#D1ECF1', color:'#0C5460'},
+  planned:   {label:' Planned',    bg:'#FFF3CD', color:'#856404'},
+  cancelled: {label:' Cancelled',  bg:'#F8D7DA', color:'#721C24'},
 }
 
 const V_STATUS = {
   active:   {label:'🟢 Active',       bg:'#D4EDDA', color:'#155724'},
-  transit:  {label:'🚚 On Trip',      bg:'#D1ECF1', color:'#0C5460'},
-  due_soon: {label:'⚠️ Docs Due',     bg:'#FFF3CD', color:'#856404'},
-  maintenance:{label:'🔧 Maintenance',bg:'#F8D7DA', color:'#721C24'},
+  transit:  {label:' On Trip',      bg:'#D1ECF1', color:'#0C5460'},
+  due_soon: {label:' Docs Due',     bg:'#FFF3CD', color:'#856404'},
+  maintenance:{label:' Maintenance',bg:'#F8D7DA', color:'#721C24'},
 }
 
 const TYPE_COLOR = {
-  staff:    {bg:'#EDE0EA', color:'#714B67', icon:'👤'},
-  goods:    {bg:'#D1ECF1', color:'#0C5460', icon:'📦'},
-  purchase: {bg:'#D4EDDA', color:'#155724', icon:'🏭'},
-  courier:  {bg:'#FFF3CD', color:'#856404', icon:'📬'},
+  staff:    {bg:'#EDE0EA', color:'#714B67', icon:''},
+  goods:    {bg:'#D1ECF1', color:'#0C5460', icon:''},
+  purchase: {bg:'#D4EDDA', color:'#155724', icon:''},
+  courier:  {bg:'#FFF3CD', color:'#856404', icon:''},
 }
 
 export default function TMDashboard() {
@@ -124,7 +124,7 @@ export default function TMDashboard() {
         {/* Fleet status */}
         <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,color:'var(--odoo-dark)'}}>🚗 Fleet Status</h4>
+            <h4 style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,color:'var(--odoo-dark)'}}> Fleet Status</h4>
             <button onClick={()=>nav('/tm/vehicles')} style={{fontSize:11,color:'var(--odoo-purple)',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Manage →</button>
           </div>
           {VEHICLES.map(v=>{
@@ -148,15 +148,15 @@ export default function TMDashboard() {
 
       {/* Quick Actions */}
       <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-        <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-dark)',marginBottom:12}}>⚡ Quick Actions</h4>
+        <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-dark)',marginBottom:12}}> Quick Actions</h4>
         <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
           {[
-            {icon:'👤',label:'Staff Booking',      path:'/tm/booking', color:'#714B67'},
-            {icon:'📦',label:'Goods Delivery',     path:'/tm/booking', color:'#017E84'},
-            {icon:'🏭',label:'RM Collection',      path:'/tm/booking', color:'#00A09D'},
-            {icon:'📬',label:'Courier Booking',    path:'/tm/booking', color:'#856404'},
-            {icon:'⛽',label:'Fuel Entry',          path:'/tm/fuel',    color:'#E06F39'},
-            {icon:'🔧',label:'Vehicle Maintenance',path:'/tm/vehicles', color:'#D9534F'},
+            {icon:'',label:'Staff Booking',      path:'/tm/booking', color:'#714B67'},
+            {icon:'',label:'Goods Delivery',     path:'/tm/booking', color:'#017E84'},
+            {icon:'',label:'RM Collection',      path:'/tm/booking', color:'#00A09D'},
+            {icon:'',label:'Courier Booking',    path:'/tm/booking', color:'#856404'},
+            {icon:'',label:'Fuel Entry',          path:'/tm/fuel',    color:'#E06F39'},
+            {icon:'',label:'Vehicle Maintenance',path:'/tm/vehicles', color:'#D9534F'},
           ].map(qa=>(
             <div key={qa.label} onClick={()=>nav(qa.path)}
               style={{padding:'12px 8px',borderRadius:7,border:`2px solid ${qa.color}22`,

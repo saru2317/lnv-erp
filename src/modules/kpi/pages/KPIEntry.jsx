@@ -42,7 +42,7 @@ export default function KPIEntry() {
           </select>
           <button className="btn btn-p sd-bsm" onClick={handleSave}
             style={saved?{background:'#155724',color:'#fff'}:{}}>
-            {saved ? '✅ Saved!' : '💾 Save Actuals'}
+            {saved ? ' Saved!' : ' Save Actuals'}
           </button>
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function KPIEntry() {
       {saved && (
         <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,
           padding:'10px 16px',marginBottom:16,fontSize:13,color:'#155724',fontWeight:600}}>
-          ✅ Actuals for {MONTH_FULL[month]} saved successfully!
+           Actuals for {MONTH_FULL[month]} saved successfully!
         </div>
       )}
 
@@ -71,7 +71,7 @@ export default function KPIEntry() {
             <tr>
               <td colSpan={11} style={{padding:'7px 14px',background:'var(--odoo-dark)',color:'#fff',
                 fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11}}>
-                📊 MAJOR KPIs — Weighted (Affects Score)
+                 MAJOR KPIs — Weighted (Affects Score)
               </td>
             </tr>
             {KPI_MASTER.filter(k=>k.cat==='Major').map((k,i)=>{
@@ -127,7 +127,7 @@ export default function KPIEntry() {
             <tr>
               <td colSpan={11} style={{padding:'7px 14px',background:'#1A5276',color:'#fff',
                 fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11}}>
-                📋 MINOR KPIs — Tracking Only
+                 MINOR KPIs — Tracking Only
               </td>
             </tr>
             {KPI_MASTER.filter(k=>k.cat==='Minor').map((k,i)=>{

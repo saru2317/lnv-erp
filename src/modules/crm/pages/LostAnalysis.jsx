@@ -38,10 +38,10 @@ export default function LostAnalysis() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Total Lost Deals',  v:LOST_DATA.length,         clr:'var(--odoo-red)',   ic:'❌'},
-          {l:'Lost Revenue',      v:fmt(totalLostVal),         clr:'var(--odoo-orange)',ic:'💸'},
-          {l:'Top Reason',        v:'Price Too High',           clr:'var(--odoo-purple)',ic:'📊'},
-          {l:'Win Rate Overall',  v:'62%',                     clr:'var(--odoo-green)', ic:'🏆'},
+          {l:'Total Lost Deals',  v:LOST_DATA.length,         clr:'var(--odoo-red)',   ic:''},
+          {l:'Lost Revenue',      v:fmt(totalLostVal),         clr:'var(--odoo-orange)',ic:''},
+          {l:'Top Reason',        v:'Price Too High',           clr:'var(--odoo-purple)',ic:''},
+          {l:'Win Rate Overall',  v:'62%',                     clr:'var(--odoo-green)', ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -82,10 +82,10 @@ export default function LostAnalysis() {
 
         {/* Competitor Analysis */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🏁 Competitor Analysis</h3></div>
+          <div className="fi-panel-hdr"><h3> Competitor Analysis</h3></div>
           <div className="fi-panel-body">
             <div style={{marginBottom:'14px',padding:'12px',background:'#F8D7DA',borderRadius:'6px'}}>
-              <div style={{fontWeight:'700',fontSize:'12px',color:'#721C24',marginBottom:'4px'}}>⚠️ Price is the #1 loss reason (40%)</div>
+              <div style={{fontWeight:'700',fontSize:'12px',color:'#721C24',marginBottom:'4px'}}> Price is the #1 loss reason (40%)</div>
               <div style={{fontSize:'12px',color:'#721C24'}}>Review pricing strategy for competitive deals. Consider value-based pricing.</div>
             </div>
             {[{comp:'Akzo Nobel',wins:2,val:2750000},{comp:'Local Vendors',wins:1,val:950000},{comp:'Henkel India',wins:0,val:0}].map(c=>(
@@ -98,7 +98,7 @@ export default function LostAnalysis() {
               </div>
             ))}
             <div style={{marginTop:'12px',padding:'10px',background:'#EDE0EA',borderRadius:'6px',fontSize:'12px'}}>
-              <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}>💡 Recommendations</div>
+              <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}> Recommendations</div>
               <div style={{lineHeight:'1.7'}}>
                 • Offer <strong>extended payment terms</strong> for large deals<br/>
                 • Emphasize <strong>quality certification</strong> over local vendors<br/>

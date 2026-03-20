@@ -29,7 +29,7 @@ export default function AuditByModule() {
                 color:activeModule===m?'var(--odoo-purple)':'var(--odoo-dark)'}}>{count}</div>
               <div style={{fontSize:'12px',fontWeight:'700',color:'var(--odoo-dark)'}}>{m}</div>
               {dels > 0 && <div style={{fontSize:'10px',color:'var(--odoo-red)',marginTop:'2px'}}>
-                🗑️ {dels} delete{dels>1?'s':''}
+                 {dels} delete{dels>1?'s':''}
               </div>}
             </div>
           )
@@ -78,22 +78,22 @@ export default function AuditByModule() {
                       )}
                       {log.action === 'CREATE' && (
                         <div style={{fontSize:'11px',color:'var(--odoo-green)',fontWeight:'600'}}>
-                          ✅ New {log.entity} created — {Object.entries(log.changes.new||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
+                           New {log.entity} created — {Object.entries(log.changes.new||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
                         </div>
                       )}
                       {log.action === 'DELETE' && (
                         <div style={{fontSize:'11px',color:'var(--odoo-red)',fontWeight:'600'}}>
-                          🗑️ {Object.entries(log.changes.old||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
+                           {Object.entries(log.changes.old||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
                         </div>
                       )}
                       {log.action === 'APPROVE' && (
                         <div style={{fontSize:'11px',color:'var(--odoo-blue)',fontWeight:'600'}}>
-                          ✅ {log.changes.field}: <span className="diff-old">{log.changes.old}</span> → <span className="diff-new">{log.changes.new}</span>
+                           {log.changes.field}: <span className="diff-old">{log.changes.old}</span> → <span className="diff-new">{log.changes.new}</span>
                         </div>
                       )}
                       {log.action === 'EXPORT' && (
                         <div style={{fontSize:'11px',color:'var(--odoo-purple)',fontWeight:'600'}}>
-                          📤 {Object.entries(log.changes.new||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
+                           {Object.entries(log.changes.new||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}
                         </div>
                       )}
                     </td>

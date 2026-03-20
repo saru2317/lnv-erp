@@ -10,9 +10,9 @@ const EWBS = [
 
 const ST = {
   active:   {label:'🟢 Active',    bg:'#D4EDDA',color:'#155724'},
-  expired:  {label:'🔴 Expired',   bg:'#F8D7DA',color:'#721C24'},
-  transit:  {label:'🔵 In Transit',bg:'#D1ECF1',color:'#0C5460'},
-  delivered:{label:'✅ Delivered', bg:'#E2E3E5',color:'#383D41'},
+  expired:  {label:' Expired',   bg:'#F8D7DA',color:'#721C24'},
+  transit:  {label:' In Transit',bg:'#D1ECF1',color:'#0C5460'},
+  delivered:{label:' Delivered', bg:'#E2E3E5',color:'#383D41'},
 }
 
 export default function EWayBill() {
@@ -21,7 +21,7 @@ export default function EWayBill() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">E-Way Bill <small>Goods Movement · Mandatory for value &gt; ₹50,000</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">🔄 Sync Portal</button>
+          <button className="btn btn-s sd-bsm"> Sync Portal</button>
           <button className="btn btn-p sd-bsm">+ Generate EWB</button>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function EWayBill() {
                 <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:s.bg,color:s.color}}>{s.label}</span></td>
                 <td style={{display:'flex',gap:4}}>
                   {e.status==='active'&&<button className="btn-xs">Extend</button>}
-                  {e.status==='expired'&&<button className="btn-xs pri">🔄 Renew</button>}
+                  {e.status==='expired'&&<button className="btn-xs pri"> Renew</button>}
                   <button className="btn-xs">Print</button>
                 </td>
               </tr>

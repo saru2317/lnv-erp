@@ -23,16 +23,16 @@ const INVOICES = [
 ]
 
 const STATUS_CONFIG = {
-  matched:   { label:'✅ Matched',    bg:'#D4EDDA', color:'#155724', desc:'In books + GSTR-2B' },
-  unmatched: { label:'⚠️ Unmatched',  bg:'#FFF3CD', color:'#856404', desc:'Supplier not filed yet' },
-  missing:   { label:'❓ Missing',    bg:'#F8D7DA', color:'#721C24', desc:'In books, not in 2B' },
-  blocked:   { label:'🚫 Blocked',    bg:'#E2E3E5', color:'#383D41', desc:'Sec 17(5) — ineligible' },
+  matched:   { label:' Matched',    bg:'#D4EDDA', color:'#155724', desc:'In books + GSTR-2B' },
+  unmatched: { label:' Unmatched',  bg:'#FFF3CD', color:'#856404', desc:'Supplier not filed yet' },
+  missing:   { label:' Missing',    bg:'#F8D7DA', color:'#721C24', desc:'In books, not in 2B' },
+  blocked:   { label:' Blocked',    bg:'#E2E3E5', color:'#383D41', desc:'Sec 17(5) — ineligible' },
 }
 
 const ELIG_CONFIG = {
-  full:    { label:'✅ Full ITC',    bg:'#D4EDDA', color:'#155724' },
-  partial: { label:'⚠️ Partial',    bg:'#FFF3CD', color:'#856404' },
-  blocked: { label:'🚫 Blocked',    bg:'#F8D7DA', color:'#721C24' },
+  full:    { label:' Full ITC',    bg:'#D4EDDA', color:'#155724' },
+  partial: { label:' Partial',    bg:'#FFF3CD', color:'#856404' },
+  blocked: { label:' Blocked',    bg:'#F8D7DA', color:'#721C24' },
 }
 
 function fmt(n) { return '₹' + n.toLocaleString('en-IN') }
@@ -68,10 +68,10 @@ export default function ITCReconciliation() {
   ]
 
   const tabs = [
-    { key:'reconciliation', label:'🔄 ITC Reconciliation' },
-    { key:'eligibility',    label:'✅ Eligibility Rules' },
-    { key:'prefiling',      label:'📋 Pre-Filing Checklist' },
-    { key:'summary',        label:'📊 Filing Summary' },
+    { key:'reconciliation', label:' ITC Reconciliation' },
+    { key:'eligibility',    label:' Eligibility Rules' },
+    { key:'prefiling',      label:' Pre-Filing Checklist' },
+    { key:'summary',        label:' Filing Summary' },
   ]
 
   return (
@@ -93,7 +93,7 @@ export default function ITCReconciliation() {
 
       {/* Alert */}
       <div className="fi-alert warn" style={{marginBottom:16}}>
-        ⚠️ <strong>Important:</strong> Only invoices that are <strong>Eligible + Matched in GSTR-2B</strong> should be claimed as ITC in GSTR-3B. Blocked credits (Sec 17(5)) must never be claimed.
+         <strong>Important:</strong> Only invoices that are <strong>Eligible + Matched in GSTR-2B</strong> should be claimed as ITC in GSTR-3B. Blocked credits (Sec 17(5)) must never be claimed.
       </div>
 
       {/* KPI Cards */}
@@ -130,7 +130,7 @@ export default function ITCReconciliation() {
         <div>
           {/* Filter */}
           <div style={{display:'flex', gap:8, marginBottom:14, flexWrap:'wrap'}}>
-            {[['all','All'],['matched','✅ Matched'],['unmatched','⚠️ Unmatched'],['missing','❓ Missing'],['blocked','🚫 Blocked']].map(([k,l]) => (
+            {[['all','All'],['matched',' Matched'],['unmatched',' Unmatched'],['missing',' Missing'],['blocked',' Blocked']].map(([k,l]) => (
               <button key={k} onClick={() => setFilterRecon(k)}
                 style={{ padding:'5px 14px', borderRadius:20, fontSize:12, fontWeight:600,
                   cursor:'pointer', transition:'all .15s', border:'1px solid var(--odoo-border)',
@@ -183,8 +183,8 @@ export default function ITCReconciliation() {
                     </td>
                     <td style={{textAlign:'center'}}>
                       {inv.suppFiled
-                        ? <span style={{color:'var(--odoo-green)',fontWeight:700,fontSize:13}}>✅</span>
-                        : <span style={{color:'var(--odoo-red)',fontWeight:700,fontSize:13}}>❌</span>}
+                        ? <span style={{color:'var(--odoo-green)',fontWeight:700,fontSize:13}}></span>
+                        : <span style={{color:'var(--odoo-red)',fontWeight:700,fontSize:13}}></span>}
                     </td>
                     <td>
                       <div>
@@ -208,7 +208,7 @@ export default function ITCReconciliation() {
             {/* Eligible */}
             <div style={{background:'#fff',borderRadius:8,border:'2px solid #00A09D',padding:18}}>
               <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,color:'#00A09D',marginBottom:14}}>
-                ✅ ELIGIBLE for ITC
+                 ELIGIBLE for ITC
               </h3>
               {[
                 ['Raw Materials','Used directly in manufacturing'],
@@ -221,7 +221,7 @@ export default function ITCReconciliation() {
                 ['Software / IT Tools','For business operations'],
               ].map(([t,d]) => (
                 <div key={t} style={{display:'flex',alignItems:'flex-start',gap:8,padding:'7px 0',borderBottom:'1px solid var(--odoo-border)'}}>
-                  <span style={{color:'#00A09D',fontWeight:700,fontSize:14,marginTop:1}}>✓</span>
+                  <span style={{color:'#00A09D',fontWeight:700,fontSize:14,marginTop:1}}></span>
                   <div>
                     <div style={{fontSize:12,fontWeight:700,color:'var(--odoo-dark)'}}>{t}</div>
                     <div style={{fontSize:11,color:'var(--odoo-gray)'}}>{d}</div>
@@ -233,14 +233,14 @@ export default function ITCReconciliation() {
             {/* Blocked */}
             <div style={{background:'#fff',borderRadius:8,border:'2px solid #D9534F',padding:18}}>
               <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,color:'#D9534F',marginBottom:6}}>
-                🚫 BLOCKED Credits — Section 17(5)
+                 BLOCKED Credits — Section 17(5)
               </h3>
               <div style={{fontSize:11,background:'#FDF0EA',padding:'6px 10px',borderRadius:4,marginBottom:12,color:'#C0392B'}}>
-                ⚠️ Claiming these = GST notice + penalty + interest
+                 Claiming these = GST notice + penalty + interest
               </div>
               {BLOCKED_CATEGORIES.map(cat => (
                 <div key={cat} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--odoo-border)'}}>
-                  <span style={{color:'#D9534F',fontWeight:700,fontSize:14}}>✗</span>
+                  <span style={{color:'#D9534F',fontWeight:700,fontSize:14}}></span>
                   <div style={{fontSize:12,fontWeight:600,color:'var(--odoo-dark)'}}>{cat}</div>
                 </div>
               ))}
@@ -249,7 +249,7 @@ export default function ITCReconciliation() {
             {/* Partial */}
             <div style={{background:'#fff',borderRadius:8,border:'2px solid #E06F39',padding:18,gridColumn:'1/-1'}}>
               <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,color:'#E06F39',marginBottom:14}}>
-                ⚠️ PARTIAL ITC — Only eligible portion claimable
+                 PARTIAL ITC — Only eligible portion claimable
               </h3>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
                 {[
@@ -273,14 +273,14 @@ export default function ITCReconciliation() {
         <div>
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:20,marginBottom:16}}>
             <h3 style={{fontFamily:'Syne,sans-serif',fontSize:15,marginBottom:16}}>
-              📋 Pre-Filing Validation Checklist — Mar 2026
+               Pre-Filing Validation Checklist — Mar 2026
             </h3>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {prefilingChecks.map((c,i) => (
                 <div key={i} style={{display:'flex',alignItems:'flex-start',gap:12,padding:12,
                   borderRadius:6, background: c.ok ? '#F0FFF4' : '#FFF3CD',
                   border: `1px solid ${c.ok ? '#C3E6CB' : '#FAD7A0'}`}}>
-                  <span style={{fontSize:18,flexShrink:0}}>{c.ok ? '✅' : '⚠️'}</span>
+                  <span style={{fontSize:18,flexShrink:0}}>{c.ok ? '' : ''}</span>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,color: c.ok ? '#155724' : '#856404'}}>{c.label}</div>
                     {!c.ok && <div style={{fontSize:11,color:'#856404',marginTop:3}}>Action required before filing</div>}
@@ -298,13 +298,13 @@ export default function ITCReconciliation() {
             </div>
             <div style={{marginTop:20,padding:14,background:'#EDE0EA',borderRadius:8}}>
               <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-purple)',marginBottom:4}}>
-                📊 Checklist Summary
+                 Checklist Summary
               </div>
               <div style={{display:'flex',gap:20,fontSize:13}}>
                 <span style={{color:'#155724',fontWeight:600}}>Pass: {prefilingChecks.filter(c=>c.ok).length}</span>
-                <span style={{color:'#856404',fontWeight:600}}>⚠️ Actions: {prefilingChecks.filter(c=>!c.ok).length}</span>
+                <span style={{color:'#856404',fontWeight:600}}> Actions: {prefilingChecks.filter(c=>!c.ok).length}</span>
                 <span style={{color:'var(--odoo-purple)',fontWeight:700}}>
-                  {prefilingChecks.filter(c=>!c.ok).length === 0 ? '🟢 READY TO FILE' : '🔴 NOT READY — Resolve pending items'}
+                  {prefilingChecks.filter(c=>!c.ok).length === 0 ? '🟢 READY TO FILE' : ' NOT READY — Resolve pending items'}
                 </span>
               </div>
             </div>
@@ -336,14 +336,14 @@ export default function ITCReconciliation() {
 
           {/* What to do next */}
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:18}}>
-            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,marginBottom:16}}>🔄 Next Steps</h3>
+            <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,marginBottom:16}}> Next Steps</h3>
             {[
-              { step:1, icon:'📞', action:'Follow up with 2 suppliers who haven\'t filed GSTR-1', urgent:true },
-              { step:2, icon:'❌', action:'Remove blocked invoices from ITC claim', urgent:true },
-              { step:3, icon:'✅', action:'Verify GSTIN for all new vendors', urgent:false },
-              { step:4, icon:'📤', action:'File GSTR-1 (outward supplies) by 11th', urgent:false },
-              { step:5, icon:'🧾', action:'Compute GSTR-3B with eligible ITC only', urgent:false },
-              { step:6, icon:'💳', action:'Pay net GST liability after ITC offset', urgent:false },
+              { step:1, icon:'', action:'Follow up with 2 suppliers who haven\'t filed GSTR-1', urgent:true },
+              { step:2, icon:'', action:'Remove blocked invoices from ITC claim', urgent:true },
+              { step:3, icon:'', action:'Verify GSTIN for all new vendors', urgent:false },
+              { step:4, icon:'', action:'File GSTR-1 (outward supplies) by 11th', urgent:false },
+              { step:5, icon:'', action:'Compute GSTR-3B with eligible ITC only', urgent:false },
+              { step:6, icon:'', action:'Pay net GST liability after ITC offset', urgent:false },
             ].map(s => (
               <div key={s.step} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:'1px solid var(--odoo-border)'}}>
                 <span style={{width:22,height:22,borderRadius:'50%',background:s.urgent?'var(--odoo-red)':'var(--odoo-purple)',

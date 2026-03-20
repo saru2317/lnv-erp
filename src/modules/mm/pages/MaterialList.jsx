@@ -17,7 +17,7 @@ export default function MaterialList() {
         <div className="lv-acts"><button className="btn btn-p sd-bsm">＋ New Material</button></div>
       </div>
       <div className="mm-filt">
-        <div className="mm-fs-input">🔍<input placeholder="Search code, description, HSN..."/></div>
+        <div className="mm-fs-input"><input placeholder="Search code, description, HSN..."/></div>
         <select className="mm-fsel"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option></select>
       </div>
       <table className="mm-tbl">

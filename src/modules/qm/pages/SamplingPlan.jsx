@@ -22,7 +22,7 @@ export default function SamplingPlan() {
         </div>
       </div>
 
-      <div className="pp-alert info">💡 LNV uses <strong>AQL 1.5 Level II</strong> for finished goods inspection and <strong>AQL 2.5 Level II</strong> for incoming raw material inspection. Sample size is auto-calculated when creating inspection lots.</div>
+      <div className="pp-alert info"> LNV uses <strong>AQL 1.5 Level II</strong> for finished goods inspection and <strong>AQL 2.5 Level II</strong> for incoming raw material inspection. Sample size is auto-calculated when creating inspection lots.</div>
 
       <div className="fi-panel-grid">
         <div className="fi-panel">
@@ -47,7 +47,7 @@ export default function SamplingPlan() {
 
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>⚙️ Active Sampling Rules</h3></div>
+            <div className="fi-panel-hdr"><h3> Active Sampling Rules</h3></div>
             <div className="fi-panel-body">
               {[['Finished Goods (FG)','AQL 1.5 Level II','Every production lot'],
                 ['Incoming Raw Material','AQL 2.5 Level II','Each GRN lot'],
@@ -66,7 +66,7 @@ export default function SamplingPlan() {
             </div>
           </div>
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>🧮 Sample Size Calculator</h3></div>
+            <div className="fi-panel-hdr"><h3> Sample Size Calculator</h3></div>
             <div className="fi-panel-body">
               <div className="fi-form-grp" style={{marginBottom:'10px'}}>
                 <label>Lot Size (Kg / Nos)</label>

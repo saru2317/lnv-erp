@@ -66,10 +66,10 @@ export default function GeneralLedger() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search narration, JV no..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search narration, JV no..."/></div>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
-        <button className="btn btn-s sd-bsm">🔄 Reset</button>
+        <button className="btn btn-s sd-bsm"> Reset</button>
       </div>
 
       <div className="acct-strip">

@@ -58,7 +58,7 @@ export default function TransportReport() {
       </div>
 
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {[['monthly','📊 Monthly Trend'],['vehicles','🚗 Vehicle-wise'],['triptype','🗺️ Trip Type']].map(([k, l]) => (
+        {[['monthly',' Monthly Trend'],['vehicles',' Vehicle-wise'],['triptype',' Trip Type']].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
               cursor:'pointer', border:'1px solid var(--odoo-border)',

@@ -21,16 +21,16 @@ export default function QMDashboard() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">QM Dashboard <small>Quality Overview · Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}>📈 Quality Report</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>🔬 New Inspection</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}> Quality Report</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}> New Inspection</button>
         </div>
       </div>
 
       <div className="qm-kpi-grid">
-        {[{cls:'green', ic:'🔬',l:'Overall Pass Rate', v:'97.4%', s:'842 lots inspected MTD'},
-          {cls:'red',   ic:'❌',l:'Rejections (MTD)',  v:'62 Kg', s:'0.34% rejection rate'},
-          {cls:'orange',ic:'📋',l:'Open NCRs',         v:'8',     s:'3 critical pending'},
-          {cls:'blue',  ic:'🏅',l:'Certificates Issued',v:'48',   s:'All shipments covered'},
+        {[{cls:'green', ic:'',l:'Overall Pass Rate', v:'97.4%', s:'842 lots inspected MTD'},
+          {cls:'red',   ic:'',l:'Rejections (MTD)',  v:'62 Kg', s:'0.34% rejection rate'},
+          {cls:'orange',ic:'',l:'Open NCRs',         v:'8',     s:'3 critical pending'},
+          {cls:'blue',  ic:'',l:'Certificates Issued',v:'48',   s:'All shipments covered'},
         ].map(k=>(
           <div key={k.l} className={`qm-kpi-card ${k.cls}`}>
             <div className="qm-kpi-icon">{k.ic}</div>
@@ -45,7 +45,7 @@ export default function QMDashboard() {
         {/* Recent Inspections */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>🔬 Recent Inspection Lots</h3>
+            <h3> Recent Inspection Lots</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>View All</button>
           </div>
           <div style={{padding:'0'}}>
@@ -65,7 +65,7 @@ export default function QMDashboard() {
                       </div>
                     </td>
                     <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:l.ncr==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:l.ncr==='—'?'400':'700'}}>{l.ncr}</td>
-                    <td><span className={`badge ${l.sb}`}>{l.sb==='badge-pass'?'✅ Pass':l.sb==='badge-fail'?'❌ Fail':'⚠️ Review'}</span></td>
+                    <td><span className={`badge ${l.sb}`}>{l.sb==='badge-pass'?' Pass':l.sb==='badge-fail'?' Fail':' Review'}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -76,7 +76,7 @@ export default function QMDashboard() {
         {/* Open NCRs */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>❌ Open NCRs</h3>
+            <h3> Open NCRs</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>View All</button>
           </div>
           <div className="fi-panel-body">
@@ -95,7 +95,7 @@ export default function QMDashboard() {
               </div>
             ))}
             <button className="btn btn-p sd-bsm" style={{width:'100%',marginTop:'4px'}} onClick={() => nav('/qm/ncr/new')}>
-              ➕ Raise New NCR
+               Raise New NCR
             </button>
           </div>
         </div>
@@ -126,14 +126,14 @@ export default function QMDashboard() {
 
       {/* Quick Actions */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
+        <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
         <div className="fi-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>🔬 New Inspection</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr/new')}>❌ Raise NCR</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}> New Inspection</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr/new')}> Raise NCR</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa/new')}>New CAPA</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/certificates')}>🏅 Issue Certificate</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/certificates')}> Issue Certificate</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/vendor')}>⭐ Vendor Rating</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}>📈 Quality Report</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}> Quality Report</button>
         </div>
       </div>
     </div>

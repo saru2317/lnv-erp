@@ -14,7 +14,7 @@ const MONTHLY = [
   {m:'Feb',jobs:48, qty:44800, rej:520, eff:98.8, cost:3760000},
   {m:'Mar',jobs:55, qty:51200, rej:580, eff:98.9, cost:4280000},
 ]
-const ST={completed:{label:'✅ Done',bg:'#D4EDDA',c:'#155724'},in_progress:{label:'🔄 WIP',bg:'#D1ECF1',c:'#0C5460'}}
+const ST={completed:{label:' Done',bg:'#D4EDDA',c:'#155724'},in_progress:{label:' WIP',bg:'#D1ECF1',c:'#0C5460'}}
 const fmtL=n=>'₹'+(n/100000).toFixed(1)+'L'
 export default function ProductionReport(){
   const [view,setView]=useState('summary')
@@ -34,7 +34,7 @@ export default function ProductionReport(){
         ].map(k=>(<div key={k.l} className={`fi-kpi-card ${k.cls}`}><div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div></div>))}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {[['summary','📊 Monthly'],['jobs','🏭 Job-wise']].map(([k,l])=>(
+        {[['summary',' Monthly'],['jobs',' Job-wise']].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)} style={{padding:'6px 16px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',border:'1px solid var(--odoo-border)',background:view===k?'var(--odoo-purple)':'#fff',color:view===k?'#fff':'var(--odoo-gray)'}}>{l}</button>
         ))}
       </div>

@@ -19,7 +19,7 @@ export default function OpportunityNew() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}>📊</div>
+      <div style={{fontSize:'48px',marginBottom:'16px'}}></div>
       <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-orange)',marginBottom:'8px'}}>Opportunity Created!</h2>
       <div style={{color:'var(--odoo-gray)',marginBottom:'24px'}}>OPP-{String(Math.floor(Math.random()*90)+19).padStart(4,'0')} — {form.company} has been added to the pipeline.</div>
       <div style={{display:'flex',gap:'12px'}}>
@@ -119,7 +119,7 @@ export default function OpportunityNew() {
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>👤 Assign</h3></div>
+            <div className="fi-panel-hdr"><h3> Assign</h3></div>
             <div className="fi-panel-body">
               <div className="sd-field">
                 <label>Sales Rep</label>

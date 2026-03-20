@@ -22,8 +22,8 @@ export default function BreakdownList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Breakdown Register <small>Feb 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/breakdown/new')}>🔴 Report Breakdown</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/breakdown/new')}> Report Breakdown</button>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function BreakdownList() {
               <td><span style={{fontSize:'11px',fontWeight:'600'}}>{b.type}</span></td>
               <td><span style={{fontWeight:'700',fontSize:'12px',
                 color:b.priority==='High'?'var(--odoo-red)':b.priority==='Medium'?'var(--odoo-orange)':'var(--odoo-blue)'}}>
-                {b.priority==='High'?'🔴':b.priority==='Medium'?'🟡':'🔵'} {b.priority}
+                {b.priority==='High'?'':b.priority==='Medium'?'🟡':''} {b.priority}
               </span></td>
               <td style={{fontWeight:'700',color:b.downtime>8?'var(--odoo-red)':b.downtime>3?'var(--odoo-orange)':'var(--odoo-green)'}}>{b.downtime} hrs</td>
               <td>{b.tech}</td>

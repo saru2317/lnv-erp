@@ -38,7 +38,7 @@ export default function SecurityConfig() {
       </div>
 
       <div style={{display:'flex',gap:0,marginBottom:'16px',borderBottom:'2px solid var(--odoo-border)'}}>
-        {[['sessions','🖥️ Active Sessions'],['policy','🔒 Password Policy'],['log','📋 Login History']].map(([k,l])=>(
+        {[['sessions',' Active Sessions'],['policy',' Password Policy'],['log',' Login History']].map(([k,l])=>(
           <div key={k} onClick={()=>setTab(k)}
             style={{padding:'8px 18px',cursor:'pointer',fontSize:'12px',fontWeight:'700',
               borderBottom:tab===k?'2px solid var(--odoo-purple)':'2px solid transparent',
@@ -51,8 +51,8 @@ export default function SecurityConfig() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'14px'}}>
             {[
               {l:'Active Now',v:activeSessions.length,c:'var(--odoo-green)',i:'🟢'},
-              {l:'Total Today',v:sessions.length,c:'var(--odoo-blue)',i:'📊'},
-              {l:'Unique Users',v:[...new Set(sessions.map(s=>s.userId))].length,c:'var(--odoo-purple)',i:'👥'},
+              {l:'Total Today',v:sessions.length,c:'var(--odoo-blue)',i:''},
+              {l:'Unique Users',v:[...new Set(sessions.map(s=>s.userId))].length,c:'var(--odoo-purple)',i:''},
             ].map(k=>(
               <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
                 <div className="crm-kpi-icon">{k.i}</div>
@@ -74,7 +74,7 @@ export default function SecurityConfig() {
                 <div style={{flex:1}}>
                   <div style={{fontWeight:'700',fontSize:'13px'}}>{s.userName}</div>
                   <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>
-                    🛡️ {s.role} &nbsp;·&nbsp; 🌐 {s.ip} &nbsp;·&nbsp; 🖥️ {s.browser}
+                     {s.role} &nbsp;·&nbsp;  {s.ip} &nbsp;·&nbsp;  {s.browser}
                   </div>
                 </div>
                 <div style={{textAlign:'right'}}>
@@ -84,7 +84,7 @@ export default function SecurityConfig() {
                 <button onClick={()=>killSession(s.id)}
                   style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid #C62828',background:'#FFEBEE',
                     color:'#C62828',fontSize:'11px',fontWeight:'700',cursor:'pointer'}}>
-                  🔒 End Session
+                   End Session
                 </button>
               </div>
             ))}
@@ -95,7 +95,7 @@ export default function SecurityConfig() {
       {tab==='policy' && (
         <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'14px'}}>
           <div className="fi-panel" style={{margin:0}}>
-            <div className="fi-panel-hdr"><h3>🔒 Password Policy</h3></div>
+            <div className="fi-panel-hdr"><h3> Password Policy</h3></div>
             <div className="fi-panel-body">
               <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
                 {[
@@ -135,12 +135,12 @@ export default function SecurityConfig() {
 
           {/* Security score card */}
           <div className="fi-panel" style={{margin:0}}>
-            <div className="fi-panel-hdr"><h3>🛡️ Security Score</h3></div>
+            <div className="fi-panel-hdr"><h3> Security Score</h3></div>
             <div className="fi-panel-body" style={{textAlign:'center'}}>
               <div style={{width:'80px',height:'80px',borderRadius:'50%',border:`6px solid ${color}`,
                 display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',
                 fontFamily:'Syne,sans-serif',fontWeight:'900',fontSize:'24px',color}}>
-                {label==='Weak'?'⚠️':label==='Medium'?'🛡️':'🔐'}
+                {label==='Weak'?'':label==='Medium'?'':''}
               </div>
               <div style={{fontWeight:'800',fontSize:'16px',color,marginBottom:'4px'}}>{label}</div>
               <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginBottom:'16px'}}>Security Level</div>
@@ -154,7 +154,7 @@ export default function SecurityConfig() {
                   {l:'Session timeout',ok:policy.sessionTimeout<=480},
                 ].map(x=>(
                   <div key={x.l} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'11px'}}>
-                    <span style={{fontSize:'14px'}}>{x.ok?'✅':'⬜'}</span>
+                    <span style={{fontSize:'14px'}}>{x.ok?'':'⬜'}</span>
                     <span style={{color:x.ok?'var(--odoo-text)':'var(--odoo-gray)',fontWeight:x.ok?'600':'400'}}>{x.l}</span>
                   </div>
                 ))}

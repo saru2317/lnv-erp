@@ -26,7 +26,7 @@ export default function ShiftMaster() {
         </div>
       </div>
 
-      <div className="pp-alert info">⚙️ <strong>Shift assignment</strong> is done per employee in Employee Master. Week-off logic is defined per shift below. OT is auto-calculated from attendance punch-out time.</div>
+      <div className="pp-alert info"> <strong>Shift assignment</strong> is done per employee in Employee Master. Week-off logic is defined per shift below. OT is auto-calculated from attendance punch-out time.</div>
 
       {/* Shift cards */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:'14px',marginBottom:'20px'}}>
@@ -43,11 +43,11 @@ export default function ShiftMaster() {
               <span style={{background:`${s.clr}18`,color:s.clr,padding:'3px 10px',borderRadius:'10px',fontSize:'11px',fontWeight:'700'}}>{s.applies}</span>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginTop:'12px',fontSize:'12px'}}>
-              {[['🕐 In',s.in],['🕕 Out',s.out],['☕ Break',`${s.break} min`],['⏱️ Hours',`${s.hrs} hrs`],
-                ['📅 Days',s.days],['🏖️ Week Off',s.weekoff]].map(([l,v])=>(
+              {[[' In',s.in],[' Out',s.out],[' Break',`${s.break} min`],['⏱ Hours',`${s.hrs} hrs`],
+                [' Days',s.days],[' Week Off',s.weekoff]].map(([l,v])=>(
                 <div key={l}>
                   <span style={{color:'var(--odoo-gray)'}}>{l}: </span>
-                  <strong style={{fontFamily:l==='🕐 In'||l==='🕕 Out'?'DM Mono,monospace':'inherit'}}>{v}</strong>
+                  <strong style={{fontFamily:l===' In'||l===' Out'?'DM Mono,monospace':'inherit'}}>{v}</strong>
                 </div>
               ))}
             </div>
@@ -60,7 +60,7 @@ export default function ShiftMaster() {
 
       {/* OT Rules */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>⏱️ Overtime Rules by Employee Category</h3></div>
+        <div className="fi-panel-hdr"><h3>⏱ Overtime Rules by Employee Category</h3></div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Category</th><th>OT Calculation</th><th>Min OT</th><th>Max OT</th><th>Approval</th><th>Payout</th></tr></thead>
@@ -82,7 +82,7 @@ export default function ShiftMaster() {
 
       {/* Week-off logic */}
       <div className="fi-panel" style={{marginTop:'14px'}}>
-        <div className="fi-panel-hdr"><h3>📅 Week-Off Logic</h3></div>
+        <div className="fi-panel-hdr"><h3> Week-Off Logic</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
             {[{type:'Staff — Fixed',rule:'Sunday is week-off for all staff. Saturdays: Working (1st/3rd Sat off optional per policy)',clr:'var(--odoo-blue)'},

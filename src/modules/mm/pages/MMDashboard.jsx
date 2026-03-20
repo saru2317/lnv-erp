@@ -12,15 +12,15 @@ export default function MMDashboard() {
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>＋ New PO</button>
         </div>
       </div>
-      <div className="mm-alert warn">⚠️ <strong>5 Purchase Orders</strong> are pending GRN for more than 7 days.{' '}
+      <div className="mm-alert warn"> <strong>5 Purchase Orders</strong> are pending GRN for more than 7 days.{' '}
         <span onClick={() => nav('/mm/po/pending')} style={{cursor:'pointer',textDecoration:'underline',fontWeight:700}}>View Pending POs →</span>
       </div>
       <div className="mm-kpi-grid">
         {[
-          {cls:'pur',ic:'📋',lb:'Purchase Orders (MTD)',val:'₹28.4L',sub:'18 POs · 3 pending approval',to:'/mm/po'},
-          {cls:'grn',ic:'📦',lb:'GRN Received (MTD)',  val:'₹21.6L',sub:'14 GRNs · 4 POs awaiting',to:'/mm/grn'},
-          {cls:'orn',ic:'🧾',lb:'Vendor Invoices Due', val:'₹8.2L', sub:'6 invoices · 2 overdue',to:'/mm/invoices'},
-          {cls:'blu',ic:'🏭',lb:'Active Vendors',      val:'24',    sub:'3 new this month',to:'/mm/vendors'},
+          {cls:'pur',ic:'',lb:'Purchase Orders (MTD)',val:'₹28.4L',sub:'18 POs · 3 pending approval',to:'/mm/po'},
+          {cls:'grn',ic:'',lb:'GRN Received (MTD)',  val:'₹21.6L',sub:'14 GRNs · 4 POs awaiting',to:'/mm/grn'},
+          {cls:'orn',ic:'',lb:'Vendor Invoices Due', val:'₹8.2L', sub:'6 invoices · 2 overdue',to:'/mm/invoices'},
+          {cls:'blu',ic:'',lb:'Active Vendors',      val:'24',    sub:'3 new this month',to:'/mm/vendors'},
         ].map(k => (
           <div key={k.lb} className={`mm-kpi ${k.cls}`} onClick={() => nav(k.to)}>
             <div className="mm-kpi-ic">{k.ic}</div>
@@ -75,13 +75,13 @@ export default function MMDashboard() {
         </div>
       </div>
       <div className="mm-panel">
-        <div className="mm-ph"><h3>⚡ Quick Actions</h3></div>
+        <div className="mm-ph"><h3> Quick Actions</h3></div>
         <div className="mm-pb" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>New Purchase Order</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices/new')}>Enter Vendor Invoice</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/new')}>Add Vendor</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/rfq')}>📩 Create RFQ</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/rfq')}> Create RFQ</button>
         </div>
       </div>
     </div>

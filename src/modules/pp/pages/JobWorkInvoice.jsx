@@ -34,12 +34,12 @@ export default function JobWorkInvoice() {
           <select className="sd-select" value={jobId} onChange={e=>{setJobId(e.target.value);setSaved(false)}}>
             {JOB_CARDS.map(j=><option key={j.id} value={j.id}>{j.id} — {j.customerName}</option>)}
           </select>
-          <button className="btn btn-s sd-bsm" onClick={()=>window.print()}>🖨️ Print</button>
-          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}>✅ Save Invoice</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>window.print()}>Print</button>
+          <button className="btn btn-p btn-s" onClick={()=>setSaved(true)}>Save Invoice</button>
         </div>
       </div>
 
-      {saved&&<div className="pp-alert" style={{marginBottom:'14px',background:'#D4EDDA',borderColor:'#C3E6CB',color:'#155724'}}>✅ Invoice <strong>{invoiceNo}</strong> saved! Ready for dispatch.</div>}
+      {saved&&<div className="pp-alert" style={{marginBottom:'14px',background:'#D4EDDA',borderColor:'#C3E6CB',color:'#155724'}}>Invoice <strong>{invoiceNo}</strong> saved! Ready for dispatch.</div>}
 
       {job&&customer&&(
         <div style={{background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:'12px',overflow:'hidden',maxWidth:'860px'}}>
@@ -56,7 +56,7 @@ export default function JobWorkInvoice() {
                 <span style={{padding:'3px 10px',borderRadius:'10px',fontSize:'11px',fontWeight:'700',
                   background:doneSteps.length===steps.length?'#D4EDDA22':'#FFF3CD22',
                   border:'1px solid rgba(255,255,255,.3)',color:'#fff'}}>
-                  {doneSteps.length===steps.length?'✅ Fully Completed':'⏳ Partial — In Progress'}
+                  {doneSteps.length===steps.length?' Fully Completed':'⏳ Partial — In Progress'}
                 </span>
               </div>
             </div>
@@ -81,10 +81,10 @@ export default function JobWorkInvoice() {
 
           {/* Job reference */}
           <div style={{padding:'10px 20px',background:'#F8F9FA',borderBottom:'1px solid var(--odoo-border)',display:'flex',gap:'24px',fontSize:'12px'}}>
-            <span>📋 Job Card: <strong style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-purple)'}}>{job.id}</strong></span>
-            <span>📄 Customer DC: <strong style={{fontFamily:'DM Mono,monospace'}}>{job.dcNo}</strong></span>
-            <span>📦 Item: <strong>{job.item}</strong></span>
-            <span>🔢 Total Qty: <strong style={{fontFamily:'DM Mono,monospace'}}>{job.qty} {job.unit}</strong></span>
+            <span>Job Card: <strong style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-purple)'}}>{job.id}</strong></span>
+            <span>Customer DC: <strong style={{fontFamily:'DM Mono,monospace'}}>{job.dcNo}</strong></span>
+            <span>Item: <strong>{job.item}</strong></span>
+            <span> Total Qty: <strong style={{fontFamily:'DM Mono,monospace'}}>{job.qty} {job.unit}</strong></span>
           </div>
 
           {/* Line items */}

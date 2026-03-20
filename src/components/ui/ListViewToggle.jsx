@@ -11,7 +11,7 @@ export default function ListViewToggle({ viewMode, onToggle }) {
           color: viewMode==='normal' ? '#fff' : 'var(--odoo-gray)',
           fontSize:12,fontWeight:600,display:'flex',alignItems:'center',gap:5,
           transition:'all .15s'}}>
-        <span style={{fontSize:13}}>☰</span>
+        <span style={{fontSize:13}}></span>
         <span>List</span>
       </button>
       <button onClick={() => onToggle('detail')}

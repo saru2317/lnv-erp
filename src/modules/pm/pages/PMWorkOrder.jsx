@@ -39,13 +39,13 @@ export default function PMWorkOrder() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>✅</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>PMW-2025-012 Completed!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Checklist: {doneCount}/{checks.length} items · Next PM auto-scheduled</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/print/wo')}>Print WO</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>← PM Schedule</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/log')}>📋 View Log</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/log')}>View Log</button>
       </div>
     </div>
   )
@@ -56,16 +56,16 @@ export default function PMWorkOrder() {
         <div className="fi-lv-title">PM Work Order <small>PMW-2025-012 · Maintenance Execution</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>← Back</button>
-          <button className="btn btn-s sd-bsm">💾 Save Progress</button>
+          <button className="btn btn-s sd-bsm">Save Progress</button>
           <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)} disabled={pct<100}>
-            {pct===100 ? '✅ Complete PM' : `${pct}% Done`}
+            {pct===100 ? ' Complete PM' : `${pct}% Done`}
           </button>
         </div>
       </div>
 
       {/* WO Header */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔧 Work Order Details</div>
+        <div className="fi-form-sec-hdr">Work Order Details</div>
         <div className="fi-form-sec-body">
           <div className="acct-strip">
             {[['WO No.','PMW-2025-012'],['Machine','SPG-01 · Ring Frame M/C'],['PM Type',pmType],
@@ -86,7 +86,7 @@ export default function PMWorkOrder() {
       {/* Checklist */}
       <div className="fi-form-sec">
         <div className="fi-form-sec-hdr">
-          ✅ PM Checklist — {pmType}
+           PM Checklist — {pmType}
           <span style={{marginLeft:'auto',fontSize:'12px',color:'var(--odoo-gray)'}}>
             {doneCount}/{checks.length} completed
           </span>
@@ -126,13 +126,13 @@ export default function PMWorkOrder() {
                 onChange={e=>setChecks(checks.map(x=>x.id===c.id?{...x,remark:e.target.value}:x))}
                 style={{width:'160px',border:'1px solid var(--odoo-border)',borderRadius:'4px',
                   padding:'4px 8px',fontSize:'11px',color:'var(--odoo-gray)'}}/>
-              {c.done && <span style={{color:'var(--odoo-green)',fontSize:'16px'}}>✅</span>}
+              {c.done && <span style={{color:'var(--odoo-green)',fontSize:'16px'}}></span>}
             </div>
           ))}
 
           {pct===100 && (
             <div className="pp-alert success" style={{margin:'14px'}}>
-              ✅ All checklist items completed! You can now close this PM Work Order.
+               All checklist items completed! You can now close this PM Work Order.
             </div>
           )}
         </div>
@@ -140,7 +140,7 @@ export default function PMWorkOrder() {
 
       {/* Spare Parts Used */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📦 Spare Parts Used</div>
+        <div className="fi-form-sec-hdr">Spare Parts Used</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Spare Part</th><th>Part No.</th><th>Qty Used</th><th>Cost</th></tr></thead>
@@ -159,15 +159,15 @@ export default function PMWorkOrder() {
               </tr>
             </tbody>
           </table>
-          <div style={{padding:'10px 14px'}}><button className="btn btn-s sd-bsm">➕ Add Spare Used</button></div>
+          <div style={{padding:'10px 14px'}}><button className="btn btn-s sd-bsm">Add Spare Used</button></div>
         </div>
       </div>
 
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/schedule')}>← Back</button>
-        <button className="btn btn-s sd-bsm">💾 Save Progress</button>
+        <button className="btn btn-s sd-bsm">Save Progress</button>
         <button className="btn btn-p sd-bsm" disabled={pct<100} onClick={() => setSaved(true)}>
-          {pct===100?'✅ Complete PM':`Complete Checklist First (${pct}%)`}
+          {pct===100?' Complete PM':`Complete Checklist First (${pct}%)`}
         </button>
       </div>
     </div>

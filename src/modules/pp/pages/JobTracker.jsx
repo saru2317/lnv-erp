@@ -21,7 +21,7 @@ export default function JobTracker() {
 
   const getWCName = id => WORK_CENTERS.find(w=>w.id===id)?.name||id||'—'
 
-  const statusIcon  = s => ({Done:'✅',Running:'🔵',Waiting:'⏳',Blocked:'🔴',Skipped:'⏭'}[s]||'❓')
+  const statusIcon  = s => ({Done:'',Running:'',Waiting:'⏳',Blocked:'',Skipped:'⏭'}[s]||'')
 
   return (
     <div>
@@ -32,7 +32,7 @@ export default function JobTracker() {
             {JOB_CARDS.map(j=><option key={j.id} value={j.id}>{j.id} — {j.item}</option>)}
           </select>
           <div style={{display:'flex',gap:'4px',background:'#F0EEEB',padding:'3px',borderRadius:'6px'}}>
-            {[['timeline','⏱️ Timeline'],['table','📋 Table'],['gantt','📊 Gantt']].map(([v,l])=>(
+            {[['timeline','⏱ Timeline'],['table',' Table'],['gantt',' Gantt']].map(([v,l])=>(
               <button key={v} onClick={()=>setViewMode(v)} style={{padding:'5px 10px',borderRadius:'4px',border:'none',fontSize:'11px',fontWeight:'600',cursor:'pointer',
                 background:viewMode===v?'var(--odoo-purple)':'transparent',color:viewMode===v?'#fff':'var(--odoo-gray)'}}>{l}</button>
             ))}
@@ -101,7 +101,7 @@ export default function JobTracker() {
                       display:'flex',alignItems:'center',justifyContent:'center',fontSize:'14px',
                       background:s.status==='Done'?'var(--odoo-green)':s.status==='Running'?'var(--odoo-orange)':'var(--odoo-border)',
                       border:'2px solid #fff',boxShadow:'0 0 0 2px '+(s.status==='Done'?'var(--odoo-green)':s.status==='Running'?'var(--odoo-orange)':'var(--odoo-border)')}}>
-                      {s.status==='Done'?'✓':s.status==='Running'?'●':idx+1}
+                      {s.status==='Done'?'':s.status==='Running'?'●':idx+1}
                       {/* If done, show check in white */}
                     </div>
                     {/* Step content */}
@@ -123,15 +123,15 @@ export default function JobTracker() {
                       </div>
                       {(wc||s.operator||s.startTime)&&(
                         <div style={{marginTop:'4px',fontSize:'11px',color:'var(--odoo-gray)',display:'flex',gap:'12px',flexWrap:'wrap'}}>
-                          {wc&&<span>⚙️ {wc.name}</span>}
-                          {s.operator&&<span>👤 {s.operator}</span>}
-                          {s.startTime&&<span>🕐 {s.startTime}{s.endTime?' → '+s.endTime:' (ongoing)'}</span>}
-                          {s.qty>0&&<span>✅ {s.qty} {job.unit} processed</span>}
+                          {wc&&<span> {wc.name}</span>}
+                          {s.operator&&<span> {s.operator}</span>}
+                          {s.startTime&&<span> {s.startTime}{s.endTime?' → '+s.endTime:' (ongoing)'}</span>}
+                          {s.qty>0&&<span>{s.qty} {job.unit} processed</span>}
                         </div>
                       )}
-                      {s.remarks&&<div style={{marginTop:'4px',fontSize:'11px',color:'var(--odoo-gray)',fontStyle:'italic'}}>💬 {s.remarks}</div>}
+                      {s.remarks&&<div style={{marginTop:'4px',fontSize:'11px',color:'var(--odoo-gray)',fontStyle:'italic'}}> {s.remarks}</div>}
                       {s.status==='Waiting'&&idx>0&&steps[idx-1]?.status!=='Done'&&(
-                        <div style={{marginTop:'4px',fontSize:'11px',color:'var(--odoo-red)',fontWeight:'600'}}>🔒 Waiting for "{steps[idx-1].step}" to complete</div>
+                        <div style={{marginTop:'4px',fontSize:'11px',color:'var(--odoo-red)',fontWeight:'600'}}> Waiting for "{steps[idx-1].step}" to complete</div>
                       )}
                     </div>
                   </div>
@@ -173,7 +173,7 @@ export default function JobTracker() {
           {/* GANTT VIEW — horizontal step bars */}
           {viewMode==='gantt'&&(
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>📊 Process Gantt — {job.id}</h3></div>
+              <div className="fi-panel-hdr"><h3>Process Gantt — {job.id}</h3></div>
               <div className="fi-panel-body">
                 {steps.map((s,i)=>(
                   <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px'}}>

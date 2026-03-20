@@ -23,7 +23,7 @@ export default function CertificateList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search cert no., lot, customer..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search cert no., lot, customer..."/></div>
         <select className="fi-filter-select"><option>All Types</option><option>COC</option><option>Test Report</option><option>NABL</option></select>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
@@ -47,9 +47,9 @@ export default function CertificateList() {
               <span style={{fontWeight:'700',color:'var(--odoo-green)'}}>Yield: {c.yield}</span>
             </div>
             <div style={{marginTop:'8px',display:'flex',gap:'6px'}}>
-              <button className="btn-xs pri" onClick={e=>{e.stopPropagation();setModal(c)}}>👁 View</button>
+              <button className="btn-xs pri" onClick={e=>{e.stopPropagation();setModal(c)}}> View</button>
               <button className="btn-xs" onClick={e=>e.stopPropagation()}>PDF</button>
-              <button className="btn-xs" onClick={e=>e.stopPropagation()}>📧 Send</button>
+              <button className="btn-xs" onClick={e=>e.stopPropagation()}> Send</button>
             </div>
           </div>
         ))}
@@ -88,18 +88,18 @@ export default function CertificateList() {
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()} style={{maxWidth:'520px'}}>
             <div className="fi-modal-hdr">
-              🏅 {modal.id}
-              <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button>
+               {modal.id}
+              <button className="fi-modal-close" onClick={() => setModal(null)}></button>
             </div>
             <div className="fi-modal-body">
               <div style={{textAlign:'center',padding:'20px 0',borderBottom:'2px solid var(--odoo-border)',marginBottom:'16px'}}>
-                <div style={{fontSize:'32px',marginBottom:'8px'}}>🏅</div>
+                <div style={{fontSize:'32px',marginBottom:'8px'}}></div>
                 <div style={{fontFamily:'Syne,sans-serif',fontSize:'18px',fontWeight:'800',color:'var(--odoo-purple)'}}>Certificate of Conformance</div>
                 <div style={{fontSize:'12px',color:'var(--odoo-gray)'}}>LNV Manufacturing Pvt. Ltd. · Ranipet, Tamil Nadu</div>
               </div>
               {[['Certificate No.',modal.id],['Inspection Lot',modal.lot],['Date',`${modal.date} Feb 2025`],
                 ['Customer',modal.cust],['Product',modal.prod],['Quantity',modal.qty],
-                ['Test Yield',modal.yield],['Result','✅ Conforms to specification'],
+                ['Test Yield',modal.yield],['Result',' Conforms to specification'],
                 ['Valid Until',modal.valid]].map(([l,v])=>(
                 <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #F5F0F4',fontSize:'13px'}}>
                   <span style={{color:'var(--odoo-gray)',fontWeight:'600'}}>{l}</span>
@@ -108,7 +108,7 @@ export default function CertificateList() {
               ))}
               <div style={{marginTop:'16px',display:'flex',gap:'10px'}}>
                 <button className="btn btn-p sd-bsm" style={{flex:1}}>Download PDF</button>
-                <button className="btn btn-s sd-bsm" style={{flex:1}}>📧 Email to Customer</button>
+                <button className="btn btn-s sd-bsm" style={{flex:1}}> Email to Customer</button>
               </div>
             </div>
           </div>

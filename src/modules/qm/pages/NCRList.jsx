@@ -52,7 +52,7 @@ export default function NCRList() {
               <td><span style={{background:'#EDE0EA',color:'var(--odoo-purple)',padding:'2px 7px',borderRadius:'4px',fontSize:'11px',fontWeight:'700'}}>{n.source}</span></td>
               <td><strong>{n.mat}</strong></td>
               <td style={{fontSize:'12px',maxWidth:'200px'}}>{n.issue}</td>
-              <td><span style={{fontWeight:'700',fontSize:'12px',color:severityClr(n.severity)}}>{'🔴'.repeat(n.severity==='Critical'?3:n.severity==='Major'?2:1)} {n.severity}</span></td>
+              <td><span style={{fontWeight:'700',fontSize:'12px',color:severityClr(n.severity)}}>{''.repeat(n.severity==='Critical'?3:n.severity==='Major'?2:1)} {n.severity}</span></td>
               <td>{n.assignee}</td>
               <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:n.capa==='—'?'var(--odoo-gray)':'var(--odoo-blue)',fontWeight:n.capa==='—'?'400':'700'}}>
                 {n.capa}

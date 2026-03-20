@@ -41,7 +41,7 @@ export default function BranchConfig() {
 
       {showForm && (
         <div className="fi-panel" style={{ marginBottom:'16px', border:'2px solid var(--odoo-purple)' }}>
-          <div className="fi-panel-hdr"><h3>{editId?'✏️ Edit':'➕ New'} Branch</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId?' Edit':' New'} Branch</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Branch Name *</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Ranipet Plant" /></div>
@@ -65,7 +65,7 @@ export default function BranchConfig() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'12px'}}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'}</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'}</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -80,7 +80,7 @@ export default function BranchConfig() {
             <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px'}}>
               <div style={{width:'40px',height:'40px',borderRadius:'8px',background:typeColor(b.type),display:'flex',
                 alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'18px',flexShrink:0}}>
-                {b.type==='Manufacturing'?'🏭':b.type==='Sales Office'?'💼':b.type==='Warehouse'?'📦':'🏢'}
+                {b.type==='Manufacturing'?'':b.type==='Sales Office'?'':b.type==='Warehouse'?'':''}
               </div>
               <div style={{flex:1}}>
                 <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
@@ -96,15 +96,15 @@ export default function BranchConfig() {
               </span>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px',fontSize:'11px',color:'var(--odoo-gray)',marginBottom:'10px'}}>
-              <div>📍 {b.address}</div>
-              <div>👤 {b.head}</div>
-              <div>📞 {b.phone}</div>
+              <div> {b.address}</div>
+              <div> {b.head}</div>
+              <div> {b.phone}</div>
               <div style={{fontFamily:'DM Mono,monospace',fontSize:'10px'}}>GST: {b.gstin}</div>
             </div>
             <div style={{display:'flex',gap:'6px'}}>
               <button className="btn-act-edit" onClick={()=>handleEdit(b)}>Edit</button>
               <button className="btn-act-view" onClick={()=>setBranches(bs=>bs.map(x=>x.id===b.id?{...x,status:x.status==='Active'?'Inactive':'Active'}:x))}>
-                {b.status==='Active'?'🔒 Disable':'🔓 Enable'}
+                {b.status==='Active'?' Disable':' Enable'}
               </button>
             </div>
           </div>

@@ -44,7 +44,7 @@ export default function SOList() {
       {/* Filters */}
       <div className="sd-fb">
         <div className="sd-fs">
-          🔍 <input placeholder="Search SO #, customer..." value={search} onChange={e=>setSearch(e.target.value)}/>
+           <input placeholder="Search SO #, customer..." value={search} onChange={e=>setSearch(e.target.value)}/>
         </div>
         <select className="sd-fsel" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
           <option value="">All Status</option>
@@ -59,7 +59,7 @@ export default function SOList() {
         <button className="btn btn-s sd-bsm">Export</button>
       </div>
 
-      {/* ── NORMAL TABLE VIEW ── */}
+      {/*  NORMAL TABLE VIEW  */}
       {viewMode === 'normal' && (
         <div className="dc">
           <table className="sd-tbl">
@@ -124,7 +124,7 @@ export default function SOList() {
         </div>
       )}
 
-      {/* ── DETAIL CARD VIEW ── */}
+      {/*  DETAIL CARD VIEW  */}
       {viewMode === 'detail' && (
         <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
           {filtered.map(o => {

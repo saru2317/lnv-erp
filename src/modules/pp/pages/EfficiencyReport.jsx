@@ -30,16 +30,16 @@ export default function EfficiencyReport() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>February 2025</option><option>January 2025</option><option>March 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
       {/* Summary KPIs */}
       <div className="pp-kpi-grid">
-        {[{cls:'green', ic:'📊',l:'Overall OEE',   v:'96.1%', s:'Target: 95%'},
-          {cls:'orange',ic:'⚙️',l:'Avg Utilization',v:'86.6%',s:'All machines'},
-          {cls:'red',   ic:'🔴',l:'Total Downtime', v:'580 hrs',s:'Feb 2025'},
-          {cls:'blue',  ic:'🔧',l:'Breakdowns',     v:'5',    s:'MTBF: 134 hrs'},
+        {[{cls:'green', ic:'',l:'Overall OEE',   v:'96.1%', s:'Target: 95%'},
+          {cls:'orange',ic:'',l:'Avg Utilization',v:'86.6%',s:'All machines'},
+          {cls:'red',   ic:'',l:'Total Downtime', v:'580 hrs',s:'Feb 2025'},
+          {cls:'blue',  ic:'',l:'Breakdowns',     v:'5',    s:'MTBF: 134 hrs'},
         ].map(k=>(
           <div key={k.l} className={`pp-kpi-card ${k.cls}`}>
             <div className="pp-kpi-icon">{k.ic}</div>
@@ -53,7 +53,7 @@ export default function EfficiencyReport() {
       <div className="fi-panel-grid">
         {/* Downtime Breakdown */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>⏱️ Downtime Analysis (hrs)</h3></div>
+          <div className="fi-panel-hdr"><h3>⏱ Downtime Analysis (hrs)</h3></div>
           <div className="fi-panel-body">
             {DOWNTIME.map(d=>(
               <div key={d.cat} style={{marginBottom:'12px'}}>
@@ -74,7 +74,7 @@ export default function EfficiencyReport() {
 
         {/* OEE by Machine bars */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 OEE by Machine</h3></div>
+          <div className="fi-panel-hdr"><h3>OEE by Machine</h3></div>
           <div className="fi-panel-body">
             {MACHINES.map(m=>(
               <div key={m.mc} style={{marginBottom:'10px'}}>

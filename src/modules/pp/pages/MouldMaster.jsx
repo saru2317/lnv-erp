@@ -47,7 +47,7 @@ export default function MouldMaster() {
 
       {/* Concept banner */}
       <div style={{ padding:'10px 14px',background:'#FFF3E0',borderRadius:'8px',marginBottom:'14px',fontSize:'12px',color:'#E65100',display:'flex',gap:'8px',alignItems:'center' }}>
-        <span style={{ fontSize:'18px' }}>💉</span>
+        <span style={{ fontSize:'18px' }}></span>
         <div>
           <strong>Mould Concept:</strong> 1 Shot = Cavity count pieces. &nbsp;·&nbsp;
           Job Qty ÷ Cavity = Shots needed. &nbsp;·&nbsp;
@@ -58,7 +58,7 @@ export default function MouldMaster() {
       {/* Form */}
       {showForm && (
         <div className="fi-panel" style={{ marginBottom:'16px',border:'2px solid var(--odoo-orange)' }}>
-          <div className="fi-panel-hdr"><h3>{editId ? '✏️ Edit Mould' : '➕ New Mould'}</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId ? ' Edit Mould' : ' New Mould'}</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field" style={{ gridColumn:'1/-1' }}>
@@ -103,12 +103,12 @@ export default function MouldMaster() {
             {/* Preview calc */}
             {form.cavity > 0 && (
               <div style={{ marginTop:'10px',padding:'10px 14px',background:'#FFF8E1',borderRadius:'6px',fontSize:'12px',color:'#E65100' }}>
-                💡 <strong>For 1000 pcs:</strong> {Math.ceil(1000/parseInt(form.cavity||1))} shots · Output: {Math.ceil(1000/parseInt(form.cavity||1))*parseInt(form.cavity||1)} pcs
+                 <strong>For 1000 pcs:</strong> {Math.ceil(1000/parseInt(form.cavity||1))} shots · Output: {Math.ceil(1000/parseInt(form.cavity||1))*parseInt(form.cavity||1)} pcs
                 &nbsp;|&nbsp; Life used: {form.maxShots>0?((parseInt(form.shots||0)/parseInt(form.maxShots))*100).toFixed(1):0}%
               </div>
             )}
             <div style={{ display:'flex',gap:'8px',marginTop:'12px' }}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'} Mould</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'} Mould</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function MouldMaster() {
             <div key={m.id} className="fi-panel" style={{ margin:0 }}>
               <div className="fi-panel-hdr" style={{ padding:'10px 14px' }}>
                 <div style={{ display:'flex',alignItems:'center',gap:'8px',flex:1 }}>
-                  <span style={{ fontSize:'22px' }}>{ind?.icon||'🔲'}</span>
+                  <span style={{ fontSize:'22px' }}>{ind?.icon||''}</span>
                   <div>
                     <div style={{ fontWeight:'800',fontSize:'13px' }}>{m.name}</div>
                     <div style={{ fontSize:'11px',fontFamily:'DM Mono,monospace',color:'var(--odoo-gray)' }}>{m.id} · {m.machine}</div>
@@ -140,7 +140,7 @@ export default function MouldMaster() {
               <div className="fi-panel-body" style={{ padding:'10px 14px' }}>
                 {/* Cavity & specs */}
                 <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'10px' }}>
-                  {[['🔲 Cavity',m.cavity,'var(--odoo-orange)'],['⚙️ Machine',m.machine,'var(--odoo-blue)'],['🔩 Material',m.material,'var(--odoo-purple)']].map(([l,v,c])=>(
+                  {[[' Cavity',m.cavity,'var(--odoo-orange)'],[' Machine',m.machine,'var(--odoo-blue)'],[' Material',m.material,'var(--odoo-purple)']].map(([l,v,c])=>(
                     <div key={l} style={{ textAlign:'center',padding:'6px',background:'#F8F9FA',borderRadius:'6px' }}>
                       <div style={{ fontSize:'9px',color:'var(--odoo-gray)',marginBottom:'2px' }}>{l}</div>
                       <div style={{ fontWeight:'800',fontSize:'12px',color:c }}>{v}</div>
@@ -157,13 +157,13 @@ export default function MouldMaster() {
                   <div style={{ height:'6px',background:'#E0E0E0',borderRadius:'3px',overflow:'hidden' }}>
                     <div style={{ height:'100%',width:`${pct}%`,background:lc,borderRadius:'3px',transition:'width .5s' }} />
                   </div>
-                  {pct > 90 && <div style={{ fontSize:'10px',color:'var(--odoo-red)',marginTop:'3px',fontWeight:'700' }}>⚠️ Due for maintenance!</div>}
-                  {pct > 70 && pct <= 90 && <div style={{ fontSize:'10px',color:'var(--odoo-orange)',marginTop:'3px' }}>⚡ Schedule maintenance soon</div>}
+                  {pct > 90 && <div style={{ fontSize:'10px',color:'var(--odoo-red)',marginTop:'3px',fontWeight:'700' }}> Due for maintenance!</div>}
+                  {pct > 70 && pct <= 90 && <div style={{ fontSize:'10px',color:'var(--odoo-orange)',marginTop:'3px' }}> Schedule maintenance soon</div>}
                 </div>
 
                 {/* Shot calculator */}
                 <div style={{ padding:'8px',background:'#FFF8E1',borderRadius:'6px',border:'1px solid #FFE082' }}>
-                  <div style={{ fontSize:'10px',fontWeight:'700',color:'#E65100',marginBottom:'4px' }}>💉 Shot Calculator</div>
+                  <div style={{ fontSize:'10px',fontWeight:'700',color:'#E65100',marginBottom:'4px' }}> Shot Calculator</div>
                   <div style={{ display:'flex',gap:'6px',alignItems:'center' }}>
                     <input type="number" value={qty} onChange={e=>setCalcQty(c=>({...c,[m.id]:e.target.value}))}
                       placeholder="Enter job qty"
@@ -181,7 +181,7 @@ export default function MouldMaster() {
                         <div style={{ fontSize:'9px',color:'var(--odoo-gray)' }}>Output Pcs</div>
                       </div>
                       <div style={{ flex:1,textAlign:'center',padding:'4px',background:'#fff',borderRadius:'4px' }}>
-                        <div style={{ fontWeight:'800',fontSize:'16px',color:'var(--odoo-purple)' }}>{m.maxShots-m.shots-shot.shots >= 0 ? (m.maxShots-m.shots-shot.shots).toLocaleString() : '⚠️'}</div>
+                        <div style={{ fontWeight:'800',fontSize:'16px',color:'var(--odoo-purple)' }}>{m.maxShots-m.shots-shot.shots >= 0 ? (m.maxShots-m.shots-shot.shots).toLocaleString() : ''}</div>
                         <div style={{ fontSize:'9px',color:'var(--odoo-gray)' }}>Remaining</div>
                       </div>
                     </div>
@@ -189,7 +189,7 @@ export default function MouldMaster() {
                 </div>
 
                 <div style={{ display:'flex',gap:'4px',marginTop:'8px' }}>
-                  <button className="btn-act-edit" onClick={()=>handleEdit(m)}>✏️ Edit</button>
+                  <button className="btn-act-edit" onClick={()=>handleEdit(m)}>Edit</button>
                   <div style={{ fontSize:'10px',color:'var(--odoo-gray)',marginLeft:'auto',alignSelf:'center' }}>Last maint: {m.lastMaint}</div>
                 </div>
               </div>
@@ -201,10 +201,10 @@ export default function MouldMaster() {
       {/* Summary KPIs */}
       <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px',marginTop:'14px' }}>
         {[
-          { l:'Total Moulds',    v:moulds.length,                                   c:'var(--odoo-purple)', i:'🔲' },
-          { l:'Active',         v:moulds.filter(m=>m.status==='Active').length,      c:'var(--odoo-green)', i:'✅' },
-          { l:'Due Maintenance',v:moulds.filter(m=>lifePct(m)>90).length,           c:'var(--odoo-red)',   i:'⚠️' },
-          { l:'Total Cavities', v:moulds.reduce((s,m)=>s+m.cavity,0),               c:'var(--odoo-orange)',i:'💉' },
+          { l:'Total Moulds',    v:moulds.length,                                   c:'var(--odoo-purple)', i:'' },
+          { l:'Active',         v:moulds.filter(m=>m.status==='Active').length,      c:'var(--odoo-green)', i:'' },
+          { l:'Due Maintenance',v:moulds.filter(m=>lifePct(m)>90).length,           c:'var(--odoo-red)',   i:'' },
+          { l:'Total Cavities', v:moulds.reduce((s,m)=>s+m.cavity,0),               c:'var(--odoo-orange)',i:'' },
         ].map(k => (
           <div key={k.l} className="crm-kpi-card" style={{ borderLeftColor:k.c }}>
             <div className="crm-kpi-icon">{k.i}</div>

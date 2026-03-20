@@ -33,7 +33,7 @@ export default function Payslip() {
           </select>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/payslip')}>Print</button>
           <button className="btn btn-s sd-bsm">Download PDF</button>
-          <button className="btn btn-s sd-bsm">📧 Email</button>
+          <button className="btn btn-s sd-bsm"> Email</button>
         </div>
       </div>
 

@@ -17,22 +17,22 @@ const PMCostReport    = lazy(() => import('./PMCostReport'))
 const PMReport        = lazy(() => import('./PMReport'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Breakdown', icon:'🔴', items:[
+  { label:'Breakdown', icon:'', items:[
     {to:'/pm',              label:'PM Dashboard'},
     {to:'/pm/breakdown',    label:'Breakdown Register'},
     {to:'/pm/breakdown/new',label:'Report Breakdown'},
   ]},
-  { label:'Preventive Maintenance', icon:'🔧', items:[
+  { label:'Preventive Maintenance', icon:'', items:[
     {to:'/pm/schedule',     label:'PM Schedule (IW31)'},
     {to:'/pm/workorder',    label:'Maintenance Work Orders'},
     {to:'/pm/log',          label:'Maintenance Log'},
   ]},
-  { label:'Spares & Calibration', icon:'⚙️', items:[
+  { label:'Spares & Calibration', icon:'', items:[
     {to:'/pm/spares',       label:'Spare Parts Register'},
     {to:'/pm/spares/issue', label:'Issue Spare Parts'},
     {to:'/pm/calibration',  label:'Calibration Register'},
   ]},
-  { label:'Masters & Reports', icon:'📊', items:[
+  { label:'Masters & Reports', icon:'', items:[
     {to:'/pm/machines',     label:'Machine Register'},
     {to:'/pm/cost',         label:'Maintenance Cost Report'},
     {to:'/pm/report',       label:'PM Summary Report'},

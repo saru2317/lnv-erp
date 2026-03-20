@@ -23,16 +23,16 @@ export default function PPReport() {
         <div className="fi-lv-title">Production Report <small>February 2025</small></div>
         <div className="fi-lv-actions">
           <select className="fi-filter-select"><option>February 2025</option><option>January 2025</option><option>March 2025</option></select>
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/efficiency')}>📊 Efficiency Report</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/efficiency')}>Efficiency Report</button>
         </div>
       </div>
 
       <div className="pp-kpi-grid">
-        {[{cls:'purple',ic:'🏭',l:'Total Production (MTD)',v:`${totalProduced.toLocaleString()} Kg`,s:'28 work orders closed'},
-          {cls:'green', ic:'✅',l:'Avg Efficiency',         v:`${avgEff}%`,s:'Target: 90%'},
-          {cls:'red',   ic:'⚠️',l:'Total Scrap',            v:`${totalScrap} Kg`,s:`Scrap Rate: ${(totalScrap/totalPlanned*100).toFixed(1)}%`},
-          {cls:'blue',  ic:'⚙️',l:'Machine Uptime',         v:'91%',s:'5 breakdowns this month'},
+        {[{cls:'purple',ic:'',l:'Total Production (MTD)',v:`${totalProduced.toLocaleString()} Kg`,s:'28 work orders closed'},
+          {cls:'green', ic:'',l:'Avg Efficiency',         v:`${avgEff}%`,s:'Target: 90%'},
+          {cls:'red',   ic:'',l:'Total Scrap',            v:`${totalScrap} Kg`,s:`Scrap Rate: ${(totalScrap/totalPlanned*100).toFixed(1)}%`},
+          {cls:'blue',  ic:'',l:'Machine Uptime',         v:'91%',s:'5 breakdowns this month'},
         ].map(k=>(
           <div key={k.l} className={`pp-kpi-card ${k.cls}`}>
             <div className="pp-kpi-icon">{k.ic}</div>
@@ -45,7 +45,7 @@ export default function PPReport() {
 
       {/* Bar chart - simple CSS */}
       <div className="fi-panel" style={{marginBottom:'16px'}}>
-        <div className="fi-panel-hdr"><h3>📊 Production vs Target by Product</h3></div>
+        <div className="fi-panel-hdr"><h3>Production vs Target by Product</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'flex',gap:'14px',alignItems:'flex-end',height:'140px',padding:'0 10px'}}>
             {[['Ring Yarn',588,600,'var(--odoo-purple)'],['Compact Sliver',1080,1100,'var(--odoo-orange)'],
@@ -69,7 +69,7 @@ export default function PPReport() {
 
       {/* Detail Table */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📋 Work Order-wise Summary</div>
+        <div className="fi-form-sec-hdr">Work Order-wise Summary</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>

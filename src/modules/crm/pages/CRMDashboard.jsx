@@ -33,9 +33,9 @@ export default function CRMDashboard() {
         <div className="fi-lv-title">CRM Dashboard <small>Sales Intelligence & Pipeline Overview</small></div>
         <div className="fi-lv-actions">
           <select className="crm-role-toggle" value={role} onChange={e=>setRole(e.target.value)}>
-            <option value="salesperson">👤 Salesperson View</option>
-            <option value="manager">👔 Manager View</option>
-            <option value="ceo">🏢 CEO View</option>
+            <option value="salesperson"> Salesperson View</option>
+            <option value="manager"> Manager View</option>
+            <option value="ceo"> CEO View</option>
           </select>
           <button className="btn btn-p btn-s" onClick={()=>nav('/crm/leads/new')}>+ New Lead</button>
         </div>
@@ -44,7 +44,7 @@ export default function CRMDashboard() {
       {/* Today's Follow-up Alert */}
       {todayActs.length > 0 && (
         <div className="pp-alert warn" style={{cursor:'pointer'}} onClick={()=>nav('/crm/activities')}>
-          📞 <strong>{todayActs.length} follow-up{todayActs.length>1?'s':''} pending today</strong>
+           <strong>{todayActs.length} follow-up{todayActs.length>1?'s':''} pending today</strong>
           {' — '}{todayActs.map(a=>a.company).join(', ')}
           <span style={{float:'right',fontWeight:'700'}}>View All →</span>
         </div>
@@ -54,11 +54,11 @@ export default function CRMDashboard() {
       {role === 'salesperson' && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'18px'}}>
           {[
-            {l:'My Leads',       v:LEADS.filter(l=>l.owner==='Vijay A.').length, clr:'var(--odoo-purple)',ic:'🎯',path:'/crm/leads'},
-            {l:'My Opportunities',v:activeOpps.filter(o=>o.owner==='Vijay A.').length,clr:'var(--odoo-orange)',ic:'📊',path:'/crm/opportunities'},
-            {l:"Today's Followups",v:todayActs.filter(a=>a.owner==='Vijay A.').length,clr:'var(--odoo-red)',ic:'📞',path:'/crm/activities'},
-            {l:'Pending Quotes',  v:sentQuotes,                                  clr:'var(--odoo-blue)',ic:'📋',path:'/crm/quotations'},
-            {l:'Monthly Sales',   v:'₹42 L',                                     clr:'var(--odoo-green)',ic:'💰',path:'/crm/reports'},
+            {l:'My Leads',       v:LEADS.filter(l=>l.owner==='Vijay A.').length, clr:'var(--odoo-purple)',ic:'',path:'/crm/leads'},
+            {l:'My Opportunities',v:activeOpps.filter(o=>o.owner==='Vijay A.').length,clr:'var(--odoo-orange)',ic:'',path:'/crm/opportunities'},
+            {l:"Today's Followups",v:todayActs.filter(a=>a.owner==='Vijay A.').length,clr:'var(--odoo-red)',ic:'',path:'/crm/activities'},
+            {l:'Pending Quotes',  v:sentQuotes,                                  clr:'var(--odoo-blue)',ic:'',path:'/crm/quotations'},
+            {l:'Monthly Sales',   v:'₹42 L',                                     clr:'var(--odoo-green)',ic:'',path:'/crm/reports'},
           ].map(k=>(
             <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}} onClick={()=>nav(k.path)}>
               <div className="crm-kpi-icon">{k.ic}</div>
@@ -72,11 +72,11 @@ export default function CRMDashboard() {
       {role === 'manager' && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'18px'}}>
           {[
-            {l:'Total Leads',      v:LEADS.length,    clr:'var(--odoo-purple)', ic:'🎯', path:'/crm/leads'},
-            {l:'Active Pipeline',  v:activeOpps.length,clr:'var(--odoo-orange)',ic:'📊', path:'/crm/opportunities'},
-            {l:'Pipeline Value',   v:fmt(pipelineVal), clr:'var(--odoo-blue)',  ic:'💼', path:'/crm/opportunities'},
-            {l:'Won This Month',   v:fmt(wonVal),      clr:'var(--odoo-green)', ic:'🏆', path:'/crm/reports'},
-            {l:'Qualified Leads',  v:qualLeads,        clr:'#B7950B',           ic:'✅', path:'/crm/leads'},
+            {l:'Total Leads',      v:LEADS.length,    clr:'var(--odoo-purple)', ic:'', path:'/crm/leads'},
+            {l:'Active Pipeline',  v:activeOpps.length,clr:'var(--odoo-orange)',ic:'', path:'/crm/opportunities'},
+            {l:'Pipeline Value',   v:fmt(pipelineVal), clr:'var(--odoo-blue)',  ic:'', path:'/crm/opportunities'},
+            {l:'Won This Month',   v:fmt(wonVal),      clr:'var(--odoo-green)', ic:'', path:'/crm/reports'},
+            {l:'Qualified Leads',  v:qualLeads,        clr:'#B7950B',           ic:'', path:'/crm/leads'},
           ].map(k=>(
             <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}} onClick={()=>nav(k.path)}>
               <div className="crm-kpi-icon">{k.ic}</div>
@@ -90,11 +90,11 @@ export default function CRMDashboard() {
       {role === 'ceo' && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'18px'}}>
           {[
-            {l:'Total Revenue',    v:'₹1.05 Cr',       clr:'var(--odoo-green)', ic:'💰'},
-            {l:'Pipeline Value',   v:fmt(pipelineVal), clr:'var(--odoo-purple)',ic:'📊'},
-            {l:'Win Rate',         v:'62%',             clr:'var(--odoo-blue)',  ic:'🏆'},
-            {l:'New Customers',    v:'4 this month',    clr:'var(--odoo-orange)',ic:'👥'},
-            {l:'Forecast Q1',      v:'₹1.5 Cr',        clr:'#B7950B',          ic:'📈'},
+            {l:'Total Revenue',    v:'₹1.05 Cr',       clr:'var(--odoo-green)', ic:''},
+            {l:'Pipeline Value',   v:fmt(pipelineVal), clr:'var(--odoo-purple)',ic:''},
+            {l:'Win Rate',         v:'62%',             clr:'var(--odoo-blue)',  ic:''},
+            {l:'New Customers',    v:'4 this month',    clr:'var(--odoo-orange)',ic:''},
+            {l:'Forecast Q1',      v:'₹1.5 Cr',        clr:'#B7950B',          ic:''},
           ].map(k=>(
             <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
               <div className="crm-kpi-icon">{k.ic}</div>
@@ -160,7 +160,7 @@ export default function CRMDashboard() {
           {/* Sales Rep Performance */}
           <div className="fi-panel">
             <div className="fi-panel-hdr">
-              <h3>👔 Team Performance</h3>
+              <h3> Team Performance</h3>
               <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/targets')}>Details</button>
             </div>
             <div className="fi-panel-body">
@@ -190,7 +190,7 @@ export default function CRMDashboard() {
       {/* Won vs Lost + Activity Summary */}
       <div className="fi-panel-grid" style={{marginTop:'14px'}}>
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🏆 Recent Wins & Losses</h3></div>
+          <div className="fi-panel-hdr"><h3> Recent Wins & Losses</h3></div>
           <div className="fi-panel-body" style={{padding:'0'}}>
             {OPPORTUNITIES.filter(o=>o.stage==='Won'||o.stage==='Lost').map(o=>(
               <div key={o.id} className="crm-list-row" onClick={()=>nav(`/crm/opportunities/${o.id}`)}>
@@ -209,7 +209,7 @@ export default function CRMDashboard() {
 
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>📞 Upcoming Activities</h3>
+            <h3> Upcoming Activities</h3>
             <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/activities')}>View All</button>
           </div>
           <div className="fi-panel-body" style={{padding:'0'}}>

@@ -42,7 +42,7 @@ export default function BOMList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search BOM, product..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search BOM, product..."/></div>
         <select className="fi-filter-select"><option>All Products</option><option>Ring Yarn</option><option>Open End Yarn</option><option>Compact Sliver</option></select>
         <select className="fi-filter-select"><option>Active</option><option>Obsolete</option><option>Draft</option></select>
       </div>
@@ -64,7 +64,7 @@ export default function BOMList() {
                 <td onClick={e=>e.stopPropagation()}>
                   <div style={{display:'flex',gap:'4px'}}>
                     <button className="btn-xs pri" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
-                      {expanded===b.id?'▲ Hide':'▼ View'}
+                      {expanded===b.id?' Hide':' View'}
                     </button>
                     <button className="btn-xs">Edit</button>
                     <button className="btn-xs">Copy</button>
@@ -75,7 +75,7 @@ export default function BOMList() {
                 <tr>
                   <td colSpan={7} style={{padding:'0',background:'#FDF8FC'}}>
                     <div style={{padding:'14px'}}>
-                      <div style={{fontWeight:'700',fontSize:'12px',color:'var(--odoo-purple)',marginBottom:'10px'}}>🔩 Components — {b.id}</div>
+                      <div style={{fontWeight:'700',fontSize:'12px',color:'var(--odoo-purple)',marginBottom:'10px'}}> Components — {b.id}</div>
                       <table className="fi-data-table" style={{margin:0}}>
                         <thead><tr><th>Seq</th><th>Component / Material</th><th>Qty per FG Unit</th><th>UOM</th><th>Std Cost</th></tr></thead>
                         <tbody>

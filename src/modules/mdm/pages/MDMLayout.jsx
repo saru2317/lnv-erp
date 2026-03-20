@@ -29,25 +29,25 @@ const NAV = [
 
 // ── Sidebar groups ────────────────────────────────────
 const SIDEBAR = [
-  { label:'Overview', icon:'🗂️', items:[
+  { label:'Overview', icon:'', items:[
     { to:'/mdm',               label:'MDM Dashboard' },
   ]},
-  { label:'Item & BOM', icon:'📦', items:[
+  { label:'Item & BOM', icon:'', items:[
     { to:'/mdm/items',         label:'Item Master'          },
     { to:'/mdm/bom',           label:'Bill of Materials'    },
     { to:'/mdm/routing',       label:'Routing / Process'    },
     { to:'/mdm/uom',           label:'Unit of Measure'      },
     { to:'/mdm/hsn',           label:'HSN / SAC Codes'      },
   ]},
-  { label:'Business Partners', icon:'🤝', items:[
+  { label:'Business Partners', icon:'', items:[
     { to:'/mdm/customers',     label:'Customer Master'      },
     { to:'/mdm/vendors',       label:'Vendor Master'        },
   ]},
-  { label:'Finance Masters', icon:'💰', items:[
+  { label:'Finance Masters', icon:'', items:[
     { to:'/mdm/accounts',      label:'Chart of Accounts'    },
     { to:'/mdm/cost-centers',  label:'Cost Centers'         },
   ]},
-  { label:'Operations', icon:'⚙️', items:[
+  { label:'Operations', icon:'', items:[
     { to:'/mdm/warehouse',     label:'Warehouse / Locations'},
     { to:'/mdm/quality',       label:'Quality Masters'      },
     { to:'/mdm/maintenance',   label:'Maintenance Masters'  },

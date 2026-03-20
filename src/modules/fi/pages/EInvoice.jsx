@@ -9,9 +9,9 @@ const INVOICES = [
 ]
 
 const STATUS_CONFIG = {
-  generated: { label:'✅ IRN Generated', bg:'#D4EDDA', color:'#155724' },
-  pending:   { label:'🕐 Pending',       bg:'#FFF3CD', color:'#856404' },
-  failed:    { label:'❌ Failed',         bg:'#F8D7DA', color:'#721C24' },
+  generated: { label:' IRN Generated', bg:'#D4EDDA', color:'#155724' },
+  pending:   { label:' Pending',       bg:'#FFF3CD', color:'#856404' },
+  failed:    { label:' Failed',         bg:'#F8D7DA', color:'#721C24' },
 }
 
 export default function EInvoice() {
@@ -22,13 +22,13 @@ export default function EInvoice() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">E-Invoice (IRN) <small>Invoice Reference Number · GST Portal Integration</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">🔄 Sync with Portal</button>
+          <button className="btn btn-s sd-bsm"> Sync with Portal</button>
           <button className="btn btn-p sd-bsm">Bulk Download QR</button>
         </div>
       </div>
 
       <div className="fi-alert info" style={{marginBottom:16}}>
-        ℹ️ E-Invoice mandatory for turnover &gt; ₹5 Cr. IRN generated from GST Portal (IRP). QR code must be printed on invoice.
+        ℹ E-Invoice mandatory for turnover &gt; ₹5 Cr. IRN generated from GST Portal (IRP). QR code must be printed on invoice.
       </div>
 
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:20}}>
@@ -73,7 +73,7 @@ export default function EInvoice() {
                     : <span style={{color:'var(--odoo-gray)',fontSize:11}}>—</span>
                   }
                 </td>
-                <td style={{textAlign:'center'}}>{inv.qr ? '✅' : '—'}</td>
+                <td style={{textAlign:'center'}}>{inv.qr ? '' : '—'}</td>
                 <td>
                   <span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:sc.bg,color:sc.color}}>
                     {sc.label}

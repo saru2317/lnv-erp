@@ -29,12 +29,12 @@ export default function AuditTrail() {
 
       {/* Summary cards */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:'10px',marginBottom:'16px'}}>
-        {[['Total Logs',AUDIT_LOGS.length,'var(--odoo-purple)','📋'],
-          ['Creates',counts.CREATE||0,'var(--odoo-green)','➕'],
-          ['Updates',counts.UPDATE||0,'var(--odoo-orange)','✏️'],
-          ['Deletes',counts.DELETE||0,'var(--odoo-red)','🗑️'],
-          ['Approvals',counts.APPROVE||0,'#6B2FA0','✅'],
-          ['Logins',counts.LOGIN||0,'var(--odoo-blue)','🔐'],
+        {[['Total Logs',AUDIT_LOGS.length,'var(--odoo-purple)',''],
+          ['Creates',counts.CREATE||0,'var(--odoo-green)',''],
+          ['Updates',counts.UPDATE||0,'var(--odoo-orange)',''],
+          ['Deletes',counts.DELETE||0,'var(--odoo-red)',''],
+          ['Approvals',counts.APPROVE||0,'#6B2FA0',''],
+          ['Logins',counts.LOGIN||0,'var(--odoo-blue)',''],
         ].map(([l,v,c,ic])=>(
           <div key={l} style={{background:'#fff',borderRadius:'8px',padding:'12px',
             boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`3px solid ${c}`,textAlign:'center'}}>
@@ -54,7 +54,7 @@ export default function AuditTrail() {
         <select className="fi-filter-select" style={{width:'130px'}} onChange={e=>setAction(e.target.value)}>
           {ACTIONS.map(a=><option key={a}>{a}</option>)}
         </select>
-        <input placeholder="🔍 User / Reference..." className="fi-filter-select" style={{flex:1,minWidth:'180px'}}
+        <input placeholder=" User / Reference..." className="fi-filter-select" style={{flex:1,minWidth:'180px'}}
           onChange={e=>setUser(e.target.value)}/>
         <div style={{display:'flex',gap:'6px',alignItems:'center',fontSize:'12px',color:'var(--odoo-gray)'}}>
           <span>From</span>
@@ -134,7 +134,7 @@ export default function AuditTrail() {
         }}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
             <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'16px'}}>Audit Detail</div>
-            <button onClick={()=>setDetail(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'20px',color:'var(--odoo-gray)'}}>✕</button>
+            <button onClick={()=>setDetail(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'20px',color:'var(--odoo-gray)'}}></button>
           </div>
 
           {/* Header info */}
@@ -155,7 +155,7 @@ export default function AuditTrail() {
           </div>
 
           {/* Changes */}
-          <div style={{fontWeight:'800',fontSize:'13px',color:'var(--odoo-dark)',marginBottom:'8px'}}>📝 Data Changes</div>
+          <div style={{fontWeight:'800',fontSize:'13px',color:'var(--odoo-dark)',marginBottom:'8px'}}> Data Changes</div>
           <div className="audit-diff-box">
             {/* UPDATE — show before/after */}
             {detail.changes?.before ? (

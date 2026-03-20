@@ -1,9 +1,9 @@
 import React from 'react'
 
 const BATCHES = [
-  { batch:'BTH-2024-88', mat:'Solvent Chemical (MAT-005)', qty:10, uom:'Litre', bin:'BIN-E10', mfg:'01 Sep 2024', exp:'01 Mar 2025', days:'1 day',    dc:'var(--odoo-red)',   pb:'badge-critical', pl:'🔴 Expiring!',    act:'dispose' },
-  { batch:'BTH-2024-91', mat:'Lubricant Oil (MAT-007)',    qty:5,  uom:'Litre', bin:'BIN-G02', mfg:'01 Oct 2024', exp:'25 Mar 2025', days:'25 days',  dc:'var(--odoo-orange)',pb:'badge-low',     pl:'⚠️ Expiring Soon',act:'priority' },
-  { batch:'BTH-2025-01', mat:'Cotton Sliver (MAT-001)',    qty:480,uom:'Kg',    bin:'BIN-A12', mfg:'15 Jan 2025', exp:'15 Jan 2026', days:'321 days', dc:'var(--odoo-green)', pb:'badge-ok',      pl:'✅ OK',            act:'' },
+  { batch:'BTH-2024-88', mat:'Solvent Chemical (MAT-005)', qty:10, uom:'Litre', bin:'BIN-E10', mfg:'01 Sep 2024', exp:'01 Mar 2025', days:'1 day',    dc:'var(--odoo-red)',   pb:'badge-critical', pl:' Expiring!',    act:'dispose' },
+  { batch:'BTH-2024-91', mat:'Lubricant Oil (MAT-007)',    qty:5,  uom:'Litre', bin:'BIN-G02', mfg:'01 Oct 2024', exp:'25 Mar 2025', days:'25 days',  dc:'var(--odoo-orange)',pb:'badge-low',     pl:' Expiring Soon',act:'priority' },
+  { batch:'BTH-2025-01', mat:'Cotton Sliver (MAT-001)',    qty:480,uom:'Kg',    bin:'BIN-A12', mfg:'15 Jan 2025', exp:'15 Jan 2026', days:'321 days', dc:'var(--odoo-green)', pb:'badge-ok',      pl:' OK',            act:'' },
 ]
 
 export default function ExpiryTracking() {
@@ -13,7 +13,7 @@ export default function ExpiryTracking() {
         <div className="wm-lv-title">Expiry Tracking <small>Batch-wise Expiry Monitor</small></div>
       </div>
       <div className="wm-alert warn">
-        ⚠️ 2 batches expiring within 30 days. Please plan consumption or disposal.
+         2 batches expiring within 30 days. Please plan consumption or disposal.
       </div>
       <table className="wm-data-table">
         <thead>

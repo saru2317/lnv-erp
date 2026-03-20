@@ -37,7 +37,7 @@ export default function CustomerMasterPP() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Customer Master <small>Entity-wise · Multi-process configuration</small></div>
         <div className="fi-lv-actions">
-          <input className="sd-search" style={{width:'200px'}} placeholder="🔍 Search customer…" value={search} onChange={e=>setSearch(e.target.value)} />
+          <input className="sd-search" style={{width:'200px'}} placeholder=" Search customer…" value={search} onChange={e=>setSearch(e.target.value)} />
           <button className="btn btn-p btn-s" onClick={()=>{setEditId(null);setShowForm(true)}}>+ New Customer</button>
         </div>
       </div>
@@ -45,7 +45,7 @@ export default function CustomerMasterPP() {
       {/* Add/Edit Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'16px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>{editId?'✏️ Edit Customer':'➕ New Customer'}</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId?' Edit Customer':' New Customer'}</h3></div>
           <div className="fi-panel-body">
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
               <div>
@@ -87,7 +87,7 @@ export default function CustomerMasterPP() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'} Customer</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'} Customer</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function CustomerMasterPP() {
               <div style={{flex:1}}>
                 <div style={{fontWeight:'700',fontSize:'14px',marginBottom:'2px'}}>{c.name}</div>
                 <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>
-                  🏭 {c.entity} · 👤 {c.contact} · 📞 {c.phone} · 💰 {c.chargeBy}
+                   {c.entity} ·  {c.contact} ·  {c.phone} ·  {c.chargeBy}
                 </div>
               </div>
               {/* Process chips */}
@@ -123,8 +123,8 @@ export default function CustomerMasterPP() {
               </div>
               {/* Actions */}
               <div style={{display:'flex',gap:'6px',flexShrink:0}}>
-                <button className="btn-act-edit" onClick={()=>handleEdit(c)}>✏️ Edit</button>
-                <button className="btn-act-view" onClick={()=>{}}>💰 Rate Card</button>
+                <button className="btn-act-edit" onClick={()=>handleEdit(c)}>Edit</button>
+                <button className="btn-act-view" onClick={()=>{}}>Rate Card</button>
               </div>
             </div>
           </div>
@@ -135,10 +135,10 @@ export default function CustomerMasterPP() {
       {/* Summary */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginTop:'14px'}}>
         {[
-          {l:'Total Customers',v:customers.length,c:'var(--odoo-purple)',i:'👥'},
-          {l:'Entity Types',v:[...new Set(customers.map(c=>c.entity))].length,c:'var(--odoo-blue)',i:'🏭'},
-          {l:'Avg Processes/Customer',v:Math.round(customers.reduce((s,c)=>s+c.processes.length,0)/customers.length),c:'var(--odoo-orange)',i:'⚙️'},
-          {l:'Per Piece Customers',v:customers.filter(c=>c.chargeBy==='Per Piece').length,c:'var(--odoo-green)',i:'💰'},
+          {l:'Total Customers',v:customers.length,c:'var(--odoo-purple)',i:''},
+          {l:'Entity Types',v:[...new Set(customers.map(c=>c.entity))].length,c:'var(--odoo-blue)',i:''},
+          {l:'Avg Processes/Customer',v:Math.round(customers.reduce((s,c)=>s+c.processes.length,0)/customers.length),c:'var(--odoo-orange)',i:''},
+          {l:'Per Piece Customers',v:customers.filter(c=>c.chargeBy==='Per Piece').length,c:'var(--odoo-green)',i:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
             <div className="crm-kpi-icon">{k.i}</div>

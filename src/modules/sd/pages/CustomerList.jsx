@@ -16,6 +16,7 @@ const STATIC_CUSTOMERS = [
 
 export default function CustomerList() {
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState('list') // list | detail
   const [customers, setCustomers] = useState(STATIC_CUSTOMERS)
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState('Tamil Nadu')
@@ -41,6 +42,21 @@ export default function CustomerList() {
       <div className="lv-hdr">
         <div className="lv-ttl">Customer Master <small>{filtered.length} records</small></div>
         <div className="lv-acts">
+          {/* View toggle */}
+          <div style={{display:'flex',gap:0,border:'1px solid var(--odoo-border)',borderRadius:6,overflow:'hidden'}}>
+            <button onClick={()=>setViewMode('list')}
+              style={{padding:'5px 12px',fontSize:11,fontWeight:600,cursor:'pointer',border:'none',
+                background:viewMode==='list'?'var(--odoo-purple)':'#fff',
+                color:viewMode==='list'?'#fff':'var(--odoo-gray)'}}>
+               List
+            </button>
+            <button onClick={()=>setViewMode('detail')}
+              style={{padding:'5px 12px',fontSize:11,fontWeight:600,cursor:'pointer',border:'none',
+                background:viewMode==='detail'?'var(--odoo-purple)':'#fff',
+                color:viewMode==='detail'?'#fff':'var(--odoo-gray)'}}>
+              ⊞ Detail
+            </button>
+          </div>
           <button className="btn btn-s btn-sm">Export</button>
           <button className="btn btn-p" onClick={() => navigate('/sd/customers/new')}>New Customer</button>
         </div>
@@ -48,7 +64,7 @@ export default function CustomerList() {
 
       <div className="sd-fb">
         <div className="sd-fs">
-          🔍 <input type="text" placeholder="Search name, GSTIN, city…" value={search} onChange={e => setSearch(e.target.value)} />
+           <input type="text" placeholder="Search name, GSTIN, city…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="sd-fsel" value={stateFilter} onChange={e => setStateFilter(e.target.value)}>
           <option value="">All States</option>
@@ -78,8 +94,15 @@ export default function CustomerList() {
           <thead>
             <tr>
               <th><input type="checkbox" /></th>
-              <th>Code</th><th>Customer Name</th><th>GSTIN</th><th>City</th>
-              <th>Mobile</th><th>Credit Limit</th><th>Outstanding</th><th>Status</th><th>Action</th>
+              <th>Code</th>
+              <th>Customer Name</th>
+              <th>GSTIN</th>
+              <th>City</th>
+              {viewMode==='detail'&&<><th>Mobile</th><th>Email</th><th>Type</th><th>GST Type</th><th>Pay Terms</th><th>Price List</th><th>Sales Exec</th><th>Job Work</th></>}
+              <th>Credit Limit</th>
+              <th>Outstanding</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +113,16 @@ export default function CustomerList() {
                 <td><strong>{c.name}</strong></td>
                 <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{c.gstin}</td>
                 <td>{c.city}</td>
-                <td>{c.mobile}</td>
+                {viewMode==='detail'&&<>
+                  <td>{c.mobile}</td>
+                  <td style={{fontSize:11}}>{c.email||'—'}</td>
+                  <td><span style={{padding:'2px 7px',borderRadius:8,fontSize:10,fontWeight:600,background:'#EBF2F8',color:'#1A5276'}}>{c.type||'Manufacturing'}</span></td>
+                  <td style={{fontSize:11}}>{c.gstType||'Regular'}</td>
+                  <td style={{fontSize:11}}>{c.paymentTerms||'Net 30'}</td>
+                  <td style={{fontSize:11}}>{c.priceList||'Standard'}</td>
+                  <td style={{fontSize:11}}>{c.salesExec||'Admin'}</td>
+                  <td style={{textAlign:'center'}}>{c.jobWork?'':'—'}</td>
+                </>}
                 <td>{c.creditLimit}</td>
                 <td><strong style={{color: c.status === 'overdue' ? '#B03A37' : '#212529'}}>{c.outstanding}</strong></td>
                 <td><Badge status={c.status}>{c.status.toUpperCase()}</Badge></td>

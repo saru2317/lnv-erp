@@ -44,7 +44,7 @@ export default function InspectionList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search lot, material, WO..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search lot, material, WO..."/></div>
         <select className="fi-filter-select" onChange={e=>setSrc(e.target.value)}>
           {SOURCE.map(s=><option key={s}>{s}</option>)}
         </select>
@@ -78,13 +78,13 @@ export default function InspectionList() {
                 </div>
               </td>
               <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:l.ncr==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:l.ncr==='—'?'400':'700'}}>{l.ncr}</td>
-              <td><span className={`badge ${l.sb}`}>{l.sl==='Pass'?'✅ Pass':l.sl==='Fail'?'❌ Fail':'⚠️ Review'}</span></td>
+              <td><span className={`badge ${l.sb}`}>{l.sl==='Pass'?' Pass':l.sl==='Fail'?' Fail':' Review'}</span></td>
               <td onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs">View</button>
                   <button className="btn-xs" onClick={() => nav('/print/ir')}>Print</button>
                   {l.sl==='Review' && <button className="btn-xs pri" onClick={() => nav('/qm/ncr/new')}>Raise NCR</button>}
-                  {l.sl==='Pass' && <button className="btn-xs" onClick={() => nav('/qm/certificates')}>🏅 Cert</button>}
+                  {l.sl==='Pass' && <button className="btn-xs" onClick={() => nav('/qm/certificates')}> Cert</button>}
                 </div>
               </td>
             </tr>

@@ -14,27 +14,27 @@ const TargetSetting = lazy(() => import('./TargetSetting'))
 const KPIEmployees  = lazy(() => import('./KPIEmployees'))
 
 const NAV_ITEMS = [
-  { to:'/kpi',              label:'📊 KPI Report' },
-  { to:'/kpi/scorecard',    label:'🎯 Scorecard' },
-  { to:'/kpi/incentive',    label:'💰 Incentive' },
-  { to:'/kpi/entry',        label:'✏️ Entry' },
-  { to:'/kpi/master',       label:'📋 KPI Master' },
+  { to:'/kpi',              label:' KPI Report' },
+  { to:'/kpi/scorecard',    label:' Scorecard' },
+  { to:'/kpi/incentive',    label:' Incentive' },
+  { to:'/kpi/entry',        label:' Entry' },
+  { to:'/kpi/master',       label:' KPI Master' },
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'KPI Reports', icon:'📊', items:[
-    { to:'/kpi',            label:'📊 KPI Performance Report' },
-    { to:'/kpi/scorecard',  label:'🎯 Individual Scorecard' },
-    { to:'/kpi/incentive',  label:'💰 Incentive Calculator' },
+  { label:'KPI Reports', icon:'', items:[
+    { to:'/kpi',            label:' KPI Performance Report' },
+    { to:'/kpi/scorecard',  label:' Individual Scorecard' },
+    { to:'/kpi/incentive',  label:' Incentive Calculator' },
   ]},
-  { label:'Data Entry', icon:'✏️', items:[
-    { to:'/kpi/entry',      label:'✏️ Monthly Entry' },
-    { to:'/kpi/targets',    label:'🎯 Target Setting' },
+  { label:'Data Entry', icon:'', items:[
+    { to:'/kpi/entry',      label:' Monthly Entry' },
+    { to:'/kpi/targets',    label:' Target Setting' },
   ]},
-  { label:'Configuration', icon:'⚙️', items:[
-    { to:'/kpi/master',     label:'📋 KPI Master' },
-    { to:'/kpi/assign',     label:'👥 KPI Assignment' },
-    { to:'/kpi/employees',  label:'🧑 Employees / Roles' },
+  { label:'Configuration', icon:'', items:[
+    { to:'/kpi/master',     label:' KPI Master' },
+    { to:'/kpi/assign',     label:' KPI Assignment' },
+    { to:'/kpi/employees',  label:' Employees / Roles' },
   ]},
 ]
 

@@ -39,7 +39,7 @@ export default function FiscalYear() {
       {activeY && (
         <div style={{ padding:'14px 16px', background:'linear-gradient(135deg,#117A65,#0E6655)', borderRadius:'10px', color:'#fff', marginBottom:'16px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-            <span style={{ fontSize:'32px' }}>📅</span>
+            <span style={{ fontSize:'32px' }}></span>
             <div>
               <div style={{ fontFamily:'Syne,sans-serif', fontWeight:'800', fontSize:'16px' }}>Active: {activeY.label}</div>
               <div style={{ fontSize:'12px', opacity:.85 }}>{activeY.start} → {activeY.end} &nbsp;·&nbsp; {activeY.periods} periods</div>
@@ -85,7 +85,7 @@ export default function FiscalYear() {
               </div>
             </div>
             <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ Create</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> Create</button>
               <button className="btn btn-s sd-bsm" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function FiscalYear() {
                   <strong style={{ fontSize:'14px', fontFamily:'Syne,sans-serif' }}>{y.label}</strong>
                   <span style={{ padding:'2px 8px', borderRadius:'8px', fontSize:'10px', fontWeight:'700',
                     background:statusBg(y.status), color:statusColor(y.status) }}>● {y.status}</span>
-                  {y.locked && <span style={{ padding:'2px 8px', borderRadius:'8px', fontSize:'10px', fontWeight:'700', background:'#F5F5F5', color:'#757575' }}>🔒 Locked</span>}
+                  {y.locked && <span style={{ padding:'2px 8px', borderRadius:'8px', fontSize:'10px', fontWeight:'700', background:'#F5F5F5', color:'#757575' }}> Locked</span>}
                 </div>
                 <div style={{ fontSize:'12px', color:'var(--odoo-gray)' }}>
                   {y.start} → {y.end} &nbsp;·&nbsp; {y.periods} accounting periods
@@ -113,12 +113,12 @@ export default function FiscalYear() {
                 )}
                 {y.status === 'Active' && !y.locked && (
                   <button className="btn btn-s sd-bsm" onClick={() => setYears(ys => ys.map(x => x.id===y.id ? {...x, locked:true} : x))}>
-                    🔒 Lock Year
+                     Lock Year
                   </button>
                 )}
                 {y.status === 'Active' && (
                   <button className="btn btn-s sd-bsm" onClick={() => setYears(ys => ys.map(x => x.id===y.id ? {...x, status:'Closed', locked:true} : x))}>
-                    📁 Close Year
+                     Close Year
                   </button>
                 )}
               </div>
@@ -137,7 +137,7 @@ export default function FiscalYear() {
                         color: isCurr ? '#fff' : isPast ? '#2E7D32' : '#9E9E9E',
                         border:`1px solid ${isCurr?'var(--odoo-orange)':isPast?'#A5D6A7':'#E0E0E0'}` }}>
                         {m}
-                        <div style={{ fontSize:'8px', fontWeight:'400' }}>{isPast?'✓':isCurr?'NOW':'—'}</div>
+                        <div style={{ fontSize:'8px', fontWeight:'400' }}>{isPast?'':isCurr?'NOW':'—'}</div>
                       </div>
                     )
                   })}

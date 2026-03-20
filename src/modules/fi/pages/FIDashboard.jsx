@@ -14,17 +14,17 @@ export default function FIDashboard() {
         <div className="fi-lv-title">FI Dashboard <small>Finance Overview · Feb 2025</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>P&amp;L</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}>⚖️ Balance Sheet</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>📓 New Journal</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}> Balance Sheet</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}> New Journal</button>
         </div>
       </div>
 
       <div className="fi-kpi-grid">
         {[
-          {cls:'purple',ic:'📈',lb:'Revenue (MTD)',     val:'₹48.6L', sub:'↑ 12% vs last month'},
-          {cls:'green', ic:'💰',lb:'Net Profit (MTD)',  val:'₹8.4L',  sub:'Margin: 17.3%'},
-          {cls:'orange',ic:'👥',lb:'Receivables (AR)',  val:'₹12.2L', sub:'3 overdue invoices'},
-          {cls:'red',   ic:'🏭',lb:'Payables (AP)',     val:'₹5.8L',  sub:'2 overdue payments'},
+          {cls:'purple',ic:'',lb:'Revenue (MTD)',     val:'₹48.6L', sub:'↑ 12% vs last month'},
+          {cls:'green', ic:'',lb:'Net Profit (MTD)',  val:'₹8.4L',  sub:'Margin: 17.3%'},
+          {cls:'orange',ic:'',lb:'Receivables (AR)',  val:'₹12.2L', sub:'3 overdue invoices'},
+          {cls:'red',   ic:'',lb:'Payables (AP)',     val:'₹5.8L',  sub:'2 overdue payments'},
         ].map(k => (
           <div key={k.lb} className={`fi-kpi-card ${k.cls}`}>
             <div className="fi-kpi-icon">{k.ic}</div>
@@ -108,15 +108,15 @@ export default function FIDashboard() {
 
       {/* Quick Actions */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
+        <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
         <div className="fi-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>📓 New Journal Entry</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}> New Journal Entry</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/pl')}>View P&amp;L</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}>⚖️ Balance Sheet</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bs')}> Balance Sheet</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/gstr3b')}>GSTR-3B</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/ar-aging')}>👥 AR Aging</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bank-recon')}>🏦 Bank Recon</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/inter-module')}>🔗 Module Journals</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/ar-aging')}> AR Aging</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/bank-recon')}> Bank Recon</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/inter-module')}> Module Journals</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/cogm')}>COGM Report</button>
         </div>
       </div>

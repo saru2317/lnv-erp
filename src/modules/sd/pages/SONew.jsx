@@ -56,10 +56,10 @@ export default function SONew() {
     setSaving(true)
     try {
       await sdApi.createOrder({ ...form, lines })
-      toast.success(`${form.soNo} Confirmed! ✅`)
+      toast.success(`${form.soNo} Confirmed! `)
       navigate('/sd/orders')
     } catch {
-      toast.success(`${form.soNo} Confirmed (dev mode) ✅`)
+      toast.success(`${form.soNo} Confirmed (dev mode) `)
       navigate('/sd/orders')
     } finally { setSaving(false) }
   }
@@ -69,9 +69,9 @@ export default function SONew() {
       <div className="lv-hdr">
         <div className="lv-ttl">New Sales Order <small>VA01 · Draft</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s" onClick={()=>navigate('/sd/orders')}>✕ Discard</button>
+          <button className="btn btn-s" onClick={()=>navigate('/sd/orders')}> Discard</button>
           <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Saved as Draft!')}>Save Draft</button>
-          <button className="btn btn-p" onClick={confirm} disabled={saving}>{saving?'Saving…':'✅ Confirm Order'}</button>
+          <button className="btn btn-p" onClick={confirm} disabled={saving}>{saving?'Saving…':' Confirm Order'}</button>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ export default function SONew() {
                       <td><input value={fmt(l.sgst||0)} disabled style={{background:'#F8F9FA',width:'80px'}}/></td>
                       <td><input value={fmt(l.igst||0)} disabled style={{background:'#F8F9FA',width:'65px'}}/></td>
                       <td><input value={fmt(l.total||0)} disabled style={{background:'#F8F9FA',fontWeight:'700',width:'90px'}}/></td>
-                      <td><span style={{color:'#D9534F',cursor:'pointer',fontSize:'14px'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}>🗑</span></td>
+                      <td><span style={{color:'#D9534F',cursor:'pointer',fontSize:'14px'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}></span></td>
                     </tr>
                   ))}
                 </tbody>

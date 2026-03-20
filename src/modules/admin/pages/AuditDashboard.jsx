@@ -25,16 +25,16 @@ export default function AuditDashboard() {
       </div>
 
       <div className="pp-alert warn">
-        🔒 <strong>Admin Only</strong> — This section is visible only to Admin role. All ERP actions are permanently logged and cannot be deleted.
+         <strong>Admin Only</strong> — This section is visible only to Admin role. All ERP actions are permanently logged and cannot be deleted.
       </div>
 
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'18px'}}>
-        {[{l:'Total Events',     v:AUDIT_LOGS.length,  clr:'var(--odoo-purple)',ic:'📋'},
-          {l:'Creates',          v:creates,             clr:'var(--odoo-green)', ic:'➕'},
-          {l:'Updates',          v:updates,             clr:'var(--odoo-orange)',ic:'✏️'},
-          {l:'Deletes',          v:deletes,             clr:'var(--odoo-red)',   ic:'🗑️'},
-          {l:'Active Users Today',v:new Set(TODAY.map(l=>l.user)).size, clr:'var(--odoo-blue)',ic:'👤'},
+        {[{l:'Total Events',     v:AUDIT_LOGS.length,  clr:'var(--odoo-purple)',ic:''},
+          {l:'Creates',          v:creates,             clr:'var(--odoo-green)', ic:''},
+          {l:'Updates',          v:updates,             clr:'var(--odoo-orange)',ic:''},
+          {l:'Deletes',          v:deletes,             clr:'var(--odoo-red)',   ic:''},
+          {l:'Active Users Today',v:new Set(TODAY.map(l=>l.user)).size, clr:'var(--odoo-blue)',ic:''},
         ].map(k => (
           <div key={k.l} style={{background:'#fff',borderRadius:'8px',padding:'14px',
             boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`4px solid ${k.clr}`,textAlign:'center'}}>
@@ -49,7 +49,7 @@ export default function AuditDashboard() {
         {/* Recent activity */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3>🕐 Recent Activity</h3>
+            <h3> Recent Activity</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/admin/audit/logs')}>View All</button>
           </div>
           <div className="fi-panel-body" style={{padding:'0'}}>
@@ -70,8 +70,8 @@ export default function AuditDashboard() {
                   </div>
                   <div style={{display:'flex',gap:'10px',fontSize:'10px',color:'var(--odoo-gray)'}}>
                     <span>{log.module}</span>
-                    <span>🕐 {log.ts.split(' ')[1]}</span>
-                    <span>🌐 {log.ip}</span>
+                    <span> {log.ts.split(' ')[1]}</span>
+                    <span> {log.ip}</span>
                   </div>
                 </div>
               </div>
@@ -100,7 +100,7 @@ export default function AuditDashboard() {
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>⚠️ Critical Events</h3></div>
+            <div className="fi-panel-hdr"><h3> Critical Events</h3></div>
             <div className="fi-panel-body">
               {AUDIT_LOGS.filter(l=>l.action==='DELETE').map(l=>(
                 <div key={l.id} style={{padding:'8px 0',borderBottom:'1px solid var(--odoo-border)',cursor:'pointer'}}

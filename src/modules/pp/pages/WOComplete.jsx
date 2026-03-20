@@ -7,14 +7,14 @@ export default function WOComplete() {
 
   if (closed) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>🔒</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>WO-2025-017 Closed Successfully!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)',textAlign:'center'}}>
         200 Kg Ring Yarn posted to FG stock &nbsp;|&nbsp; COGM variance journal created &nbsp;|&nbsp; WM updated
       </div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Work Orders</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/report')}>📈 View Report</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/report')}> View Report</button>
       </div>
     </div>
   )
@@ -25,15 +25,15 @@ export default function WOComplete() {
         <div className="fi-lv-title">Close Work Order <small>WO-2025-017 · Final Settlement</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Back</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setClosed(true)}>🔒 Close & Post FG to Stock</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setClosed(true)}> Close & Post FG to Stock</button>
         </div>
       </div>
 
-      <div className="pp-alert success">✅ All production entries complete. Ready for final settlement and stock posting.</div>
+      <div className="pp-alert success">All production entries complete. Ready for final settlement and stock posting.</div>
 
       {/* WO Summary */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📊 Final Settlement — WO-2025-017</div>
+        <div className="fi-form-sec-hdr">Final Settlement — WO-2025-017</div>
         <div className="fi-form-sec-body">
           <div className="acct-strip" style={{marginBottom:'14px'}}>
             {[['Work Order','WO-2025-017'],['Product','Ring Yarn (40s Count)'],['Machine','RFM-01'],['Planned Qty','200 Kg'],['Produced','200 Kg'],['Status','100% Complete']].map(([l,v])=>(
@@ -54,7 +54,7 @@ export default function WOComplete() {
 
       {/* Cost Breakdown */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">💰 Cost Breakdown</div>
+        <div className="fi-form-sec-hdr">Cost Breakdown</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Cost Element</th><th>Planned (₹)</th><th>Actual (₹)</th><th>Variance (₹)</th><th>%</th></tr></thead>
@@ -80,7 +80,7 @@ export default function WOComplete() {
 
       {/* FI Auto Journals */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📓 Auto FI Journals on Closure</div>
+        <div className="fi-form-sec-hdr"> Auto FI Journals on Closure</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Account</th><th>Dr</th><th>Cr</th><th>Description</th></tr></thead>
@@ -95,7 +95,7 @@ export default function WOComplete() {
 
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Back</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setClosed(true)}>🔒 Close & Post FG to Stock</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setClosed(true)}> Close & Post FG to Stock</button>
       </div>
     </div>
   )

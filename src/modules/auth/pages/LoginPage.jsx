@@ -13,10 +13,10 @@ const DEMO_USERS = [
 ]
 
 const FEATURES = [
-  { icon:'🏭', title:'Multi-Industry',      desc:'Manufacturing · Trading · Textile · Service' },
-  { icon:'☁️', title:'Cloud SaaS',          desc:'Access anywhere on any device' },
-  { icon:'📊', title:'Real-Time Analytics', desc:'Live dashboards & insights' },
-  { icon:'🔐', title:'Enterprise Security', desc:'Role-based multi-company access' },
+  { icon:'', title:'Multi-Industry',      desc:'Manufacturing · Trading · Textile · Service' },
+  { icon:'', title:'Cloud SaaS',          desc:'Access anywhere on any device' },
+  { icon:'', title:'Real-Time Analytics', desc:'Live dashboards & insights' },
+  { icon:'', title:'Enterprise Security', desc:'Role-based multi-company access' },
 ]
 
 const MOD_PILLS = ['SD · Sales','MM · Purchase','WM · Inventory','PP · Manufacturing','FI · Finance','QM · Quality','HCM · Payroll']
@@ -177,7 +177,7 @@ export default function LoginPage() {
           </div>
 
           <h2 style={{ fontFamily:'Syne,sans-serif', fontSize:26, fontWeight:700, color:'#1C1C1C', margin:'0 0 5px', minHeight:36 }}>
-            {tab==='signin' ? 'Welcome Back 👋' : 'Register Company 🏢'}
+            {tab==='signin' ? 'Welcome Back ' : 'Register Company '}
           </h2>
           <p style={{ color:'#6C757D', fontSize:13, margin:0, minHeight:20 }}>
             {tab==='signin' ? 'Sign in to your LNV ERP account to continue' : 'Start your 30-day free trial — no credit card required'}
@@ -223,7 +223,7 @@ export default function LoginPage() {
               <span onClick={() => setShowPass(s=>!s)}
                 style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)',
                   cursor:'pointer', fontSize:15, color:'#6C757D', userSelect:'none' }}>
-                {showPass ? '🙈' : '👁️'}
+                {showPass ? '' : ''}
               </span>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default function LoginPage() {
           {error && (
             <div style={{ background:'#FDEDEC', border:'1px solid #F5B7B1', borderRadius:6,
               padding:'10px 14px', fontSize:12, color:'#C0392B', marginBottom:12 }}>
-              ⚠️ {error}
+               {error}
             </div>
           )}
 
@@ -254,13 +254,13 @@ export default function LoginPage() {
             }}
             onMouseEnter={e => { if(!loading){ e.currentTarget.style.background='#875A7B'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(113,75,103,.4)' }}}
             onMouseLeave={e => { e.currentTarget.style.background=loading?'#9E7D96':'#714B67'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='none' }}>
-            {loading ? '⏳ Signing in…' : '🚀 Sign In to LNV ERP'}
+            {loading ? '⏳ Signing in…' : ' Sign In to LNV ERP'}
           </button>
 
           {/* Demo credentials box */}
           <div style={{ marginTop:10, background:'#FDF8FC', border:'1px solid #E8D5E5', borderRadius:6, padding:'12px 14px' }}>
             <div style={{ fontSize:11, fontWeight:700, color:'#714B67', marginBottom:8,
-              textTransform:'uppercase', letterSpacing:.5 }}>🔑 Demo Credentials — click to fill</div>
+              textTransform:'uppercase', letterSpacing:.5 }}> Demo Credentials — click to fill</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:4, marginBottom:6 }}>
               {DEMO_USERS.map(u => (
                 <div key={u.email}
@@ -323,7 +323,7 @@ export default function LoginPage() {
               cursor:'pointer', transition:'all .2s', letterSpacing:.3 }}
             onMouseEnter={e => { e.currentTarget.style.background='#875A7B'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(113,75,103,.4)' }}
             onMouseLeave={e => { e.currentTarget.style.background='#714B67'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='none' }}>
-            🏢 Register &amp; Start 30-Day Trial
+             Register &amp; Start 30-Day Trial
           </button>
           <p style={{ fontSize:11, color:'#6C757D', textAlign:'center', marginTop:10 }}>
             No credit card required · Free trial · Cancel anytime

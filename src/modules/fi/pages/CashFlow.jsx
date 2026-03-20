@@ -14,7 +14,7 @@ export default function CashFlow() {
       </div>
       <div style={{maxWidth:'700px'}}>
         <div className="fin-report">
-          <div className="fin-report-hdr"><h2>💧 Cash Flow Statement (Indirect Method)</h2><span>Month ended 28 Feb 2025</span></div>
+          <div className="fin-report-hdr"><h2> Cash Flow Statement (Indirect Method)</h2><span>Month ended 28 Feb 2025</span></div>
 
           <div className="fin-section">
             <div className="fin-sec-title" onClick={() => tog('op')}>{open.op?'▾':'►'} A. CASH FROM OPERATING ACTIVITIES</div>

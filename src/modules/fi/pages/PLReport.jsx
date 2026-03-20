@@ -91,7 +91,7 @@ export default function PLReport() {
         {/* Ratios + Breakdown */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📈 Key Ratios</h3></div>
+            <div className="fi-panel-hdr"><h3> Key Ratios</h3></div>
             <div className="fi-panel-body">
               {[
                 {l:'Gross Margin',v:'45.8%',c:'var(--odoo-green)'},

@@ -34,7 +34,7 @@ export default function VendorLedger() {
           <div style={{textAlign:'right'}}>
             <div style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Total Outstanding</div>
             <div style={{fontFamily:'Syne,sans-serif',fontSize:'28px',fontWeight:'800',color:'var(--odoo-red)'}}>₹1,42,000</div>
-            <div style={{fontSize:'11px',color:'var(--odoo-red)'}}>⚠️ Overdue since 22 Feb 2025</div>
+            <div style={{fontSize:'11px',color:'var(--odoo-red)'}}> Overdue since 22 Feb 2025</div>
           </div>
         </div>
       </div>

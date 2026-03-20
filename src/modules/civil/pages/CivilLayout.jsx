@@ -8,14 +8,14 @@ const BOQ            = lazy(() => import('./BOQ'))
 const SiteProgress   = lazy(() => import('./SiteProgress'))
 const ContractorBill = lazy(() => import('./ContractorBill'))
 const NAV_ITEMS = [
-  {to:'/civil',              label:'🏠 Home'},
-  {to:'/civil/projects',     label:'🏗️ Projects'},
-  {to:'/civil/boq',          label:'📋 BOQ'},
-  {to:'/civil/progress',     label:'📊 Progress'},
-  {to:'/civil/bills',        label:'🧾 Bills'},
+  {to:'/civil',              label:' Home'},
+  {to:'/civil/projects',     label:' Projects'},
+  {to:'/civil/boq',          label:' BOQ'},
+  {to:'/civil/progress',     label:' Progress'},
+  {to:'/civil/bills',        label:' Bills'},
 ]
 const SIDEBAR_GROUPS = [
-  { label:'Project Management', icon:'🏗️', items:[
+  { label:'Project Management', icon:'', items:[
     {to:'/civil',           label:'Civil Dashboard'},
     {to:'/civil/projects',  label:'Project List'},
     {to:'/civil/boq',       label:'Bill of Quantities (BOQ)'},

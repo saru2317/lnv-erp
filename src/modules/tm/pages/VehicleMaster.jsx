@@ -8,7 +8,7 @@ const VEHICLES = [
   { reg:'TN38 IJ 7890', type:'Three Wheeler',    cat:'Courier/Local',   fuel:'CNG',    cap:'150 kg',    driver:'Dinesh R.',  ins:'17 Mar 2026', fc:'17 Mar 2026', tax:'17 Mar 2026', permit:'17 Apr 2026', odo:18400,  status:'due_soon' },
 ]
 
-const ST = { active:{label:'🟢 Active',bg:'#D4EDDA',color:'#155724'}, on_trip:{label:'🚚 On Trip',bg:'#D1ECF1',color:'#0C5460'}, due_soon:{label:'⚠️ Docs Due',bg:'#FFF3CD',color:'#856404'}, maintenance:{label:'🔧 In Maintenance',bg:'#F8D7DA',color:'#721C24'} }
+const ST = { active:{label:'🟢 Active',bg:'#D4EDDA',color:'#155724'}, on_trip:{label:' On Trip',bg:'#D1ECF1',color:'#0C5460'}, due_soon:{label:' Docs Due',bg:'#FFF3CD',color:'#856404'}, maintenance:{label:' In Maintenance',bg:'#F8D7DA',color:'#721C24'} }
 
 function isDue(dateStr) {
   const d = new Date(dateStr.split(' ').reverse().join('-').replace(/(\d+) (\w+) (\d+)/,'$3-$2-$1'))
@@ -31,7 +31,7 @@ export default function VehicleMaster() {
         </div>
       </div>
       <div className="fi-alert warn" style={{marginBottom:14}}>
-        ⚠️ <strong>1 vehicle</strong> has documents expiring today/overdue — TN38 IJ 7890. Renew immediately.
+         <strong>1 vehicle</strong> has documents expiring today/overdue — TN38 IJ 7890. Renew immediately.
       </div>
       <table className="fi-data-table">
         <thead>

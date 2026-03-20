@@ -59,7 +59,7 @@ export default function ARaging() {
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
               <h3>{modal.inv} · {modal.cust}</h3>
-              <span className="fi-modal-close" onClick={() => setModal(null)}>✕</span>
+              <span className="fi-modal-close" onClick={() => setModal(null)}></span>
             </div>
             <div className="fi-modal-body">
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
@@ -70,7 +70,7 @@ export default function ARaging() {
               <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Close</button>
                 <button className="btn btn-p sd-bsm">Record Receipt</button>
-                <button className="btn btn-s sd-bsm">📧 Send Reminder Email</button>
+                <button className="btn btn-s sd-bsm"> Send Reminder Email</button>
               </div>
             </div>
           </div>

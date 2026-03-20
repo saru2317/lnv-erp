@@ -55,10 +55,10 @@ export default function AuditLog() {
           <input type="date" className="fi-filter-select" onChange={e=>setDateTo(e.target.value)}/>
         </div>
         <div className="fi-filter-search" style={{flex:1,minWidth:'160px'}}>
-          🔍<input placeholder="Search ref, entity, user..." onChange={e=>{setSearch(e.target.value);setPage(1)}}/>
+          <input placeholder="Search ref, entity, user..." onChange={e=>{setSearch(e.target.value);setPage(1)}}/>
         </div>
         <button className="btn btn-s sd-bsm" onClick={()=>{setModule('All');setAction('All');setUser('All');setSearch('');setPage(1)}}>
-          ✕ Clear
+           Clear
         </button>
       </div>
 
@@ -143,7 +143,7 @@ export default function AuditLog() {
                 <tr>
                   <td colSpan={9} style={{background:'#F7F0F5',padding:'14px 20px'}}>
                     <div style={{fontWeight:'700',fontSize:'12px',color:'var(--odoo-purple)',marginBottom:'10px'}}>
-                      📋 Change Details — {log.entity} · {log.ref}
+                       Change Details — {log.entity} · {log.ref}
                     </div>
                     <div style={{display:'flex',gap:'24px',flexWrap:'wrap'}}>
 

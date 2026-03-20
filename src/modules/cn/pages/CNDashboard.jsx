@@ -12,7 +12,7 @@ export default function CNDashboard(){return(<div>
     {[{cls:'purple',l:'Total Meals Today',v:'432',s:'All departments'},{cls:'green',l:'Lunch Count',v:'145',s:'Current day'},{cls:'orange',l:'MTD Deduction',v:'₹94,380',s:'From salary'},{cls:'blue',l:'Canteen Cost MTD',v:'₹1.8L',s:'Total expense'}].map(k=>(<div key={k.l} className={`fi-kpi-card ${k.cls}`}><div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div></div>))}
   </div>
   <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-    <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}>🍽️ Today's Meal Count by Department</div>
+    <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}> Today's Meal Count by Department</div>
     <table style={{width:'100%',borderCollapse:'collapse'}}>
       <thead><tr style={{background:'#F8F9FA'}}>{['Department','Breakfast','Lunch','Dinner','Tea/Snacks','Total Meals','Deduction (₹)'].map(h=>(<th key={h} style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:'var(--odoo-gray)',textAlign:h==='Department'?'left':'center',borderBottom:'1px solid var(--odoo-border)'}}>{h}</th>))}</tr></thead>
       <tbody>{MEALS.map(m=>(<tr key={m.dept} style={{borderBottom:'1px solid var(--odoo-border)'}}>

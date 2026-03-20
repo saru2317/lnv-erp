@@ -20,7 +20,7 @@ export default function GRNList() {
         </div>
       </div>
       <div className="mm-filt">
-        <div className="mm-fs-input">🔍<input placeholder="Search GRN No., PO No., Vendor..."/></div>
+        <div className="mm-fs-input"><input placeholder="Search GRN No., PO No., Vendor..."/></div>
         <select className="mm-fsel"><option>All Vendors</option><option>Lakshmi Textile Mills</option><option>Sri Murugan Traders</option><option>Aruna Industries</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Fully Received</option><option>Partial</option><option>Quality Hold</option></select>
       </div>

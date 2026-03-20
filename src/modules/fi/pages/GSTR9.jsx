@@ -11,7 +11,7 @@ export default function GSTR9() {
         </div>
       </div>
       <div className="fi-alert info" style={{marginBottom:16}}>
-        ℹ️ GSTR-9 is the annual summary of all monthly/quarterly returns filed during the year. Reconcile any differences before filing.
+        ℹ GSTR-9 is the annual summary of all monthly/quarterly returns filed during the year. Reconcile any differences before filing.
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
         {/* Outward Supplies */}

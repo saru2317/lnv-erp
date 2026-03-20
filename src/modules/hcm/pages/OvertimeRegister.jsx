@@ -81,7 +81,7 @@ export default function OvertimeRegister() {
                 {r.status==='Pending' && (
                   <div style={{display:'flex',gap:'4px'}}>
                     <button className="btn-xs pri" onClick={()=>approve(r.id)}>Approve</button>
-                    <button className="btn-xs" onClick={()=>reject(r.id)} style={{color:'var(--odoo-red)'}}>❌</button>
+                    <button className="btn-xs" onClick={()=>reject(r.id)} style={{color:'var(--odoo-red)'}}></button>
                   </div>
                 )}
                 {r.status!=='Pending' && <button className="btn-xs">View</button>}

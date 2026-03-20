@@ -61,7 +61,7 @@ export default function FixedAssetRegister() {
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
               <h3>{sel.code} — {sel.name}</h3>
-              <span className="fi-modal-close" onClick={() => setSel(null)}>✕</span>
+              <span className="fi-modal-close" onClick={() => setSel(null)}></span>
             </div>
             <div className="fi-modal-body">
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
@@ -72,11 +72,11 @@ export default function FixedAssetRegister() {
                   <div key={l}><label style={{fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase',display:'block',marginBottom:'3px'}}>{l}</label><strong>{v}</strong></div>
                 ))}
               </div>
-              <div className="fi-alert info" style={{fontSize:'12px'}}>📓 Monthly depreciation JV auto-posted to: 6400 · Depreciation (Dr) / 1500 · Accumulated Depreciation (Cr)</div>
+              <div className="fi-alert info" style={{fontSize:'12px'}}> Monthly depreciation JV auto-posted to: 6400 · Depreciation (Dr) / 1500 · Accumulated Depreciation (Cr)</div>
               <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setSel(null)}>Close</button>
                 <button className="btn btn-s sd-bsm">Depreciation Schedule</button>
-                <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}}>🗑 Dispose Asset</button>
+                <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}}> Dispose Asset</button>
               </div>
             </div>
           </div>

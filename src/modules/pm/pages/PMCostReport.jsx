@@ -30,15 +30,15 @@ export default function PMCostReport() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>February 2025</option><option>January 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
         </div>
       </div>
 
       <div className="pm-kpi-grid">
-        {[{cls:'orange',ic:'💰',l:'Total Maint. Cost (MTD)',v:`₹${(totalMTD/100000).toFixed(1)}L`,s:`Budget: ₹${(totalBudget/100000).toFixed(1)}L · ${budgetPct}% utilized`},
-          {cls:'red',  ic:'📦',l:'Spare Parts Cost',v:`₹${(82400/1000).toFixed(0)}K`,s:'48% of total maint. cost'},
-          {cls:'blue', ic:'⏱️',l:'Labour Hours',v:'38 hrs',s:'Breakdown + PM combined'},
-          {cls:'purple',ic:'🔴',l:'Breakdown Cost',v:`₹${(MACHINE_COST.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}K`,s:`${MACHINE_COST.reduce((s,m)=>s+m.bds,0)} breakdowns MTD`},
+        {[{cls:'orange',ic:'',l:'Total Maint. Cost (MTD)',v:`₹${(totalMTD/100000).toFixed(1)}L`,s:`Budget: ₹${(totalBudget/100000).toFixed(1)}L · ${budgetPct}% utilized`},
+          {cls:'red',  ic:'',l:'Spare Parts Cost',v:`₹${(82400/1000).toFixed(0)}K`,s:'48% of total maint. cost'},
+          {cls:'blue', ic:'⏱',l:'Labour Hours',v:'38 hrs',s:'Breakdown + PM combined'},
+          {cls:'purple',ic:'',l:'Breakdown Cost',v:`₹${(MACHINE_COST.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}K`,s:`${MACHINE_COST.reduce((s,m)=>s+m.bds,0)} breakdowns MTD`},
         ].map(k=>(
           <div key={k.l} className={`pm-kpi-card ${k.cls}`}>
             <div className="pm-kpi-icon">{k.ic}</div>
@@ -52,7 +52,7 @@ export default function PMCostReport() {
       <div className="fi-panel-grid">
         {/* Cost by category */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📊 Cost by Category</h3></div>
+          <div className="fi-panel-hdr"><h3>Cost by Category</h3></div>
           <div className="fi-panel-body">
             {COST_DATA.map(c=>{
               const pct = Math.round(c.mtd/c.budget*100)
@@ -76,7 +76,7 @@ export default function PMCostReport() {
 
         {/* Cost by machine */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🏭 Cost by Machine</h3></div>
+          <div className="fi-panel-hdr"><h3>Cost by Machine</h3></div>
           <div className="fi-panel-body">
             {MACHINE_COST.sort((a,b)=>b.total-a.total).map(m=>(
               <div key={m.mc} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
@@ -99,7 +99,7 @@ export default function PMCostReport() {
 
       {/* Detail Table */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">💰 Budget vs Actual — {month}</div>
+        <div className="fi-form-sec-hdr">Budget vs Actual — {month}</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Category</th><th>Budget</th><th>MTD Actual</th><th>YTD Actual</th><th>Variance</th><th>Budget %</th></tr></thead>

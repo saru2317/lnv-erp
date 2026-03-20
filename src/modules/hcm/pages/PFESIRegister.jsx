@@ -32,7 +32,7 @@ export default function PFESIRegister() {
           </div>
         ))}
       </div>
-      <div className="pp-alert info">📅 PF Challan due: <strong>15 March 2025</strong> · ESI Challan due: <strong>15 March 2025</strong></div>
+      <div className="pp-alert info"> PF Challan due: <strong>15 March 2025</strong> · ESI Challan due: <strong>15 March 2025</strong></div>
       <table className="fi-data-table">
         <thead><tr><th>Employee</th><th>PF Wages</th><th>PF(EE) 12%</th><th>PF(ER) 13%</th><th>PF Total</th><th>ESI Wages</th><th>ESI(EE) 0.75%</th><th>ESI(ER) 3.25%</th></tr></thead>
         <tbody>

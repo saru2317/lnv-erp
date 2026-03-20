@@ -41,7 +41,7 @@ export default function CustomerView() {
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:'20px',fontWeight:'800',fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)'}}>{cust.name}</div>
-              <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>{cust.industry} · 📍 {cust.city}, {cust.state} · Customer since {cust.since}</div>
+              <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>{cust.industry} ·  {cust.city}, {cust.state} · Customer since {cust.since}</div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',textAlign:'center'}}>
               {[['Annual Value',fmt(cust.annualValue),'var(--odoo-purple)'],['Won Deals',fmt(wonVal),'var(--odoo-green)'],['Lost Deals',fmt(lostVal),'var(--odoo-red)']].map(([l,v,c])=>(
@@ -70,7 +70,7 @@ export default function CustomerView() {
       {tab==='overview'&&(
         <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>🏢 Company Details</h3></div>
+            <div className="fi-panel-hdr"><h3> Company Details</h3></div>
             <div className="fi-panel-body">
               <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'10px'}}>
                 {[['Customer ID',cust.id],['Industry',cust.industry],['City',cust.city],['State',cust.state],
@@ -104,13 +104,13 @@ export default function CustomerView() {
               </div>
             </div>
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>🤖 AI Insights</h3></div>
+              <div className="fi-panel-hdr"><h3> AI Insights</h3></div>
               <div className="fi-panel-body">
                 <div style={{background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px',lineHeight:'1.7'}}>
                   <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}>Customer Health: <strong style={{color:'var(--odoo-green)'}}>Good</strong></div>
                   <div>Retention probability: <strong>85%</strong></div>
                   <div>Next purchase prediction: <strong>Apr 2025</strong></div>
-                  <div style={{marginTop:'4px',color:'var(--odoo-orange)'}}>💡 Upsell opportunity: Annual maintenance contract</div>
+                  <div style={{marginTop:'4px',color:'var(--odoo-orange)'}}> Upsell opportunity: Annual maintenance contract</div>
                 </div>
               </div>
             </div>

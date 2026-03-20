@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 const WOS = [
   {no:'WO-2025-020',prod:'Compact Sliver',        bom:'BOM-001',pqty:'800 Kg', prod2:'80 Kg', start:'26 Feb',due:'05 Mar',mc:'CSP-01',pct:10, pclr:'var(--odoo-blue)',   sb:'badge-released', sl:'Released',    act:'Start'},
   {no:'WO-2025-019',prod:'Ring Yarn (30s)',        bom:'BOM-002',pqty:'500 Kg', prod2:'325 Kg',start:'24 Feb',due:'02 Mar',mc:'RFM-01',pct:65, pclr:'var(--odoo-orange)', sb:'badge-progress', sl:'In Progress',  act:'Entry'},
-  {no:'WO-2025-018',prod:'Open End Yarn (12s)',    bom:'BOM-003',pqty:'300 Kg', prod2:'90 Kg', start:'22 Feb',due:'01 Mar',mc:'OE-02', pct:30, pclr:'var(--odoo-red)',    sb:'badge-hold',     sl:'⚠️ Mat.Short', act:'Reorder'},
+  {no:'WO-2025-018',prod:'Open End Yarn (12s)',    bom:'BOM-003',pqty:'300 Kg', prod2:'90 Kg', start:'22 Feb',due:'01 Mar',mc:'OE-02', pct:30, pclr:'var(--odoo-red)',    sb:'badge-hold',     sl:' Mat.Short', act:'Reorder'},
   {no:'WO-2025-017',prod:'Ring Yarn (40s)',        bom:'BOM-002',pqty:'200 Kg', prod2:'200 Kg',start:'18 Feb',due:'25 Feb',mc:'RFM-01',pct:100,pclr:'var(--odoo-green)',  sb:'badge-done',     sl:'Completed',    act:'Close'},
   {no:'WO-2025-016',prod:'Compact Sliver',         bom:'BOM-001',pqty:'600 Kg', prod2:'480 Kg',start:'15 Feb',due:'22 Feb',mc:'CSP-01',pct:80, pclr:'var(--odoo-orange)', sb:'badge-progress', sl:'In Progress',  act:'Entry'},
   {no:'WO-2025-015',prod:'Cotton Sliver Grade A',  bom:'BOM-004',pqty:'1000 Kg',prod2:'1000 Kg',start:'10 Feb',due:'18 Feb',mc:'CRD-01',pct:100,pclr:'var(--odoo-green)', sb:'badge-done',     sl:'Completed',    act:'Close'},
@@ -30,7 +30,7 @@ export default function WOList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Work Orders <small>CO03 · Production Orders</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/gantt')}>📅 Gantt</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/gantt')}> Gantt</button>
           <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>Create WO</button>
         </div>
@@ -43,7 +43,7 @@ export default function WOList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search WO no., product, machine..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search WO no., product, machine..."/></div>
         <select className="fi-filter-select"><option>All Products</option><option>Ring Yarn</option><option>Open End Yarn</option><option>Compact Sliver</option></select>
         <select className="fi-filter-select"><option>All Machines</option><option>RFM-01</option><option>OE-02</option><option>CSP-01</option></select>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>

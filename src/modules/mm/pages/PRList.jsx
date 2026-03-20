@@ -134,16 +134,16 @@ export default function PRList() {
                     {(pr.status==='pending_quotes'||pr.status==='pending_cs') && pr.csReqd &&
                       <button className="btn-xs pri" onClick={()=>nav('/mm/cs/new')}
                         style={{background:'var(--odoo-purple)',color:'#fff',whiteSpace:'nowrap'}}>
-                        📊 Enter CS
+                         Enter CS
                       </button>}
                     {pr.status==='approved' &&
                       <button className="btn-xs pri" onClick={()=>nav('/mm/po/new')}
                         style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}>
-                        📋 Raise PO
+                         Raise PO
                       </button>}
                     {pr.status==='draft' &&
                       <button className="btn-xs" onClick={()=>nav('/mm/pr/new')}>
-                        ✏️ Edit
+                         Edit
                       </button>}
                     <button className="btn-xs">View</button>
                     <button className="btn-xs" onClick={() => nav('/print/pr')}>Print</button>

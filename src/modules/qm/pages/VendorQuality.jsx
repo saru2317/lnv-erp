@@ -18,7 +18,7 @@ export default function VendorQuality() {
         <div className="fi-lv-title">Vendor Quality Rating <small>Supplier Performance — Feb 2025</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-s sd-bsm">📧 Send Reports</button>
+          <button className="btn btn-s sd-bsm"> Send Reports</button>
         </div>
       </div>
 
@@ -48,7 +48,7 @@ export default function VendorQuality() {
             <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'var(--odoo-gray)'}}>
               <span>{v.pass}/{v.lots} lots passed</span>
               <span style={{color:v.ncrs>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:'700'}}>
-                {v.ncrs>0?`❌ ${v.ncrs} NCR`:'✅ No NCR'}
+                {v.ncrs>0?` ${v.ncrs} NCR`:' No NCR'}
               </span>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function VendorQuality() {
               </td>
               <td><span style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'16px',color:v.clr}}>{v.grade}</span></td>
               <td><span className={`badge ${v.rating>=90?'badge-pass':v.rating>=75?'badge-review':'badge-fail'}`}>
-                {v.rating>=90?'✅ Approved':v.rating>=75?'⚠️ Conditional':'❌ Review Required'}
+                {v.rating>=90?' Approved':v.rating>=75?' Conditional':' Review Required'}
               </span></td>
             </tr>
           ))}

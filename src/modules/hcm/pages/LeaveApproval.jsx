@@ -28,17 +28,17 @@ export default function LeaveApproval() {
                 <span className={`leave-${r.type.toLowerCase()}`}>{r.type} — {r.days} day{r.days>1?'s':''}</span>
               </div>
               <div style={{fontSize:'12px',color:'var(--odoo-gray)'}}>{r.emp} · {r.dept} · Shift: {r.shift}</div>
-              <div style={{fontSize:'13px',margin:'8px 0'}}>📅 {r.from} → {r.to} · <strong>{r.reason}</strong></div>
+              <div style={{fontSize:'13px',margin:'8px 0'}}> {r.from} → {r.to} · <strong>{r.reason}</strong></div>
               <div style={{display:'flex',gap:'12px',fontSize:'11px'}}>
                 <span style={{color:'var(--odoo-green)',fontWeight:'700'}}>
                   Balance: {r[`balance_${r.type.toLowerCase()}`]} {r.type} days remaining
                 </span>
-                {r.last3>0 && <span style={{color:'var(--odoo-orange)',fontWeight:'700'}}>⚠️ {r.last3} leave(s) in last 30 days</span>}
+                {r.last3>0 && <span style={{color:'var(--odoo-orange)',fontWeight:'700'}}> {r.last3} leave(s) in last 30 days</span>}
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',flexShrink:0}}>
               <button className="btn btn-p sd-bsm" onClick={()=>act(r.id,'approve')}>Approve</button>
-              <button className="btn btn-s sd-bsm" style={{borderColor:'var(--odoo-red)',color:'var(--odoo-red)'}} onClick={()=>act(r.id,'reject')}>❌ Reject</button>
+              <button className="btn btn-s sd-bsm" style={{borderColor:'var(--odoo-red)',color:'var(--odoo-red)'}} onClick={()=>act(r.id,'reject')}> Reject</button>
             </div>
           </div>
         </div>

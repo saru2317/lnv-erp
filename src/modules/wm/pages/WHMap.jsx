@@ -74,11 +74,11 @@ export default function WHMap() {
       {/* Map */}
       <div className="wh-map-wrap">
         <div className="wh-map-title">
-          <span>🏗️ Storage Layout — Click a bin to view stock</span>
+          <span> Storage Layout — Click a bin to view stock</span>
           <div style={{display:'flex',gap:'8px'}}>
             <span className="badge badge-ok">Healthy: 28</span>
-            <span className="badge badge-low">⚠️ Low: 8</span>
-            <span className="badge badge-critical">🔴 Critical: 4</span>
+            <span className="badge badge-low"> Low: 8</span>
+            <span className="badge badge-critical"> Critical: 4</span>
             <span className="badge badge-draft">Empty: 12</span>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function WHMap() {
       {/* Bin Detail Panel */}
       {selected === null ? (
         <div className="wm-alert info" style={{textAlign:'center',justifyContent:'center'}}>
-          🗺️ Click any bin above to view its stock details
+           Click any bin above to view its stock details
         </div>
       ) : (
         <div className="wm-panel">
@@ -116,19 +116,19 @@ export default function WHMap() {
                 ? <span className="badge badge-draft">Empty Bin</span>
                 : <span className="badge badge-ok">{stockRows.length} Material{stockRows.length>1?'s':''}</span>
               }
-              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/transfer')}>🔄 Transfer</button>
+              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/transfer')}> Transfer</button>
               <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>Issue</button>
-              <button className="btn btn-s sd-bsm" onClick={() => setSelected(null)}>✕ Close</button>
+              <button className="btn btn-s sd-bsm" onClick={() => setSelected(null)}> Close</button>
             </div>
           </div>
 
           {isEmpty ? (
             <div className="wm-panel-body" style={{textAlign:'center',padding:'28px',color:'var(--odoo-gray)'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>📭</div>
+              <div style={{fontSize:'32px',marginBottom:'8px'}}></div>
               <div style={{fontSize:'13px',fontWeight:'600'}}>BIN {selected} is currently empty</div>
               <div style={{fontSize:'11px',marginTop:'4px'}}>No stock stored in this location</div>
               <button className="btn btn-p sd-bsm" style={{marginTop:'12px'}} onClick={() => nav('/wm/goods-receipt')}>
-                📥 Receive Stock Here
+                 Receive Stock Here
               </button>
             </div>
           ) : (
@@ -175,7 +175,7 @@ export default function WHMap() {
                       <td><span className={`badge ${r.b}`}>{r.bl}</span></td>
                       <td onClick={e=>e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
                         <button className="btn-xs" onClick={() => nav('/wm/goods-issue')}>Issue</button>
-                        <button className="btn-xs" onClick={() => nav('/wm/transfer')}>🔄 Move</button>
+                        <button className="btn-xs" onClick={() => nav('/wm/transfer')}> Move</button>
                       </td>
                     </tr>
                   ))}

@@ -20,20 +20,20 @@ export default function PrintWrapper({ title, children, onClose }) {
       }} className="no-print">
         <span style={{ fontFamily:'Syne,sans-serif', fontSize:13,
           fontWeight:700, color:'#fff', flex:1 }}>
-          🖨️ {title}
+           {title}
         </span>
         <button onClick={() => window.print()}
           style={{ padding:'7px 20px', background:'#714B67', color:'#fff',
             border:'none', borderRadius:6, fontWeight:700, fontSize:13,
             cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>
-          🖨️ Print / Save PDF
+           Print / Save PDF
         </button>
         {onClose && (
           <button onClick={onClose}
             style={{ padding:'7px 16px', background:'#444', color:'#fff',
               border:'none', borderRadius:6, fontWeight:600, fontSize:13,
               cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>
-            ✕ Close
+             Close
           </button>
         )}
       </div>

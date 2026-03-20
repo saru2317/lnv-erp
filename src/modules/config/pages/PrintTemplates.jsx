@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { PRINT_TEMPLATES } from './_configData'
 
-const FORMAT_ICONS = { A4:'📄', A5:'📋', Label:'🏷️' }
+const FORMAT_ICONS = { A4:'', A5:'', Label:'' }
 
 export default function PrintTemplates() {
   const [templates, setTemplates] = useState(PRINT_TEMPLATES)
@@ -30,7 +30,7 @@ export default function PrintTemplates() {
       </div>
 
       <div style={{ padding:'10px 14px', background:'#EDE0EA', borderRadius:'8px', marginBottom:'16px', fontSize:'12px', color:'var(--odoo-purple)' }}>
-        🖨️ <strong>Print Templates</strong> define the layout for all printed/PDF documents. One template per document type can be set as <strong>Default</strong>.
+         <strong>Print Templates</strong> define the layout for all printed/PDF documents. One template per document type can be set as <strong>Default</strong>.
       </div>
 
       {Object.entries(grouped).map(([module, tmps]) => (
@@ -51,7 +51,7 @@ export default function PrintTemplates() {
                   opacity: t.status==='Inactive' ? 0.6 : 1 }}>
                   <div style={{ width:'36px', height:'36px', borderRadius:'6px', background:moduleColor(module)+'22',
                     display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', flexShrink:0 }}>
-                    {FORMAT_ICONS[t.format] || '📄'}
+                    {FORMAT_ICONS[t.format] || ''}
                   </div>
                   <div style={{ flex:1 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
@@ -73,7 +73,7 @@ export default function PrintTemplates() {
                       </button>
                     )}
                     <button className="btn-act-edit" onClick={()=>toggleStatus(t.id)}>
-                      {t.status==='Active'?'🔒':'🔓'}
+                      {t.status==='Active'?'':''}
                     </button>
                     <button className="btn-act-view" style={{ fontSize:'10px' }}>Preview</button>
                   </div>

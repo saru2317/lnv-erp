@@ -8,7 +8,7 @@ export default function VendorInvNew() {
       <div className="lv-hdr">
         <div className="lv-ttl">Enter Vendor Invoice <small>MIRO · Invoice Verification</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}> Cancel</button>
           <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>Post Invoice</button>
         </div>
@@ -68,7 +68,7 @@ export default function VendorInvNew() {
         </div>
       </div>
       <div className="mm-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/invoices')}>Post Invoice</button>
         <div className="mm-flow">

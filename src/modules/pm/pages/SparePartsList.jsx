@@ -32,8 +32,8 @@ export default function SparePartsList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Spare Parts Register <small>Stock & Reorder Status</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares/issue')}>📤 Issue Spares</button>
-          <button className="btn btn-p sd-bsm">➕ Add Spare Part</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares/issue')}>Issue Spares</button>
+          <button className="btn btn-p sd-bsm">Add Spare Part</button>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default function SparePartsList() {
         <select className="fi-filter-select" onChange={e=>setCat(e.target.value)} style={{width:'160px'}}>
           {CATS.map(c=><option key={c}>{c}</option>)}
         </select>
-        <div className="fi-filter-search" style={{flex:1}}>🔍<input placeholder="Search part name, ID..."/></div>
+        <div className="fi-filter-search" style={{flex:1}}><input placeholder="Search part name, ID..."/></div>
       </div>
 
       <table className="fi-data-table">
@@ -87,7 +87,7 @@ export default function SparePartsList() {
               <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px'}}>₹{s.price}</td>
               <td style={{fontSize:'12px'}}>{s.supplier}</td>
               <td><span className={`badge ${s.sb}`}>
-                {s.sl==='Critical'?'🔴 '+s.sl:s.sl==='Low Stock'?'⚠️ '+s.sl:'✅ '+s.sl}
+                {s.sl==='Critical'?' '+s.sl:s.sl==='Low Stock'?' '+s.sl:' '+s.sl}
               </span></td>
               <td>
                 <div style={{display:'flex',gap:'4px'}}>

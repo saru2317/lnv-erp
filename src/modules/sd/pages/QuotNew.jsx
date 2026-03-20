@@ -24,14 +24,14 @@ export default function QuotNew() {
       <div className="lv-hdr">
         <div className="lv-ttl">New Sales Quotation <small>VA21</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s" onClick={()=>navigate('/sd/quotations')}>✕ Cancel</button>
+          <button className="btn btn-s" onClick={()=>navigate('/sd/quotations')}> Cancel</button>
           <button className="btn btn-sm" style={{background:'#E06F39',color:'#fff',border:'none',borderRadius:'6px',padding:'5px 11px',fontWeight:'700',cursor:'pointer'}} onClick={()=>toast.success('Quotation saved as draft!')}>Save Draft</button>
-          <button className="btn btn-p" onClick={()=>{toast.success('QT-0032 Sent! 📧');navigate('/sd/quotations')}}>📧 Send Quotation</button>
+          <button className="btn btn-p" onClick={()=>{toast.success('QT-0032 Sent! ');navigate('/sd/quotations')}}> Send Quotation</button>
         </div>
       </div>
       <div className="sd-fc"><div className="sd-fb2">
         <div className="sd-sec">
-          <div className="sd-stt">📝 Quotation Header</div>
+          <div className="sd-stt"> Quotation Header</div>
           <div className="sd-fg3">
             <div className="sd-fg"><label>Quotation #</label><input className="sd-fi" value="QT-0032" disabled/></div>
             <div className="sd-fg"><label>Date</label><input className="sd-fi" type="date" defaultValue={today}/></div>
@@ -58,7 +58,7 @@ export default function QuotNew() {
                     <td><input type="number" value={l.rate} onChange={e=>setLine(i,'rate',e.target.value)} style={{width:'75px'}}/></td>
                     <td><select value={l.gstPct} onChange={e=>setLine(i,'gstPct',e.target.value)} style={{width:'50px'}}><option value={18}>18%</option><option value={12}>12%</option><option value={5}>5%</option></select></td>
                     <td><input value={fmt(l.total)} disabled style={{background:'#F8F9FA',fontWeight:'700',width:'90px'}}/></td>
-                    <td><span style={{color:'#D9534F',cursor:'pointer'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}>🗑</span></td>
+                    <td><span style={{color:'#D9534F',cursor:'pointer'}} onClick={()=>setLines(ls=>ls.filter((_,idx)=>idx!==i))}></span></td>
                   </tr>
                 ))}
               </tbody>

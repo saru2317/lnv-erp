@@ -22,16 +22,16 @@ export default function PMReport() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">PM Summary Report <small>February 2025</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export PDF</button>
-          <button className="btn btn-s sd-bsm">📧 Email Report</button>
+          <button className="btn btn-s sd-bsm">Export PDF</button>
+          <button className="btn btn-s sd-bsm"> Email Report</button>
         </div>
       </div>
 
       <div className="pm-kpi-grid">
-        {[{cls:'red',   ic:'🔴',l:'Breakdowns (MTD)',v:totalBDs,s:'WND-01 worst performer'},
-          {cls:'orange',ic:'⏱️',l:'Total Downtime',  v:`${totalDown} hrs`,s:'Production loss: ~₹4.2L'},
-          {cls:'blue',  ic:'📊',l:'Avg MTBF',        v:`${avgMTBF} hrs`,s:'Target: ≥ 168 hrs'},
-          {cls:'green', ic:'🏭',l:'Plant Availability',v:`${avgAvail}%`,s:'Target: ≥ 97%'},
+        {[{cls:'red',   ic:'',l:'Breakdowns (MTD)',v:totalBDs,s:'WND-01 worst performer'},
+          {cls:'orange',ic:'⏱',l:'Total Downtime',  v:`${totalDown} hrs`,s:'Production loss: ~₹4.2L'},
+          {cls:'blue',  ic:'',l:'Avg MTBF',        v:`${avgMTBF} hrs`,s:'Target: ≥ 168 hrs'},
+          {cls:'green', ic:'',l:'Plant Availability',v:`${avgAvail}%`,s:'Target: ≥ 97%'},
         ].map(k=>(
           <div key={k.l} className={`pm-kpi-card ${k.cls}`}>
             <div className="pm-kpi-icon">{k.ic}</div>
@@ -45,7 +45,7 @@ export default function PMReport() {
       {/* PM Compliance */}
       <div className="fi-panel-grid">
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📅 PM Compliance — Feb 2025</h3></div>
+          <div className="fi-panel-hdr"><h3> PM Compliance — Feb 2025</h3></div>
           <div className="fi-panel-body">
             {[['Scheduled PMs',8],['Completed on Time',5],['Overdue / Missed',3],['PM Compliance %','62.5%']].map(([l,v])=>(
               <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--odoo-border)'}}>
@@ -54,14 +54,14 @@ export default function PMReport() {
               </div>
             ))}
             <div style={{marginTop:'12px',background:'#FFF3CD',borderRadius:'6px',padding:'10px',fontSize:'12px',color:'#856404'}}>
-              ⚠️ PM compliance is below target (80%). SPG-01 and CB-01 are overdue.
+               PM compliance is below target (80%). SPG-01 and CB-01 are overdue.
             </div>
           </div>
         </div>
 
         {/* Availability by machine */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🏭 Machine Availability</h3></div>
+          <div className="fi-panel-hdr"><h3>Machine Availability</h3></div>
           <div className="fi-panel-body">
             {MONTHLY_KPI.map(m=>(
               <div key={m.mc} style={{marginBottom:'10px'}}>
@@ -81,7 +81,7 @@ export default function PMReport() {
 
       {/* Machine-wise KPI Table */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📋 Machine-wise Reliability KPIs — Feb 2025</div>
+        <div className="fi-form-sec-hdr">Machine-wise Reliability KPIs — Feb 2025</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr>

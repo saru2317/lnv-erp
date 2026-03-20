@@ -28,10 +28,10 @@ export default function SalesTarget() {
       {/* Overall KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Total Target FY',  v:fmt(SALESREPS.reduce((s,r)=>s+r.target,0)*12/3),  clr:'var(--odoo-purple)',ic:'🎯'},
-          {l:'Total Achieved',   v:fmt(SALESREPS.reduce((s,r)=>s+r.achieved,0)),      clr:'var(--odoo-green)', ic:'✅'},
-          {l:'Team Avg Achievement',v:Math.round(SALESREPS.reduce((s,r)=>s+r.achieved/r.target,0)/SALESREPS.length*100)+'%',clr:'var(--odoo-orange)',ic:'📊'},
-          {l:'Deals in Pipeline', v:OPPORTUNITIES.filter(o=>o.stage!=='Won'&&o.stage!=='Lost').length,clr:'var(--odoo-blue)',ic:'📈'},
+          {l:'Total Target FY',  v:fmt(SALESREPS.reduce((s,r)=>s+r.target,0)*12/3),  clr:'var(--odoo-purple)',ic:''},
+          {l:'Total Achieved',   v:fmt(SALESREPS.reduce((s,r)=>s+r.achieved,0)),      clr:'var(--odoo-green)', ic:''},
+          {l:'Team Avg Achievement',v:Math.round(SALESREPS.reduce((s,r)=>s+r.achieved/r.target,0)/SALESREPS.length*100)+'%',clr:'var(--odoo-orange)',ic:''},
+          {l:'Deals in Pipeline', v:OPPORTUNITIES.filter(o=>o.stage!=='Won'&&o.stage!=='Lost').length,clr:'var(--odoo-blue)',ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -70,7 +70,7 @@ export default function SalesTarget() {
                   </div>
                   <div>
                     <div style={{fontWeight:'700',fontSize:'13px'}}>{r.name}</div>
-                    <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>📍 {r.region} · {r.email}</div>
+                    <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}> {r.region} · {r.email}</div>
                   </div>
                 </div>
                 <div style={{fontSize:'22px',fontWeight:'800',fontFamily:'Syne,sans-serif',color:clr}}>{pct}%</div>

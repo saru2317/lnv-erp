@@ -27,7 +27,7 @@ export default function TDSRegister() {
           </div>
         ))}
       </div>
-      <div className="fi-alert warn">⚠️ TDS for Feb 2025 (₹45,458) must be deposited by 07 Mar 2025. Avoid interest @ 1.5% per month.</div>
+      <div className="fi-alert warn"> TDS for Feb 2025 (₹45,458) must be deposited by 07 Mar 2025. Avoid interest @ 1.5% per month.</div>
       <table className="fi-data-table">
         <thead><tr><th>Party Name</th><th>PAN</th><th>Section</th><th>Rate</th><th>Gross Amount</th><th>TDS Deducted</th><th>Net Paid</th><th>Month</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>{TDS.map((r,i)=>(

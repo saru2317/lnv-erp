@@ -41,12 +41,12 @@ export default function HCMDashboard() {
         <div style={{display:'grid',gridTemplateColumns:`repeat(${TODAY_BDAYS.length},1fr)`,gap:'12px',marginBottom:'18px'}}>
           {TODAY_BDAYS.map(b=>(
             <div key={b.emp} className="bday-card">
-              <div style={{fontSize:'28px',marginBottom:'6px'}}>🎂</div>
+              <div style={{fontSize:'28px',marginBottom:'6px'}}></div>
               <div style={{fontSize:'16px',fontWeight:'800',fontFamily:'Syne,sans-serif'}}>{b.name}</div>
-              <div style={{fontSize:'11px',opacity:.8}}>{b.dept} · {b.emp} · {b.yrs} years with LNV 🎉</div>
+              <div style={{fontSize:'11px',opacity:.8}}>{b.dept} · {b.emp} · {b.yrs} years with LNV </div>
               <button style={{marginTop:'10px',background:'rgba(255,255,255,.2)',border:'1.5px solid rgba(255,255,255,.5)',
                 color:'#fff',borderRadius:'6px',padding:'5px 14px',cursor:'pointer',fontSize:'12px',fontWeight:'700'}}>
-                🎉 Send Wishes
+                 Send Wishes
               </button>
             </div>
           ))}
@@ -54,10 +54,10 @@ export default function HCMDashboard() {
       )}
 
       <div className="hcm-kpi-grid">
-        {[{cls:'purple',ic:'👥',l:'Total Employees',v:'148',s:'Active headcount',tr:'↑ 2 this month',tc:'up'},
-          {cls:'green', ic:'✅',l:'Present Today',  v:'138',s:'93.2% attendance',tr:'7 on leave · 3 late',tc:'wn'},
-          {cls:'blue',  ic:'💰',l:'Gross Payroll (MTD)',v:'₹18.4L',s:'148 employees',tr:'Feb processed ✅',tc:'up'},
-          {cls:'orange',ic:'📋',l:'Pending Approvals',v:'19',s:'Leave + OT + Exit',tr:'Action needed',tc:'dn'},
+        {[{cls:'purple',ic:'',l:'Total Employees',v:'148',s:'Active headcount',tr:'↑ 2 this month',tc:'up'},
+          {cls:'green', ic:'',l:'Present Today',  v:'138',s:'93.2% attendance',tr:'7 on leave · 3 late',tc:'wn'},
+          {cls:'blue',  ic:'',l:'Gross Payroll (MTD)',v:'₹18.4L',s:'148 employees',tr:'Feb processed ',tc:'up'},
+          {cls:'orange',ic:'',l:'Pending Approvals',v:'19',s:'Leave + OT + Exit',tr:'Action needed',tc:'dn'},
         ].map(k=>(
           <div key={k.l} className={`hcm-kpi-card ${k.cls}`}>
             <div className="hcm-kpi-icon">{k.ic}</div>
@@ -96,7 +96,7 @@ export default function HCMDashboard() {
 
         {/* Pending Actions */}
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>⚡ Pending Actions</h3></div>
+          <div className="fi-panel-hdr"><h3> Pending Actions</h3></div>
           <div className="fi-panel-body">
             {PENDING.map(p=>(
               <div key={p.type} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',
@@ -114,7 +114,7 @@ export default function HCMDashboard() {
 
       {/* Month summary row */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>📅 HR Calendar — This Week</h3></div>
+        <div className="fi-panel-hdr"><h3> HR Calendar — This Week</h3></div>
         <div className="fi-panel-body">
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px'}}>
             {[['Mon 24','Normal',138,'var(--odoo-green)'],['Tue 25','Normal',141,'var(--odoo-green)'],

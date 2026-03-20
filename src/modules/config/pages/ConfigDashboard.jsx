@@ -3,18 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { COMPANY, USERS, ROLES, NUMBER_SERIES, FISCAL_YEARS, TAX_RATES, BRANCHES } from './_configData'
 
 const SECTIONS = [
-  { icon:'🏢', title:'Company Profile',    sub:'Legal name, GST, address, logo',       to:'/config/company',        color:'#714B67', status:'Configured' },
-  { icon:'🏗️', title:'Branches',           sub:`${BRANCHES.length} branches configured`, to:'/config/branches',      color:'#1A5276', status:'Configured' },
-  { icon:'👥', title:'Users & Access',     sub:`${USERS.length} users · ${ROLES.length} roles`, to:'/config/users', color:'#196F3D', status:'Configured' },
-  { icon:'🛡️', title:'Roles & Permissions',sub:'RBAC — module-level access control',   to:'/config/roles',          color:'#C0392B', status:'Configured' },
-  { icon:'🔢', title:'Number Series',      sub:`${NUMBER_SERIES.length} document series`, to:'/config/number-series',color:'#784212', status:'Configured' },
-  { icon:'🏛️', title:'Fiscal Years',       sub:`${FISCAL_YEARS.filter(f=>f.status==='Active').length} active FY`, to:'/config/fiscal-year', color:'#6C3483', status:'Configured' },
-  { icon:'💸', title:'Tax & GST Config',   sub:`${TAX_RATES.length} tax rates configured`, to:'/config/tax',         color:'#117A65', status:'Configured' },
-  { icon:'💱', title:'Currency',           sub:'INR base · 4 active currencies',       to:'/config/currency',       color:'#1F618D', status:'Configured' },
-  { icon:'📧', title:'Email Settings',     sub:'SMTP · Templates · Triggers',          to:'/config/email',          color:'#E65100', status:'Connected'  },
-  { icon:'🖨️', title:'Print Templates',   sub:'Invoice · PO · Pay slip · Labels',     to:'/config/print',          color:'#4D5656', status:'Configured' },
-  { icon:'🔐', title:'Session & Security', sub:'Active sessions · Password policy',    to:'/config/security',       color:'#B7950B', status:'Active'      },
-  { icon:'📋', title:'Audit Log',          sub:'All system changes tracked',           to:'/config/audit',          color:'#717D7E', status:'Running'     },
+  { icon:'', title:'Company Profile',    sub:'Legal name, GST, address, logo',       to:'/config/company',        color:'#714B67', status:'Configured' },
+  { icon:'', title:'Branches',           sub:`${BRANCHES.length} branches configured`, to:'/config/branches',      color:'#1A5276', status:'Configured' },
+  { icon:'', title:'Users & Access',     sub:`${USERS.length} users · ${ROLES.length} roles`, to:'/config/users', color:'#196F3D', status:'Configured' },
+  { icon:'', title:'Roles & Permissions',sub:'RBAC — module-level access control',   to:'/config/roles',          color:'#C0392B', status:'Configured' },
+  { icon:'', title:'Number Series',      sub:`${NUMBER_SERIES.length} document series`, to:'/config/number-series',color:'#784212', status:'Configured' },
+  { icon:'', title:'Fiscal Years',       sub:`${FISCAL_YEARS.filter(f=>f.status==='Active').length} active FY`, to:'/config/fiscal-year', color:'#6C3483', status:'Configured' },
+  { icon:'', title:'Tax & GST Config',   sub:`${TAX_RATES.length} tax rates configured`, to:'/config/tax',         color:'#117A65', status:'Configured' },
+  { icon:'', title:'Currency',           sub:'INR base · 4 active currencies',       to:'/config/currency',       color:'#1F618D', status:'Configured' },
+  { icon:'', title:'Email Settings',     sub:'SMTP · Templates · Triggers',          to:'/config/email',          color:'#E65100', status:'Connected'  },
+  { icon:'', title:'Print Templates',   sub:'Invoice · PO · Pay slip · Labels',     to:'/config/print',          color:'#4D5656', status:'Configured' },
+  { icon:'', title:'Session & Security', sub:'Active sessions · Password policy',    to:'/config/security',       color:'#B7950B', status:'Active'      },
+  { icon:'', title:'Audit Log',          sub:'All system changes tracked',           to:'/config/audit',          color:'#717D7E', status:'Running'     },
 ]
 
 export default function ConfigDashboard() {
@@ -54,7 +54,7 @@ export default function ConfigDashboard() {
         </div>
         <button className="btn btn-s" onClick={() => nav('/config/company')}
           style={{ background:'rgba(255,255,255,.2)', color:'#fff', border:'1px solid rgba(255,255,255,.3)' }}>
-          ✏️ Edit Profile
+           Edit Profile
         </button>
       </div>
 

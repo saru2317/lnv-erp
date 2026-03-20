@@ -51,7 +51,7 @@ export default function PRNew() {
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/pr')}>← Back</button>
           <button className="btn btn-s sd-bsm">Print</button>
           <button className="btn btn-p sd-bsm" onClick={handleSave}>
-            {saved ? '✅ Saved!' : '💾 Save & Submit'}
+            {saved ? ' Saved!' : ' Save & Submit'}
           </button>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function PRNew() {
       {saved && (
         <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,
           padding:'10px 16px',marginBottom:16,fontSize:13,color:'#155724',fontWeight:600}}>
-          ✅ PR {prNo} saved! {csReqd ? 'Redirecting to Comparative Statement entry…' : 'Redirecting to PR list…'}
+           PR {prNo} saved! {csReqd ? 'Redirecting to Comparative Statement entry…' : 'Redirecting to PR list…'}
         </div>
       )}
 
@@ -117,7 +117,7 @@ export default function PRNew() {
                     background: csReqd===v ? (v?'#EDE0EA':'#D4EDDA') : '#F8F9FA',
                     color: csReqd===v ? (v?'var(--odoo-purple)':'#155724') : 'var(--odoo-gray)',
                     border:`1.5px solid ${csReqd===v?(v?'var(--odoo-purple)':'#C3E6CB'):'var(--odoo-border)'}`}}>
-                  {v ? '📊 Yes — CS Required' : '📋 No — Direct PO'}
+                  {v ? ' Yes — CS Required' : ' No — Direct PO'}
                 </div>
               ))}
             </div>
@@ -127,7 +127,7 @@ export default function PRNew() {
         {csReqd && (
           <div style={{background:'#EDE0EA',border:'1px solid var(--odoo-border)',borderRadius:6,
             padding:'8px 14px',fontSize:12,color:'var(--odoo-purple)',fontWeight:600,marginBottom:14}}>
-            📊 Comparative Statement workflow will be triggered after saving this PR.
+             Comparative Statement workflow will be triggered after saving this PR.
             Purchase team must collect quotes from minimum 3 vendors before HOD approval.
           </div>
         )}
@@ -187,7 +187,7 @@ export default function PRNew() {
                     {items.length>1 &&
                       <button onClick={()=>removeItem(idx)}
                         style={{background:'#F8D7DA',color:'#721C24',border:'none',
-                          borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:12}}>✕</button>}
+                          borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:12}}></button>}
                   </td>
                 </tr>
               ))}

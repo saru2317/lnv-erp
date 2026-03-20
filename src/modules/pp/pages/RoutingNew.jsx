@@ -18,11 +18,11 @@ export default function RoutingNew() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>✅</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>RTE-005 Created!</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}>← Routing List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>➕ New Routing</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>New Routing</button>
       </div>
     </div>
   )
@@ -32,13 +32,13 @@ export default function RoutingNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Create Routing <small>CA01 · Define Operations</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save Routing</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}> Cancel</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Routing</button>
         </div>
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">⚙️ Routing Header</div>
+        <div className="fi-form-sec-hdr"> Routing Header</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Routing No.</label><input className="fi-form-ctrl" defaultValue="RTE-005" readOnly/></div>
@@ -56,7 +56,7 @@ export default function RoutingNew() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">⚙️ Operations Sequence</div>
+        <div className="fi-form-sec-hdr"> Operations Sequence</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>#</th><th>Seq</th><th>Operation Name</th><th>Work Centre</th><th>Setup (min)</th><th>Run Time</th><th>UOM</th><th></th></tr></thead>
@@ -72,20 +72,20 @@ export default function RoutingNew() {
                   <td><select value={o.uom} onChange={e=>upd(o.id,'uom',e.target.value)} style={{width:'90px'}}>
                     <option>min/Kg</option><option>min/Nos</option><option>hr/Batch</option>
                   </select></td>
-                  <td><span onClick={()=>del(o.id)} style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}}>🗑</span></td>
+                  <td><span onClick={()=>del(o.id)} style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}}></span></td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm" onClick={add}>➕ Add Operation</button>
+            <button className="btn btn-s sd-bsm" onClick={add}>Add Operation</button>
           </div>
         </div>
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save Routing</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}> Cancel</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Routing</button>
       </div>
     </div>
   )

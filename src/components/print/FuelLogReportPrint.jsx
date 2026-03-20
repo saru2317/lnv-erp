@@ -22,7 +22,7 @@ export default function FuelLogReportPrint({ data, onClose }) {
         </div>
         {/* Content placeholder - will be populated with real data */}
         <div style={{background:'#F8F9FA',border:'2px dashed #DDD',borderRadius:8,padding:32,textAlign:'center',color:'#999',marginBottom:20}}>
-          <div style={{fontSize:32,marginBottom:8}}>📋</div>
+          <div style={{fontSize:32,marginBottom:8}}></div>
           <div style={{fontSize:13,fontWeight:600,color:'#714B67'}}>Fuel Log Report</div>
           <div style={{fontSize:11,marginTop:4}}>Document content renders from module data</div>
         </div>

@@ -39,7 +39,7 @@ export default function TaxConfig() {
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:0, marginBottom:'16px', borderBottom:'2px solid var(--odoo-border)' }}>
-        {[['gst','💰 GST Rates'],['tds','📋 TDS Rates'],['hsn','🔢 HSN Codes']].map(([k,l]) => (
+        {[['gst',' GST Rates'],['tds',' TDS Rates'],['hsn',' HSN Codes']].map(([k,l]) => (
           <div key={k} onClick={()=>setTab(k)}
             style={{ padding:'8px 18px', cursor:'pointer', fontSize:'12px', fontWeight:'700',
               borderBottom: tab===k ? '2px solid var(--odoo-purple)' : '2px solid transparent',
@@ -70,7 +70,7 @@ export default function TaxConfig() {
               </>)}
             </div>
             <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ Save</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> Save</button>
               <button className="btn btn-s sd-bsm" onClick={()=>setShowForm(false)}>Cancel</button>
             </div>
           </div>

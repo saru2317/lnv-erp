@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const MRP = [
-  {mat:'Ring Yarn (MAT-002)',req:'500 Kg',stock:'80 Kg',open:'0',net:'-420 Kg',order:'500 Kg',by:'01 Mar 2025',sb:'badge-hold',sl:'🔴 Urgent',urgent:true},
-  {mat:'Solvent Chemical (MAT-005)',req:'100 Litre',stock:'25 Litre',open:'0',net:'-75 Litre',order:'200 Litre',by:'03 Mar 2025',sb:'badge-hold',sl:'🔴 Urgent',urgent:true},
-  {mat:'Cotton Sliver (MAT-001)',req:'880 Kg',stock:'480 Kg',open:'400 Kg',net:'0 Kg',order:'400 Kg',by:'05 Mar 2025',sb:'badge-progress',sl:'⚠️ Plan',urgent:false},
-  {mat:'Lattice Aprons (MAT-003)',req:'20 Nos',stock:'35 Nos',open:'0',net:'+15 Nos',order:'—',by:'—',sb:'badge-done',sl:'✅ OK',urgent:false},
-  {mat:'Packing Boxes (MAT-004)',req:'500 Nos',stock:'850 Nos',open:'0',net:'+350 Nos',order:'—',by:'—',sb:'badge-done',sl:'✅ OK',urgent:false},
-  {mat:'OE Rotors (MAT-006)',req:'24 Nos',stock:'24 Nos',open:'0',net:'0 Nos',order:'24 Nos',by:'08 Mar 2025',sb:'badge-progress',sl:'⚠️ Plan',urgent:false},
-  {mat:'Card Clothing (MAT-007)',req:'4 Set',stock:'5 Set',open:'0',net:'+1 Set',order:'—',by:'—',sb:'badge-done',sl:'✅ OK',urgent:false},
+  {mat:'Ring Yarn (MAT-002)',req:'500 Kg',stock:'80 Kg',open:'0',net:'-420 Kg',order:'500 Kg',by:'01 Mar 2025',sb:'badge-hold',sl:' Urgent',urgent:true},
+  {mat:'Solvent Chemical (MAT-005)',req:'100 Litre',stock:'25 Litre',open:'0',net:'-75 Litre',order:'200 Litre',by:'03 Mar 2025',sb:'badge-hold',sl:' Urgent',urgent:true},
+  {mat:'Cotton Sliver (MAT-001)',req:'880 Kg',stock:'480 Kg',open:'400 Kg',net:'0 Kg',order:'400 Kg',by:'05 Mar 2025',sb:'badge-progress',sl:' Plan',urgent:false},
+  {mat:'Lattice Aprons (MAT-003)',req:'20 Nos',stock:'35 Nos',open:'0',net:'+15 Nos',order:'—',by:'—',sb:'badge-done',sl:' OK',urgent:false},
+  {mat:'Packing Boxes (MAT-004)',req:'500 Nos',stock:'850 Nos',open:'0',net:'+350 Nos',order:'—',by:'—',sb:'badge-done',sl:' OK',urgent:false},
+  {mat:'OE Rotors (MAT-006)',req:'24 Nos',stock:'24 Nos',open:'0',net:'0 Nos',order:'24 Nos',by:'08 Mar 2025',sb:'badge-progress',sl:' Plan',urgent:false},
+  {mat:'Card Clothing (MAT-007)',req:'4 Set',stock:'5 Set',open:'0',net:'+1 Set',order:'—',by:'—',sb:'badge-done',sl:' OK',urgent:false},
 ]
 
 export default function MRPList() {
@@ -25,9 +25,9 @@ export default function MRPList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">MRP Results <small>MD04 · Stock / Requirements List</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp')}>🔄 Re-run MRP</button>
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">📤 Raise All POs</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/mrp')}> Re-run MRP</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Raise All POs</button>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function MRPList() {
 
       {MRP.filter(m=>m.urgent).length > 0 && (
         <div className="pp-alert warn">
-          ⚠️ <strong>{MRP.filter(m=>m.urgent).length} materials need urgent PO.</strong> Ring Yarn and Solvent Chemical are critically short — production may stop.
+           <strong>{MRP.filter(m=>m.urgent).length} materials need urgent PO.</strong> Ring Yarn and Solvent Chemical are critically short — production may stop.
         </div>
       )}
 
@@ -62,7 +62,7 @@ export default function MRPList() {
               <td>
                 {m.order!=='—' && (
                   <button className={`btn-xs ${m.urgent?'pri':''}`}>
-                    {m.urgent?'🚨 Raise PO':'📋 Plan PO'}
+                    {m.urgent?' Raise PO':' Plan PO'}
                   </button>
                 )}
               </td>

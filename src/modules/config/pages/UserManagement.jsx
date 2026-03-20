@@ -4,33 +4,33 @@ import React, { useState } from 'react'
 const AVATAR_COLORS = ['#714B67','#E06F39','#00A09D','#017E84','#8E44AD','#1A5276','#196F3D','#B03A37','#B7860B','#4A235A']
 
 const MODULES_LIST = [
-  {k:'sd',   icon:'📦', name:'Sales (SD)'},
-  {k:'mm',   icon:'🛒', name:'Purchase (MM)'},
-  {k:'wm',   icon:'🏗️', name:'Warehouse (WM)'},
-  {k:'fi',   icon:'💰', name:'Finance (FI)'},
-  {k:'pp',   icon:'⚙️', name:'Production (PP)'},
-  {k:'qm',   icon:'🔬', name:'Quality (QM)'},
-  {k:'pm',   icon:'🔧', name:'Maintenance (PM)'},
-  {k:'hcm',  icon:'👥', name:'HR (HCM)'},
-  {k:'crm',  icon:'🤝', name:'CRM'},
-  {k:'am',   icon:'🏛️', name:'Assets'},
-  {k:'tm',   icon:'🚚', name:'Transport'},
+  {k:'sd',   icon:'', name:'Sales (SD)'},
+  {k:'mm',   icon:'', name:'Purchase (MM)'},
+  {k:'wm',   icon:'', name:'Warehouse (WM)'},
+  {k:'fi',   icon:'', name:'Finance (FI)'},
+  {k:'pp',   icon:'', name:'Production (PP)'},
+  {k:'qm',   icon:'', name:'Quality (QM)'},
+  {k:'pm',   icon:'', name:'Maintenance (PM)'},
+  {k:'hcm',  icon:'', name:'HR (HCM)'},
+  {k:'crm',  icon:'', name:'CRM'},
+  {k:'am',   icon:'', name:'Assets'},
+  {k:'tm',   icon:'', name:'Transport'},
   {k:'vm',   icon:'🪪', name:'Visitor'},
-  {k:'cn',   icon:'🍽️', name:'Canteen'},
-  {k:'civil',icon:'🏗️', name:'Civil'},
-  {k:'config',icon:'🛠️',name:'Config'},
-  {k:'mdm',   icon:'🗂️', name:'MDM'},
+  {k:'cn',   icon:'', name:'Canteen'},
+  {k:'civil',icon:'', name:'Civil'},
+  {k:'config',icon:'',name:'Config'},
+  {k:'mdm',   icon:'', name:'MDM'},
 ]
 
 const PERMS_LIST = [
-  {k:'view',    icon:'👁️', name:'View Records',    sub:'Read-only access'},
-  {k:'create',  icon:'➕', name:'Create Records',   sub:'Add new entries'},
-  {k:'edit',    icon:'✏️', name:'Edit Records',     sub:'Modify existing'},
-  {k:'delete',  icon:'🗑️', name:'Delete Records',   sub:'Remove entries'},
-  {k:'approve', icon:'✅', name:'Approve / Reject', sub:'Workflow approvals'},
-  {k:'export',  icon:'📤', name:'Export Data',       sub:'Excel / PDF export'},
-  {k:'reports', icon:'📊', name:'View Reports',      sub:'MIS & analytics'},
-  {k:'settings',icon:'⚙️', name:'System Settings',  sub:'Config & setup'},
+  {k:'view',    icon:'', name:'View Records',    sub:'Read-only access'},
+  {k:'create',  icon:'', name:'Create Records',   sub:'Add new entries'},
+  {k:'edit',    icon:'', name:'Edit Records',     sub:'Modify existing'},
+  {k:'delete',  icon:'', name:'Delete Records',   sub:'Remove entries'},
+  {k:'approve', icon:'', name:'Approve / Reject', sub:'Workflow approvals'},
+  {k:'export',  icon:'', name:'Export Data',       sub:'Excel / PDF export'},
+  {k:'reports', icon:'', name:'View Reports',      sub:'MIS & analytics'},
+  {k:'settings',icon:'', name:'System Settings',  sub:'Config & setup'},
 ]
 
 const ROLE_MOD = {
@@ -51,7 +51,7 @@ const ROLE_PERM = {
   sales:      ['view','create','edit','export'],
   viewer:     ['view'],
 }
-const ROLE_LABELS = {admin:'👑 Super Admin',manager:'🏭 Plant Manager',accounts:'💰 Accounts',operations:'⚙️ Operations',hr:'👥 HR Manager',sales:'🤝 Sales Officer',viewer:'👁️ Viewer'}
+const ROLE_LABELS = {admin:' Super Admin',manager:' Plant Manager',accounts:' Accounts',operations:' Operations',hr:' HR Manager',sales:' Sales Officer',viewer:' Viewer'}
 const ROLE_BG     = {admin:'#F7F0F5',manager:'#FDF0EA',accounts:'#E6F7F7',operations:'#E6F4F5',hr:'#F4ECF7',sales:'#E6F4F5',viewer:'#F5F5F5'}
 const ROLE_CLR    = {admin:'#714B67',manager:'#E06F39',accounts:'#00A09D',operations:'#017E84',hr:'#8E44AD',sales:'#015E63',viewer:'#6C757D'}
 const ROLE_DESC   = {admin:'Full system access — all modules and settings',manager:'Production, quality, maintenance oversight',accounts:'Finance, GST, payables & receivables',operations:'Production execution, QC, maintenance tasks',hr:'Employee management, payroll, leave approval',sales:'Sales orders, CRM leads and follow-ups',viewer:'Read-only access — no edit or approve rights'}
@@ -115,7 +115,7 @@ const gBtn = {
   padding:'6px 12px', borderRadius:7, fontSize:11, fontWeight:600,
   cursor:'pointer', border:'none', background:'transparent', color:'var(--odoo-purple)',
 }
-const AUDIT_ICONS = {add:'➕',edit:'✏️',del:'🗑️',login:'🔑',perm:'🔐',pass:'🔒'}
+const AUDIT_ICONS = {add:'',edit:'',del:'',login:'',perm:'',pass:''}
 const AUDIT_BG    = {add:'#E6F7F7',edit:'#FDF0EA',del:'#FDEDEC',login:'#EDE0EA',perm:'#F4ECF7',pass:'#FEF8E6'}
 
 // ── TOAST ─────────────────────────────────────────────
@@ -226,12 +226,12 @@ export default function UserManagement() {
       {/* PAGE HEADER */}
       <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20}}>
         <div>
-          <h1 style={{fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:800, color:'var(--odoo-dark)', marginBottom:4}}>👥 User Control</h1>
+          <h1 style={{fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:800, color:'var(--odoo-dark)', marginBottom:4}}> User Control</h1>
           <p style={{fontSize:12, color:'var(--odoo-muted)'}}>Manage users, assign roles, and configure module-level permissions for LNV ERP</p>
         </div>
         <div style={{display:'flex', gap:8}}>
           <BtnSec onClick={()=>setShowAudit(true)}>Audit Log</BtnSec>
-          <BtnSec onClick={()=>setShowRoles(true)}>🔐 Role Manager</BtnSec>
+          <BtnSec onClick={()=>setShowRoles(true)}> Role Manager</BtnSec>
           <BtnPri onClick={openAdd}>＋ Add New User</BtnPri>
         </div>
       </div>
@@ -239,11 +239,11 @@ export default function UserManagement() {
       {/* STAT CARDS */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, marginBottom:20}}>
         {[
-          {label:'Total Users',       val:stats.total,    icon:'👥', clr:'var(--odoo-purple)', f:'all'},
-          {label:'Active Users',      val:stats.active,   icon:'✅', clr:'var(--odoo-green)',  f:'active'},
+          {label:'Total Users',       val:stats.total,    icon:'', clr:'var(--odoo-purple)', f:'all'},
+          {label:'Active Users',      val:stats.active,   icon:'', clr:'var(--odoo-green)',  f:'active'},
           {label:'Online Now',        val:stats.online,   icon:'🟢', clr:'var(--odoo-orange)', f:'online'},
-          {label:'Inactive / Locked', val:stats.inactive, icon:'🔒', clr:'var(--odoo-red)',    f:'inactive'},
-          {label:'Roles Defined',     val:6,              icon:'🔐', clr:'#8E44AD',            f:null},
+          {label:'Inactive / Locked', val:stats.inactive, icon:'', clr:'var(--odoo-red)',    f:'inactive'},
+          {label:'Roles Defined',     val:6,              icon:'', clr:'#8E44AD',            f:null},
         ].map((s,i) => (
           <div key={i} onClick={()=>s.f&&setFStatus(s.f)}
             style={{background:'#fff', borderRadius:12, padding:'16px 18px',
@@ -265,7 +265,7 @@ export default function UserManagement() {
         background:'#fff', border:'1px solid var(--odoo-border)', borderRadius:10,
         padding:'10px 14px', boxShadow:'0 2px 8px rgba(113,75,103,.08)'}}>
         <div style={{position:'relative', flex:1, maxWidth:300}}>
-          <span style={{position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', fontSize:13, color:'#ADB5BD'}}>🔍</span>
+          <span style={{position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', fontSize:13, color:'#ADB5BD'}}></span>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name, email, role..."
             style={{width:'100%', padding:'8px 12px 8px 34px', background:'var(--odoo-bg)',
               border:'1.5px solid var(--odoo-border)', borderRadius:8,
@@ -288,7 +288,7 @@ export default function UserManagement() {
           {Object.entries(ROLE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
         </select>
         <div style={{display:'flex', gap:3, background:'var(--odoo-bg)', padding:3, borderRadius:7, border:'1px solid var(--odoo-border)'}}>
-          {[['table','☰'],['grid','⊞']].map(([v,ico])=>(
+          {[['table',''],['grid','⊞']].map(([v,ico])=>(
             <div key={v} onClick={()=>setView(v)}
               style={{width:30, height:28, borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center',
                 cursor:'pointer', fontSize:13, transition:'all .15s',
@@ -302,7 +302,7 @@ export default function UserManagement() {
       {/* USER LIST */}
       {filtered.length===0 ? (
         <div style={{textAlign:'center', padding:'50px 20px'}}>
-          <div style={{fontSize:48, opacity:.25, marginBottom:12}}>👥</div>
+          <div style={{fontSize:48, opacity:.25, marginBottom:12}}></div>
           <div style={{fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:700, color:'var(--odoo-muted)', marginBottom:6}}>No users found</div>
           <div style={{fontSize:12, color:'#ADB5BD'}}>Try adjusting your search or filters</div>
         </div>
@@ -327,9 +327,9 @@ export default function UserManagement() {
         <div style={{padding:'18px 22px', borderBottom:'1px solid var(--odoo-border)',
           display:'flex', alignItems:'center', justifyContent:'space-between', background:'#FBF7FA'}}>
           <h3 style={{fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800, color:'var(--odoo-dark)'}}>
-            {editId ? `✏️ Edit User — ${form.fname} ${form.lname}` : '➕ Add New User'}
+            {editId ? ` Edit User — ${form.fname} ${form.lname}` : ' Add New User'}
           </h3>
-          <span onClick={closeDrawer} style={{cursor:'pointer', fontSize:20, color:'var(--odoo-muted)', padding:'4px 8px', borderRadius:6}}>✕</span>
+          <span onClick={closeDrawer} style={{cursor:'pointer', fontSize:20, color:'var(--odoo-muted)', padding:'4px 8px', borderRadius:6}}></span>
         </div>
         {/* Body */}
         <div style={{flex:1, overflowY:'auto', padding:22}}>
@@ -351,7 +351,7 @@ export default function UserManagement() {
             </div>
           </div>
 
-          <FSec title="👤 Basic Information">
+          <FSec title=" Basic Information">
             <FRow>
               <FG label="First Name *" err={errors.fname}><input value={form.fname} onChange={e=>fc('fname',e.target.value)} placeholder="e.g. Ramesh" style={inputSt(errors.fname)} /></FG>
               <FG label="Last Name *"  err={errors.lname}><input value={form.lname} onChange={e=>fc('lname',e.target.value)} placeholder="e.g. Kumar"  style={inputSt(errors.lname)} /></FG>
@@ -368,7 +368,7 @@ export default function UserManagement() {
             </FRow>
           </FSec>
 
-          <FSec title="🔑 Login Credentials">
+          <FSec title=" Login Credentials">
             <FRow>
               <FG label="Username *" err={errors.uname} hint="Lowercase, no spaces">
                 <input value={form.uname} onChange={e=>fc('uname',e.target.value)} placeholder="ramesh.kumar" style={inputSt(errors.uname)} />
@@ -384,13 +384,13 @@ export default function UserManagement() {
               <FG label="Status">
                 <select value={form.status} onChange={e=>fc('status',e.target.value)} style={inputSt()}>
                   <option value="active">Active</option>
-                  <option value="inactive">🔒 Inactive</option>
+                  <option value="inactive"> Inactive</option>
                 </select>
               </FG>
             </FRow>
           </FSec>
 
-          <FSec title="📦 Module Access" extra={
+          <FSec title=" Module Access" extra={
             <div style={{display:'flex', gap:6, marginLeft:'auto'}}>
               <button onClick={()=>setAllMods(true)}  style={gBtn}>Select All</button>
               <button onClick={()=>setAllMods(false)} style={gBtn}>Clear All</button>
@@ -411,14 +411,14 @@ export default function UserManagement() {
                       border:`2px solid ${on?'var(--odoo-purple)':'var(--odoo-border)'}`,
                       background:on?'var(--odoo-purple)':'transparent',
                       display:'flex', alignItems:'center', justifyContent:'center',
-                      fontSize:8, color:'#fff', fontWeight:700}}>{on?'✓':''}</div>
+                      fontSize:8, color:'#fff', fontWeight:700}}>{on?'':''}</div>
                   </div>
                 )
               })}
             </div>
           </FSec>
 
-          <FSec title="🔐 Feature Permissions">
+          <FSec title=" Feature Permissions">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:6}}>
               {PERMS_LIST.map(p=>{
                 const on=form.perms.includes(p.k)
@@ -439,7 +439,7 @@ export default function UserManagement() {
             </div>
           </FSec>
 
-          <FSec title="📝 Notes">
+          <FSec title=" Notes">
             <textarea value={form.notes} onChange={e=>fc('notes',e.target.value)}
               placeholder="Any notes about this user..."
               style={{...inputSt(), resize:'vertical', minHeight:70}} />
@@ -449,7 +449,7 @@ export default function UserManagement() {
         <div style={{padding:'16px 22px', borderTop:'1px solid var(--odoo-border)',
           display:'flex', gap:10, justifyContent:'flex-end', background:'#FBF7FA'}}>
           <button onClick={closeDrawer} style={gBtn}>Cancel</button>
-          <button onClick={()=>{setForm({...BLANK_FORM});setErrors({})}} style={{...gBtn, color:'var(--odoo-muted)'}}>🔄 Reset</button>
+          <button onClick={()=>{setForm({...BLANK_FORM});setErrors({})}} style={{...gBtn, color:'var(--odoo-muted)'}}> Reset</button>
           <BtnPri onClick={saveUser}>{editId ? 'Update User' : 'Save User'}</BtnPri>
         </div>
       </div>
@@ -461,9 +461,9 @@ export default function UserManagement() {
             padding:'18px 22px', borderRadius:'14px 14px 0 0',
             display:'flex', alignItems:'center', justifyContent:'space-between'}}>
             <h3 style={{fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:800, color:'#fff'}}>
-              🔐 Permissions — {permUser.fname} {permUser.lname}
+               Permissions — {permUser.fname} {permUser.lname}
             </h3>
-            <span onClick={()=>setPermUser(null)} style={{cursor:'pointer', fontSize:18, color:'rgba(255,255,255,.7)', padding:'4px 8px'}}>✕</span>
+            <span onClick={()=>setPermUser(null)} style={{cursor:'pointer', fontSize:18, color:'rgba(255,255,255,.7)', padding:'4px 8px'}}></span>
           </div>
           <div style={{padding:22, overflowY:'auto', maxHeight:'calc(90vh - 120px)'}}>
             {/* User row */}
@@ -495,7 +495,7 @@ export default function UserManagement() {
               })}
             </div>
             {/* Feature perms */}
-            <div style={{fontFamily:'Syne,sans-serif', fontSize:12, fontWeight:700, color:'var(--odoo-purple)', textTransform:'uppercase', letterSpacing:.5, marginBottom:10}}>🔐 Feature Permissions</div>
+            <div style={{fontFamily:'Syne,sans-serif', fontSize:12, fontWeight:700, color:'var(--odoo-purple)', textTransform:'uppercase', letterSpacing:.5, marginBottom:10}}> Feature Permissions</div>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:7}}>
               {PERMS_LIST.map(p=>{
                 const on=permPerms.includes(p.k)
@@ -528,7 +528,7 @@ export default function UserManagement() {
       {deleteId && (
         <Modal onClose={()=>setDeleteId(null)} width={340}>
           <div style={{padding:28, textAlign:'center'}}>
-            <div style={{fontSize:46, marginBottom:12}}>🗑️</div>
+            <div style={{fontSize:46, marginBottom:12}}></div>
             <div style={{fontFamily:'Syne,sans-serif', fontSize:18, fontWeight:800, color:'var(--odoo-dark)', marginBottom:8}}>Delete User?</div>
             <div style={{fontSize:12, color:'var(--odoo-muted)', marginBottom:20, lineHeight:1.6}}>
               {(()=>{const u=users.find(x=>x.id===deleteId); return u ? `Delete ${u.fname} ${u.lname} (@${u.uname})? This cannot be undone.` : ''})()}
@@ -547,7 +547,7 @@ export default function UserManagement() {
           <div style={{padding:'18px 22px', borderBottom:'1px solid var(--odoo-border)',
             display:'flex', alignItems:'center', justifyContent:'space-between', background:'#FBF7FA'}}>
             <h3 style={{fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:800}}>User Activity Audit Log</h3>
-            <span onClick={()=>setShowAudit(false)} style={{cursor:'pointer', fontSize:18, color:'var(--odoo-muted)', padding:'4px 8px'}}>✕</span>
+            <span onClick={()=>setShowAudit(false)} style={{cursor:'pointer', fontSize:18, color:'var(--odoo-muted)', padding:'4px 8px'}}></span>
           </div>
           <div style={{overflowY:'auto', padding:20, maxHeight:'70vh'}}>
             {audit.map((a,i)=>(
@@ -555,7 +555,7 @@ export default function UserManagement() {
                 borderBottom: i<audit.length-1 ? '1px solid var(--odoo-border)' : 'none'}}>
                 <div style={{width:28, height:28, borderRadius:8, display:'flex', alignItems:'center',
                   justifyContent:'center', fontSize:12, flexShrink:0,
-                  background:AUDIT_BG[a.type]||'var(--odoo-bg)'}}>{AUDIT_ICONS[a.type]||'📋'}</div>
+                  background:AUDIT_BG[a.type]||'var(--odoo-bg)'}}>{AUDIT_ICONS[a.type]||''}</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:11, fontWeight:600, color:'var(--odoo-dark)'}}>{a.msg}</div>
                   <div style={{fontSize:10, color:'var(--odoo-muted)', marginTop:2}}>{a.meta}</div>
@@ -573,8 +573,8 @@ export default function UserManagement() {
           <div style={{background:'linear-gradient(135deg,var(--odoo-purple),#875A7B)',
             padding:'18px 22px', borderRadius:'14px 14px 0 0',
             display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-            <h3 style={{fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:800, color:'#fff'}}>🔐 Role Manager</h3>
-            <span onClick={()=>setShowRoles(false)} style={{cursor:'pointer', fontSize:18, color:'rgba(255,255,255,.7)', padding:'4px 8px'}}>✕</span>
+            <h3 style={{fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:800, color:'#fff'}}> Role Manager</h3>
+            <span onClick={()=>setShowRoles(false)} style={{cursor:'pointer', fontSize:18, color:'rgba(255,255,255,.7)', padding:'4px 8px'}}></span>
           </div>
           <div style={{overflowY:'auto', padding:20, maxHeight:'70vh'}}>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:16}}>
@@ -592,7 +592,7 @@ export default function UserManagement() {
                     <div style={{fontSize:11, color:'var(--odoo-muted)', marginBottom:10, lineHeight:1.5}}>{ROLE_DESC[k]}</div>
                     <div style={{display:'flex', gap:8, fontSize:10, fontWeight:600, marginBottom:8}}>
                       <span style={{background:'rgba(255,255,255,.6)', padding:'2px 7px', borderRadius:5}}>{mods.length} modules</span>
-                      <span style={{background:'rgba(255,255,255,.6)', padding:'2px 7px', borderRadius:5}}>🔐 {perms.length} permissions</span>
+                      <span style={{background:'rgba(255,255,255,.6)', padding:'2px 7px', borderRadius:5}}> {perms.length} permissions</span>
                     </div>
                     <div style={{display:'flex', flexWrap:'wrap', gap:3}}>
                       {mods.slice(0,6).map(m=>{const mod=MODULES_LIST.find(x=>x.k===m); return mod?<span key={m} style={{fontSize:9, background:'rgba(255,255,255,.5)', padding:'1px 5px', borderRadius:4}}>{mod.icon} {mod.name}</span>:null})}
@@ -603,7 +603,7 @@ export default function UserManagement() {
               })}
             </div>
             <div style={{background:'#FBF7FA', border:'1px solid var(--odoo-border)', borderRadius:10, padding:14, fontSize:12, color:'var(--odoo-muted)'}}>
-              💡 <strong style={{color:'var(--odoo-purple)'}}>Role defaults</strong> apply when creating a new user. Customize individual permissions via the <strong>🔐 Permissions</strong> button on any user row.
+               <strong style={{color:'var(--odoo-purple)'}}>Role defaults</strong> apply when creating a new user. Customize individual permissions via the <strong> Permissions</strong> button on any user row.
             </div>
           </div>
         </Modal>
@@ -620,7 +620,7 @@ export default function UserManagement() {
                         t.type==='e'?'linear-gradient(135deg,#B03A37,#D9534F)':
                                      'linear-gradient(135deg,#714B67,#875A7B)',
             animation:'slideIn .35s cubic-bezier(.34,1.56,.64,1)'}}>
-            <span>{{s:'✅',w:'⚠️',e:'❌',i:'ℹ️'}[t.type]}</span><span>{t.msg}</span>
+            <span>{{s:'',w:'',e:'',i:'ℹ'}[t.type]}</span><span>{t.msg}</span>
           </div>
         ))}
       </div>
@@ -665,10 +665,10 @@ function TableView({ users, total, onEdit, onDelete, onPerms }) {
           <div><span style={{fontSize:10, fontWeight:600, color:'var(--odoo-muted)', background:'var(--odoo-bg)', padding:'2px 7px', borderRadius:6, border:'1px solid var(--odoo-border)'}}>{u.dept||'—'}</span></div>
           <div style={{display:'flex', gap:5}} onClick={e=>e.stopPropagation()}>
             {[
-              {ico:'👁️',hb:'#E6F4F5',hc:'#017E84',fn:()=>onEdit(u)},
-              {ico:'✏️',hb:'#EDE0EA',hc:'var(--odoo-purple)',fn:()=>onEdit(u)},
-              {ico:'🔐',hb:'#F4ECF7',hc:'#8E44AD',fn:()=>onPerms(u)},
-              {ico:'🗑️',hb:'#FDEDEC',hc:'var(--odoo-red)',fn:()=>onDelete(u.id)},
+              {ico:'',hb:'#E6F4F5',hc:'#017E84',fn:()=>onEdit(u)},
+              {ico:'',hb:'#EDE0EA',hc:'var(--odoo-purple)',fn:()=>onEdit(u)},
+              {ico:'',hb:'#F4ECF7',hc:'#8E44AD',fn:()=>onPerms(u)},
+              {ico:'',hb:'#FDEDEC',hc:'var(--odoo-red)',fn:()=>onDelete(u.id)},
             ].map((b,bi)=>(
               <div key={bi} onClick={b.fn}
                 style={{width:26, height:26, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
@@ -712,7 +712,7 @@ function GridView({ users, onEdit, onDelete, onPerms }) {
             <div style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:800, color:'var(--odoo-dark)', marginBottom:2}}>{u.fname} {u.lname}</div>
             <div style={{marginBottom:8}}><span style={rolePill(u.role)}>{ROLE_LABELS[u.role]}</span></div>
             <div style={{display:'flex', flexDirection:'column', gap:3, marginBottom:10}}>
-              {[`📧 ${u.email}`,`🏢 ${u.dept||'—'} · ${u.desig||'—'}`,`🕐 ${u.lastLogin}`].map((r,i)=>(
+              {[` ${u.email}`,` ${u.dept||'—'} · ${u.desig||'—'}`,` ${u.lastLogin}`].map((r,i)=>(
                 <div key={i} style={{fontSize:10, color:'var(--odoo-muted)'}}>{r}</div>
               ))}
             </div>
@@ -722,8 +722,8 @@ function GridView({ users, onEdit, onDelete, onPerms }) {
             </div>
             <div style={{display:'flex', gap:6, paddingTop:10, borderTop:'1px solid var(--odoo-border)'}}>
               <button onClick={()=>onEdit(u)}    style={{flex:1, padding:'4px 8px', borderRadius:6, fontSize:10, fontWeight:700, border:'1px solid var(--odoo-border)', background:'#fff', color:'var(--odoo-dark)', cursor:'pointer'}}>Edit</button>
-              <button onClick={()=>onPerms(u)}   style={{flex:1, padding:'4px 8px', borderRadius:6, fontSize:10, fontWeight:700, border:'1px solid var(--odoo-border)', background:'#fff', color:'var(--odoo-dark)', cursor:'pointer'}}>🔐 Perms</button>
-              <button onClick={()=>onDelete(u.id)} style={{padding:'4px 8px', borderRadius:6, fontSize:10, fontWeight:700, border:'1px solid #FDEDEC', background:'#FDEDEC', color:'var(--odoo-red)', cursor:'pointer'}}>🗑️</button>
+              <button onClick={()=>onPerms(u)}   style={{flex:1, padding:'4px 8px', borderRadius:6, fontSize:10, fontWeight:700, border:'1px solid var(--odoo-border)', background:'#fff', color:'var(--odoo-dark)', cursor:'pointer'}}> Perms</button>
+              <button onClick={()=>onDelete(u.id)} style={{padding:'4px 8px', borderRadius:6, fontSize:10, fontWeight:700, border:'1px solid #FDEDEC', background:'#FDEDEC', color:'var(--odoo-red)', cursor:'pointer'}}></button>
             </div>
           </div>
         </div>

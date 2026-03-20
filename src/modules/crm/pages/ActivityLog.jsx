@@ -39,11 +39,11 @@ export default function ActivityLog() {
       {/* KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'14px'}}>
         {[
-          {l:'Total Activities',v:ACTIVITIES.length,     clr:'var(--odoo-purple)',ic:'📋'},
-          {l:'Today Follow-ups',v:todayCount,             clr:'var(--odoo-orange)',ic:'📅'},
+          {l:'Total Activities',v:ACTIVITIES.length,     clr:'var(--odoo-purple)',ic:''},
+          {l:'Today Follow-ups',v:todayCount,             clr:'var(--odoo-orange)',ic:''},
           {l:'Pending',         v:pendingCount,           clr:'var(--odoo-red)',   ic:'⏳'},
-          {l:'Calls This Week', v:ACTIVITIES.filter(a=>a.type==='Call').length, clr:'var(--odoo-blue)',ic:'📞'},
-          {l:'Meetings',        v:ACTIVITIES.filter(a=>a.type==='Meeting').length,clr:'var(--odoo-green)',ic:'🤝'},
+          {l:'Calls This Week', v:ACTIVITIES.filter(a=>a.type==='Call').length, clr:'var(--odoo-blue)',ic:''},
+          {l:'Meetings',        v:ACTIVITIES.filter(a=>a.type==='Meeting').length,clr:'var(--odoo-green)',ic:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.clr}}>
             <div className="crm-kpi-icon">{k.ic}</div>
@@ -82,7 +82,7 @@ export default function ActivityLog() {
       {/* Log Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>📝 Log New Activity</h3></div>
+          <div className="fi-panel-hdr"><h3> Log New Activity</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -116,7 +116,7 @@ export default function ActivityLog() {
                 placeholder="What was discussed? Any commitments made?" style={{width:'100%'}} />
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'8px'}}>
-              <button className="btn btn-p btn-s" onClick={()=>setShowForm(false)}>✓ Save Activity</button>
+              <button className="btn btn-p btn-s" onClick={()=>setShowForm(false)}> Save Activity</button>
               <button className="btn btn-s sd-bsm" onClick={()=>setShowForm(false)}>Cancel</button>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function ActivityLog() {
                 <td style={{fontSize:'12px'}}>{a.owner}</td>
                 <td style={{fontSize:'12px',maxWidth:'180px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={a.notes}>{a.notes}</td>
                 <td style={{fontSize:'12px',color:a.nextFollowup===TODAY?'var(--odoo-orange)':'var(--odoo-text)',fontWeight:a.nextFollowup===TODAY?'700':'400'}}>
-                  {a.nextFollowup||'—'}{a.nextFollowup===TODAY&&' 🔔'}
+                  {a.nextFollowup||'—'}{a.nextFollowup===TODAY&&' '}
                 </td>
                 <td><span className={a.status==='Completed'?'crm-stage-won':'crm-badge-contacted'}>{a.status}</span></td>
               </tr>

@@ -6,7 +6,7 @@ const VISITORS=[
   {id:'VIS-2026-043',name:'Govt. Inspector',company:'Pollution Control',purpose:'Factory Inspection', host:'Admin',    in:'11:30',out:'—',    badge:'V-043',status:'inside'},
   {id:'VIS-2026-044',name:'Suresh B.',     company:'Personal',          purpose:'Meet HR',            host:'Kavitha R.',in:'14:00',out:'—',   badge:'V-044',status:'waiting'},
 ]
-const ST={inside:{label:'🟢 Inside',bg:'#D4EDDA',color:'#155724'},checked_out:{label:'✅ Out',bg:'#E2E3E5',color:'#383D41'},waiting:{label:'⏳ Waiting',bg:'#FFF3CD',color:'#856404'}}
+const ST={inside:{label:'🟢 Inside',bg:'#D4EDDA',color:'#155724'},checked_out:{label:' Out',bg:'#E2E3E5',color:'#383D41'},waiting:{label:'⏳ Waiting',bg:'#FFF3CD',color:'#856404'}}
 export default function VMDashboard(){
   const nav=useNavigate()
   return(<div>

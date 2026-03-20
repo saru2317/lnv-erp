@@ -82,10 +82,10 @@ export default function ItemRouting() {
       {/* LEFT — Item selector */}
       <div className="fi-panel" style={{ height: 'fit-content' }}>
         <div className="fi-panel-hdr" style={{ padding: '10px 14px' }}>
-          <h3 style={{ margin: 0, fontSize: '12px' }}>📦 Select Item</h3>
+          <h3 style={{ margin: 0, fontSize: '12px' }}>Select Item</h3>
         </div>
         <div style={{ padding: '8px' }}>
-          <input className="sd-search" placeholder="🔍 Search…" value={search}
+          <input className="sd-search" placeholder=" Search…" value={search}
             onChange={e => setSearch(e.target.value)} style={{ width: '100%', marginBottom: '8px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '500px', overflow: 'auto' }}>
             {filteredItems.map(it => {
@@ -101,7 +101,7 @@ export default function ItemRouting() {
                       <div style={{ fontSize: '11px', fontWeight: '700', color: it.id === selItemId ? 'var(--odoo-purple)' : 'var(--odoo-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</div>
                       <div style={{ fontSize: '10px', color: 'var(--odoo-gray)', fontFamily: 'DM Mono,monospace' }}>{it.code}</div>
                     </div>
-                    {saved[it.id] && <span style={{ fontSize: '10px', color: 'var(--odoo-green)' }}>✓</span>}
+                    {saved[it.id] && <span style={{ fontSize: '10px', color: 'var(--odoo-green)' }}></span>}
                   </div>
                 </div>
               )
@@ -133,7 +133,7 @@ export default function ItemRouting() {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="btn btn-s sd-bsm" onClick={resetRoute}>↺ Reset</button>
                     <button className="btn btn-p btn-s" onClick={handleSave}>
-                      {saved[selItemId] ? '✓ Saved!' : '💾 Save Route'}
+                      {saved[selItemId] ? ' Saved!' : ' Save Route'}
                     </button>
                   </div>
                 </div>
@@ -141,9 +141,9 @@ export default function ItemRouting() {
                 {/* Mould info */}
                 {item.prodType === 'mould' && item.cavity && (
                   <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF3CD', borderRadius: '6px', display: 'flex', gap: '20px', fontSize: '12px' }}>
-                    <span>💉 <strong>Mould:</strong> {item.mouldId || '—'}</span>
-                    <span>🔲 <strong>Cavity:</strong> {item.cavity}</span>
-                    <span>📊 <strong>1000 pcs =</strong> {Math.ceil(1000 / item.cavity)} shots</span>
+                    <span> <strong>Mould:</strong> {item.mouldId || '—'}</span>
+                    <span> <strong>Cavity:</strong> {item.cavity}</span>
+                    <span><strong>1000 pcs =</strong> {Math.ceil(1000 / item.cavity)} shots</span>
                     <span style={{ color: 'var(--odoo-gray)' }}>Output per shot = {item.cavity} pcs</span>
                   </div>
                 )}
@@ -158,7 +158,7 @@ export default function ItemRouting() {
 
             {/* Drag instructions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '11px', color: 'var(--odoo-gray)' }}>
-              <span>🖱️ Drag stages to reorder · Toggle ✓/✗ to activate/skip · Set WC override per stage</span>
+              <span> Drag stages to reorder · Toggle / to activate/skip · Set WC override per stage</span>
             </div>
 
             {/* Stage rows */}
@@ -203,7 +203,7 @@ export default function ItemRouting() {
                         background: stage.mandatory ? '#E8F5E9' : '#FFF3E0',
                         color: stage.mandatory ? '#2E7D32' : '#E65100',
                         borderColor: stage.mandatory ? '#A5D6A7' : '#FFCC80' }}>
-                      {stage.mandatory ? '🔒 Must' : '⚡ Skip'}
+                      {stage.mandatory ? ' Must' : ' Skip'}
                     </button>
                   </div>
 
@@ -214,7 +214,7 @@ export default function ItemRouting() {
                         background: stage.active ? '#EDE0EA' : '#F5F5F5',
                         color: stage.active ? 'var(--odoo-purple)' : 'var(--odoo-gray)',
                         borderColor: stage.active ? 'var(--odoo-purple)' : '#DDD' }}>
-                      {stage.active ? '✓ Active' : '✗ Off'}
+                      {stage.active ? ' Active' : ' Off'}
                     </button>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export default function ItemRouting() {
 
             {/* Flow preview */}
             <div style={{ marginTop: '14px', padding: '12px 14px', background: '#F8F9FA', borderRadius: '8px', border: '1px solid var(--odoo-border)' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--odoo-gray)', marginBottom: '8px' }}>🗺️ PRODUCTION FLOW PREVIEW</div>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--odoo-gray)', marginBottom: '8px' }}> PRODUCTION FLOW PREVIEW</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0', alignItems: 'center' }}>
                 {route.filter(s => s.active).map((s, i, arr) => (
                   <React.Fragment key={s.id + i}>

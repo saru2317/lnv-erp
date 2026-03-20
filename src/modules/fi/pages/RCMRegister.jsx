@@ -21,7 +21,7 @@ export default function RCMRegister() {
         </div>
       </div>
       <div className="fi-alert warn" style={{marginBottom:16}}>
-        ⚠️ Under RCM, <strong>you (recipient) pay GST</strong> directly to govt — not the vendor. Self-invoice required. ITC available only after payment.
+         Under RCM, <strong>you (recipient) pay GST</strong> directly to govt — not the vendor. Self-invoice required. ITC available only after payment.
       </div>
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)',marginBottom:20}}>
         {[
@@ -52,7 +52,7 @@ export default function RCMRegister() {
               <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,
                 background:r.status==='paid'?'#D4EDDA':'#FFF3CD',
                 color:r.status==='paid'?'#155724':'#856404'}}>
-                {r.status==='paid'?'✅ Paid':'⚠️ Pending'}
+                {r.status==='paid'?' Paid':' Pending'}
               </span></td>
             </tr>
           ))}

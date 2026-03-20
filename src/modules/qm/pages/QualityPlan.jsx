@@ -50,7 +50,7 @@ export default function QualityPlan() {
               {expanded===p.id && (
                 <tr>
                   <td colSpan={7} style={{background:'#FDF8FC',padding:'14px'}}>
-                    <div style={{fontWeight:'700',fontSize:'12px',color:'var(--odoo-purple)',marginBottom:'8px'}}>🧪 Test Parameters — {p.id}</div>
+                    <div style={{fontWeight:'700',fontSize:'12px',color:'var(--odoo-purple)',marginBottom:'8px'}}> Test Parameters — {p.id}</div>
                     <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
                       {p.tests.map((t,i)=>(
                         <span key={t} style={{background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:'6px',

@@ -50,7 +50,7 @@ export default function PurchaseReport() {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {[['monthly','📊 Monthly Trend'],['vendors','🏭 Vendor-wise'],['pending','⚠️ Pending GRN']].map(([k,l])=>(
+        {[['monthly',' Monthly Trend'],['vendors',' Vendor-wise'],['pending',' Pending GRN']].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)}
             style={{padding:'6px 16px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
               border:'1px solid var(--odoo-border)',background:view===k?'var(--odoo-purple)':'#fff',
@@ -116,7 +116,7 @@ export default function PurchaseReport() {
                 <td style={{fontFamily:'DM Mono,monospace'}}>{v.inv>0?fmtL(v.inv):'—'}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>{v.paid>0?fmtL(v.paid):'—'}</td>
                 <td style={{fontFamily:'DM Mono,monospace',color:v.due>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:v.due>0?700:400}}>
-                  {v.due>0?fmtL(v.due):'✅ Nil'}
+                  {v.due>0?fmtL(v.due):' Nil'}
                 </td>
                 <td>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
@@ -134,7 +134,7 @@ export default function PurchaseReport() {
 
       {view==='pending' && (
         <div>
-          <div className="fi-alert warn" style={{marginBottom:14}}>⚠️ These POs have been raised but GRN is pending. Follow up with vendors.</div>
+          <div className="fi-alert warn" style={{marginBottom:14}}> These POs have been raised but GRN is pending. Follow up with vendors.</div>
           <table className="fi-data-table">
             <thead><tr><th>PO No.</th><th>Vendor</th><th>PO Date</th><th>PO Value</th><th>GRN Done</th><th>Pending</th><th>Days Overdue</th></tr></thead>
             <tbody>

@@ -36,7 +36,7 @@ export default function EmployeeProfile() {
           <div style={{flex:1}}>
             <div style={{display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
               <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'20px',color:'var(--odoo-dark)'}}>{EMP.name}</div>
-              {isToday(EMP.dob) && <span style={{background:'#FFF3CD',color:'#856404',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>🎂 Birthday Today!</span>}
+              {isToday(EMP.dob) && <span style={{background:'#FFF3CD',color:'#856404',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}> Birthday Today!</span>}
             </div>
             <div style={{color:'var(--odoo-purple)',fontWeight:'600',fontSize:'14px',marginTop:'2px'}}>{EMP.desg} · {EMP.dept}</div>
             <div style={{display:'flex',gap:'12px',marginTop:'8px',flexWrap:'wrap'}}>
@@ -70,11 +70,11 @@ export default function EmployeeProfile() {
       {tab==='Overview' && (
         <div className="fi-panel-grid">
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>👤 Personal Details</h3></div>
+            <div className="fi-panel-hdr"><h3> Personal Details</h3></div>
             <div className="fi-panel-body">
-              {[['📞 Mobile',EMP.ph],['📧 Email',EMP.email],['🎂 DOB',`${EMP.dob} (42 yrs)`],
-                ['🩸 Blood',EMP.blood],['👤 Gender',EMP.gender],['💍 Marital',EMP.marital],
-                ['📍 Address',EMP.addr],['🆘 Emergency',EMP.emergency]].map(([l,v])=>(
+              {[[' Mobile',EMP.ph],[' Email',EMP.email],[' DOB',`${EMP.dob} (42 yrs)`],
+                ['🩸 Blood',EMP.blood],[' Gender',EMP.gender],[' Marital',EMP.marital],
+                [' Address',EMP.addr],['🆘 Emergency',EMP.emergency]].map(([l,v])=>(
                 <div key={l} style={{display:'flex',gap:'8px',padding:'7px 0',borderBottom:'1px solid var(--odoo-border)',fontSize:'12px'}}>
                   <span style={{minWidth:'120px',color:'var(--odoo-gray)',fontWeight:'600'}}>{l}</span>
                   <span style={{fontWeight:'600'}}>{v}</span>
@@ -84,7 +84,7 @@ export default function EmployeeProfile() {
           </div>
           <div>
             <div className="fi-panel" style={{marginBottom:'14px'}}>
-              <div className="fi-panel-hdr"><h3>🏛️ ID & Statutory</h3></div>
+              <div className="fi-panel-hdr"><h3> ID & Statutory</h3></div>
               <div className="fi-panel-body">
                 {[['Aadhaar',EMP.aadhaar],['PAN',EMP.pan],['Bank A/C',EMP.bank],
                   ['PF No.',EMP.pf],['ESI No.',EMP.esi]].map(([l,v])=>(
@@ -96,7 +96,7 @@ export default function EmployeeProfile() {
               </div>
             </div>
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>📅 Leave Balance — 2025</h3></div>
+              <div className="fi-panel-hdr"><h3> Leave Balance — 2025</h3></div>
               <div className="fi-panel-body">
                 {LEAVE_BALANCE.map(l=>(
                   <div key={l.type} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:'1px solid var(--odoo-border)'}}>
@@ -143,8 +143,8 @@ export default function EmployeeProfile() {
       {(tab==='Attendance'||tab==='Leave'||tab==='Documents') && (
         <div className="pp-alert info">
           {tab==='Attendance' && <><strong>Attendance:</strong> 24/26 days present · 1 late mark · 1 WFH (Feb 2025)</>}
-          {tab==='Leave' && <>📅 <strong>Leave History:</strong> 3 EL taken (15-17 Jan), 1 SL (8 Feb). All approved.</>}
-          {tab==='Documents' && <><strong>Documents:</strong> Aadhaar ✅, PAN ✅, Passbook ✅, Photo ✅, Qualification ✅</>}
+          {tab==='Leave' && <> <strong>Leave History:</strong> 3 EL taken (15-17 Jan), 1 SL (8 Feb). All approved.</>}
+          {tab==='Documents' && <><strong>Documents:</strong> Aadhaar , PAN , Passbook , Photo , Qualification </>}
         </div>
       )}
     </div>

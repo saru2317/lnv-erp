@@ -25,14 +25,14 @@ export default function OpportunityView() {
         <div className="fi-lv-actions">
           {!isWon&&!isLost&&<><button className="btn btn-s sd-bsm" onClick={()=>setActForm(f=>({...f,show:true}))}>+ Activity</button>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>Create Quotation</button>
-          <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStage('Won')}>🏆 Mark Won</button>
-          <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStage('Lost')}>✗ Mark Lost</button></>}
+          <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStage('Won')}> Mark Won</button>
+          <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStage('Lost')}> Mark Lost</button></>}
         </div>
       </div>
 
       {/* Won/Lost Banner */}
-      {isWon&&<div className="pp-alert" style={{background:'#D4EDDA',borderColor:'var(--odoo-green)',marginBottom:'14px'}}>🏆 <strong>Deal Won!</strong> — Congratulations! This opportunity has been closed as WON. <button className="btn btn-s btn-p" style={{marginLeft:'8px'}} onClick={()=>nav('/crm/quotations/new')}>Create Sales Order →</button></div>}
-      {isLost&&<div className="pp-alert warn" style={{marginBottom:'14px'}}>❌ <strong>Deal Lost</strong> — This opportunity was marked as Lost. {opp.lostReason&&`Reason: ${opp.lostReason}`}</div>}
+      {isWon&&<div className="pp-alert" style={{background:'#D4EDDA',borderColor:'var(--odoo-green)',marginBottom:'14px'}}> <strong>Deal Won!</strong> — Congratulations! This opportunity has been closed as WON. <button className="btn btn-s btn-p" style={{marginLeft:'8px'}} onClick={()=>nav('/crm/quotations/new')}>Create Sales Order →</button></div>}
+      {isLost&&<div className="pp-alert warn" style={{marginBottom:'14px'}}> <strong>Deal Lost</strong> — This opportunity was marked as Lost. {opp.lostReason&&`Reason: ${opp.lostReason}`}</div>}
 
       {/* Stage Stepper */}
       {!isWon&&!isLost&&(
@@ -40,7 +40,7 @@ export default function OpportunityView() {
           {OPP_STAGES.filter(s=>s!=='Won'&&s!=='Lost').map((s,i)=>(
             <div key={s} className={`crm-step ${stage===s?'crm-step-active':i<stageIdx?'crm-step-done':''}`}
               onClick={()=>setStage(s)} style={{cursor:'pointer'}}>
-              <div className="crm-step-dot">{i<stageIdx?'✓':i+1}</div>
+              <div className="crm-step-dot">{i<stageIdx?'':i+1}</div>
               <div className="crm-step-lbl">{s}</div>
             </div>
           ))}
@@ -96,7 +96,7 @@ export default function OpportunityView() {
           {/* Activity log form */}
           {actForm.show&&(
             <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-              <div className="fi-panel-hdr"><h3>📝 Log Activity</h3></div>
+              <div className="fi-panel-hdr"><h3> Log Activity</h3></div>
               <div className="fi-panel-body">
                 <div className="sd-form-grid">
                   <div className="sd-field">
@@ -125,7 +125,7 @@ export default function OpportunityView() {
 
           {/* Activity Timeline */}
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📅 Activity History</h3></div>
+            <div className="fi-panel-hdr"><h3> Activity History</h3></div>
             <div className="fi-panel-body">
               {activities.length===0
                 ? <div style={{textAlign:'center',padding:'24px',color:'var(--odoo-gray)'}}>No activities logged yet.</div>
@@ -150,7 +150,7 @@ export default function OpportunityView() {
         {/* Right */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>🤖 AI Win Analysis</h3></div>
+            <div className="fi-panel-hdr"><h3> AI Win Analysis</h3></div>
             <div className="fi-panel-body">
               <div style={{textAlign:'center',marginBottom:'12px'}}>
                 <div style={{fontSize:'36px',fontWeight:'800',fontFamily:'Syne,sans-serif',
@@ -176,11 +176,11 @@ export default function OpportunityView() {
           </div>
 
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>⚡ Quick Actions</h3></div>
+            <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
             <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               <button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>nav('/crm/quotations/new')}>Create Quotation</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Call'}))}>📞 Log Call</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Meeting'}))}>🤝 Log Meeting</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Call'}))}> Log Call</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Meeting'}))}> Log Meeting</button>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Demo'}))}>Log Demo</button>
             </div>
           </div>

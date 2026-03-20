@@ -23,18 +23,18 @@ export default function CapacityPlan() {
           <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
             <option>March 2025</option><option>April 2025</option><option>May 2025</option>
           </select>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/gantt')}>📅 Gantt View</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/gantt')}> Gantt View</button>
         </div>
       </div>
 
-      <div className="pp-alert warn">⚠️ <strong>RFM-01 is at 102% capacity</strong> in Week 2 of March — consider rescheduling WO-2025-021.</div>
+      <div className="pp-alert warn"> <strong>RFM-01 is at 102% capacity</strong> in Week 2 of March — consider rescheduling WO-2025-021.</div>
 
       {/* Summary KPIs */}
       <div className="pp-kpi-grid" style={{marginBottom:'20px'}}>
-        {[{cls:'green',ic:'✅',l:'Machines Available',v:'8',s:'All work centres'},
-          {cls:'red',  ic:'⚠️',l:'Overloaded',        v:'1',s:'RFM-01 in W2'},
-          {cls:'orange',ic:'📊',l:'Avg Utilization',  v:'68%',s:'Across all machines'},
-          {cls:'blue', ic:'📅',l:'Planned Orders',    v:'6',s:'March 2025'},
+        {[{cls:'green',ic:'',l:'Machines Available',v:'8',s:'All work centres'},
+          {cls:'red',  ic:'',l:'Overloaded',        v:'1',s:'RFM-01 in W2'},
+          {cls:'orange',ic:'',l:'Avg Utilization',  v:'68%',s:'Across all machines'},
+          {cls:'blue', ic:'',l:'Planned Orders',    v:'6',s:'March 2025'},
         ].map(k=>(
           <div key={k.l} className={`pp-kpi-card ${k.cls}`}>
             <div className="pp-kpi-icon">{k.ic}</div>
@@ -70,7 +70,7 @@ export default function CapacityPlan() {
                       <div style={{background:'#F0EEEB',borderRadius:'3px',height:'5px',marginTop:'3px'}}>
                         <div style={{width:`${Math.min(pct,100)}%`,height:'100%',background:clr,borderRadius:'3px'}}></div>
                       </div>
-                      <div style={{fontSize:'10px',color:clr,fontWeight:'600',marginTop:'2px'}}>{pct}% {overloaded?'⚠️ Over':''}</div>
+                      <div style={{fontSize:'10px',color:clr,fontWeight:'600',marginTop:'2px'}}>{pct}% {overloaded?' Over':''}</div>
                     </td>
                   )
                 })}

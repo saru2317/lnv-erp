@@ -12,7 +12,7 @@ export default function EmailConfig() {
   const handleTest = () => {
     if (!testEmail) { alert('Enter a test email address'); return }
     setTesting(true)
-    setTimeout(() => { setTesting(false); alert(`✅ Test email sent to ${testEmail}`) }, 1800)
+    setTimeout(() => { setTesting(false); alert(` Test email sent to ${testEmail}`) }, 1800)
   }
 
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
@@ -29,14 +29,14 @@ export default function EmailConfig() {
           <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'6px',
             background:config.status==='Connected'?'#E8F5E9':'#FFEBEE',
             color:config.status==='Connected'?'#2E7D32':'#C62828',fontSize:'12px',fontWeight:'700'}}>
-            {config.status==='Connected'?'🟢':'🔴'} {config.status}
+            {config.status==='Connected'?'🟢':''} {config.status}
           </div>
-          <button className="btn btn-p btn-s" onClick={handleSave}>{saved?'✅ Saved!':'💾 Save'}</button>
+          <button className="btn btn-p btn-s" onClick={handleSave}>{saved?' Saved!':' Save'}</button>
         </div>
       </div>
 
       <div style={{display:'flex',gap:0,marginBottom:'16px',borderBottom:'2px solid var(--odoo-border)'}}>
-        {[['smtp','📧 SMTP Config'],['templates','📋 Templates'],['test','🧪 Test Email']].map(([k,l])=>(
+        {[['smtp',' SMTP Config'],['templates',' Templates'],['test',' Test Email']].map(([k,l])=>(
           <div key={k} onClick={()=>setTab(k)}
             style={{padding:'8px 18px',cursor:'pointer',fontSize:'12px',fontWeight:'700',
               borderBottom:tab===k?'2px solid var(--odoo-purple)':'2px solid transparent',
@@ -46,7 +46,7 @@ export default function EmailConfig() {
 
       {tab==='smtp' && (
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>📧 SMTP Server Configuration</h3></div>
+          <div className="fi-panel-hdr"><h3> SMTP Server Configuration</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -69,7 +69,7 @@ export default function EmailConfig() {
               <div className="sd-field"><label>Password</label><input type="password" value={config.password} onChange={e=>set('password',e.target.value)} /></div>
             </div>
             <div style={{marginTop:'12px',padding:'10px 14px',background:'#F8F9FA',borderRadius:'6px',fontSize:'11px',color:'var(--odoo-gray)'}}>
-              💡 For Gmail SMTP, use App Passwords (not your actual Gmail password). Go to Google Account → Security → 2FA → App Passwords.
+               For Gmail SMTP, use App Passwords (not your actual Gmail password). Go to Google Account → Security → 2FA → App Passwords.
             </div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function EmailConfig() {
               <div key={t.id} style={{padding:'12px 16px',background:'#fff',borderRadius:'8px',
                 border:'1px solid var(--odoo-border)',display:'flex',alignItems:'center',gap:'12px'}}>
                 <div style={{width:'36px',height:'36px',borderRadius:'8px',background:'#EDE0EA',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>📧</div>
+                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}></div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:'700',fontSize:'13px'}}>{t.name}</div>
                   <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>Trigger: <strong>{t.trigger}</strong></div>
@@ -106,14 +106,14 @@ export default function EmailConfig() {
             ))}
           </div>
           <div style={{marginTop:'12px',padding:'10px 14px',background:'#FFF3CD',borderRadius:'6px',fontSize:'12px',color:'#856404'}}>
-            💡 Templates use placeholders like {'{{customer_name}}'}, {'{{invoice_no}}'}, {'{{amount}}'}. Click Edit to customise.
+             Templates use placeholders like {'{{customer_name}}'}, {'{{invoice_no}}'}, {'{{amount}}'}. Click Edit to customise.
           </div>
         </div>
       )}
 
       {tab==='test' && (
         <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>🧪 Send Test Email</h3></div>
+          <div className="fi-panel-hdr"><h3> Send Test Email</h3></div>
           <div className="fi-panel-body">
             <div style={{marginBottom:'12px',fontSize:'12px',color:'var(--odoo-gray)'}}>
               Sends a test email using your current SMTP settings to verify the connection.
@@ -125,7 +125,7 @@ export default function EmailConfig() {
               </div>
               <button className="btn btn-p btn-s" onClick={handleTest} disabled={testing}
                 style={{whiteSpace:'nowrap',flexShrink:0}}>
-                {testing ? '⏳ Sending…' : '📤 Send Test'}
+                {testing ? '⏳ Sending…' : ' Send Test'}
               </button>
             </div>
             <div style={{marginTop:'16px',padding:'12px 14px',background:'#F8F9FA',borderRadius:'6px',fontSize:'12px'}}>

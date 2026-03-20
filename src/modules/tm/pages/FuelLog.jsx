@@ -35,7 +35,7 @@ export default function FuelLog() {
         ].map(k=>(<div key={k.l} className={`fi-kpi-card ${k.cls}`}><div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div></div>))}
       </div>
       <div style={{display:'flex',gap:8,marginBottom:14}}>
-        {[['log','📋 Fuel Entries'],['summary','📊 Vehicle Summary']].map(([k,l])=>(
+        {[['log',' Fuel Entries'],['summary',' Vehicle Summary']].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)} style={{padding:'6px 16px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',border:'1px solid var(--odoo-border)',background:view===k?'var(--odoo-purple)':'#fff',color:view===k?'#fff':'var(--odoo-gray)'}}>{l}</button>
         ))}
       </div>

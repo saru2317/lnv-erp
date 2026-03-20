@@ -22,16 +22,16 @@ export default function QuotationView() {
         </div>
         <div className="fi-lv-actions">
           <span className={`crm-badge ${QT_STATUS_COLORS[status]||'crm-badge-new'}`} style={{fontSize:'13px',padding:'4px 14px'}}>{status}</span>
-          {status==='Draft'&&<button className="btn btn-p btn-s" onClick={()=>setStatus('Sent')}>📧 Send to Customer</button>}
+          {status==='Draft'&&<button className="btn btn-p btn-s" onClick={()=>setStatus('Sent')}> Send to Customer</button>}
           {status==='Sent'&&<><button className="btn btn-s sd-bsm" onClick={()=>setShowRevise(true)}>Revise</button>
-          <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStatus('Won')}>✓ Mark Won</button>
-          <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStatus('Lost')}>✗ Mark Lost</button></>}
+          <button className="btn btn-p btn-s" style={{background:'var(--odoo-green)'}} onClick={()=>setStatus('Won')}> Mark Won</button>
+          <button className="btn btn-s" style={{background:'var(--odoo-red)',color:'#fff'}} onClick={()=>setStatus('Lost')}> Mark Lost</button></>}
           {status==='Won'&&<button className="btn btn-p btn-s" onClick={()=>nav('/crm/opportunities')}>→ Create Sales Order</button>}
         </div>
       </div>
 
-      {status==='Won'&&<div className="pp-alert" style={{background:'#D4EDDA',borderColor:'var(--odoo-green)',marginBottom:'14px'}}>🏆 <strong>Quotation Won!</strong> Proceed to create a Sales Order in the SD module.</div>}
-      {status==='Sent'&&<div className="pp-alert warn" style={{marginBottom:'14px'}}>📧 Quotation sent to {qt.company}. Valid until <strong>{qt.validity}</strong>. Awaiting customer response.</div>}
+      {status==='Won'&&<div className="pp-alert" style={{background:'#D4EDDA',borderColor:'var(--odoo-green)',marginBottom:'14px'}}> <strong>Quotation Won!</strong> Proceed to create a Sales Order in the SD module.</div>}
+      {status==='Sent'&&<div className="pp-alert warn" style={{marginBottom:'14px'}}> Quotation sent to {qt.company}. Valid until <strong>{qt.validity}</strong>. Awaiting customer response.</div>}
 
       {showRevise&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-orange)'}}>
@@ -138,10 +138,10 @@ export default function QuotationView() {
             </div>
           </div>
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>⚡ Actions</h3></div>
+            <div className="fi-panel-hdr"><h3> Actions</h3></div>
             <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}}>🖨️ Print Quotation</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}}>📧 Email to Customer</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}}> Print Quotation</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}}> Email to Customer</button>
               <button className="btn btn-s sd-bsm" style={{width:'100%'}}>Download PDF</button>
               {status==='Won'&&<button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>nav('/crm/opportunities')}>→ Create Sales Order</button>}
             </div>

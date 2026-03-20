@@ -24,11 +24,11 @@ export default function GanttView() {
           {['week','month','quarter'].map(v=>(
             <button key={v} className={`btn ${view===v?'btn-p':'btn-s'} sd-bsm`} onClick={()=>setView(v)}>{v.charAt(0).toUpperCase()+v.slice(1)}</button>
           ))}
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>➕ New WO</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/wo/new')}>New WO</button>
         </div>
       </div>
 
-      <div className="pp-alert info">💡 Drag bars to reschedule (view only in this build). <strong>RFM-01 overloaded in Week 2</strong> — WO-2025-021 may need rescheduling.</div>
+      <div className="pp-alert info"> Drag bars to reschedule (view only in this build). <strong>RFM-01 overloaded in Week 2</strong> — WO-2025-021 may need rescheduling.</div>
 
       <div className="gantt-wrap">
         {/* Week header */}
@@ -79,7 +79,7 @@ export default function GanttView() {
 
         {/* Machine Load Summary */}
         <div style={{marginTop:'20px',borderTop:'1px solid var(--odoo-border)',paddingTop:'14px'}}>
-          <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'10px',fontFamily:'Syne,sans-serif'}}>⚙️ Machine Load — March 2025</div>
+          <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'10px',fontFamily:'Syne,sans-serif'}}> Machine Load — March 2025</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px'}}>
             {[{mc:'RFM-01',load:102,clr:'var(--odoo-red)'},{mc:'OE-02',load:75,clr:'var(--odoo-orange)'},
               {mc:'CSP-01',load:60,clr:'var(--odoo-green)'},{mc:'CRD-01',load:45,clr:'var(--odoo-blue)'}].map(m=>(
@@ -88,7 +88,7 @@ export default function GanttView() {
                 <div className="mc-util-bar">
                   <div className="mc-util-fill" style={{width:`${Math.min(m.load,100)}%`,background:m.clr}}></div>
                 </div>
-                <div style={{fontSize:'11px',fontWeight:'700',color:m.clr,marginTop:'2px'}}>{m.load}% {m.load>100?'⚠️ OVERLOADED':''}</div>
+                <div style={{fontSize:'11px',fontWeight:'700',color:m.clr,marginTop:'2px'}}>{m.load}% {m.load>100?' OVERLOADED':''}</div>
               </div>
             ))}
           </div>

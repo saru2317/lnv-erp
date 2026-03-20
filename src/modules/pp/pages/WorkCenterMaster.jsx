@@ -52,7 +52,7 @@ export default function WorkCenterMaster() {
       {/* Add/Edit Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>{editId?'✏️ Edit':'➕ New'} Work Center</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId?' Edit':' New'} Work Center</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Work Center Name *</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Powder Coat Booth 1" /></div>
@@ -81,7 +81,7 @@ export default function WorkCenterMaster() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'}</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'}</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function WorkCenterMaster() {
           return (
             <div key={proc} className="fi-panel">
               <div className="fi-panel-hdr">
-                <h3>⚙️ {proc}</h3>
+                <h3> {proc}</h3>
                 <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
                   <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{procWCs.length} work center{procWCs.length!==1?'s':''}</span>
                   <button className="btn btn-s sd-bsm" onClick={()=>{set('process',proc);setEditId(null);setShowForm(true)}}>+ Add</button>
@@ -112,7 +112,7 @@ export default function WorkCenterMaster() {
                           background:w.status==='Active'?'var(--odoo-green)':w.status==='Under Maintenance'?'var(--odoo-red)':'var(--odoo-gray)'}}></div>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:'700',fontSize:'13px'}}>{w.name}</div>
-                          <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>👤 {w.operator||'—'} · 🕐 {w.shift}</div>
+                          <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}> {w.operator||'—'} ·  {w.shift}</div>
                         </div>
                         {/* Capacity */}
                         <div style={{textAlign:'center',minWidth:'90px'}}>
@@ -133,8 +133,8 @@ export default function WorkCenterMaster() {
                         <span className={w.status==='Active'?'crm-stage-won':w.status==='Under Maintenance'?'crm-stage-lost':'crm-badge-new'} style={{fontSize:'10px',flexShrink:0}}>{w.status}</span>
                         {/* Actions */}
                         <div style={{display:'flex',gap:'4px',flexShrink:0}}>
-                          <button className="btn-act-edit" onClick={()=>handleEdit(w)}>✏️</button>
-                          <button className="btn-act-del" onClick={()=>setWcs(ws=>ws.filter(x=>x.id!==w.id))}>🗑</button>
+                          <button className="btn-act-edit" onClick={()=>handleEdit(w)}></button>
+                          <button className="btn-act-del" onClick={()=>setWcs(ws=>ws.filter(x=>x.id!==w.id))}></button>
                         </div>
                       </div>
                     ))}
@@ -148,10 +148,10 @@ export default function WorkCenterMaster() {
       {/* Summary stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginTop:'14px'}}>
         {[
-          {l:'Total Work Centers', v:wcs.length,                                   c:'var(--odoo-purple)',i:'⚙️'},
-          {l:'Active',             v:wcs.filter(w=>w.status==='Active').length,    c:'var(--odoo-green)', i:'✅'},
-          {l:'Under Maintenance',  v:wcs.filter(w=>w.status==='Under Maintenance').length,c:'var(--odoo-red)',i:'🔧'},
-          {l:'Avg Utilization',    v:Math.round(wcs.filter(w=>w.status==='Active').reduce((s,w)=>s+w.utilization,0)/wcs.filter(w=>w.status==='Active').length)+'%',c:'var(--odoo-orange)',i:'📊'},
+          {l:'Total Work Centers', v:wcs.length,                                   c:'var(--odoo-purple)',i:''},
+          {l:'Active',             v:wcs.filter(w=>w.status==='Active').length,    c:'var(--odoo-green)', i:''},
+          {l:'Under Maintenance',  v:wcs.filter(w=>w.status==='Under Maintenance').length,c:'var(--odoo-red)',i:''},
+          {l:'Avg Utilization',    v:Math.round(wcs.filter(w=>w.status==='Active').reduce((s,w)=>s+w.utilization,0)/wcs.filter(w=>w.status==='Active').length)+'%',c:'var(--odoo-orange)',i:''},
         ].map(k=>(
           <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
             <div className="crm-kpi-icon">{k.i}</div>

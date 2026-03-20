@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 const COA = [
-  {grp:'📦 ASSETS (1xxx)', cls:'asset', items:[
+  {grp:' ASSETS (1xxx)', cls:'asset', items:[
     {code:'1100',name:'Cash in Hand',           type:'Current Asset',  bal:'₹40,000',  bc:'cr'},
     {code:'1200',name:'Bank — HDFC Current',    type:'Current Asset',  bal:'₹27,56,000',bc:'cr'},
     {code:'1210',name:'Bank — ICICI OD A/C',    type:'Current Asset',  bal:'₹0',        bc:'cr'},
@@ -15,7 +15,7 @@ const COA = [
     {code:'1600',name:'GST Input Credit (ITC)',  type:'Current Asset', bal:'₹62,000',   bc:'cr'},
     {code:'1700',name:'TDS Receivable',          type:'Current Asset', bal:'₹36,000',   bc:'cr'},
   ]},
-  {grp:'⚖️ LIABILITIES (2xxx)', cls:'liab', items:[
+  {grp:' LIABILITIES (2xxx)', cls:'liab', items:[
     {code:'2100',name:'Accounts Payable (AP)',   type:'Current Liability',bal:'₹5,60,000', bc:'dr'},
     {code:'2110',name:'Advance from Customers',  type:'Current Liability',bal:'₹1,48,000', bc:'dr'},
     {code:'2200',name:'GST Payable (CGST)',       type:'Current Liability',bal:'₹2,82,000', bc:'dr'},
@@ -29,13 +29,13 @@ const COA = [
     {code:'2600',name:'Retained Earnings',        type:'Equity',           bal:'₹52,54,000',bc:'dr'},
     {code:'2700',name:'Term Loan — HDFC',         type:'Long Term',        bal:'₹27,00,000',bc:'dr'},
   ]},
-  {grp:'💰 INCOME (5xxx)', cls:'inc', items:[
+  {grp:' INCOME (5xxx)', cls:'inc', items:[
     {code:'5100',name:'Sales Revenue',            type:'Income',   bal:'₹48,60,000',bc:'dr'},
     {code:'5110',name:'Service Revenue',          type:'Income',   bal:'₹0',         bc:'dr'},
     {code:'5200',name:'Other Income',             type:'Income',   bal:'₹24,000',   bc:'dr'},
     {code:'5300',name:'Interest Income',          type:'Income',   bal:'₹17,000',   bc:'dr'},
   ]},
-  {grp:'💸 EXPENSES (6xxx)', cls:'exp', items:[
+  {grp:' EXPENSES (6xxx)', cls:'exp', items:[
     {code:'6100',name:'COGS — Direct Material',   type:'COGS',     bal:'₹26,40,000',bc:'cr'},
     {code:'6110',name:'COGM — Direct Labour',     type:'COGM/PP',  bal:'₹4,80,000', bc:'cr'},
     {code:'6120',name:'COGM — Mfg Overhead',     type:'COGM/PP',   bal:'₹2,60,000', bc:'cr'},

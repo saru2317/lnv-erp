@@ -40,7 +40,7 @@ export default function InvoiceList() {
       </div>
 
       <div className="sd-fb">
-        <div className="sd-fs">🔍<input placeholder="Search invoice #, customer…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+        <div className="sd-fs"><input placeholder="Search invoice #, customer…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
         <select className="sd-fsel" value={status} onChange={e=>setStatus(e.target.value)}>
           <option value="">All Status</option><option value="draft">Draft</option><option value="pending">Pending</option>
           <option value="paid">Paid</option><option value="overdue">Overdue</option>
@@ -67,10 +67,10 @@ export default function InvoiceList() {
                 <td style={{color: inv.status==='overdue'?'#B03A37':'inherit'}}>{inv.due}</td>
                 <td><Badge status={inv.status}>{inv.status.toUpperCase()}</Badge></td>
                 <td style={{display:'flex',gap:'4px'}}>
-                  <button className="act-btn-view" onClick={()=>navigate(`/sd/invoices/${inv.id}`)}>👁 View</button>
-                  {inv.status==='paid'    && <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/invoice')}}>🖨 Print</button>}
+                  <button className="act-btn-view" onClick={()=>navigate(`/sd/invoices/${inv.id}`)}> View</button>
+                  {inv.status==='paid'    && <button className="act-btn-print" onClick={e=>{e.stopPropagation();navigate('/print/invoice')}}> Print</button>}
                   {inv.status==='pending' && <button className="act-btn-green">Payment</button>}
-                  {inv.status==='overdue' && <button className="act-btn-orange">📱 WhatsApp</button>}
+                  {inv.status==='overdue' && <button className="act-btn-orange"> WhatsApp</button>}
                 </td>
               </tr>
             ))}

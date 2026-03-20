@@ -22,11 +22,11 @@ export default function BOMNew() {
 
   if(saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>✅</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>BOM-005 Created!</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/bom')}>← BOM List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>➕ Create Another</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>Create Another</button>
       </div>
     </div>
   )
@@ -36,13 +36,13 @@ export default function BOMNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Create BOM <small>CS01 · Bill of Materials</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/bom')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save BOM</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/bom')}> Cancel</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save BOM</button>
         </div>
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔩 BOM Header</div>
+        <div className="fi-form-sec-hdr"> BOM Header</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>BOM Number</label><input className="fi-form-ctrl" defaultValue="BOM-005" readOnly/></div>
@@ -75,7 +75,7 @@ export default function BOMNew() {
 
       {/* Component Lines */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📦 Components</div>
+        <div className="fi-form-sec-hdr">Components</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>#</th><th>Component / Material</th><th>Qty per Base</th><th>UOM</th><th>Scrap %</th><th>Effective Qty</th><th></th></tr></thead>
@@ -98,20 +98,20 @@ export default function BOMNew() {
                   <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-blue)',fontWeight:'600'}}>
                     {l.qty ? (parseFloat(l.qty) * (1 + (parseFloat(l.scrap)||0)/100)).toFixed(3) : '—'} {l.uom}
                   </td>
-                  <td><span onClick={()=>del(l.id)} style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}}>🗑</span></td>
+                  <td><span onClick={()=>del(l.id)} style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}}></span></td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm" onClick={addLine}>➕ Add Component</button>
+            <button className="btn btn-s sd-bsm" onClick={addLine}>Add Component</button>
           </div>
         </div>
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/bom')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>💾 Save BOM</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/bom')}> Cancel</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save BOM</button>
       </div>
     </div>
   )

@@ -23,13 +23,13 @@ export default function CalibrationList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Calibration Register <small>Instrument Calibration Tracking</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">➕ Add Instrument</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Add Instrument</button>
         </div>
       </div>
 
       {CALIBRATIONS.some(c=>c.overdue>0) && (
-        <div className="pp-alert warn">⚠️ <strong>1 instrument overdue for calibration</strong> — Temperature Gauge (TG-001) is 14 days overdue. Schedule immediately.</div>
+        <div className="pp-alert warn"> <strong>1 instrument overdue for calibration</strong> — Temperature Gauge (TG-001) is 14 days overdue. Schedule immediately.</div>
       )}
 
       <div className="pp-chips">
@@ -57,7 +57,7 @@ export default function CalibrationList() {
               <td style={{fontSize:'12px'}}>{c.agency}</td>
               <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:c.cert==='—'?'var(--odoo-gray)':'var(--odoo-blue)'}}>{c.cert}</td>
               <td><span className={`badge ${c.sb}`}>
-                {c.overdue>0?`⚠️ ${c.overdue}d Overdue`:c.overdue===0?'⏰ Due Today':'✅ Valid'}
+                {c.overdue>0?` ${c.overdue}d Overdue`:c.overdue===0?'⏰ Due Today':' Valid'}
               </span></td>
               <td>
                 <div style={{display:'flex',gap:'4px'}}>

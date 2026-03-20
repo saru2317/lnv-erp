@@ -68,10 +68,10 @@ export default function JVNew() {
 
   // Status indicator
   const getBalStatus = () => {
-    if (balanced) return {icon:'✅', label:'Balanced', color:'var(--odoo-green)'}
-    if (absDiff <= 1.00) return {icon:'🔄', label:`Auto Round-Off: ${fmtDisp(absDiff)}`, color:'var(--odoo-blue)'}
-    if (absDiff <= 10)   return {icon:'⚠️', label:`Difference: ${fmtDisp(absDiff)} — Check entries`, color:'var(--odoo-orange)'}
-    return {icon:'❌', label:`Difference: ${fmtDisp(absDiff)} — Cannot post`, color:'var(--odoo-red)'}
+    if (balanced) return {icon:'', label:'Balanced', color:'var(--odoo-green)'}
+    if (absDiff <= 1.00) return {icon:'', label:`Auto Round-Off: ${fmtDisp(absDiff)}`, color:'var(--odoo-blue)'}
+    if (absDiff <= 10)   return {icon:'', label:`Difference: ${fmtDisp(absDiff)} — Check entries`, color:'var(--odoo-orange)'}
+    return {icon:'', label:`Difference: ${fmtDisp(absDiff)} — Cannot post`, color:'var(--odoo-red)'}
   }
   const balStatus = getBalStatus()
 
@@ -85,7 +85,7 @@ export default function JVNew() {
   if (posted) {
     return (
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px 20px',gap:'16px'}}>
-        <div style={{fontSize:'48px'}}>✅</div>
+        <div style={{fontSize:'48px'}}></div>
         <div style={{fontFamily:'Syne,sans-serif',fontSize:'22px',fontWeight:'800',color:'var(--odoo-green)'}}>JV-2025-0149 Posted Successfully!</div>
         {roundOff.show && <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Auto Round-Off of {fmtDisp(roundOff.amt)} posted to {roundOff.acct}</div>}
         <div style={{display:'flex',gap:'10px',marginTop:'8px'}}>
@@ -101,20 +101,20 @@ export default function JVNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">New Journal Entry <small>FB50 · Manual Journal Voucher</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}> Cancel</button>
           <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm"
             disabled={!balanced}
             title={balanced ? 'Post Journal' : absDiff <= 1 ? 'Round-off will be auto-posted' : 'Difference > ₹1 — check entries'}
             onClick={() => setPosted(true)}>
-            {balanced ? '✅ Post Journal' : absDiff <= 1 ? '✅ Post + Round-Off' : `⚠️ Diff: ${fmtDisp(absDiff)}`}
+            {balanced ? ' Post Journal' : absDiff <= 1 ? ' Post + Round-Off' : ` Diff: ${fmtDisp(absDiff)}`}
           </button>
         </div>
       </div>
 
       {/* Header */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📓 Journal Header</div>
+        <div className="fi-form-sec-hdr"> Journal Header</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>JV Number</label><input className="fi-form-ctrl" defaultValue="JV-2025-0149" readOnly/></div>
@@ -178,7 +178,7 @@ export default function JVNew() {
                         onFocus={e => { if(l.dr) updateLine(l.id,'dr','') }}/>
                     </td>
                     <td>
-                      <span className="li-del" style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}} onClick={() => delLine(l.id)}>🗑</span>
+                      <span className="li-del" style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}} onClick={() => delLine(l.id)}></span>
                     </td>
                   </tr>
                 ))}
@@ -186,7 +186,7 @@ export default function JVNew() {
                 {/* ── AUTO ROUND-OFF ROW ── */}
                 {roundOff.show && (
                   <tr style={{background:'#EBF5FB',borderTop:'2px dashed var(--odoo-blue)'}}>
-                    <td style={{color:'var(--odoo-blue)',fontSize:'11px',fontWeight:'700'}}>🔄</td>
+                    <td style={{color:'var(--odoo-blue)',fontSize:'11px',fontWeight:'700'}}></td>
                     <td>
                       <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
                         <span style={{
@@ -251,7 +251,7 @@ export default function JVNew() {
                     </td>
                     <td>
                       <span title="Auto-calculated. Cannot delete."
-                        style={{fontSize:'12px',color:'var(--odoo-blue)',cursor:'not-allowed',opacity:.5}}>🔒</span>
+                        style={{fontSize:'12px',color:'var(--odoo-blue)',cursor:'not-allowed',opacity:.5}}></span>
                     </td>
                   </tr>
                 )}
@@ -309,16 +309,16 @@ export default function JVNew() {
                      : 'var(--odoo-red)',
                 fontSize: absDiff===0 ? '18px' : '16px'
               }}>
-                {absDiff===0 ? '₹0.00 ✅' : `₹${absDiff.toFixed(2)}`}
+                {absDiff===0 ? '₹0.00 ' : `₹${absDiff.toFixed(2)}`}
               </span>
               {absDiff > 0 && absDiff <= 1 && (
-                <div style={{fontSize:'10px',color:'var(--odoo-blue)',marginTop:'2px'}}>Auto Round-Off 🔄</div>
+                <div style={{fontSize:'10px',color:'var(--odoo-blue)',marginTop:'2px'}}>Auto Round-Off </div>
               )}
               {absDiff > 1 && absDiff <= 10 && (
-                <div style={{fontSize:'10px',color:'var(--odoo-orange)',marginTop:'2px'}}>Check entries ⚠️</div>
+                <div style={{fontSize:'10px',color:'var(--odoo-orange)',marginTop:'2px'}}>Check entries </div>
               )}
               {absDiff > 10 && (
-                <div style={{fontSize:'10px',color:'var(--odoo-red)',marginTop:'2px'}}>Cannot post ❌</div>
+                <div style={{fontSize:'10px',color:'var(--odoo-red)',marginTop:'2px'}}>Cannot post </div>
               )}
             </div>
           </div>
@@ -331,7 +331,7 @@ export default function JVNew() {
               borderRadius:'6px',fontSize:'12px',color:'var(--odoo-blue)',
               display:'flex',alignItems:'center',gap:'8px'
             }}>
-              <span style={{fontSize:'16px'}}>🔄</span>
+              <span style={{fontSize:'16px'}}></span>
               <span>
                 <strong>Auto Round-Off Applied:</strong>&nbsp;
                 Difference of <strong>₹{roundOff.amt.toFixed(2)}</strong> is within ₹1.00 tolerance.&nbsp;
@@ -341,13 +341,13 @@ export default function JVNew() {
           )}
           {absDiff > 1 && absDiff <= 10 && (
             <div style={{margin:'10px 14px',padding:'10px 14px',background:'#FEF5E7',border:'1px solid #FAD7A0',borderRadius:'6px',fontSize:'12px',color:'var(--odoo-orange)',display:'flex',alignItems:'center',gap:'8px'}}>
-              <span>⚠️</span>
+              <span></span>
               <span><strong>Difference of ₹{absDiff.toFixed(2)} exceeds auto round-off limit (₹1.00).</strong> Please check your entries and correct the amount.</span>
             </div>
           )}
           {absDiff > 10 && (
             <div style={{margin:'10px 14px',padding:'10px 14px',background:'#FDEDEC',border:'1px solid #F5B7B1',borderRadius:'6px',fontSize:'12px',color:'var(--odoo-red)',display:'flex',alignItems:'center',gap:'8px'}}>
-              <span>❌</span>
+              <span></span>
               <span><strong>Cannot post! Difference of ₹{absDiff.toFixed(2)} is too large.</strong> Fix the debit/credit amounts before posting.</span>
             </div>
           )}
@@ -356,19 +356,19 @@ export default function JVNew() {
 
       {/* Footer Actions */}
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/fi/jv')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm"
           disabled={!balanced}
           onClick={() => setPosted(true)}>
-          {balanced ? '✅ Post Journal' : `⚠️ Diff: ${fmtDisp(absDiff)}`}
+          {balanced ? ' Post Journal' : ` Diff: ${fmtDisp(absDiff)}`}
         </button>
         <div className="fi-status-flow">
-          <span className="fi-sf-step act">📝 Entry</span>
+          <span className="fi-sf-step act"> Entry</span>
           <span className="fi-sf-arr">›</span>
           <span className={`fi-sf-step ${balanced?'done':''}`}>Posted</span>
           <span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">📜 In Ledger</span>
+          <span className="fi-sf-step"> In Ledger</span>
         </div>
       </div>
     </div>

@@ -38,7 +38,7 @@ export default function JobCardList() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Job Cards <small>{JOB_CARDS.length} total · {JOB_CARDS.filter(j=>j.status==='In Progress').length} active</small></div>
         <div className="fi-lv-actions">
-          <input className="sd-search" style={{width:'180px'}} value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Job ID / Customer / Item…" />
+          <input className="sd-search" style={{width:'180px'}} value={search} onChange={e=>setSearch(e.target.value)} placeholder=" Job ID / Customer / Item…" />
           <select className="sd-select" value={statusF} onChange={e=>setStatusF(e.target.value)}>
             <option>All</option>{['Pending','In Progress','Completed','On Hold'].map(s=><option key={s}>{s}</option>)}
           </select>
@@ -102,9 +102,9 @@ export default function JobCardList() {
                   </td>
                   <td>
                     <div style={{display:'flex',gap:'4px'}}>
-                      <button className="btn-act-view" onClick={()=>nav(`/pp/job-tracker?id=${j.id}`)}>🔍</button>
+                      <button className="btn-act-view" onClick={()=>nav(`/pp/job-tracker?id=${j.id}`)}></button>
                   <button className="btn-xs" onClick={()=>nav('/print/labourcard')}>Print</button>
-                      <button className="btn-act-edit" onClick={()=>nav(`/pp/process-execution?id=${j.id}`)}>⚙️</button>
+                      <button className="btn-act-edit" onClick={()=>nav(`/pp/process-execution?id=${j.id}`)}></button>
                     </div>
                   </td>
                 </tr>

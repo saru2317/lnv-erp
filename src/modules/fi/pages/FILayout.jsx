@@ -39,17 +39,17 @@ const BudgetVsActual     = lazy(() => import('./BudgetVsActual'))
 const InterModuleJournals= lazy(() => import('./InterModuleJournals'))
 
 const NAV_ITEMS = [
-  { to: '/fi',          label: '🏠 Home' },
-  { to: '/fi/jv',       label: '📓 Journals' },
-  { to: '/fi/itc-recon',label: '🔄 ITC Recon' },
-  { to: '/fi/gstr3b',   label: '🧾 GST' },
-  { to: '/fi/ar-aging', label: '💳 AR/AP' },
-  { to: '/fi/pl',       label: '📊 Reports' },
+  { to: '/fi',          label: ' Home' },
+  { to: '/fi/jv',       label: ' Journals' },
+  { to: '/fi/itc-recon',label: ' ITC Recon' },
+  { to: '/fi/gstr3b',   label: ' GST' },
+  { to: '/fi/ar-aging', label: ' AR/AP' },
+  { to: '/fi/pl',       label: ' Reports' },
 ]
 
 const SIDEBAR_GROUPS = [
   {
-    label: 'General Ledger', icon: '📓',
+    label: 'General Ledger', icon: '',
     items: [
       { to: '/fi/jv',           label: 'Journal List (FB03)' },
       { to: '/fi/jv/new',       label: 'New Journal (FB50)' },
@@ -60,9 +60,9 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'GST Compliance', icon: '🧾',
+    label: 'GST Compliance', icon: '',
     items: [
-      { to: '/fi/itc-recon',    label: '🔄 ITC Reconciliation (IRS)' },
+      { to: '/fi/itc-recon',    label: ' ITC Reconciliation (IRS)' },
       { to: '/fi/gstr1',        label: 'GSTR-1 (Sales Register)' },
       { to: '/fi/gstr2b',       label: 'GSTR-2B (Purchase Register)' },
       { to: '/fi/gstr3b',       label: 'GSTR-3B (Monthly Return)' },
@@ -76,7 +76,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Financial Reports', icon: '📊',
+    label: 'Financial Reports', icon: '',
     items: [
       { to: '/fi/pl',            label: 'Profit & Loss' },
       { to: '/fi/bs',            label: 'Balance Sheet' },
@@ -88,7 +88,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'AR / AP / Bank', icon: '💳',
+    label: 'AR / AP / Bank', icon: '',
     items: [
       { to: '/fi/ar-aging',     label: 'AR Aging (Customers)' },
       { to: '/fi/receipts',     label: 'Customer Receipts' },
@@ -100,7 +100,7 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Assets & Compliance', icon: '🏭',
+    label: 'Assets & Compliance', icon: '',
     items: [
       { to: '/fi/fixed-assets', label: 'Fixed Asset Register' },
       { to: '/fi/tds',          label: 'TDS Register' },

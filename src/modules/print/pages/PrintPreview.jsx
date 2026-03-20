@@ -129,7 +129,7 @@ export default function PrintPreview() {
           display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div style={{ fontFamily:'Syne,sans-serif', fontSize:18,
             fontWeight:800, color:'#F5C518' }}>
-            🖨️ LNV ERP — Print Center
+             LNV ERP — Print Center
           </div>
           <button onClick={() => navigate(-1)}
             style={{ padding:'7px 16px', background:'rgba(255,255,255,.15)',
@@ -166,7 +166,7 @@ export default function PrintPreview() {
                       e.currentTarget.style.borderColor=`${grp.color}44`
                       e.currentTarget.style.transform=''
                     }}>
-                    <div style={{ fontSize:24, marginBottom:6 }}>📄</div>
+                    <div style={{ fontSize:24, marginBottom:6 }}></div>
                     <div style={{ fontSize:12, fontWeight:600, color:'#fff' }}>
                       {doc.label}
                     </div>

@@ -8,7 +8,7 @@ export default function GRNNew() {
       <div className="lv-hdr">
         <div className="lv-ttl">Record Goods Receipt <small>MIGO · GRN Entry</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn')}> Cancel</button>
           <button className="btn btn-s sd-bsm">Save Draft</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn')}>Post GRN</button>
         </div>
@@ -51,7 +51,7 @@ export default function GRNNew() {
                   <td style={{color:'var(--odoo-gray)'}}>0 Kg</td>
                   <td><input type="number" defaultValue="400" style={{width:'70px'}}/></td>
                   <td>Kg</td>
-                  <td><select style={{width:'115px'}}><option>Accepted</option><option>❌ Rejected</option><option>⏳ QC Pending</option></select></td>
+                  <td><select style={{width:'115px'}}><option>Accepted</option><option> Rejected</option><option>⏳ QC Pending</option></select></td>
                   <td><input defaultValue="BIN-A12" style={{width:'80px'}}/></td>
                   <td><input placeholder="Remarks..." style={{width:'110px'}}/></td>
                 </tr>
@@ -61,7 +61,7 @@ export default function GRNNew() {
                   <td style={{color:'var(--odoo-gray)'}}>0 Nos</td>
                   <td><input type="number" defaultValue="98" style={{width:'70px'}}/></td>
                   <td>Nos</td>
-                  <td><select style={{width:'115px'}}><option>Accepted</option><option>❌ Rejected</option><option>⏳ QC Pending</option></select></td>
+                  <td><select style={{width:'115px'}}><option>Accepted</option><option> Rejected</option><option>⏳ QC Pending</option></select></td>
                   <td><input defaultValue="BIN-C05" style={{width:'80px'}}/></td>
                   <td><input defaultValue="2 damaged" style={{width:'110px'}}/></td>
                 </tr>
@@ -72,7 +72,7 @@ export default function GRNNew() {
       </div>
 
       <div className="mm-fs">
-        <div className="mm-fsh">📎 Attachments &amp; Notes</div>
+        <div className="mm-fsh"> Attachments &amp; Notes</div>
         <div className="mm-fsb">
           <div className="mm-fr2">
             <div className="mm-fg"><label>Upload DC / Invoice Copy</label><input type="file" className="mm-fc" accept=".pdf,.jpg,.png"/></div>
@@ -82,7 +82,7 @@ export default function GRNNew() {
       </div>
 
       <div className="mm-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn')}>Post GRN</button>
         <div className="mm-flow">

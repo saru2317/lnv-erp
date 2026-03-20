@@ -47,7 +47,7 @@ export default function LeadList() {
 
       {/* Filters */}
       <div className="sd-filter-bar">
-        <input className="sd-search" placeholder="🔍 Search company or contact…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <input className="sd-search" placeholder=" Search company or contact…" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="sd-select" value={source} onChange={e=>setSource(e.target.value)}>
           <option>All</option>
           {LEAD_SOURCES.map(s=><option key={s}>{s}</option>)}

@@ -66,8 +66,8 @@ export default function UserManager() {
               <td>
                 <div style={{display:'flex',gap:'4px'}}>
                   <button className="btn-xs" onClick={() => setModal(u)}>Edit</button>
-                  <button className="btn-xs" style={{color:'var(--odoo-orange)'}}>🔑 Reset PW</button>
-                  {u.sessions>0 && <button className="btn-xs" style={{color:'var(--odoo-red)'}}>⏏️ Logout</button>}
+                  <button className="btn-xs" style={{color:'var(--odoo-orange)'}}> Reset PW</button>
+                  {u.sessions>0 && <button className="btn-xs" style={{color:'var(--odoo-red)'}}>⏏ Logout</button>}
                 </div>
               </td>
             </tr>
@@ -79,8 +79,8 @@ export default function UserManager() {
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              {modal==='new'?'➕ New User':`✏️ Edit — ${modal.user}`}
-              <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button>
+              {modal==='new'?' New User':` Edit — ${modal.user}`}
+              <button className="fi-modal-close" onClick={() => setModal(null)}></button>
             </div>
             <div className="fi-modal-body">
               <div className="fi-form-row">

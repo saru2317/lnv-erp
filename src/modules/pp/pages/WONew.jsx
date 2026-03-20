@@ -34,12 +34,12 @@ export default function WONew() {
 
   if(done) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>✅</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'22px',fontWeight:'800',color:'var(--odoo-green)'}}>WO-2025-021 Created & Released!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Stock reserved · Shop floor notified · FI auto-journal queued</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Work Orders</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/entry')}>📝 Production Entry</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/entry')}> Production Entry</button>
       </div>
     </div>
   )
@@ -51,16 +51,16 @@ export default function WONew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Create Work Order <small>CO01 · New Production Order</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>✕ Cancel</button>
-          <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>✅ Create & Release</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}> Cancel</button>
+          <button className="btn btn-s sd-bsm">Save Draft</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>Create & Release</button>
         </div>
       </div>
 
-      {hasShort && <div className="pp-alert warn">⚠️ <strong>Material shortage detected!</strong> Some components have insufficient stock. Consider running MRP before releasing.</div>}
+      {hasShort && <div className="pp-alert warn"> <strong>Material shortage detected!</strong> Some components have insufficient stock. Consider running MRP before releasing.</div>}
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🏭 Work Order Header</div>
+        <div className="fi-form-sec-hdr">Work Order Header</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>WO Number</label><input className="fi-form-ctrl" defaultValue="WO-2025-021" readOnly/></div>
@@ -102,7 +102,7 @@ export default function WONew() {
 
       {/* Components from BOM */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔩 Component Requirements (from BOM)</div>
+        <div className="fi-form-sec-hdr"> Component Requirements (from BOM)</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>#</th><th>Component</th><th>Required Qty</th><th>UOM</th><th>Available Stock</th><th>To Issue</th><th>Short</th><th>Status</th></tr></thead>
@@ -118,18 +118,18 @@ export default function WONew() {
                   <td style={{color:c.avail>=c.reqQty?'var(--odoo-green)':'var(--odoo-red)',fontWeight:'600'}}>
                     {c.avail>=c.reqQty ? '—' : `${c.reqQty-c.avail} ${c.uom}`}
                   </td>
-                  <td><span className={`badge ${c.status==='available'?'badge-done':'badge-hold'}`}>{c.status==='available'?'✅ Available':'❌ Short'}</span></td>
+                  <td><span className={`badge ${c.status==='available'?'badge-done':'badge-hold'}`}>{c.status==='available'?' Available':' Short'}</span></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!hasShort && <div className="pp-alert success" style={{margin:'14px'}}>✅ All components available. Stock will be reserved on release.</div>}
+          {!hasShort && <div className="pp-alert success" style={{margin:'14px'}}>All components available. Stock will be reserved on release.</div>}
         </div>
       </div>
 
       {/* Operations from Routing */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">⚙️ Operations Sequence (from Routing)</div>
+        <div className="fi-form-sec-hdr"> Operations Sequence (from Routing)</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>Seq</th><th>Operation</th><th>Work Centre</th><th>Setup Time</th><th>Run Time / Unit</th><th>Total Time</th></tr></thead>
@@ -150,15 +150,15 @@ export default function WONew() {
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>✕ Cancel</button>
-        <button className="btn btn-s sd-bsm">💾 Save Draft</button>
-        <button className="btn btn-s sd-bsm">📤 Release Only</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>✅ Create & Release</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}> Cancel</button>
+        <button className="btn btn-s sd-bsm">Save Draft</button>
+        <button className="btn btn-s sd-bsm">Release Only</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>Create & Release</button>
         <div className="fi-status-flow">
-          <span className="fi-sf-step act">📝 Create</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">📤 Released</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">🏭 In Progress</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">✅ Closed</span>
+          <span className="fi-sf-step act"> Create</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Released</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">In Progress</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Closed</span>
         </div>
       </div>
     </div>

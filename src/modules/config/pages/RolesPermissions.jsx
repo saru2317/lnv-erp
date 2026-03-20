@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import { ROLES, ALL_MODULES } from './_configData'
 
 const PERMISSIONS = [
-  { k:'view',     icon:'👁️',  label:'View',     sub:'Read records' },
-  { k:'create',   icon:'➕',  label:'Create',   sub:'Add new entries' },
-  { k:'edit',     icon:'✏️',  label:'Edit',     sub:'Modify existing' },
-  { k:'delete',   icon:'🗑️',  label:'Delete',   sub:'Remove entries' },
-  { k:'approve',  icon:'✅',  label:'Approve',  sub:'Workflow approval' },
-  { k:'export',   icon:'⬇️',  label:'Export',   sub:'Download data' },
-  { k:'reports',  icon:'📊',  label:'Reports',  sub:'View reports' },
-  { k:'settings', icon:'⚙️',  label:'Settings', sub:'Config access' },
+  { k:'view',     icon:'',  label:'View',     sub:'Read records' },
+  { k:'create',   icon:'',  label:'Create',   sub:'Add new entries' },
+  { k:'edit',     icon:'',  label:'Edit',     sub:'Modify existing' },
+  { k:'delete',   icon:'',  label:'Delete',   sub:'Remove entries' },
+  { k:'approve',  icon:'',  label:'Approve',  sub:'Workflow approval' },
+  { k:'export',   icon:'⬇',  label:'Export',   sub:'Download data' },
+  { k:'reports',  icon:'',  label:'Reports',  sub:'View reports' },
+  { k:'settings', icon:'',  label:'Settings', sub:'Config access' },
 ]
 
 // Default permission set per role
@@ -103,14 +103,14 @@ export default function RolesPermissions() {
           <button className="btn btn-s sd-bsm" onClick={() => setTab('new')}>+ New Role</button>
           <button className="btn btn-p sd-bsm" onClick={handleSave}
             style={saved ? {background:'#155724',color:'#fff'} : {}}>
-            {saved ? '✅ Saved!' : '💾 Save Changes'}
+            {saved ? ' Saved!' : ' Save Changes'}
           </button>
         </div>
       </div>
 
       {/* Info */}
       <div className="fi-alert info" style={{marginBottom:16}}>
-        🛡️ <strong>RBAC:</strong> Each user is assigned one role. The role controls (1) which <strong>modules</strong> are visible in the nav, and (2) which <strong>actions</strong> they can perform. Admin always has full access.
+         <strong>RBAC:</strong> Each user is assigned one role. The role controls (1) which <strong>modules</strong> are visible in the nav, and (2) which <strong>actions</strong> they can perform. Admin always has full access.
       </div>
 
       {/* Role summary cards */}
@@ -143,9 +143,9 @@ export default function RolesPermissions() {
       {/* Tabs */}
       <div style={{display:'flex', borderBottom:'2px solid var(--odoo-border)', marginBottom:20}}>
         {[
-          ['matrix',      '📊 Module Access Matrix'],
-          ['permissions', '🔐 Action Permissions'],
-          ['new',         '➕ Create New Role'],
+          ['matrix',      ' Module Access Matrix'],
+          ['permissions', ' Action Permissions'],
+          ['new',         ' Create New Role'],
         ].map(([k, l]) => (
           <div key={k} onClick={() => setTab(k)}
             style={{padding:'9px 20px', fontSize:13, fontWeight:600, cursor:'pointer',
@@ -233,7 +233,7 @@ export default function RolesPermissions() {
                                   opacity: locked ? 0.6 : 1,
                                 }}
                                 title={locked ? 'Cannot modify' : (hasIt ? 'Click to revoke' : 'Click to grant')}>
-                                {hasIt ? '✓' : ''}
+                                {hasIt ? '' : ''}
                               </div>
                             </td>
                           )
@@ -248,9 +248,9 @@ export default function RolesPermissions() {
           <div style={{padding:'12px 16px', background:'#F8F9FA',
             borderTop:'1px solid var(--odoo-border)', fontSize:11, color:'var(--odoo-gray)',
             display:'flex', gap:20}}>
-            <span>✓ = Access granted &nbsp;|&nbsp; Empty = No access</span>
-            <span style={{color:'var(--odoo-orange)'}}>⚠️ Home module is always visible to all roles</span>
-            <span style={{color:'var(--odoo-red)'}}>🔒 Admin always has full access</span>
+            <span> = Access granted &nbsp;|&nbsp; Empty = No access</span>
+            <span style={{color:'var(--odoo-orange)'}}> Home module is always visible to all roles</span>
+            <span style={{color:'var(--odoo-red)'}}> Admin always has full access</span>
           </div>
         </div>
       )}
@@ -318,7 +318,7 @@ export default function RolesPermissions() {
                                 }}>
                                 <span style={{fontSize:13}}>{mod.icon}</span>
                                 {mod.label}
-                                {has && <span style={{fontSize:10, fontWeight:800}}>✓</span>}
+                                {has && <span style={{fontSize:10, fontWeight:800}}></span>}
                               </div>
                             )
                           })}
@@ -331,12 +331,12 @@ export default function RolesPermissions() {
                 {/* Right: Action permissions */}
                 <div style={{padding:20}}>
                   <div style={{fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700,
-                    marginBottom:14, color:'var(--odoo-dark)'}}>🔐 Action Permissions</div>
+                    marginBottom:14, color:'var(--odoo-dark)'}}> Action Permissions</div>
                   {selRole === 'admin' && (
                     <div style={{background:'#FFF3CD', border:'1px solid #FAD7A0',
                       borderRadius:6, padding:'10px 14px', fontSize:12,
                       color:'#856404', marginBottom:14}}>
-                      ⚠️ Admin role always has all permissions and cannot be restricted.
+                       Admin role always has all permissions and cannot be restricted.
                     </div>
                   )}
                   <div style={{display:'flex', flexDirection:'column', gap:10}}>
@@ -458,7 +458,7 @@ export default function RolesPermissions() {
                             transition:'all .15s'}}>
                           <span style={{fontSize:13}}>{mod.icon}</span>
                           {mod.label}
-                          {has && <span>✓</span>}
+                          {has && <span></span>}
                         </div>
                       )
                     })}
@@ -485,7 +485,7 @@ export default function RolesPermissions() {
             <button className="btn btn-p sd-bsm" onClick={addRole}
               disabled={!newRole.name || !newRole.label}
               style={{opacity: (!newRole.name || !newRole.label) ? 0.5 : 1}}>
-              ✅ Create Role
+               Create Role
             </button>
           </div>
         </div>

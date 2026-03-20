@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 const VENDORS = [
   {id:'V-001',name:'Lakshmi Textile Mills Pvt. Ltd.', gstin:'33AABLM9234B1Z6',city:'Tiruppur, TN', cat:'Raw Material',  bal:'₹1,42,000', balc:'var(--odoo-orange)',b:'mm-bdg-approved',l:'Active'},
   {id:'V-002',name:'Coimbatore Spares Co.',           gstin:'33AABCC2341B1Z1',city:'Coimbatore, TN',cat:'Spares',        bal:'₹88,500',   balc:'var(--odoo-orange)',b:'mm-bdg-approved',l:'Active'},
-  {id:'V-003',name:'Sri Murugan Traders',             gstin:'33AABCS9871B1Z4',city:'Erode, TN',    cat:'Packing',        bal:'₹36,200 ⚠️',balc:'var(--odoo-red)',   b:'mm-bdg-approved',l:'Active'},
+  {id:'V-003',name:'Sri Murugan Traders',             gstin:'33AABCS9871B1Z4',city:'Erode, TN',    cat:'Packing',        bal:'₹36,200 ',balc:'var(--odoo-red)',   b:'mm-bdg-approved',l:'Active'},
   {id:'V-004',name:'Aruna Industries',                gstin:'33AABCA5631B1Z2',city:'Salem, TN',    cat:'Chemicals',      bal:'₹0',        balc:'var(--odoo-green)', b:'mm-bdg-approved',l:'Active'},
   {id:'V-005',name:'KG Denim Ltd.',                   gstin:'33AABCK7234B1Z9',city:'Karur, TN',    cat:'Raw Material',   bal:'₹0',        balc:'var(--odoo-gray)',  b:'mm-bdg-draft',   l:'Inactive'},
 ]
@@ -22,7 +22,7 @@ export default function VendorList() {
         </div>
       </div>
       <div className="mm-filt">
-        <div className="mm-fs-input">🔍<input placeholder="Search vendor name, GSTIN, city..."/></div>
+        <div className="mm-fs-input"><input placeholder="Search vendor name, GSTIN, city..."/></div>
         <select className="mm-fsel"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option><option>Services</option></select>
         <select className="mm-fsel"><option>All Status</option><option>Active</option><option>Inactive</option><option>Blocked</option></select>
       </div>

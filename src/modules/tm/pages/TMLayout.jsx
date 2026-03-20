@@ -10,27 +10,27 @@ const VehicleMaster= lazy(() => import('./VehicleMaster'))
 const FuelLog      = lazy(() => import('./FuelLog'))
 
 const NAV_ITEMS = [
-  { to:'/tm',          label:'🏠 Home' },
-  { to:'/tm/booking',  label:'📋 Bookings' },
-  { to:'/tm/trips',    label:'🚚 Trips' },
-  { to:'/tm/vehicles', label:'🚗 Vehicles' },
-  { to:'/tm/fuel',     label:'⛽ Fuel' },
+  { to:'/tm',          label:' Home' },
+  { to:'/tm/booking',  label:' Bookings' },
+  { to:'/tm/trips',    label:' Trips' },
+  { to:'/tm/vehicles', label:' Vehicles' },
+  { to:'/tm/fuel',     label:' Fuel' },
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'Trip Management', icon:'🚚', items:[
+  { label:'Trip Management', icon:'', items:[
     { to:'/tm',             label:'TM Dashboard' },
     { to:'/tm/booking',     label:'Trip Booking & Planning' },
     { to:'/tm/trip/new',    label:'New Trip Sheet' },
     { to:'/tm/trips',       label:'Trip History' },
   ]},
-  { label:'Fleet & Compliance', icon:'🚗', items:[
+  { label:'Fleet & Compliance', icon:'', items:[
     { to:'/tm/vehicles',    label:'Vehicle Master' },
     { to:'/tm/fuel',        label:'Fuel Log' },
     { to:'/tm/compliance',  label:'FC / Tax / Insurance' },
     { to:'/tm/drivers',     label:'Driver Register' },
   ]},
-  { label:'Reports', icon:'📊', items:[
+  { label:'Reports', icon:'', items:[
     { to:'/tm/fuel',        label:'Fuel Analysis' },
     { to:'/tm/trips',       label:'Trip Report' },
   ]},

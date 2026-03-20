@@ -35,7 +35,7 @@ export default function UserManagement() {
       </div>
 
       <div className="pp-alert info">
-        🔐 <strong>RBAC Roles:</strong> admin — full access &nbsp;|&nbsp; manager — PP/QM/PM/WM/MM &nbsp;|&nbsp;
+         <strong>RBAC Roles:</strong> admin — full access &nbsp;|&nbsp; manager — PP/QM/PM/WM/MM &nbsp;|&nbsp;
         accounts — FI/SD/MM &nbsp;|&nbsp; operations — PP/QM/PM/WM/MM &nbsp;|&nbsp;
         hr — HCM only &nbsp;|&nbsp; sales — SD/CRM
       </div>
@@ -81,7 +81,7 @@ export default function UserManagement() {
                   <button className="btn-xs" onClick={() => setModal(u)}>Edit</button>
                   <button className="btn-xs" style={{color:u.status==='Active'?'var(--odoo-red)':'var(--odoo-green)'}}
                     onClick={() => toggleStatus(u.id)}>
-                    {u.status==='Active'?'🔒 Disable':'🔓 Enable'}
+                    {u.status==='Active'?' Disable':' Enable'}
                   </button>
                 </div>
               </td>
@@ -94,8 +94,8 @@ export default function UserManagement() {
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e => e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              {modal==='new' ? '➕ Add New User' : `✏️ Edit — ${modal.name}`}
-              <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button>
+              {modal==='new' ? ' Add New User' : ` Edit — ${modal.name}`}
+              <button className="fi-modal-close" onClick={() => setModal(null)}></button>
             </div>
             <div className="fi-modal-body">
               <div className="fi-form-row">

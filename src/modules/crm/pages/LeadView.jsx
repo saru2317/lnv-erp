@@ -13,7 +13,7 @@ export default function LeadView() {
 
   if(converted) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}>🚀</div>
+      <div style={{fontSize:'48px',marginBottom:'16px'}}></div>
       <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-green)',marginBottom:'8px'}}>Lead Converted!</h2>
       <div style={{color:'var(--odoo-gray)',marginBottom:'24px'}}>{lead.company} has been converted to an Opportunity.</div>
       <div style={{display:'flex',gap:'12px'}}>
@@ -36,7 +36,7 @@ export default function LeadView() {
             {LEAD_STATUSES.map(s=><option key={s}>{s}</option>)}
           </select>
           <button className="btn btn-s sd-bsm" onClick={()=>setActForm(f=>({...f,show:true}))}>+ Log Activity</button>
-          {status==='Qualified'&&<button className="btn btn-p btn-s" onClick={()=>setConverted(true)}>🚀 Convert to Opportunity</button>}
+          {status==='Qualified'&&<button className="btn btn-p btn-s" onClick={()=>setConverted(true)}> Convert to Opportunity</button>}
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export default function LeadView() {
         {LEAD_STATUSES.filter(s=>s!=='Junk Lead'&&s!=='Not Qualified').map((s,i)=>(
           <div key={s} className={`crm-step ${status===s?'crm-step-active':LEAD_STATUSES.indexOf(status)>LEAD_STATUSES.indexOf(s)?'crm-step-done':''}`}
             onClick={()=>setStatus(s)} style={{cursor:'pointer'}}>
-            <div className="crm-step-dot">{LEAD_STATUSES.indexOf(status)>i?'✓':i+1}</div>
+            <div className="crm-step-dot">{LEAD_STATUSES.indexOf(status)>i?'':i+1}</div>
             <div className="crm-step-lbl">{s}</div>
           </div>
         ))}
@@ -55,7 +55,7 @@ export default function LeadView() {
         {/* Left */}
         <div>
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>🏢 Lead Information</h3></div>
+            <div className="fi-panel-hdr"><h3> Lead Information</h3></div>
             <div className="fi-panel-body">
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
                 {[
@@ -79,7 +79,7 @@ export default function LeadView() {
           {/* Activity log form */}
           {actForm.show && (
             <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-              <div className="fi-panel-hdr"><h3>📝 Log Activity</h3></div>
+              <div className="fi-panel-hdr"><h3> Log Activity</h3></div>
               <div className="fi-panel-body">
                 <div className="sd-form-grid">
                   <div className="sd-field">
@@ -99,7 +99,7 @@ export default function LeadView() {
                     placeholder="What happened? What was discussed?" style={{width:'100%'}} />
                 </div>
                 <div style={{display:'flex',gap:'8px',marginTop:'8px'}}>
-                  <button className="btn btn-p btn-s" onClick={()=>setActForm(f=>({...f,show:false}))}>✓ Save Activity</button>
+                  <button className="btn btn-p btn-s" onClick={()=>setActForm(f=>({...f,show:false}))}> Save Activity</button>
                   <button className="btn btn-s sd-bsm" onClick={()=>setActForm(f=>({...f,show:false}))}>Cancel</button>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function LeadView() {
 
           {/* Activity Timeline */}
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>📅 Activity Timeline</h3></div>
+            <div className="fi-panel-hdr"><h3> Activity Timeline</h3></div>
             <div className="fi-panel-body">
               {activities.length===0 ? (
                 <div style={{textAlign:'center',padding:'24px',color:'var(--odoo-gray)'}}>
@@ -126,7 +126,7 @@ export default function LeadView() {
                         <span className={a.status==='Completed'?'crm-stage-won':'crm-badge-contacted'} style={{fontSize:'10px'}}>{a.status}</span>
                       </div>
                       <div style={{fontSize:'12px',color:'var(--odoo-text)'}}>{a.notes}</div>
-                      {a.nextFollowup&&<div style={{fontSize:'11px',color:'var(--odoo-orange)',marginTop:'3px'}}>📅 Follow-up: {a.nextFollowup}</div>}
+                      {a.nextFollowup&&<div style={{fontSize:'11px',color:'var(--odoo-orange)',marginTop:'3px'}}> Follow-up: {a.nextFollowup}</div>}
                     </div>
                   ))}
                 </div>
@@ -154,7 +154,7 @@ export default function LeadView() {
                   {l:'Timeline discussed',done:status==='Qualified'},
                 ].map(f=>(
                   <div key={f.l} style={{display:'flex',gap:'6px',alignItems:'center',marginBottom:'4px'}}>
-                    <span style={{color:f.done?'var(--odoo-green)':'var(--odoo-gray)'}}>{f.done?'✓':'○'}</span>
+                    <span style={{color:f.done?'var(--odoo-green)':'var(--odoo-gray)'}}>{f.done?'':'○'}</span>
                     <span style={{color:f.done?'var(--odoo-text)':'var(--odoo-gray)'}}>{f.l}</span>
                   </div>
                 ))}
@@ -163,19 +163,19 @@ export default function LeadView() {
           </div>
 
           <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>📞 Quick Actions</h3></div>
+            <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
             <div className="fi-panel-body" style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              <button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Call'}))}>📞 Log Call</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Meeting'}))}>🤝 Log Meeting</button>
-              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Email'}))}>📧 Log Email</button>
+              <button className="btn btn-p btn-s" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Call'}))}> Log Call</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Meeting'}))}> Log Meeting</button>
+              <button className="btn btn-s sd-bsm" style={{width:'100%'}} onClick={()=>setActForm(f=>({...f,show:true,type:'Email'}))}> Log Email</button>
               {status==='Qualified'&&(
-                <button className="btn btn-p btn-s" style={{width:'100%',background:'var(--odoo-green)'}} onClick={()=>setConverted(true)}>🚀 Convert to Opp</button>
+                <button className="btn btn-p btn-s" style={{width:'100%',background:'var(--odoo-green)'}} onClick={()=>setConverted(true)}> Convert to Opp</button>
               )}
             </div>
           </div>
 
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>🤖 AI Insights</h3></div>
+            <div className="fi-panel-hdr"><h3> AI Insights</h3></div>
             <div className="fi-panel-body">
               <div style={{background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px',lineHeight:'1.7'}}>
                 <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'6px'}}>Win Probability: <strong style={{fontSize:'16px'}}>{status==='Qualified'?'72%':status==='Contacted'?'45%':'20%'}</strong></div>

@@ -77,7 +77,7 @@ export default function JobQueueScheduler() {
             updated[runIdx+1]={...updated[runIdx+1],status:'Running',startTime:new Date().toLocaleTimeString(),wcId:'WC-auto'}
           }
           next[job.id]=updated
-          log.push(`✅ ${job.id}: "${updated[runIdx].step}" DONE → "${updated[runIdx+1]?.step||'Completed'}" started`)
+          log.push(` ${job.id}: "${updated[runIdx].step}" DONE → "${updated[runIdx+1]?.step||'Completed'}" started`)
         }
       })
 
@@ -90,7 +90,7 @@ export default function JobQueueScheduler() {
     setStepData(prev=>{
       const steps=[...(prev[jobId]||[])]
       if(steps[stepIdx]) steps[stepIdx]={...steps[stepIdx],status:'Running',wcId,startTime:new Date().toLocaleTimeString()}
-      setTickLog(t=>[`🔵 Manual: ${jobId} step "${steps[stepIdx]?.step}" assigned to ${WORK_CENTERS.find(w=>w.id===wcId)?.name||wcId}`,...t].slice(0,20))
+      setTickLog(t=>[` Manual: ${jobId} step "${steps[stepIdx]?.step}" assigned to ${WORK_CENTERS.find(w=>w.id===wcId)?.name||wcId}`,...t].slice(0,20))
       return {...prev,[jobId]:steps}
     })
   }
@@ -102,7 +102,7 @@ export default function JobQueueScheduler() {
         steps[stepIdx]={...steps[stepIdx],status:'Done',endTime:new Date().toLocaleTimeString()}
         if(stepIdx+1<steps.length) steps[stepIdx+1]={...steps[stepIdx+1],status:'Running',startTime:new Date().toLocaleTimeString()}
       }
-      setTickLog(t=>[`✅ ${jobId}: Step "${steps[stepIdx]?.step}" marked DONE`,...t].slice(0,20))
+      setTickLog(t=>[` ${jobId}: Step "${steps[stepIdx]?.step}" marked DONE`,...t].slice(0,20))
       return {...prev,[jobId]:steps}
     })
   }
@@ -118,7 +118,7 @@ export default function JobQueueScheduler() {
         </div>
         <div className="fi-lv-actions">
           <div style={{display:'flex',gap:'4px',background:'#F0EEEB',padding:'3px',borderRadius:'6px'}}>
-            {[['scheduler','🧠 Scheduler'],['queue','📋 Queue'],['wcboard','🏭 WC Board']].map(([v,l])=>(
+            {[['scheduler',' Scheduler'],['queue',' Queue'],['wcboard',' WC Board']].map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} style={{padding:'5px 12px',borderRadius:'4px',border:'none',fontSize:'12px',fontWeight:'600',cursor:'pointer',
                 background:view===v?'var(--odoo-purple)':'transparent',color:view===v?'#fff':'var(--odoo-gray)'}}>
                 {l}
@@ -139,7 +139,7 @@ export default function JobQueueScheduler() {
         <div>
           {/* Smart scheduler rule explanation */}
           <div style={{marginBottom:'14px',padding:'12px 16px',background:'linear-gradient(135deg,#1A1A2E,#16213E)',borderRadius:'10px',color:'#fff'}}>
-            <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'6px'}}>🧠 Smart Scheduler Logic</div>
+            <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'6px'}}> Smart Scheduler Logic</div>
             <div style={{fontSize:'11px',lineHeight:'1.8',color:'#CBD5E0'}}>
               <span style={{color:'#68D391',fontWeight:'700'}}>Rule:</span> A Work Center is <span style={{color:'#68D391'}}>FREE</span> → it grabs the <span style={{color:'#F6E05E'}}>oldest READY job</span> for its process, regardless of job sequence.<br/>
               <span style={{color:'#FC8181',fontWeight:'700'}}>Sequence Lock:</span> A job's Step N+1 is <span style={{color:'#FC8181'}}>LOCKED</span> until Step N is marked <span style={{color:'#68D391'}}>DONE</span>.<br/>
@@ -180,11 +180,11 @@ export default function JobQueueScheduler() {
                                     const stepIdx=(stepData[job.id]||[]).findIndex(s=>s.status==='Running'||(s.status==='Waiting'&&(stepData[job.id]||[]).slice(0,(stepData[job.id]||[]).indexOf(s)).every(ss=>ss.status==='Done')))
                                     manualAssign(job.id,stepIdx>=0?stepIdx:job.currentStep-1,wc.id)
                                   }}>
-                                  ⚙️ Assign → {wc.name}
+                                   Assign → {wc.name}
                                 </button>
                               ))}
                             </div>
-                          : <div style={{fontSize:'11px',color:'var(--odoo-red)'}}>⚠️ No free work center for "{nextStep}" right now</div>
+                          : <div style={{fontSize:'11px',color:'var(--odoo-red)'}}> No free work center for "{nextStep}" right now</div>
                         }
                       </div>
                     )
@@ -195,7 +195,7 @@ export default function JobQueueScheduler() {
             {/* RUNNING JOBS — currently in progress */}
             <div className="fi-panel">
               <div className="fi-panel-hdr" style={{background:'#FFF3CD'}}>
-                <h3 style={{color:'#856404'}}>🔵 RUNNING — In Progress ({runningJobs.length})</h3>
+                <h3 style={{color:'#856404'}}> RUNNING — In Progress ({runningJobs.length})</h3>
               </div>
               {runningJobs.length===0
                 ? <div style={{padding:'20px',textAlign:'center',color:'var(--odoo-gray)',fontSize:'12px'}}>No jobs currently running</div>
@@ -208,7 +208,7 @@ export default function JobQueueScheduler() {
                           <strong style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-purple)',fontSize:'12px'}}>{job.id}</strong>
                           <button className="btn btn-p btn-s" style={{fontSize:'10px',padding:'3px 10px',background:'var(--odoo-green)',borderColor:'var(--odoo-green)'}}
                             onClick={()=>markStepDone(job.id,stepIdx)}>
-                            ✓ Mark Done
+                             Mark Done
                           </button>
                         </div>
                         <div style={{fontSize:'11px',marginBottom:'4px'}}>
@@ -257,10 +257,10 @@ export default function JobQueueScheduler() {
           {/* Scheduler Activity Log */}
           {tickLog.length>0&&(
             <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3>📝 Scheduler Activity Log</h3></div>
+              <div className="fi-panel-hdr"><h3> Scheduler Activity Log</h3></div>
               <div className="fi-panel-body" style={{maxHeight:'180px',overflow:'auto',fontFamily:'DM Mono,monospace',fontSize:'11px'}}>
                 {tickLog.map((l,i)=>(
-                  <div key={i} style={{padding:'3px 0',borderBottom:'1px solid var(--odoo-border)',color:l.includes('✅')?'var(--odoo-green)':l.includes('🔵')?'var(--odoo-blue)':'var(--odoo-text)'}}>
+                  <div key={i} style={{padding:'3px 0',borderBottom:'1px solid var(--odoo-border)',color:l.includes('')?'var(--odoo-green)':l.includes('')?'var(--odoo-blue)':'var(--odoo-text)'}}>
                     <span style={{color:'var(--odoo-gray)',marginRight:'8px'}}>{new Date().toLocaleTimeString()}</span>{l}
                   </div>
                 ))}
@@ -301,11 +301,11 @@ export default function JobQueueScheduler() {
                     <span style={{padding:'3px 8px',borderRadius:'10px',fontSize:'10px',fontWeight:'700',
                       background:job.isReady?'#D4EDDA':job.runningStep?'#FFF3CD':'#F8D7DA',
                       color:job.isReady?'#155724':job.runningStep?'#856404':'#721C24'}}>
-                      {job.isReady?'🟢 READY':job.runningStep?'🔵 RUNNING':'⏳ WAITING'}
+                      {job.isReady?'🟢 READY':job.runningStep?' RUNNING':'⏳ WAITING'}
                     </span>
                   </td>
                   <td>
-                    <button className="btn-act-view" onClick={()=>nav(`/pp/process-execution?id=${job.id}`)}>⚙️ Execute</button>
+                    <button className="btn-act-view" onClick={()=>nav(`/pp/process-execution?id=${job.id}`)}> Execute</button>
                   </td>
                 </tr>
               ))}
@@ -331,10 +331,10 @@ export default function JobQueueScheduler() {
               </div>
               <div style={{padding:'10px 14px'}}>
                 {wc.status==='Under Maintenance'
-                  ? <div style={{textAlign:'center',color:'var(--odoo-red)',fontWeight:'700',fontSize:'12px',padding:'8px 0'}}>🔧 Under Maintenance</div>
+                  ? <div style={{textAlign:'center',color:'var(--odoo-red)',fontWeight:'700',fontSize:'12px',padding:'8px 0'}}>Under Maintenance</div>
                   : wc.isOccupied&&wc.assignedJob
                     ? <div>
-                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-orange)',marginBottom:'4px'}}>🔵 RUNNING</div>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-orange)',marginBottom:'4px'}}> RUNNING</div>
                         <div style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-purple)'}}>{wc.assignedJob.id}</div>
                         <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginTop:'2px'}}>{wc.assignedJob.item}</div>
                         <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{wc.assignedJob.qty} {wc.assignedJob.unit}</div>
@@ -351,7 +351,7 @@ export default function JobQueueScheduler() {
                 }
                 <div style={{marginTop:'8px',borderTop:'1px solid var(--odoo-border)',paddingTop:'6px',display:'flex',justifyContent:'space-between',fontSize:'10px',color:'var(--odoo-gray)'}}>
                   <span>Cap: {wc.capacity} {wc.unit}</span>
-                  <span>👤 {wc.operator||'—'}</span>
+                  <span> {wc.operator||'—'}</span>
                 </div>
               </div>
             </div>

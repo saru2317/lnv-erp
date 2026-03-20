@@ -8,11 +8,11 @@ export default function GoodsReceipt() {
       <div className="wm-lv-hdr">
         <div className="wm-lv-title">Goods Receipt <small>MIGO · GR from GRN</small></div>
         <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
           <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post Goods Receipt</button>
         </div>
       </div>
-      <div className="wm-alert info">ℹ️ Goods Receipt auto-updates stock after GRN is posted from the MM module.</div>
+      <div className="wm-alert info">ℹ Goods Receipt auto-updates stock after GRN is posted from the MM module.</div>
 
       <div className="wm-form-sec">
         <div className="wm-form-sec-hdr">Receipt Details</div>
@@ -65,7 +65,7 @@ export default function GoodsReceipt() {
       </div>
 
       <div className="wm-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}>✕ Cancel</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/stock')}> Cancel</button>
         <button className="btn btn-p sd-bsm" onClick={() => nav('/wm/movement-log')}>Post GR &amp; Update Stock</button>
         <div className="wm-status-flow">
           <span className="wm-sf-step done">GRN Posted</span><span className="wm-sf-arr">›</span>

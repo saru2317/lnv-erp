@@ -17,36 +17,36 @@ const AssetReport       = lazy(() => import('./AssetReport'))
 const CRMReport         = lazy(() => import('./CRMReport'))
 
 const NAV_ITEMS = [
-  { to:'/reports',            label:'🏠 Overview' },
-  { to:'/reports/sales',      label:'💰 Sales' },
-  { to:'/reports/purchase',   label:'🛒 Purchase' },
-  { to:'/reports/inventory',  label:'📦 Inventory' },
-  { to:'/reports/production', label:'🏭 Production' },
-  { to:'/reports/finance',    label:'📒 Finance' },
+  { to:'/reports',            label:' Overview' },
+  { to:'/reports/sales',      label:' Sales' },
+  { to:'/reports/purchase',   label:' Purchase' },
+  { to:'/reports/inventory',  label:' Inventory' },
+  { to:'/reports/production', label:' Production' },
+  { to:'/reports/finance',    label:' Finance' },
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'Business Reports', icon:'📊', items:[
-    { to:'/reports',           label:'📊 Executive Dashboard' },
-    { to:'/reports/sales',     label:'💰 Sales & Revenue' },
-    { to:'/reports/purchase',  label:'🛒 Purchase & Vendors' },
-    { to:'/reports/inventory', label:'📦 Inventory & Stock' },
-    { to:'/reports/production',label:'🏭 Production & Jobs' },
+  { label:'Business Reports', icon:'', items:[
+    { to:'/reports',           label:' Executive Dashboard' },
+    { to:'/reports/sales',     label:' Sales & Revenue' },
+    { to:'/reports/purchase',  label:' Purchase & Vendors' },
+    { to:'/reports/inventory', label:' Inventory & Stock' },
+    { to:'/reports/production',label:' Production & Jobs' },
   ]},
-  { label:'Financial Reports', icon:'📒', items:[
-    { to:'/reports/finance',   label:'📒 Finance Summary' },
+  { label:'Financial Reports', icon:'', items:[
+    { to:'/reports/finance',   label:' Finance Summary' },
     { to:'/fi/pl',             label:'P&L Statement →' },
     { to:'/fi/bs',             label:'Balance Sheet →' },
     { to:'/fi/cashflow',       label:'Cash Flow →' },
     { to:'/fi/itc-recon',      label:'ITC Reconciliation →' },
   ]},
-  { label:'HR & Operations', icon:'👥', items:[
-    { to:'/reports/hr',        label:'👥 HR Report' },
-    { to:'/reports/quality',   label:'🔬 Quality Report' },
-    { to:'/reports/transport', label:'🚚 Transport Report' },
-    { to:'/reports/inventory', label:'📦 Inventory (WM)' },
-    { to:'/reports/assets',    label:'🏛️ Asset Report' },
-    { to:'/reports/crm',       label:'🤝 CRM Report' },
+  { label:'HR & Operations', icon:'', items:[
+    { to:'/reports/hr',        label:' HR Report' },
+    { to:'/reports/quality',   label:' Quality Report' },
+    { to:'/reports/transport', label:' Transport Report' },
+    { to:'/reports/inventory', label:' Inventory (WM)' },
+    { to:'/reports/assets',    label:' Asset Report' },
+    { to:'/reports/crm',       label:' CRM Report' },
   ]},
 ]
 

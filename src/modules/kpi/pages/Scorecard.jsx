@@ -48,14 +48,14 @@ export default function Scorecard({ kpiMaster, actuals, employees, assignments }
             <option value="">Select Employee…</option>
             {emps.map(e => <option key={e.code} value={e.code}>{e.name} — {e.dept}</option>)}
           </select>
-          {selEmp && <button className="btn btn-s sd-bsm">🖨️ Print Scorecard</button>}
+          {selEmp && <button className="btn btn-s sd-bsm"> Print Scorecard</button>}
         </div>
       </div>
 
       {!selEmp ? (
         <div style={{background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           padding:40, textAlign:'center', color:'var(--odoo-gray)'}}>
-          <div style={{fontSize:48, marginBottom:12}}>🎯</div>
+          <div style={{fontSize:48, marginBottom:12}}></div>
           <div style={{fontSize:14, fontWeight:600}}>Select an employee to view their KPI scorecard</div>
           <div style={{fontSize:12, marginTop:6}}>Individual scores based on role-assigned KPIs</div>
         </div>

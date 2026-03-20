@@ -60,7 +60,7 @@ export default function CRMReport() {
       </div>
 
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {[['pipeline','🔄 Sales Pipeline'],['monthly','📊 Monthly Trend'],['source','📡 Lead Sources']].map(([k, l]) => (
+        {[['pipeline',' Sales Pipeline'],['monthly',' Monthly Trend'],['source',' Lead Sources']].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
               cursor:'pointer', border:'1px solid var(--odoo-border)',
@@ -75,7 +75,7 @@ export default function CRMReport() {
         <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
           padding:20, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
           <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, marginBottom:16 }}>
-            🔄 Sales Pipeline Funnel
+             Sales Pipeline Funnel
           </h4>
           {PIPELINE.map((p, i) => {
             const w = (p.count / PIPELINE[0].count) * 100

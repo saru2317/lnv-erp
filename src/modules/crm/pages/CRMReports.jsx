@@ -13,16 +13,16 @@ export default function CRMReports() {
   const [activeReport, setActiveReport] = useState('pipeline')
 
   const REPORTS = [
-    {key:'pipeline',      label:'📊 Pipeline Report'},
-    {key:'leads',         label:'🎯 Lead Analysis'},
-    {key:'quotation',     label:'📄 Quotation Report'},
-    {key:'salesperson',   label:'👔 Salesperson'},
-    {key:'activity',      label:'📞 Activity Report'},
-    {key:'customer',      label:'👥 Customer Report'},
-    {key:'lost',          label:'❌ Lost Analysis'},
-    {key:'forecast',      label:'📈 Forecast'},
-    {key:'revenue',       label:'💰 Revenue Trend'},
-    {key:'ai',            label:'🤖 AI Insights'},
+    {key:'pipeline',      label:' Pipeline Report'},
+    {key:'leads',         label:' Lead Analysis'},
+    {key:'quotation',     label:' Quotation Report'},
+    {key:'salesperson',   label:' Salesperson'},
+    {key:'activity',      label:' Activity Report'},
+    {key:'customer',      label:' Customer Report'},
+    {key:'lost',          label:' Lost Analysis'},
+    {key:'forecast',      label:' Forecast'},
+    {key:'revenue',       label:' Revenue Trend'},
+    {key:'ai',            label:' AI Insights'},
   ]
 
   const totalPipeline = OPPORTUNITIES.filter(o=>o.stage!=='Won'&&o.stage!=='Lost').reduce((s,o)=>s+o.value,0)
@@ -135,7 +135,7 @@ export default function CRMReports() {
 
           {activeReport==='salesperson'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>👔 Salesperson Performance</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> Salesperson Performance</div>
               <table className="sd-table">
                 <thead><tr><th>Salesperson</th><th>Target</th><th>Achieved</th><th>Achievement %</th><th>Deals Won</th><th>Pipeline</th></tr></thead>
                 <tbody>
@@ -162,7 +162,7 @@ export default function CRMReports() {
 
           {activeReport==='activity'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>📞 Activity Report</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> Activity Report</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'16px'}}>
                 {['Call','Meeting','Demo','Email','Site Visit'].map(t=>{
                   const cnt = ACTIVITIES.filter(a=>a.type===t).length
@@ -196,7 +196,7 @@ export default function CRMReports() {
 
           {activeReport==='customer'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>👥 Customer Revenue Report</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> Customer Revenue Report</div>
               {CUSTOMERS.sort((a,b)=>b.annualValue-a.annualValue).map(c=>(
                 <Bar key={c.id} v={c.annualValue} max={CUSTOMERS[0].annualValue} label={c.name} subLabel={fmt(c.annualValue)+'/yr'} />
               ))}
@@ -205,7 +205,7 @@ export default function CRMReports() {
 
           {activeReport==='forecast'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>📈 Sales Forecast</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> Sales Forecast</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'12px',marginBottom:'16px'}}>
                 {[{q:'Q1 2025',v:'₹1.05 Cr',t:'₹1.2 Cr',p:87},{q:'Q2 2025',v:'₹1.35 Cr',t:'₹1.5 Cr',p:90}].map(q=>(
                   <div key={q.q} style={{padding:'14px',background:'#fff',borderRadius:'8px',boxShadow:'0 1px 4px rgba(0,0,0,.08)'}}>
@@ -292,7 +292,7 @@ export default function CRMReports() {
 
           {activeReport==='lost'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>❌ Lost Deals Summary</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> Lost Deals Summary</div>
               {['Price Too High','Competitor Won','Delivery Timeline','Budget Cancelled','No Response'].map((r,i)=>{
                 const pct=[40,30,20,7,3][i]
                 return <Bar key={r} v={pct} max={100} label={r} subLabel={pct+'%'} color={['var(--odoo-red)','var(--odoo-orange)','#B7950B','var(--odoo-gray)','var(--odoo-blue)'][i]} />
@@ -302,7 +302,7 @@ export default function CRMReports() {
 
           {activeReport==='ai'&&(
             <div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}>🤖 AI Sales Insights</div>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'700',fontSize:'16px',marginBottom:'14px'}}> AI Sales Insights</div>
               <div style={{display:'grid',gap:'12px'}}>
                 <div style={{background:'linear-gradient(135deg,var(--odoo-purple),#875A7B)',borderRadius:'10px',padding:'16px',color:'#fff'}}>
                   <div style={{fontWeight:'700',fontSize:'13px',marginBottom:'8px'}}>Win Probability Scores</div>
@@ -319,14 +319,14 @@ export default function CRMReports() {
                   ))}
                 </div>
                 <div className="fi-panel">
-                  <div className="fi-panel-hdr"><h3>💡 AI Recommendations</h3></div>
+                  <div className="fi-panel-hdr"><h3> AI Recommendations</h3></div>
                   <div className="fi-panel-body">
                     <div style={{display:'grid',gap:'8px'}}>
                       {[
-                        {icon:'🔥',title:'Hot Opportunity',desc:'Star Fab Works — ₹12L deal. 60% win prob. Competitor detected. Revise pricing.'},
-                        {icon:'⚡',title:'Quick Win',desc:'Meenakshi Pharma — No competitor. Demo done. Follow up NOW for proposal acceptance.'},
-                        {icon:'⚠️',title:'At Risk',desc:'Velocity Auto — 5 days since last contact. Customer may be evaluating others.'},
-                        {icon:'📈',title:'Upsell Opportunity',desc:'Sri Lakshmi Mills — Long-time customer. Offer AMC upgrade to Premium plan.'},
+                        {icon:'',title:'Hot Opportunity',desc:'Star Fab Works — ₹12L deal. 60% win prob. Competitor detected. Revise pricing.'},
+                        {icon:'',title:'Quick Win',desc:'Meenakshi Pharma — No competitor. Demo done. Follow up NOW for proposal acceptance.'},
+                        {icon:'',title:'At Risk',desc:'Velocity Auto — 5 days since last contact. Customer may be evaluating others.'},
+                        {icon:'',title:'Upsell Opportunity',desc:'Sri Lakshmi Mills — Long-time customer. Offer AMC upgrade to Premium plan.'},
                       ].map(item=>(
                         <div key={item.title} style={{padding:'10px',background:'#F8F9FA',borderRadius:'6px',display:'flex',gap:'10px'}}>
                           <div style={{fontSize:'20px'}}>{item.icon}</div>

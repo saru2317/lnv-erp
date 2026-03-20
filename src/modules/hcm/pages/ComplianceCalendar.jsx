@@ -9,7 +9,7 @@ export default function ComplianceCalendar() {
       <div className="fi-lv-hdr"><div className="fi-lv-title">Compliance Calendar <small>All statutory due dates</small></div></div>
       {CALENDAR.map(c=>(
         <div key={c.month} className="fi-panel" style={{marginBottom:'14px'}}>
-          <div className="fi-panel-hdr"><h3>📅 {c.month}</h3></div>
+          <div className="fi-panel-hdr"><h3> {c.month}</h3></div>
           <div style={{padding:'0'}}>
             <table className="fi-data-table" style={{margin:0}}>
               <thead><tr><th>Task</th><th>Type</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>

@@ -27,10 +27,10 @@ export default function POReport() {
 
       <div className="mm-kpi-grid" style={{marginBottom:'14px'}}>
         {[
-          {cls:'pur',ic:'📋',lb:'Total POs',       val:'18',     sub:'Feb 2025'},
-          {cls:'orn',ic:'💰',lb:'PO Value',         val:'₹28.4L', sub:'Gross purchase value'},
-          {cls:'grn',ic:'📦',lb:'GRN Done',         val:'₹21.6L', sub:'76% of PO value received'},
-          {cls:'blu',ic:'🧾',lb:'Invoiced',          val:'₹18.2L', sub:'64% invoiced'},
+          {cls:'pur',ic:'',lb:'Total POs',       val:'18',     sub:'Feb 2025'},
+          {cls:'orn',ic:'',lb:'PO Value',         val:'₹28.4L', sub:'Gross purchase value'},
+          {cls:'grn',ic:'',lb:'GRN Done',         val:'₹21.6L', sub:'76% of PO value received'},
+          {cls:'blu',ic:'',lb:'Invoiced',          val:'₹18.2L', sub:'64% invoiced'},
         ].map(k => (
           <div key={k.lb} className={`mm-kpi ${k.cls}`}>
             <div className="mm-kpi-ic">{k.ic}</div>

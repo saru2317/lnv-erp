@@ -85,10 +85,10 @@ export default function HRReport() {
       {/* View tabs */}
       <div style={{ display:'flex', gap:6, marginBottom:14 }}>
         {[
-          ['attendance', '📅 Attendance'],
-          ['dept',       '🏭 Dept-wise'],
-          ['leave',      '🌴 Leave Summary'],
-          ['payroll',    '💰 Payroll Trend'],
+          ['attendance', ' Attendance'],
+          ['dept',       ' Dept-wise'],
+          ['leave',      ' Leave Summary'],
+          ['payroll',    ' Payroll Trend'],
         ].map(([k, l]) => (
           <button key={k} onClick={() => setView(k)}
             style={{ padding:'6px 16px', borderRadius:20, fontSize:12, fontWeight:600,
@@ -106,7 +106,7 @@ export default function HRReport() {
           <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
             padding:18, marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, marginBottom:14 }}>
-              📅 Monthly Attendance Trend
+               Monthly Attendance Trend
             </h4>
             <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:120 }}>
               {MONTHLY_ATTENDANCE.map((m, i) => {
@@ -259,7 +259,7 @@ export default function HRReport() {
           <div style={{ background:'#fff', borderRadius:8, border:'1px solid var(--odoo-border)',
             padding:18, marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, marginBottom:14 }}>
-              💰 Monthly Payroll Trend
+               Monthly Payroll Trend
             </h4>
             <div style={{ display:'flex', gap:8, alignItems:'flex-end', height:120 }}>
               {PAYROLL_SUMMARY.map((p, i) => {

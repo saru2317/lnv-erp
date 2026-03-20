@@ -18,18 +18,18 @@ const PENDING_BOOKINGS = [
 ]
 
 const BTYPE = {
-  staff:      {icon:'👤',label:'Staff Trip',    color:'#714B67', bg:'#EDE0EA'},
-  delivery:   {icon:'📦',label:'Goods Delivery',color:'#017E84', bg:'#D1ECF1'},
-  collection: {icon:'🏭',label:'RM Collection', color:'#00A09D', bg:'#E6F7F7'},
-  courier:    {icon:'📬',label:'Courier',        color:'#856404', bg:'#FFF3CD'},
-  personal:   {icon:'🏠',label:'Personal',       color:'#6C757D', bg:'#E2E3E5'},
+  staff:      {icon:'',label:'Staff Trip',    color:'#714B67', bg:'#EDE0EA'},
+  delivery:   {icon:'',label:'Goods Delivery',color:'#017E84', bg:'#D1ECF1'},
+  collection: {icon:'',label:'RM Collection', color:'#00A09D', bg:'#E6F7F7'},
+  courier:    {icon:'',label:'Courier',        color:'#856404', bg:'#FFF3CD'},
+  personal:   {icon:'',label:'Personal',       color:'#6C757D', bg:'#E2E3E5'},
 }
 
 const BSTATUS = {
   pending:   {label:'⏳ Pending',   bg:'#FFF3CD',color:'#856404'},
-  allocated: {label:'✅ Allocated', bg:'#D4EDDA',color:'#155724'},
-  dispatched:{label:'🚚 On Road',   bg:'#D1ECF1',color:'#0C5460'},
-  completed: {label:'✅ Done',      bg:'#E2E3E5',color:'#383D41'},
+  allocated: {label:' Allocated', bg:'#D4EDDA',color:'#155724'},
+  dispatched:{label:' On Road',   bg:'#D1ECF1',color:'#0C5460'},
+  completed: {label:' Done',      bg:'#E2E3E5',color:'#383D41'},
 }
 
 const V_STATUS = { available:{label:'Available',color:'#155724'}, on_trip:{label:'On Trip',color:'#856404'} }
@@ -72,7 +72,7 @@ export default function TripBooking() {
 
       {/* Tabs */}
       <div style={{display:'flex',borderBottom:'2px solid var(--odoo-border)',marginBottom:16}}>
-        {[['plan','📋 Trip Plan & Allocation'],['new','➕ New Booking Request']].map(([k,l])=>(
+        {[['plan',' Trip Plan & Allocation'],['new',' New Booking Request']].map(([k,l])=>(
           <div key={k} onClick={()=>setTab(k)}
             style={{padding:'9px 20px',fontSize:13,fontWeight:600,cursor:'pointer',
               color:tab===k?'var(--odoo-purple)':'var(--odoo-gray)',
@@ -88,7 +88,7 @@ export default function TripBooking() {
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
             padding:16,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
             <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:12}}>
-              🚗 Vehicle Availability — Today
+               Vehicle Availability — Today
             </h4>
             <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
               {VEHICLES.map(v=>(
@@ -136,7 +136,7 @@ export default function TripBooking() {
                     </td>
                     <td style={{fontSize:12,maxWidth:160}}>{bk.purpose}</td>
                     <td style={{fontSize:11,textAlign:'center'}}>
-                      {bk.passengers && <span>👤 {bk.passengers}</span>}
+                      {bk.passengers && <span> {bk.passengers}</span>}
                       {bk.weight && <span>{bk.weight}</span>}
                     </td>
                     <td>
@@ -161,7 +161,7 @@ export default function TripBooking() {
                       <div style={{display:'flex',gap:4}}>
                         {bk.status==='pending' && !allocating &&
                           <button className="btn-xs pri" style={{background:'var(--odoo-purple)',color:'#fff',whiteSpace:'nowrap'}}
-                            onClick={()=>setAllocating(bk.id)}>🚗 Allocate</button>}
+                            onClick={()=>setAllocating(bk.id)}> Allocate</button>}
                         {bk.status==='allocated' &&
                           <button className="btn-xs pri" style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}
                             onClick={()=>nav('/tm/trip/new')}>Trip Sheet</button>}
@@ -222,7 +222,7 @@ export default function TripBooking() {
           <div style={{display:'flex',gap:12,justifyContent:'flex-end',paddingTop:12,borderTop:'1px solid var(--odoo-border)'}}>
             <button className="btn btn-s sd-bsm" onClick={()=>setTab('plan')}>Cancel</button>
             <button className="btn btn-p sd-bsm" onClick={()=>{setTab('plan')}}>
-              📋 Submit Booking Request
+               Submit Booking Request
             </button>
           </div>
         </div>

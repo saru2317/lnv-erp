@@ -8,12 +8,12 @@ export default function BreakdownNew() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>🔴</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-red)'}}>BD-2025-009 Reported!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Technician notified · Supervisor alerted · Downtime clock started</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}>← Breakdown List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/workorder')}>🔧 Create Work Order</button>
+        <button className="btn btn-p sd-bsm" onClick={() => nav('/pm/workorder')}>Create Work Order</button>
       </div>
     </div>
   )
@@ -23,15 +23,15 @@ export default function BreakdownNew() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Report Breakdown <small>New Breakdown Entry</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>🔴 Submit Report</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}> Cancel</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}> Submit Report</button>
         </div>
       </div>
 
-      <div className="pp-alert warn">⚠️ Reporting a breakdown will immediately alert the maintenance supervisor and start the downtime clock.</div>
+      <div className="pp-alert warn"> Reporting a breakdown will immediately alert the maintenance supervisor and start the downtime clock.</div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔴 Breakdown Details</div>
+        <div className="fi-form-sec-hdr"> Breakdown Details</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>BD Number</label><input className="fi-form-ctrl" defaultValue="BD-2025-009" readOnly/></div>
@@ -94,7 +94,7 @@ export default function BreakdownNew() {
 
       {/* Spares needed */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📦 Spare Parts Likely Required</div>
+        <div className="fi-form-sec-hdr">Spare Parts Likely Required</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>#</th><th>Spare Part</th><th>Part No.</th><th>Est. Qty</th><th>Stock</th></tr></thead>
@@ -109,24 +109,24 @@ export default function BreakdownNew() {
                 </select></td>
                 <td><input defaultValue="SP-0042" style={{width:'80px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
                 <td><input type="number" defaultValue="2" style={{width:'60px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                <td><span className="badge badge-pass">✅ 5 in stock</span></td>
+                <td><span className="badge badge-pass">5 in stock</span></td>
               </tr>
             </tbody>
           </table>
           <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm">➕ Add Spare Part</button>
+            <button className="btn btn-s sd-bsm">Add Spare Part</button>
           </div>
         </div>
       </div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>🔴 Submit Report</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/breakdown')}> Cancel</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}> Submit Report</button>
         <div className="fi-status-flow">
-          <span className="fi-sf-step act">🔴 Reported</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">🔧 Assigned</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">⚙️ In Repair</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">✅ Resolved</span>
+          <span className="fi-sf-step act"> Reported</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Assigned</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step"> In Repair</span><span className="fi-sf-arr">›</span>
+          <span className="fi-sf-step">Resolved</span>
         </div>
       </div>
     </div>

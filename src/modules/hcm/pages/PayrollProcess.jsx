@@ -17,7 +17,7 @@ export default function PayrollProcess() {
 
   if (done) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>💰</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>
         Payroll Posted — {month}!
       </div>
@@ -51,7 +51,7 @@ export default function PayrollProcess() {
             background:i<step?'var(--odoo-green)':i===step?'var(--odoo-purple)':'#fff',
             color:i<=step?'#fff':'var(--odoo-gray)',fontSize:'12px',fontWeight:'700',
             borderRight:'1px solid var(--odoo-border)'}}>
-            <div style={{fontSize:'16px',marginBottom:'4px'}}>{i<step?'✅':i===step?'▶':'○'}</div>
+            <div style={{fontSize:'16px',marginBottom:'4px'}}>{i<step?'':i===step?'▶':'○'}</div>
             {s}
           </div>
         ))}
@@ -59,7 +59,7 @@ export default function PayrollProcess() {
 
       {/* Step content */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>{step===0?'🔒 Attendance Lock':step===1?'➖ Deductions':step===2?'⏱️ OT & Arrears':step===3?'👁️ Net Pay Preview':'📤 Post & Generate'}</h3></div>
+        <div className="fi-panel-hdr"><h3>{step===0?' Attendance Lock':step===1?' Deductions':step===2?'⏱ OT & Arrears':step===3?' Net Pay Preview':' Post & Generate'}</h3></div>
         <div className="fi-panel-body">
           {step===0 && (
             <div>
@@ -134,12 +134,12 @@ export default function PayrollProcess() {
           )}
           {step===4 && (
             <div>
-              <div className="pp-alert warn">⚠️ <strong>Final step!</strong> This will generate payslips, post the salary journal in FI, and initiate bank transfer batch.</div>
-              {[['📄 Generate payslips for all 148 employees','✅'],
-                ['💳 Create bank transfer file (NEFT batch)','✅'],
-                ['📒 Post salary journal to FI (GL entries)','✅'],
-                ['📊 Update PF/ESI registers','✅'],
-                ['📧 Email payslips to employees','Optional']].map(([task,status])=>(
+              <div className="pp-alert warn"> <strong>Final step!</strong> This will generate payslips, post the salary journal in FI, and initiate bank transfer batch.</div>
+              {[[' Generate payslips for all 148 employees',''],
+                [' Create bank transfer file (NEFT batch)',''],
+                [' Post salary journal to FI (GL entries)',''],
+                [' Update PF/ESI registers',''],
+                [' Email payslips to employees','Optional']].map(([task,status])=>(
                 <div key={task} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--odoo-border)',fontSize:'13px'}}>
                   <span>{task}</span><strong style={{color:'var(--odoo-green)'}}>{status}</strong>
                 </div>
@@ -150,7 +150,7 @@ export default function PayrollProcess() {
           <div style={{marginTop:'16px',display:'flex',gap:'10px'}}>
             {step>0 && <button className="btn btn-s sd-bsm" onClick={()=>setStep(s=>s-1)}>← Back</button>}
             <button className="btn btn-p sd-bsm" onClick={runStep} disabled={running} style={{minWidth:'160px'}}>
-              {running?'⏳ Processing...':step<4?'▶ Run This Step':'📤 Post Payroll'}
+              {running?'⏳ Processing...':step<4?'▶ Run This Step':' Post Payroll'}
             </button>
           </div>
         </div>

@@ -20,26 +20,26 @@ const BinMaster        = lazy(() => import('./BinMaster'))
 const StockReport      = lazy(() => import('./StockReport'))
 
 const NAV_ITEMS = [
-  { to: '/wm',             label: '🏠 Home' },
+  { to: '/wm',             label: ' Home' },
   { to:'/wm/item-ledger', label:'Item Ledger' },
-    { to: '/wm/stock',       label: '📦 Stock' },
-  { to: '/wm/goods-issue', label: '📤 Goods Issue' },
-  { to: '/wm/transfer',    label: '🔄 Transfer' },
-  { to: '/wm/report',      label: '📊 Reports' },
+    { to: '/wm/stock',       label: ' Stock' },
+  { to: '/wm/goods-issue', label: ' Goods Issue' },
+  { to: '/wm/transfer',    label: ' Transfer' },
+  { to: '/wm/report',      label: ' Reports' },
 ]
 
 const SIDEBAR_GROUPS = [
   {
-    label: 'Stock Overview', icon: '📦',
+    label: 'Stock Overview', icon: '',
     items: [
       { to: '/wm/stock',         label: 'Stock Overview (MB52)' },
       { to: '/wm/bin-stock',     label: 'Bin / Location Stock' },
-      { to: '/wm/reorder',       label: 'Reorder Alerts ⚠️' },
+      { to: '/wm/reorder',       label: 'Reorder Alerts ' },
       { to: '/wm/expiry',        label: 'Expiry Tracking' },
     ]
   },
   {
-    label: 'Stock Movements', icon: '📤',
+    label: 'Stock Movements', icon: '',
     items: [
       { to: '/wm/goods-receipt', label: 'Goods Receipt (GR)' },
       { to: '/wm/goods-issue',   label: 'Goods Issue (GI)' },
@@ -48,21 +48,21 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
-    label: 'Physical Inventory', icon: '📋',
+    label: 'Physical Inventory', icon: '',
     items: [
       { to: '/wm/physical-inventory', label: 'Physical Count (MI01)' },
       { to: '/wm/adjustment',         label: 'Stock Adjustment' },
     ]
   },
   {
-    label: 'Locations', icon: '🏗️',
+    label: 'Locations', icon: '',
     items: [
-      { to: '/wm/wh-map',    label: 'Warehouse Map 🗺️' },
+      { to: '/wm/wh-map',    label: 'Warehouse Map ' },
       { to: '/wm/bin-master',label: 'Bin / Location Master' },
     ]
   },
   {
-    label: 'Reports', icon: '📊',
+    label: 'Reports', icon: '',
     items: [
       { to: '/wm/report',       label: 'Stock Report' },
       { to: '/wm/movement-log', label: 'Movement Register' },

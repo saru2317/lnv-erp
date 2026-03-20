@@ -14,7 +14,7 @@ export default function PendingPO() {
       <div className="lv-hdr">
         <div className="lv-ttl">Pending GRN — Purchase Orders <small>Awaiting Receipt</small></div>
       </div>
-      <div className="mm-alert warn">⚠️ The following POs have not received GRN within the expected delivery date. Please follow up with vendors.</div>
+      <div className="mm-alert warn"> The following POs have not received GRN within the expected delivery date. Please follow up with vendors.</div>
       <table className="mm-tbl">
         <thead><tr><th>PO No.</th><th>Vendor</th><th>Order Date</th><th>Expected Delivery</th><th>Days Overdue</th><th>Amount</th><th>Actions</th></tr></thead>
         <tbody>

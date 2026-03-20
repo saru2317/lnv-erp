@@ -10,15 +10,15 @@ const Depreciation  = lazy(() => import('./Depreciation'))
 const PropertyRegister = lazy(() => import('./PropertyRegister'))
 
 const NAV_ITEMS = [
-  { to:'/am',            label:'🏠 Home' },
-  { to:'/am/assets',     label:'🏭 Assets' },
-  { to:'/am/issue',      label:'📋 Issue/Return' },
-  { to:'/am/depreciation',label:'📉 Depreciation' },
-  { to:'/am/property',   label:'🏢 Property' },
+  { to:'/am',            label:' Home' },
+  { to:'/am/assets',     label:' Assets' },
+  { to:'/am/issue',      label:' Issue/Return' },
+  { to:'/am/depreciation',label:' Depreciation' },
+  { to:'/am/property',   label:' Property' },
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'Company Assets', icon:'🏭', items:[
+  { label:'Company Assets', icon:'', items:[
     { to:'/am',                label:'Asset Dashboard' },
     { to:'/am/assets',         label:'Asset Register' },
     { to:'/am/issue',          label:'Asset Issue / Return' },
@@ -26,7 +26,7 @@ const SIDEBAR_GROUPS = [
     { to:'/am/disposal',       label:'Disposal / Scrap' },
     { to:'/am/assets',         label:'Asset Movement' },
   ]},
-  { label:'Company Property', icon:'🏢', items:[
+  { label:'Company Property', icon:'', items:[
     { to:'/am/property',       label:'Property Register' },
     { to:'/am/property',       label:'Lease / Rent Management' },
     { to:'/am/property',       label:'Property Maintenance' },

@@ -29,13 +29,13 @@ export default function KPIEmployees({ employees, assignments }) {
               <td style={{textAlign:'center'}}>
                 <span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,
                   background:e.incElig?'#D4EDDA':'#F8F9FA',color:e.incElig?'#155724':'#999'}}>
-                  {e.incElig?'✅ Yes':'— No'}
+                  {e.incElig?' Yes':'— No'}
                 </span>
               </td>
               <td style={{fontSize:11,color:'var(--odoo-gray)'}}>{getKPISet(e)}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn-xs">Edit</button>
-                <button className="btn-xs" onClick={()=>setEmps(es=>es.filter(x=>x.code!==e.code))}>🗑️</button>
+                <button className="btn-xs" onClick={()=>setEmps(es=>es.filter(x=>x.code!==e.code))}></button>
               </div></td>
             </tr>
           ))}

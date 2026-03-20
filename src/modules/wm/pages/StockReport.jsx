@@ -27,10 +27,10 @@ export default function StockReport() {
 
       <div className="wm-kpi-grid">
         {[
-          { cls:'purple', ic:'📦', lb:'Total SKUs',      val:'86',     sub:'Active materials' },
-          { cls:'green',  ic:'💰', lb:'Stock Value',      val:'₹42.8L', sub:'Current valuation' },
-          { cls:'orange', ic:'📥', lb:'Receipts (MTD)',   val:'₹8.6L',  sub:'14 GRNs this month' },
-          { cls:'blue',   ic:'📤', lb:'Issues (MTD)',     val:'₹6.2L',  sub:'22 issue movements' },
+          { cls:'purple', ic:'', lb:'Total SKUs',      val:'86',     sub:'Active materials' },
+          { cls:'green',  ic:'', lb:'Stock Value',      val:'₹42.8L', sub:'Current valuation' },
+          { cls:'orange', ic:'', lb:'Receipts (MTD)',   val:'₹8.6L',  sub:'14 GRNs this month' },
+          { cls:'blue',   ic:'', lb:'Issues (MTD)',     val:'₹6.2L',  sub:'22 issue movements' },
         ].map(k => (
           <div key={k.lb} className={`wm-kpi-card ${k.cls}`}>
             <div className="wm-kpi-icon">{k.ic}</div>

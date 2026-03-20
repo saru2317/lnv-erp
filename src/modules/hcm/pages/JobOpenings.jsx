@@ -20,7 +20,7 @@ export default function JobOpenings() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Job Openings <small>Recruitment Pipeline</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/candidates')}>👥 Candidates</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/hcm/candidates')}> Candidates</button>
           <button className="btn btn-p sd-bsm" onClick={() => setModal('new')}>New Position</button>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function JobOpenings() {
       {modal && (
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
-            <div className="fi-modal-hdr">New Job Opening <button className="fi-modal-close" onClick={() => setModal(null)}>✕</button></div>
+            <div className="fi-modal-hdr">New Job Opening <button className="fi-modal-close" onClick={() => setModal(null)}></button></div>
             <div className="fi-modal-body">
               <div className="fi-form-row"><div className="fi-form-grp"><label>Position Title <span>*</span></label><input className="fi-form-ctrl" placeholder="e.g. Ring Frame Operator"/></div>
               <div className="fi-form-grp"><label>Department</label>

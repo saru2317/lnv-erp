@@ -39,11 +39,11 @@ export default function JVList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search">🔍<input placeholder="Search JV no., account, narration..."/></div>
+        <div className="fi-filter-search"><input placeholder="Search JV no., account, narration..."/></div>
         <select className="fi-filter-select"><option>All Types</option><option>Sales</option><option>Purchase</option><option>Bank</option><option>Manual JV</option><option>Production</option></select>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
         <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
-        <button className="btn btn-s sd-bsm">🔄 Reset</button>
+        <button className="btn btn-s sd-bsm"> Reset</button>
       </div>
 
       <table className="fi-data-table">
@@ -83,8 +83,8 @@ export default function JVList() {
         <div className="fi-modal-overlay" onClick={() => setModal(null)}>
           <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
             <div className="fi-modal-hdr">
-              <h3>📓 {modal.no}</h3>
-              <span className="fi-modal-close" onClick={() => setModal(null)}>✕</span>
+              <h3> {modal.no}</h3>
+              <span className="fi-modal-close" onClick={() => setModal(null)}></span>
             </div>
             <div className="fi-modal-body">
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
@@ -105,8 +105,8 @@ export default function JVList() {
               </table>
               <div style={{display:'flex',gap:'8px'}}>
                 <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Close</button>
-                <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}} onClick={() => setModal(null)}>↩️ Reverse JV</button>
-                <button className="btn btn-p sd-bsm" onClick={() => {nav('/fi/ledger'); setModal(null)}}>📜 View in Ledger</button>
+                <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}} onClick={() => setModal(null)}>↩ Reverse JV</button>
+                <button className="btn btn-p sd-bsm" onClick={() => {nav('/fi/ledger'); setModal(null)}}> View in Ledger</button>
               </div>
             </div>
           </div>

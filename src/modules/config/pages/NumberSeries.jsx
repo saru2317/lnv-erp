@@ -52,7 +52,7 @@ export default function NumberSeries() {
 
       {showForm && (
         <div className="fi-panel" style={{ marginBottom:'16px', border:'2px solid var(--odoo-purple)' }}>
-          <div className="fi-panel-hdr"><h3>{editId ? '✏️ Edit' : '➕ New'} Number Series</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId ? ' Edit' : ' New'} Number Series</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field">
@@ -78,7 +78,7 @@ export default function NumberSeries() {
               <span style={{ fontSize:'11px', color:'var(--odoo-gray)' }}>Next: <strong style={{fontFamily:'DM Mono,monospace'}}>{form.prefix}{String(parseInt(form.next)+1).padStart(parseInt(form.padding)||4,'0')}{form.suffix}</strong></span>
             </div>
             <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ {editId?'Update':'Save'}</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> {editId?'Update':'Save'}</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function NumberSeries() {
                     </span>
                   </td>
                   <td>
-                    <button className="btn-act-edit" onClick={() => handleEdit(s)}>✏️</button>
+                    <button className="btn-act-edit" onClick={() => handleEdit(s)}></button>
                   </td>
                 </tr>
               )

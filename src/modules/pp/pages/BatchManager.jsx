@@ -56,7 +56,7 @@ export default function BatchManager() {
 
   return (
     <div>
-      {toast && <div style={{ position:'fixed',top:'60px',right:'20px',background:'var(--odoo-green)',color:'#fff',padding:'10px 16px',borderRadius:'8px',fontWeight:'700',zIndex:999 }}>✅ {toast}</div>}
+      {toast && <div style={{ position:'fixed',top:'60px',right:'20px',background:'var(--odoo-green)',color:'#fff',padding:'10px 16px',borderRadius:'8px',fontWeight:'700',zIndex:999 }}>{toast}</div>}
 
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Batch Manager <small>Club multiple jobs into one tank/furnace batch</small></div>
@@ -77,7 +77,7 @@ export default function BatchManager() {
       {/* New batch creator */}
       {showNew && (
         <div className="fi-panel" style={{ marginBottom:'16px',border:'2px solid var(--odoo-blue)' }}>
-          <div className="fi-panel-hdr"><h3>➕ Create New Batch</h3></div>
+          <div className="fi-panel-hdr"><h3>Create New Batch</h3></div>
           <div className="fi-panel-body">
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px' }}>
 
@@ -114,12 +114,12 @@ export default function BatchManager() {
                       <div style={{ height:'100%',width:`${Math.min(capacityPct,100)}%`,transition:'width .3s',
                         background: capacityPct>100?'var(--odoo-red)':capacityPct>80?'var(--odoo-orange)':'var(--odoo-green)',borderRadius:'4px' }} />
                     </div>
-                    {capacityPct>100&&<div style={{ fontSize:'10px',color:'var(--odoo-red)',marginTop:'4px',fontWeight:'700' }}>⚠️ Over capacity! Reduce job selection.</div>}
+                    {capacityPct>100&&<div style={{ fontSize:'10px',color:'var(--odoo-red)',marginTop:'4px',fontWeight:'700' }}> Over capacity! Reduce job selection.</div>}
                   </div>
                 )}
 
                 <button className="btn btn-p btn-s" onClick={createBatch} disabled={!selStage||!selWC||selJobs.length===0||capacityPct>100}>
-                  ✓ Create Batch ({selJobs.length} jobs, {totalQtySelected} pcs)
+                   Create Batch ({selJobs.length} jobs, {totalQtySelected} pcs)
                 </button>
                 <button className="btn btn-s sd-bsm" style={{ marginLeft:'8px' }} onClick={() => setShowNew(false)}>Cancel</button>
               </div>
@@ -144,7 +144,7 @@ export default function BatchManager() {
                               border:'1px solid',borderColor:checked?'var(--odoo-blue)':'var(--odoo-border)',
                               background:checked?'#E3F2FD':'#fff',opacity:canAdd?1:0.5 }}>
                             <div style={{ width:'16px',height:'16px',borderRadius:'3px',border:'2px solid',borderColor:checked?'var(--odoo-blue)':'#CCC',background:checked?'var(--odoo-blue)':'#fff',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                              {checked&&<span style={{ color:'#fff',fontSize:'10px',lineHeight:1 }}>✓</span>}
+                              {checked&&<span style={{ color:'#fff',fontSize:'10px',lineHeight:1 }}></span>}
                             </div>
                             <span style={{ fontSize:'14px' }}>{iind?.icon}</span>
                             <div style={{ flex:1 }}>
@@ -204,7 +204,7 @@ export default function BatchManager() {
                     <div style={{ display:'flex',gap:'4px' }}>
                       {b.status==='Pending'  && <button className="btn-act-edit" onClick={()=>showToast(`${b.id} started!`)}>▶ Start</button>}
                       {b.status==='Running'  && <button className="btn-act-view" onClick={()=>showToast(`${b.id} completed!`)}>⏹ Done</button>}
-                      {b.status==='Done'     && <button className="btn-act-view">📄 Report</button>}
+                      {b.status==='Done'     && <button className="btn-act-view">Report</button>}
                     </div>
                   </td>
                 </tr>
@@ -218,9 +218,9 @@ export default function BatchManager() {
       <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px',marginTop:'14px' }}>
         {[
           { l:'Total Batches',  v:batches.length,                              c:'var(--odoo-purple)', i:'🪣' },
-          { l:'Running Now',    v:batches.filter(b=>b.status==='Running').length,c:'var(--odoo-orange)',i:'▶️' },
-          { l:'Completed',      v:batches.filter(b=>b.status==='Done').length, c:'var(--odoo-green)', i:'✅' },
-          { l:'Jobs Clubbed',   v:batches.reduce((s,b)=>s+b.jobCards.length,0),c:'var(--odoo-blue)',  i:'🔗' },
+          { l:'Running Now',    v:batches.filter(b=>b.status==='Running').length,c:'var(--odoo-orange)',i:'▶' },
+          { l:'Completed',      v:batches.filter(b=>b.status==='Done').length, c:'var(--odoo-green)', i:'' },
+          { l:'Jobs Clubbed',   v:batches.reduce((s,b)=>s+b.jobCards.length,0),c:'var(--odoo-blue)',  i:'' },
         ].map(k => (
           <div key={k.l} className="crm-kpi-card" style={{ borderLeftColor:k.c }}>
             <div className="crm-kpi-icon">{k.i}</div>

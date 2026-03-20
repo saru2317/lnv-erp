@@ -47,7 +47,7 @@ export default function ManpowerPlanning() {
           ))}
         </div>
         <div style={{marginTop:'12px',background:'rgba(255,255,255,.1)',borderRadius:'6px',padding:'8px 12px',fontSize:'12px'}}>
-          📊 E-Cost utilization: <strong>{Math.round(BUDGET.actual_ecost/BUDGET.target_ecost*100)}%</strong> · 
+           E-Cost utilization: <strong>{Math.round(BUDGET.actual_ecost/BUDGET.target_ecost*100)}%</strong> · 
           Savings: <strong>₹{((BUDGET.target_ecost-BUDGET.actual_ecost)/1000).toFixed(0)}K</strong> this month
         </div>
       </div>
@@ -74,7 +74,7 @@ export default function ManpowerPlanning() {
                 <td style={{textAlign:'center',fontFamily:'DM Mono,monospace',fontSize:'12px'}}>{d.plan2025}</td>
                 <td style={{textAlign:'center',fontWeight:'700',
                   color:d.plan2025-d.actual>0?'var(--odoo-orange)':'var(--odoo-green)'}}>
-                  {d.plan2025-d.actual>0?`+${d.plan2025-d.actual} needed`:d.plan2025-d.actual<0?`${d.plan2025-d.actual}`:'✅'}
+                  {d.plan2025-d.actual>0?`+${d.plan2025-d.actual} needed`:d.plan2025-d.actual<0?`${d.plan2025-d.actual}`:''}
                 </td>
                 <td style={{fontSize:'12px',color:d.skillGap==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:d.skillGap==='—'?'400':'600'}}>{d.skillGap}</td>
               </tr>

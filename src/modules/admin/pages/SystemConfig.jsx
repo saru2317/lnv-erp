@@ -59,7 +59,7 @@ export default function SystemConfig() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">🔐 Security Settings</div>
+        <div className="fi-form-sec-hdr"> Security Settings</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Min Password Length</label><input type="number" className="fi-form-ctrl" defaultValue="8"/></div>

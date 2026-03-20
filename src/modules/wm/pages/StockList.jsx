@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 
 const STOCKS = [
-  {code:'MAT-001',desc:'Compact Cotton Sliver',   cat:'Raw Material',bin:'BIN-A12',uom:'Kg',  op:200,  in_:400, out:120, cur:480,  reord:200, val:'₹4,08,000',b:'badge-ok',       bl:'✅ OK',         cc:''},
-  {code:'MAT-002',desc:'Ring Yarn (30s Count)',    cat:'Raw Material',bin:'BIN-B04',uom:'Kg',  op:150,  in_:0,   out:70,  cur:80,   reord:200, val:'₹96,000',  b:'badge-critical',  bl:'🔴 Critical',  cc:'var(--odoo-red)'},
-  {code:'MAT-003',desc:'Lattice Aprons (Set)',     cat:'Spares',      bin:'BIN-C05',uom:'Nos', op:80,   in_:0,   out:45,  cur:35,   reord:50,  val:'₹36,750',  b:'badge-low',       bl:'⚠️ Low',       cc:'var(--odoo-orange)'},
-  {code:'MAT-004',desc:'Packing Boxes Double Wall',cat:'Packing',     bin:'BIN-F06',uom:'Nos', op:500,  in_:1000,out:650, cur:850,  reord:500, val:'₹1,70,000',b:'badge-ok',        bl:'✅ OK',         cc:''},
-  {code:'MAT-005',desc:'Solvent Chemical 30%',     cat:'Chemicals',   bin:'BIN-E10',uom:'Litre',op:70, in_:30,  out:75,  cur:25,   reord:100, val:'₹12,500',  b:'badge-low',       bl:'⚠️ Low',       cc:'var(--odoo-orange)'},
-  {code:'MAT-006',desc:'Open End Yarn (12s)',       cat:'Raw Material',bin:'BIN-A08',uom:'Kg',  op:300,  in_:200, out:180, cur:320,  reord:150, val:'₹2,88,000',b:'badge-ok',        bl:'✅ OK',         cc:''},
-  {code:'MAT-007',desc:'Lubricant Oil (Machine)',   cat:'Spares',      bin:'BIN-G02',uom:'Litre',op:40, in_:20,  out:35,  cur:25,   reord:20,  val:'₹6,250',   b:'badge-ok',        bl:'✅ OK',         cc:''},
+  {code:'MAT-001',desc:'Compact Cotton Sliver',   cat:'Raw Material',bin:'BIN-A12',uom:'Kg',  op:200,  in_:400, out:120, cur:480,  reord:200, val:'₹4,08,000',b:'badge-ok',       bl:' OK',         cc:''},
+  {code:'MAT-002',desc:'Ring Yarn (30s Count)',    cat:'Raw Material',bin:'BIN-B04',uom:'Kg',  op:150,  in_:0,   out:70,  cur:80,   reord:200, val:'₹96,000',  b:'badge-critical',  bl:' Critical',  cc:'var(--odoo-red)'},
+  {code:'MAT-003',desc:'Lattice Aprons (Set)',     cat:'Spares',      bin:'BIN-C05',uom:'Nos', op:80,   in_:0,   out:45,  cur:35,   reord:50,  val:'₹36,750',  b:'badge-low',       bl:' Low',       cc:'var(--odoo-orange)'},
+  {code:'MAT-004',desc:'Packing Boxes Double Wall',cat:'Packing',     bin:'BIN-F06',uom:'Nos', op:500,  in_:1000,out:650, cur:850,  reord:500, val:'₹1,70,000',b:'badge-ok',        bl:' OK',         cc:''},
+  {code:'MAT-005',desc:'Solvent Chemical 30%',     cat:'Chemicals',   bin:'BIN-E10',uom:'Litre',op:70, in_:30,  out:75,  cur:25,   reord:100, val:'₹12,500',  b:'badge-low',       bl:' Low',       cc:'var(--odoo-orange)'},
+  {code:'MAT-006',desc:'Open End Yarn (12s)',       cat:'Raw Material',bin:'BIN-A08',uom:'Kg',  op:300,  in_:200, out:180, cur:320,  reord:150, val:'₹2,88,000',b:'badge-ok',        bl:' OK',         cc:''},
+  {code:'MAT-007',desc:'Lubricant Oil (Machine)',   cat:'Spares',      bin:'BIN-G02',uom:'Litre',op:40, in_:20,  out:35,  cur:25,   reord:20,  val:'₹6,250',   b:'badge-ok',        bl:' OK',         cc:''},
 ]
 
 export default function StockList() {
@@ -33,7 +33,7 @@ export default function StockList() {
         ))}
       </div>
       <div className="wm-filter-bar">
-        <div className="wm-filter-search">🔍<input placeholder="Search material, code, bin..."/></div>
+        <div className="wm-filter-search"><input placeholder="Search material, code, bin..."/></div>
         <select className="wm-filter-select"><option>All Locations</option><option>Main Store</option><option>Warehouse B</option><option>Production Floor</option></select>
         <select className="wm-filter-select"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option></select>
         <select className="wm-filter-select"><option>All Stock Status</option><option>OK</option><option>Low</option><option>Critical</option><option>Zero</option></select>

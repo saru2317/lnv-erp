@@ -26,12 +26,12 @@ export default function SpareIssue() {
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>📦</div>
+      <div style={{fontSize:'48px'}}></div>
       <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-purple)'}}>SPI-2025-032 — Issued!</div>
       <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Stock updated · Maintenance log entry created · ₹{total.toLocaleString()} cost recorded</div>
       <div style={{display:'flex',gap:'10px'}}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares')}>← Spare Parts</button>
-        <button className="btn btn-s sd-bsm" onClick={() => { setSaved(false); setRows([{id:0,spare:'SP-0021',qty:1}]) }}>➕ New Issue</button>
+        <button className="btn btn-s sd-bsm" onClick={() => { setSaved(false); setRows([{id:0,spare:'SP-0021',qty:1}]) }}>New Issue</button>
       </div>
     </div>
   )
@@ -41,13 +41,13 @@ export default function SpareIssue() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Issue Spare Parts <small>SPI-2025-032</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares')}>✕ Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>📤 Issue & Deduct Stock</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares')}> Cancel</button>
+          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Issue & Deduct Stock</button>
         </div>
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📋 Issue Details</div>
+        <div className="fi-form-sec-hdr">Issue Details</div>
         <div className="fi-form-sec-body">
           <div className="fi-form-row">
             <div className="fi-form-grp"><label>Issue No.</label><input className="fi-form-ctrl" defaultValue="SPI-2025-032" readOnly/></div>
@@ -81,7 +81,7 @@ export default function SpareIssue() {
       </div>
 
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">📦 Spare Parts to Issue</div>
+        <div className="fi-form-sec-hdr">Spare Parts to Issue</div>
         <div style={{padding:'0'}}>
           <table className="fi-data-table">
             <thead><tr><th>#</th><th>Part ID</th><th>Spare Part Name</th><th>Available</th><th>Qty to Issue</th><th>Unit</th><th>Cost</th><th></th></tr></thead>
@@ -111,12 +111,12 @@ export default function SpareIssue() {
                       <input type="number" min="1" value={r.qty} onChange={e=>updateRow(r.id,'qty',parseInt(e.target.value)||1)}
                         style={{width:'70px',border:`2px solid ${lowStock?'var(--odoo-red)':'var(--odoo-border)'}`,borderRadius:'5px',
                           padding:'5px 8px',fontSize:'13px',fontWeight:'600',textAlign:'center'}}/>
-                      {lowStock && <div style={{fontSize:'10px',color:'var(--odoo-red)',marginTop:'2px'}}>⚠️ Exceeds stock!</div>}
+                      {lowStock && <div style={{fontSize:'10px',color:'var(--odoo-red)',marginTop:'2px'}}> Exceeds stock!</div>}
                     </td>
                     <td style={{fontSize:'12px',color:'var(--odoo-gray)'}}>{sp?.unit}</td>
                     <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-blue)'}}>₹{rowCost.toLocaleString()}</td>
                     <td>
-                      {rows.length>1 && <button onClick={()=>removeRow(r.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--odoo-red)',fontSize:'16px'}}>✕</button>}
+                      {rows.length>1 && <button onClick={()=>removeRow(r.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--odoo-red)',fontSize:'16px'}}></button>}
                     </td>
                   </tr>
                 )
@@ -131,16 +131,16 @@ export default function SpareIssue() {
             </tfoot>
           </table>
           <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm" onClick={addRow}>➕ Add More Parts</button>
+            <button className="btn btn-s sd-bsm" onClick={addRow}>Add More Parts</button>
           </div>
         </div>
       </div>
 
-      <div className="pp-alert info">💡 Issuing spare parts will auto-deduct stock and create a cost entry in the Maintenance Cost Report. FI integration posts to maintenance expense account.</div>
+      <div className="pp-alert info"> Issuing spare parts will auto-deduct stock and create a cost entry in the Maintenance Cost Report. FI integration posts to maintenance expense account.</div>
 
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares')}>✕ Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>📤 Issue & Deduct Stock</button>
+        <button className="btn btn-s sd-bsm" onClick={() => nav('/pm/spares')}> Cancel</button>
+        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Issue & Deduct Stock</button>
       </div>
     </div>
   )

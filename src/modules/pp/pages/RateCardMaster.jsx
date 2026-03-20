@@ -64,13 +64,13 @@ export default function RateCardMaster() {
 
       {/* Rate pricing tip */}
       <div style={{marginBottom:'14px',padding:'10px 14px',background:'#FFF3CD',borderRadius:'8px',fontSize:'12px',color:'#856404'}}>
-        💡 <strong>Rate hierarchy:</strong> Customer-specific rate → Process default rate → System default. Customer rate always takes priority for billing!
+         <strong>Rate hierarchy:</strong> Customer-specific rate → Process default rate → System default. Customer rate always takes priority for billing!
       </div>
 
       {/* Add/Edit Form */}
       {showForm&&(
         <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>{editId?'✏️ Edit Rate':'➕ Add Rate Card'}</h3></div>
+          <div className="fi-panel-hdr"><h3>{editId?' Edit Rate':' Add Rate Card'}</h3></div>
           <div className="fi-panel-body">
             <div className="sd-form-grid">
               <div className="sd-field"><label>Customer *</label>
@@ -99,7 +99,7 @@ export default function RateCardMaster() {
               </div>
             </div>
             <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-              <button className="btn btn-p btn-s" onClick={handleSave}>✓ Save Rate</button>
+              <button className="btn btn-p btn-s" onClick={handleSave}> Save Rate</button>
               <button className="btn btn-s sd-bsm" onClick={()=>{setShowForm(false);setEditId(null)}}>Cancel</button>
             </div>
           </div>
@@ -149,11 +149,11 @@ export default function RateCardMaster() {
                             <span style={{fontFamily:'DM Mono,monospace',fontWeight:'800',fontSize:'16px',color:'var(--odoo-purple)'}}>₹{parseFloat(rc.rate).toFixed(2)}</span>
                             <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
                               <span style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{rc.unit}</span>
-                              <button className="btn-act-edit" style={{padding:'2px 6px',fontSize:'10px'}} onClick={()=>handleEdit(rc)}>✏️</button>
+                              <button className="btn-act-edit" style={{padding:'2px 6px',fontSize:'10px'}} onClick={()=>handleEdit(rc)}></button>
                             </div>
                           </div>
                         : <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                            <span style={{fontSize:'11px',color:'var(--odoo-orange)',fontWeight:'600'}}>⚠️ No rate set</span>
+                            <span style={{fontSize:'11px',color:'var(--odoo-orange)',fontWeight:'600'}}> No rate set</span>
                             <button className="btn-act-edit" style={{padding:'2px 8px',fontSize:'10px'}} onClick={()=>{set('customerId',cust.id);set('process',p);setShowForm(true)}}>Add</button>
                           </div>
                       }
@@ -163,7 +163,7 @@ export default function RateCardMaster() {
               </div>
               {missingRates.length>0&&(
                 <div style={{padding:'8px 14px',background:'#FFF3CD',fontSize:'11px',color:'#856404'}}>
-                  ⚠️ Missing rates for: <strong>{missingRates.join(', ')}</strong> — Job invoices may be incorrect!
+                   Missing rates for: <strong>{missingRates.join(', ')}</strong> — Job invoices may be incorrect!
                 </div>
               )}
             </div>

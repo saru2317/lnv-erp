@@ -21,8 +21,8 @@ export default function MachineRegister() {
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Machine Register <small>Plant & Equipment Master</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">⬇️ Export</button>
-          <button className="btn btn-p sd-bsm">➕ Add Machine</button>
+          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-p sd-bsm">Add Machine</button>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function MachineRegister() {
                 <td style={{fontSize:'12px'}}>{m.cap}</td>
                 <td>
                   {m.status==='Breakdown' ? (
-                    <span style={{color:'var(--odoo-red)',fontWeight:'700'}}>🔴 Down</span>
+                    <span style={{color:'var(--odoo-red)',fontWeight:'700'}}> Down</span>
                   ) : (
                     <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
                       <div style={{background:'#F0EEEB',borderRadius:'4px',height:'8px',width:'70px'}}>
@@ -68,7 +68,7 @@ export default function MachineRegister() {
                   )}
                 </td>
                 <td style={{fontSize:'12px'}}>{m.loc}</td>
-                <td><span className={`badge ${m.sb}`}>{m.status==='Running'?'✅ Running':'🔴 Breakdown'}</span></td>
+                <td><span className={`badge ${m.sb}`}>{m.status==='Running'?' Running':' Breakdown'}</span></td>
                 <td><button className="btn-xs pri">{expanded===m.id?'▲':'▼'}</button></td>
               </tr>
               {expanded===m.id && (
