@@ -49,12 +49,12 @@ export default function KPIEntry() {
 
       {saved && (
         <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,
-          padding:'10px 16px',marginBottom:16,fontSize:13,color:'#155724',fontWeight:600}}>
+          marginBottom:16,fontSize:13,fontWeight:600}}>
            Actuals for {MONTH_FULL[month]} saved successfully!
         </div>
       )}
 
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
+      <div style={{borderRadius:8,border:'1px solid var(--odoo-border)',
         overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
           <thead>
@@ -69,7 +69,7 @@ export default function KPIEntry() {
           <tbody>
             {/* Major */}
             <tr>
-              <td colSpan={11} style={{padding:'7px 14px',background:'var(--odoo-dark)',color:'#fff',
+              <td colSpan={11} style={{padding:'7px 14px',background:'var(--odoo-dark)',
                 fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11}}>
                  MAJOR KPIs — Weighted (Affects Score)
               </td>
@@ -78,7 +78,7 @@ export default function KPIEntry() {
               const {v,pct,cs,sc} = inp(k)
               return (
                 <tr key={k.code} style={{background:i%2===0?'#fff':'#F8F9FA',borderBottom:'1px solid var(--odoo-border)'}}>
-                  <td style={{padding:'7px 10px',textAlign:'center',color:'var(--odoo-gray)',fontSize:10}}>{i+1}</td>
+                  <td style={{padding:'7px 10px',textAlign:'center',fontSize:10}}>{i+1}</td>
                   <td style={{padding:'7px 10px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:10}}>{k.code}</td>
                   <td style={{padding:'7px 10px',textAlign:'center'}}>
                     <span style={{padding:'2px 6px',borderRadius:8,fontSize:9,fontWeight:700,background:'#EDE0EA',color:'var(--odoo-purple)'}}>Major</span>
@@ -102,7 +102,7 @@ export default function KPIEntry() {
                       onBlur={e=>e.target.style.borderColor=values[k.code]?'var(--odoo-purple)':'var(--odoo-border)'}
                     />
                   </td>
-                  <td style={{padding:'7px 10px',textAlign:'center',fontFamily:'DM Mono,monospace',
+                  <td style={{textAlign:'center',fontFamily:'DM Mono,monospace',
                     fontWeight:700,background:v!=null?cs.bg:'',color:v!=null?cs.color:'var(--odoo-gray)'}}>
                     {pct != null ? `${pct}%` : '—'}
                   </td>
@@ -118,14 +118,14 @@ export default function KPIEntry() {
                         background:cs.bg,color:cs.color}}>
                         {(pct||0)>=90?'On Target':(pct||0)>=70?'Near Target':'Below'}
                       </span>
-                    ) : <span style={{color:'var(--odoo-gray)',fontSize:11}}>Not Entered</span>}
+                    ) : <span style={{fontSize:11}}>Not Entered</span>}
                   </td>
                 </tr>
               )
             })}
             {/* Minor */}
             <tr>
-              <td colSpan={11} style={{padding:'7px 14px',background:'#1A5276',color:'#fff',
+              <td colSpan={11} style={{padding:'7px 14px',background:'#1A5276',
                 fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11}}>
                  MINOR KPIs — Tracking Only
               </td>
@@ -135,7 +135,7 @@ export default function KPIEntry() {
               return (
                 <tr key={k.code} style={{background:'#EFF6FF',borderBottom:'1px solid var(--odoo-border)'}}>
                   <td style={{padding:'7px 10px',textAlign:'center',color:'var(--odoo-gray)',fontSize:10}}>{i+1}</td>
-                  <td style={{padding:'7px 10px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#1A5276',fontSize:10}}>{k.code}</td>
+                  <td style={{padding:'7px 10px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:10}}>{k.code}</td>
                   <td style={{padding:'7px 10px',textAlign:'center'}}>
                     <span style={{padding:'2px 6px',borderRadius:8,fontSize:9,fontWeight:700,background:'#D1ECF1',color:'#0C5460'}}>Minor</span>
                   </td>
@@ -156,7 +156,7 @@ export default function KPIEntry() {
                     fontWeight:700,background:v!=null?cs.bg:'',color:v!=null?cs.color:'var(--odoo-gray)'}}>
                     {pct != null ? `${pct}%` : '—'}
                   </td>
-                  <td style={{padding:'7px 10px',textAlign:'center',color:'var(--odoo-gray)',fontSize:10}}>Tracking</td>
+                  <td style={{padding:'7px 10px',textAlign:'center',fontSize:10}}>Tracking</td>
                   <td style={{padding:'7px 10px',textAlign:'center'}}>
                     {v != null ? <span style={{padding:'3px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:cs.bg,color:cs.color}}>{(pct||0)>=90?'On Target':(pct||0)>=70?'Near Target':'Below'}</span>
                       : <span style={{color:'var(--odoo-gray)',fontSize:11}}>Not Entered</span>}

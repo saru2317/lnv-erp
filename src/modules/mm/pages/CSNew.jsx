@@ -81,7 +81,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
   const txtInp = (val, setter, ph='') => (
     <input type="text" value={val} placeholder={ph}
       onChange={e => setter(e.target.value)}
-      style={{width:'100%', padding:'5px 7px',
+      style={{width:'100%', 
         border:'1px solid var(--odoo-border)', borderRadius:4,
         fontSize:11, background:'#FFFDE7', outline:'none', boxSizing:'border-box'}} />
   )
@@ -93,13 +93,12 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
       <div style={{background:bgHeader,padding:'10px 16px',
         display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
         <div style={{fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:13,
-          color:'#fff',minWidth:100}}>Supplier {['I','II','III'][idx]}</div>
+          minWidth:100}}>Supplier {['I','II','III'][idx]}</div>
         <div style={{flex:1,minWidth:180}}>
           <input value={sup.name} placeholder="Supplier / Vendor Name"
             onChange={e=>updateSup('name',e.target.value)}
-            style={{width:'100%',padding:'5px 10px',borderRadius:4,border:'none',
-              fontSize:12,fontWeight:600,background:'rgba(255,255,255,.2)',
-              color:'#fff',outline:'none','::placeholder':{color:'rgba(255,255,255,.6)'}}} />
+            style={{width:'100%',borderRadius:4,border:'none',
+              fontSize:12,fontWeight:600,background:'rgba(255,255,255,.2)',color:'#fff',outline:'none','::placeholder':{color:'rgba(255,255,255,.6)'}}} />
         </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           {[['Supply Type',sup.supplyType,v=>updateSup('supplyType',v),
@@ -112,7 +111,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
               {type==='select'
                 ? <select value={val} onChange={e=>setter(e.target.value)}
                     style={{padding:'3px 6px',borderRadius:3,border:'none',fontSize:11,
-                      background:'rgba(255,255,255,.2)',color:'#fff',outline:'none'}}>
+                      background:'rgba(255,255,255,.2)',outline:'none'}}>
                     {opts.map(o=><option key={o} style={{color:'#000'}}>{o}</option>)}
                   </select>
                 : <input type={type} value={val} onChange={e=>setter(e.target.value)}
@@ -135,7 +134,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
                 'Total Value','Loading','Cost/Unit','Land.Cost WO GST'
               ].map(h=>(
                 <th key={h} style={{padding:'7px 8px',fontSize:10,fontWeight:700,
-                  color:'var(--odoo-dark)',textAlign:'center',
+                  textAlign:'center',
                   border:'1px solid var(--odoo-border)',whiteSpace:'nowrap'}}>{h}</th>
               ))}
             </tr>
@@ -146,10 +145,9 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
               const isBlank = !item.desc && !item.rate
               return (
                 <tr key={i} style={{background:i%2===0?'#fff':bgRow+'22'}}>
-                  <td style={{textAlign:'center',padding:'4px 6px',fontWeight:700,
-                    color:'var(--odoo-gray)',border:'1px solid var(--odoo-border)',fontSize:11}}>{i+1}</td>
+                  <td style={{textAlign:'center',padding:'4px 6px',fontWeight:700,color:'var(--odoo-gray)',border:'1px solid var(--odoo-border)',fontSize:11}}>{i+1}</td>
                   {/* Description - 2 cols wide */}
-                  <td style={{padding:'3px 5px',border:'1px solid var(--odoo-border)',minWidth:160}}>
+                  <td style={{border:'1px solid var(--odoo-border)',minWidth:160}}>
                     {txtInp(item.desc, v=>updateItem(i,'desc',v), 'Item description')}
                   </td>
                   <td style={{padding:'3px 5px',border:'1px solid var(--odoo-border)',minWidth:80}}>
@@ -162,7 +160,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
                       {UOM_LIST.map(u=><option key={u}>{u}</option>)}
                     </select>
                   </td>
-                  <td style={{padding:'3px 5px',border:'1px solid var(--odoo-border)',minWidth:65}}>
+                  <td style={{border:'1px solid var(--odoo-border)',minWidth:65}}>
                     {numInp(item.qty, v=>updateItem(i,'qty',v))}
                   </td>
                   <td style={{padding:'3px 5px',border:'1px solid var(--odoo-border)',minWidth:90}}>
@@ -196,7 +194,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
                     </select>
                   </td>
                   {/* GST Amt */}
-                  <td style={{padding:'4px 8px',textAlign:'right',
+                  <td style={{textAlign:'right',
                     border:'1px solid var(--odoo-border)',fontFamily:'DM Mono,monospace',
                     fontSize:11,background:'#FEF8E6',color:isBlank?'#ccc':'var(--odoo-orange)'}}>
                     {isBlank?'—':fmt(c.gstAmt)}
@@ -233,12 +231,11 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
                 fontSize:12,border:'1px solid var(--odoo-border)'}}>
                 Delivery: &nbsp;
                 <input value={sup.deliveryTerms} onChange={e=>updateSup('deliveryTerms',e.target.value)}
-                  style={{background:'transparent',border:'1px dashed var(--odoo-border)',
-                    padding:'2px 6px',borderRadius:3,fontSize:11,outline:'none',width:160}} />
+                  style={{background:'transparent',border:'1px dashed var(--odoo-border)',padding:'2px 6px',borderRadius:3,fontSize:11,outline:'none',width:160}} />
                 &nbsp;&nbsp; Payment: &nbsp;
                 <input value={sup.paymentTerms} onChange={e=>updateSup('paymentTerms',e.target.value)}
                   style={{background:'transparent',border:'1px dashed var(--odoo-border)',
-                    padding:'2px 6px',borderRadius:3,fontSize:11,outline:'none',width:160}} />
+                    borderRadius:3,fontSize:11,outline:'none',width:160}} />
               </td>
               <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',
                 border:'1px solid var(--odoo-border)'}}>{fmt(totals.basicVal)}</td>
@@ -252,7 +249,7 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
               <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',
                 border:'1px solid var(--odoo-border)',color:'var(--odoo-orange)'}}>{fmt(totals.gstAmt)}</td>
               <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                fontSize:13,border:'1px solid var(--odoo-border)',color:'var(--odoo-purple)',fontWeight:800}}>
+                fontSize:13,border:'1px solid var(--odoo-border)',fontWeight:800}}>
                 {fmt(totals.totalVal)}
               </td>
               <td colSpan={3} style={{border:'1px solid var(--odoo-border)'}}></td>
@@ -328,19 +325,18 @@ export default function CSNew() {
       </div>
 
       {/* CS Info header */}
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
-        padding:16,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+      <div style={{borderRadius:8,border:'1px solid var(--odoo-border)',padding:16,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
 
         {/* Company banner */}
         <div style={{background:'linear-gradient(135deg,#4A3050,#714B67)',borderRadius:6,
-          padding:'12px 20px',marginBottom:16,
+          marginBottom:16,
           display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:800,color:'#F5C518'}}>P C S</div>
             <div style={{fontSize:11,color:'rgba(255,255,255,.7)'}}>Auto Coats · Purchase Department</div>
           </div>
           <div style={{textAlign:'center'}}>
-            <div style={{fontFamily:'Syne,sans-serif',fontSize:15,fontWeight:700,color:'#fff',letterSpacing:2}}>
+            <div style={{fontFamily:'Syne,sans-serif',fontSize:15,fontWeight:700,letterSpacing:2}}>
               COMPARATIVE STATEMENT
             </div>
             <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:600,color:'#F5C518'}}>{csNo}</div>
@@ -359,12 +355,11 @@ export default function CSNew() {
             ['Supplier Selected',selectedSup,setSelectedSup,true],
           ].map(([lbl,val,setter,editable,type])=>(
             <div key={lbl}>
-              <label style={{fontSize:11,fontWeight:700,color:'var(--odoo-gray)',
+              <label style={{fontSize:11,fontWeight:700,
                 textTransform:'uppercase',letterSpacing:.5,marginBottom:4,display:'block'}}>{lbl}</label>
               {!editable
                 ? <div style={{padding:'7px 10px',background:'#F8F9FA',borderRadius:5,
-                    border:'1px solid var(--odoo-border)',fontSize:12,fontWeight:700,
-                    color:'var(--odoo-purple)',fontFamily:'DM Mono,monospace'}}>{val}</div>
+                    border:'1px solid var(--odoo-border)',fontSize:12,fontWeight:700,color:'var(--odoo-purple)',fontFamily:'DM Mono,monospace'}}>{val}</div>
                 : <input type={type||'text'} value={val} onChange={e=>setter(e.target.value)}
                     style={{width:'100%',padding:'7px 10px',border:'1.5px solid var(--odoo-border)',
                       borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box'}} />
@@ -375,13 +370,13 @@ export default function CSNew() {
 
         {selectedSup && (
           <div style={{marginTop:12}}>
-            <label style={{fontSize:11,fontWeight:700,color:'var(--odoo-gray)',
+            <label style={{fontSize:11,fontWeight:700,
               textTransform:'uppercase',letterSpacing:.5,marginBottom:4,display:'block'}}>
               Reason for Selection
             </label>
             <input value={reason} onChange={e=>setReason(e.target.value)}
               placeholder="Reason for selecting this vendor (e.g. L1 price, quality, delivery terms…)"
-              style={{width:'100%',padding:'7px 10px',border:'1.5px solid var(--odoo-border)',
+              style={{width:'100%',border:'1.5px solid var(--odoo-border)',
                 borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box'}} />
           </div>
         )}
@@ -418,10 +413,9 @@ export default function CSNew() {
 
       {/* Comparison summary — auto highlight lowest */}
       {suppliers.some(s=>s.items.some(i=>parseFloat(i.rate)>0)) && (
-        <div style={{background:'#fff',borderRadius:8,border:'2px solid var(--odoo-purple)',
-          padding:18,marginBottom:16,boxShadow:'0 2px 8px rgba(0,0,0,.08)'}}>
+        <div style={{borderRadius:8,border:'2px solid var(--odoo-purple)',padding:18,marginBottom:16,boxShadow:'0 2px 8px rgba(0,0,0,.08)'}}>
           <div style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:800,
-            color:'var(--odoo-purple)',marginBottom:14,display:'flex',gap:10,alignItems:'center'}}>
+            marginBottom:14,display:'flex',gap:10,alignItems:'center'}}>
              Landing Cost Comparison (WO GST)
             <span style={{fontSize:11,fontWeight:400,color:'var(--odoo-gray)'}}>
               Green = Lowest cost (L1)
@@ -430,12 +424,11 @@ export default function CSNew() {
           <table style={{width:'100%',borderCollapse:'collapse'}}>
             <thead>
               <tr style={{background:'#F8F9FA'}}>
-                <th style={{padding:'8px 12px',fontSize:11,fontWeight:700,textAlign:'left',
+                <th style={{fontSize:11,fontWeight:700,textAlign:'left',
                   border:'1px solid var(--odoo-border)'}}>Item</th>
                 {suppliers.map((s,si)=>(
                   <th key={si} style={{padding:'8px 12px',fontSize:11,fontWeight:700,textAlign:'center',
-                    border:'1px solid var(--odoo-border)',
-                    background:si===0?'#EDE0EA':si===1?'#E6F7F7':'#D1ECF1',
+                    border:'1px solid var(--odoo-border)',background:si===0?'#EDE0EA':si===1?'#E6F7F7':'#D1ECF1',
                     color:si===0?'var(--odoo-purple)':si===1?'#155724':'#0C5460'}}>
                     {s.name || `Supplier ${['I','II','III'][si]}`}
                   </th>
@@ -465,7 +458,7 @@ export default function CSNew() {
                           fontWeight: isLowest ? 800 : 400,
                           color: isLowest ? '#155724' : 'var(--odoo-dark)'}}>
                           {c.landingCost > 0 ? fmt(c.landingCost) : '—'}
-                          {isLowest && <div style={{fontSize:10,color:'#155724',fontWeight:700}}> L1</div>}
+                          {isLowest && <div style={{fontSize:10,fontWeight:700}}> L1</div>}
                         </td>
                       )
                     })}
@@ -478,7 +471,7 @@ export default function CSNew() {
       )}
 
       {/* Previous purchases */}
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid #E0C070',
+      <div style={{borderRadius:8,border:'1px solid #E0C070',
         overflow:'hidden',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{background:'#856404',padding:'10px 16px',
           fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:800,color:'#fff'}}>
@@ -490,8 +483,8 @@ export default function CSNew() {
               <tr style={{background:'#FFF3CD'}}>
                 {['#','Item Description','Spec','UOM','Qty','Rate','Disc%',
                   'Basic Value','GST%','GST Amt','Landing Cost\nWO GST','Supplier Name','PO Ref'].map(h=>(
-                  <th key={h} style={{padding:'7px 8px',fontSize:10,fontWeight:700,
-                    color:'#856404',textAlign:'center',border:'1px solid #FAD7A0',whiteSpace:'nowrap'}}>{h}</th>
+                  <th key={h} style={{fontSize:10,fontWeight:700,
+                    textAlign:'center',border:'1px solid #FAD7A0',whiteSpace:'nowrap'}}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -508,8 +501,7 @@ export default function CSNew() {
                 const landing = qty>0 ? (basic+packing+freight)/qty : 0
                 return (
                   <tr key={i} style={{background:i%2===0?'#fff':'#FFFDE7'}}>
-                    <td style={{padding:'4px 8px',textAlign:'center',fontWeight:700,
-                      color:'var(--odoo-gray)',border:'1px solid #FAD7A0',fontSize:11}}>{i+1}</td>
+                    <td style={{padding:'4px 8px',textAlign:'center',fontWeight:700,border:'1px solid #FAD7A0',fontSize:11}}>{i+1}</td>
                     {[['desc','text',180,'Item description'],['spec','text',90,'Brand'],
                       ['uom','select',65],['qty','number',65],['rate','number',80],
                       ['discPct','number',55]].map(([f,t,w,ph])=>(
@@ -522,7 +514,7 @@ export default function CSNew() {
                             </select>
                           : <input type={t} value={pp[f]} placeholder={ph}
                               onChange={e=>updatePrev(i,f,e.target.value)}
-                              style={{width:'100%',padding:'4px 6px',border:'1px solid #FAD7A0',
+                              style={{width:'100%',border:'1px solid #FAD7A0',
                                 borderRadius:3,fontSize:11,background:'#FFFDE7',outline:'none',
                                 textAlign:t==='number'?'right':'left'}} />
                         }
@@ -537,7 +529,7 @@ export default function CSNew() {
                         {[0,5,12,18,28].map(g=><option key={g} value={g}>{g}%</option>)}
                       </select>
                     </td>
-                    <td style={{padding:'4px 8px',textAlign:'right',fontFamily:'DM Mono,monospace',
+                    <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',
                       fontSize:11,border:'1px solid #FAD7A0',color:'var(--odoo-orange)'}}>{fmt(gstAmt)}</td>
                     <td style={{padding:'4px 8px',textAlign:'right',fontFamily:'DM Mono,monospace',
                       fontSize:12,fontWeight:700,border:'1px solid #FAD7A0',color:'#856404'}}>{fmt(landing)}</td>
@@ -558,25 +550,24 @@ export default function CSNew() {
       </div>
 
       {/* Remarks + Approval */}
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
+      <div style={{borderRadius:8,border:'1px solid var(--odoo-border)',
         padding:20,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
         <div style={{marginBottom:16}}>
-          <label style={{fontSize:11,fontWeight:700,color:'var(--odoo-gray)',
+          <label style={{fontSize:11,fontWeight:700,
             textTransform:'uppercase',letterSpacing:.5,marginBottom:6,display:'block'}}>
             Remarks / Notes
           </label>
           <textarea value={remarks} onChange={e=>setRemarks(e.target.value)} rows={3}
-            style={{width:'100%',padding:'8px 12px',border:'1.5px solid var(--odoo-border)',
+            style={{width:'100%',border:'1.5px solid var(--odoo-border)',
               borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',
               fontFamily:'DM Sans,sans-serif',resize:'vertical',boxSizing:'border-box'}} />
         </div>
-        <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,
-          color:'var(--odoo-dark)',marginBottom:14}}>Approval Signatures</div>
+        <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-dark)',marginBottom:14}}>Approval Signatures</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
           {['Prepared By\n(Purchase)','Checked By','HOD Approval\n& Vendor Selection','GM Approval','MD / Director'].map(s=>(
             <div key={s} style={{border:'1px solid var(--odoo-border)',borderRadius:6,overflow:'hidden'}}>
               <div style={{background:'var(--odoo-purple)',padding:'7px 10px',
-                fontSize:11,fontWeight:700,color:'#fff',textAlign:'center',
+                fontSize:11,fontWeight:700,textAlign:'center',
                 whiteSpace:'pre-line',lineHeight:1.3}}>{s}</div>
               <div style={{height:50,background:'#F8F9FA'}} />
               <div style={{background:'#F0EEEB',padding:'5px',

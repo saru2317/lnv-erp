@@ -18,11 +18,11 @@ const PENDING_BOOKINGS = [
 ]
 
 const BTYPE = {
-  staff:      {icon:'',label:'Staff Trip',    color:'#714B67', bg:'#EDE0EA'},
+  staff:      {icon:'',label:'Staff Trip',     bg:'#EDE0EA'},
   delivery:   {icon:'',label:'Goods Delivery',color:'#017E84', bg:'#D1ECF1'},
-  collection: {icon:'',label:'RM Collection', color:'#00A09D', bg:'#E6F7F7'},
-  courier:    {icon:'',label:'Courier',        color:'#856404', bg:'#FFF3CD'},
-  personal:   {icon:'',label:'Personal',       color:'#6C757D', bg:'#E2E3E5'},
+  collection: {icon:'',label:'RM Collection',  bg:'#E6F7F7'},
+  courier:    {icon:'',label:'Courier',color:'#856404', bg:'#FFF3CD'},
+  personal:   {icon:'',label:'Personal',        bg:'#E2E3E5'},
 }
 
 const BSTATUS = {
@@ -55,9 +55,9 @@ export default function TripBooking() {
     setAllocating(null)
   }
 
-  const inp = {padding:'7px 10px',border:'1.5px solid var(--odoo-border)',borderRadius:5,
+  const inp = {border:'1.5px solid var(--odoo-border)',borderRadius:5,
     fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box',width:'100%',fontFamily:'DM Sans,sans-serif'}
-  const lbl = {fontSize:11,fontWeight:700,color:'var(--odoo-gray)',textTransform:'uppercase',letterSpacing:.5,marginBottom:4,display:'block'}
+  const lbl = {fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:.5,marginBottom:4,display:'block'}
 
   return (
     <div>
@@ -74,8 +74,7 @@ export default function TripBooking() {
       <div style={{display:'flex',borderBottom:'2px solid var(--odoo-border)',marginBottom:16}}>
         {[['plan',' Trip Plan & Allocation'],['new',' New Booking Request']].map(([k,l])=>(
           <div key={k} onClick={()=>setTab(k)}
-            style={{padding:'9px 20px',fontSize:13,fontWeight:600,cursor:'pointer',
-              color:tab===k?'var(--odoo-purple)':'var(--odoo-gray)',
+            style={{padding:'9px 20px',fontSize:13,fontWeight:600,cursor:'pointer',color:tab===k?'var(--odoo-purple)':'var(--odoo-gray)',
               borderBottom:tab===k?'2px solid var(--odoo-purple)':'2px solid transparent',marginBottom:-2}}>
             {l}
           </div>
@@ -85,21 +84,19 @@ export default function TripBooking() {
       {/* ── TRIP PLAN TAB ── */}
       {tab === 'plan' && (
         <div>
-          <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
-            padding:16,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+          <div style={{borderRadius:8,border:'1px solid var(--odoo-border)',padding:16,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
             <h4 style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,marginBottom:12}}>
                Vehicle Availability — Today
             </h4>
             <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
               {VEHICLES.map(v=>(
-                <div key={v.id} style={{padding:'10px 14px',borderRadius:7,
-                  border:`2px solid ${v.status==='available'?'var(--odoo-green)':'var(--odoo-orange)'}`,
-                  background:v.status==='available'?'#F0FFF4':'#FFFDE7',minWidth:180}}>
+                <div key={v.id} style={{borderRadius:7,
+                  border:`2px solid ${v.status==='available'?'var(--odoo-green)':'var(--odoo-orange)'}`,background:v.status==='available'?'#F0FFF4':'#FFFDE7',minWidth:180}}>
                   <div style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-dark)'}}>{v.reg}</div>
                   <div style={{fontSize:11,color:'var(--odoo-gray)'}}>{v.type} · {v.cap}</div>
                   <div style={{fontSize:10,marginTop:3}}>
                     <span style={{fontWeight:600,color:V_STATUS[v.status].color}}>● {V_STATUS[v.status].label}</span>
-                    <span style={{color:'var(--odoo-gray)',marginLeft:6}}>{v.driver}</span>
+                    <span style={{marginLeft:6}}>{v.driver}</span>
                   </div>
                 </div>
               ))}
@@ -156,11 +153,11 @@ export default function TripBooking() {
                           : <span style={{fontSize:11,color:'var(--odoo-gray)'}}>— Not allocated</span>
                       }
                     </td>
-                    <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:bs.bg,color:bs.color}}>{bs.label}</span></td>
+                    <td><span style={{borderRadius:10,fontSize:11,fontWeight:600,background:bs.bg,color:bs.color}}>{bs.label}</span></td>
                     <td>
                       <div style={{display:'flex',gap:4}}>
                         {bk.status==='pending' && !allocating &&
-                          <button className="btn-xs pri" style={{background:'var(--odoo-purple)',color:'#fff',whiteSpace:'nowrap'}}
+                          <button className="btn-xs pri" style={{background:'var(--odoo-purple)',whiteSpace:'nowrap'}}
                             onClick={()=>setAllocating(bk.id)}> Allocate</button>}
                         {bk.status==='allocated' &&
                           <button className="btn-xs pri" style={{background:'var(--odoo-green)',color:'#fff',whiteSpace:'nowrap'}}
@@ -177,7 +174,7 @@ export default function TripBooking() {
 
       {/* ── NEW BOOKING TAB ── */}
       {tab === 'new' && (
-        <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:20,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+        <div style={{borderRadius:8,border:'1px solid var(--odoo-border)',padding:20,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           {/* Trip type selector */}
           <div style={{marginBottom:20}}>
             <label style={lbl}>Trip Type</label>
@@ -185,8 +182,7 @@ export default function TripBooking() {
               {Object.entries(BTYPE).map(([k,v])=>(
                 <div key={k} onClick={()=>setBtype(k)}
                   style={{padding:'10px 16px',borderRadius:7,cursor:'pointer',
-                    border:`2px solid ${btype===k?v.color:'var(--odoo-border)'}`,
-                    background:btype===k?v.bg:'#fff',transition:'all .15s'}}>
+                    border:`2px solid ${btype===k?v.color:'var(--odoo-border)'}`,background:btype===k?v.bg:'#fff',transition:'all .15s'}}>
                   <div style={{fontSize:20,textAlign:'center'}}>{v.icon}</div>
                   <div style={{fontSize:11,fontWeight:700,color:btype===k?v.color:'var(--odoo-gray)',textAlign:'center',marginTop:3}}>{v.label}</div>
                 </div>

@@ -41,7 +41,7 @@ export default function Payslip() {
         {/* Header */}
         <div className="payslip-hdr">
           <div className="payslip-company">LNV Manufacturing Pvt. Ltd.</div>
-          <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginTop:'2px'}}>Ranipet, Tamil Nadu — 632 401</div>
+          <div style={{fontSize:'12px',marginTop:'2px'}}>Ranipet, Tamil Nadu — 632 401</div>
           <div style={{fontFamily:'Syne,sans-serif',fontSize:'16px',fontWeight:'800',color:'var(--odoo-purple)',marginTop:'10px'}}>
             SALARY SLIP — {month.toUpperCase()}
           </div>
@@ -55,7 +55,7 @@ export default function Payslip() {
             ['Working Days',days_worked],['LOP Days',lop||'Nil'],['Bank',emp.bank],['Pay Month',month]
           ].map(([l,v])=>(
             <div key={l} style={{display:'flex',gap:'8px',fontSize:'12px'}}>
-              <span style={{color:'var(--odoo-gray)',minWidth:'120px',fontWeight:'600'}}>{l}:</span>
+              <span style={{minWidth:'120px',fontWeight:'600'}}>{l}:</span>
               <strong style={{fontFamily:l.includes('PF')||l.includes('ESI')||l==='Employee ID'?'DM Mono,monospace':'inherit'}}>{v}</strong>
             </div>
           ))}
@@ -69,16 +69,16 @@ export default function Payslip() {
             {[['Basic Wage',basic],['DA (30%)',da],['HRA (10%)',hra],['Conveyance',conv],
               ['Special Allowance',special],
               ...(ot_pay>0?[['OT Pay (3.5 hrs)',ot_pay]]:[])].map(([l,v])=>(
-              <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',
+              <div key={l} style={{display:'flex',justifyContent:'space-between',
                 borderBottom:'1px solid var(--odoo-border)',fontSize:'13px'}}>
                 <span>{l}</span>
                 <strong style={{fontFamily:'DM Mono,monospace'}}>₹{v.toLocaleString()}</strong>
               </div>
             ))}
             <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',
-              background:'#EAF9F6',borderRadius:'5px',padding:'8px',marginTop:'4px',fontSize:'13px',fontWeight:'800'}}>
+              background:'#EAF9F6',borderRadius:'5px',marginTop:'4px',fontSize:'13px',fontWeight:'800'}}>
               <span style={{color:'var(--odoo-green)'}}>GROSS SALARY</span>
-              <strong style={{color:'var(--odoo-green)',fontFamily:'DM Mono,monospace'}}>₹{gross.toLocaleString()}</strong>
+              <strong style={{fontFamily:'DM Mono,monospace'}}>₹{gross.toLocaleString()}</strong>
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export default function Payslip() {
             <div style={{display:'flex',justifyContent:'space-between',padding:'8px',
               background:'#F8D7DA',borderRadius:'5px',marginTop:'4px',fontSize:'13px',fontWeight:'800'}}>
               <span style={{color:'var(--odoo-red)'}}>TOTAL DEDUCTIONS</span>
-              <strong style={{color:'var(--odoo-red)',fontFamily:'DM Mono,monospace'}}>₹{total_ded.toLocaleString()}</strong>
+              <strong style={{fontFamily:'DM Mono,monospace'}}>₹{total_ded.toLocaleString()}</strong>
             </div>
           </div>
         </div>

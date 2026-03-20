@@ -107,7 +107,7 @@ export default function ProductionEntry() {
                     {BATCHES.map(b=><option key={b.id} value={b.id}>{b.id} — {b.stage} · {b.jobCards.length} jobs · {b.totalQty} pcs</option>)}
                   </select>
                 </div>
-                <div style={{ padding:'8px 12px',background:'#E3F2FD',borderRadius:'6px',fontSize:'12px',color:'#1565C0' }}>
+                <div style={{ background:'#E3F2FD',borderRadius:'6px',fontSize:'12px',color:'#1565C0' }}>
                   🪣 <strong>Jobs in batch:</strong> {batch?.jobCards.join(', ')} · Total: {batch?.totalQty} pcs
                 </div>
               </>
@@ -118,7 +118,7 @@ export default function ProductionEntry() {
                 {indList.map(([k,v]) => (
                   <div key={k} onClick={() => { setSelInd(k); setCurStep(0); setCompletedSteps(new Set()); setFormData({}) }}
                     style={{ display:'flex',alignItems:'center',gap:'8px',padding:'8px 10px',borderRadius:'6px',cursor:'pointer',
-                      border:'1px solid',borderColor:selInd===k?v.color:'var(--odoo-border)',
+                      border:'1px solid',borderColor:selInd===k?v.
                       background:selInd===k?v.light:'#fff' }}>
                     <span style={{ fontSize:'18px' }}>{v.icon}</span>
                     <div>
@@ -134,7 +134,7 @@ export default function ProductionEntry() {
 
           {/* Job / Industry info row */}
           {(job||ind) && (
-            <div style={{ display:'flex',gap:'12px',alignItems:'center',marginTop:'10px',padding:'8px 12px',background:ind?.light||'#F8F9FA',borderRadius:'8px',flexWrap:'wrap' }}>
+            <div style={{ display:'flex',gap:'12px',alignItems:'center',marginTop:'10px',background:ind?.light||'#F8F9FA',borderRadius:'8px',flexWrap:'wrap' }}>
               <span style={{ fontSize:'22px' }}>{ind?.icon}</span>
               <div>
                 <strong style={{ fontSize:'13px' }}>{entryMode==='job'?job?.item:ind?.name}</strong>
@@ -215,9 +215,9 @@ export default function ProductionEntry() {
                   </h3>
                   <div style={{ fontSize:'11px',color:ind?.color||'var(--odoo-purple)',opacity:.8 }}>
                     {s.machine} · {s.fields?.length||0} fields
-                    {s.perJobInBatch&&<span style={{ marginLeft:'8px',padding:'2px 6px',background:ind?.color,color:'#fff',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>Per-Job in Batch</span>}
+                    {s.perJobInBatch&&<span style={{ marginLeft:'8px',background:ind?.color,borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>Per-Job in Batch</span>}
                     {s.shotCounter&&<span style={{ marginLeft:'8px',padding:'2px 6px',background:'#FF8F00',color:'#fff',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>Shot Counter</span>}
-                    {s.amperHourCalc&&<span style={{ marginLeft:'8px',padding:'2px 6px',background:'#1565C0',color:'#fff',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>A·hr Calc</span>}
+                    {s.amperHourCalc&&<span style={{ marginLeft:'8px',background:'#1565C0',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>A·hr Calc</span>}
                   </div>
                 </div>
                 <div className="fi-panel-body">
@@ -228,7 +228,7 @@ export default function ProductionEntry() {
                       🪣 <strong>Batch Mode:</strong> Enter readings for each job separately ↓
                       <div style={{ display:'flex',gap:'6px',marginTop:'6px',flexWrap:'wrap' }}>
                         {batch.jobCards.map(jid=>(
-                          <span key={jid} style={{ padding:'4px 10px',background:'#BBDEFB',borderRadius:'4px',fontSize:'11px',fontWeight:'700',color:'#1565C0',cursor:'pointer' }}>{jid}</span>
+                          <span key={jid} style={{ background:'#BBDEFB',borderRadius:'4px',fontSize:'11px',fontWeight:'700',color:'#1565C0',cursor:'pointer' }}>{jid}</span>
                         ))}
                       </div>
                     </div>
@@ -269,9 +269,9 @@ export default function ProductionEntry() {
                   {/* Shot counter display */}
                   {s.shotCounter && shotInfo && (
                     <div style={{ marginTop:'12px',padding:'10px 12px',background:'#FFF8E1',borderRadius:'8px',border:'1px solid #FFE082' }}>
-                      <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}> Shot Counter for this stage</div>
+                      <div style={{ fontWeight:'800',fontSize:'12px',marginBottom:'8px' }}> Shot Counter for this stage</div>
                       <div style={{ display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap' }}>
-                        <div style={{ textAlign:'center',padding:'8px 12px',background:'#fff',borderRadius:'6px',minWidth:'80px' }}>
+                        <div style={{ textAlign:'center',borderRadius:'6px',minWidth:'80px' }}>
                           <div style={{ fontSize:'24px',fontWeight:'900',color:'#E65100' }}>{shotsFired}</div>
                           <div style={{ fontSize:'10px',color:'var(--odoo-gray)' }}>Shots Fired</div>
                         </div>
@@ -279,7 +279,7 @@ export default function ProductionEntry() {
                           <div style={{ fontSize:'24px',fontWeight:'900',color:'var(--odoo-green)' }}>{shotsFired*item?.cavity||0}</div>
                           <div style={{ fontSize:'10px',color:'var(--odoo-gray)' }}>Output Pcs</div>
                         </div>
-                        <div style={{ textAlign:'center',padding:'8px 12px',background:'#fff',borderRadius:'6px',minWidth:'80px' }}>
+                        <div style={{ textAlign:'center',borderRadius:'6px',minWidth:'80px' }}>
                           <div style={{ fontSize:'24px',fontWeight:'900',color:'var(--odoo-blue)' }}>{Math.max(0,shotInfo.shots-shotsFired)}</div>
                           <div style={{ fontSize:'10px',color:'var(--odoo-gray)' }}>Remaining</div>
                         </div>
@@ -333,7 +333,7 @@ export default function ProductionEntry() {
               const jitem=ITEMS.find(i=>i.id===j.itemId)
               const jind=INDUSTRIES[jitem?.industry]
               return(
-                <div key={j.id} style={{ padding:'8px 10px',background:'#F8F9FA',borderRadius:'6px',border:'1px solid var(--odoo-border)',cursor:'pointer' }}
+                <div key={j.id} style={{ background:'#F8F9FA',borderRadius:'6px',border:'1px solid var(--odoo-border)',cursor:'pointer' }}
                   onClick={()=>{setEntryMode('job');setSelJobId(j.id);setCurStep(j.currentStep>0?j.currentStep-1:0)}}>
                   <div style={{ display:'flex',gap:'6px',alignItems:'center',marginBottom:'4px' }}>
                     <span>{jind?.icon}</span>
