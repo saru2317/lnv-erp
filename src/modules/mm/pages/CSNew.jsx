@@ -467,7 +467,7 @@ export default function CSNew() {
               })}
             </tbody>
           </table>
-          </div>
+        </div>
       )}
 
       {/* Previous purchases */}

@@ -6,10 +6,10 @@ import { sdApi } from '../services/sdApi'
 // Fallback static data when API not ready
 const STATIC = {
   kpis: [
-    { icon:'', label:'Total Revenue',    value:'₹21.6Cr', trend:'▲ 18.2%', trendCls:'tup', bg:'#EDE0EA', onClick:'revenue' },
-    { icon:'', label:'Open Orders',      value:'67',      trend:'12 New',  trendCls:'tup', bg:'#FFF3CD', onClick:'orders'  },
-    { icon:'', label:'Pending Invoices', value:'23',      trend:'3 Overdue',trendCls:'tdn',bg:'#D1ECF1', onClick:'invoices'},
-    { icon:'', label:'Customers',        value:'342',     trend:'▲ 28 New',trendCls:'tup', bg:'#D4EDDA', onClick:'customers'},
+    { icon:'▸', label:'Total Revenue',    value:'₹21.6Cr', trend:'▲ 18.2%', trendCls:'tup', bg:'#EDE0EA', onClick:'revenue' },
+    { icon:'📋', label:'Open Orders',      value:'67',      trend:'12 New',  trendCls:'tup', bg:'#FFF3CD', onClick:'orders'  },
+    { icon:'🧾', label:'Pending Invoices', value:'23',      trend:'3 Overdue',trendCls:'tdn',bg:'#D1ECF1', onClick:'invoices'},
+    { icon:'👥', label:'Customers',        value:'342',     trend:'▲ 28 New',trendCls:'tup', bg:'#D4EDDA', onClick:'customers'},
     { icon:'⏰', label:'Overdue Amt',      value:'₹4.6L',  trend:'2 Customers',trendCls:'tdn',bg:'#F8D7DA',onClick:'invoices'},
   ],
   recentOrders: [

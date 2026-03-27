@@ -33,12 +33,12 @@ const HRPolicy           = lazy(() => import('./HRPolicy'))
 const HCMReport          = lazy(() => import('./HCMReport'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Recruitment', icon:'', items:[
+  { label:'Recruitment', icon:'▸', items:[
     {to:'/hcm',                label:'HCM Dashboard'},
     {to:'/hcm/jobs',           label:'Job Openings'},
     {to:'/hcm/candidates',     label:'Candidate Tracker'},
   ]},
-  { label:'Employee Management', icon:'', items:[
+  { label:'Employee Management', icon:'👤', items:[
     {to:'/hcm/employees',      label:'Employee Register'},
     {to:'/hcm/employees/new',  label:'New Employee (Onboard)'},
     {to:'/hcm/profile',        label:'Employee Profile'},
@@ -50,29 +50,29 @@ const SIDEBAR_GROUPS = [
     {to:'/hcm/overtime',       label:'Overtime Register'},
     {to:'/hcm/manpower',       label:'Manpower Planning'},
   ]},
-  { label:'Leave Management', icon:'', items:[
+  { label:'Leave Management', icon:'📅', items:[
     {to:'/hcm/leave/policy',   label:'Leave & Week-Off Policy'},
     {to:'/hcm/leave/register', label:'Leave Register'},
     {to:'/hcm/leave/approval', label:'Leave Approval'},
   ]},
-  { label:'Payroll', icon:'', items:[
+  { label:'Payroll', icon:'💰', items:[
     {to:'/hcm/pay/components',  label:'Pay Components & CTC'},
     {to:'/hcm/pay/master',      label:'Salary Master'},
     {to:'/hcm/pay/process',     label:'Payroll Processing'},
     {to:'/hcm/pay/payslip',     label:'Payslip'},
     {to:'/hcm/pay/billcontrol', label:'Pay Bill Control'},
   ]},
-  { label:'Statutory', icon:'', items:[
+  { label:'Statutory', icon:'▸', items:[
     {to:'/hcm/statutory/pfesi',    label:'PF & ESI Register'},
     {to:'/hcm/statutory/others',   label:'PT / TDS / LWF'},
     {to:'/hcm/statutory/calendar', label:'Compliance Calendar'},
   ]},
-  { label:'Facilities', icon:'', items:[
+  { label:'Facilities', icon:'▸', items:[
     {to:'/hcm/canteen',        label:'Canteen Register'},
     {to:'/hcm/housekeeping',   label:'Housekeeping Log'},
     {to:'/hcm/security',       label:'Security & Gate Log'},
   ]},
-  { label:'Portal & Reports', icon:'', items:[
+  { label:'Portal & Reports', icon:'📦', items:[
     {to:'/hcm/portal',         label:'Employee Self-Service'},
     {to:'/hcm/policy',         label:'HR Policies'},
     {to:'/hcm/report',         label:'HR Analytics Report'},

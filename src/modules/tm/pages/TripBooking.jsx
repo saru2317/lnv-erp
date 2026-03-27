@@ -18,11 +18,11 @@ const PENDING_BOOKINGS = [
 ]
 
 const BTYPE = {
-  staff:      {icon:'',label:'Staff Trip',     bg:'#EDE0EA'},
-  delivery:   {icon:'',label:'Goods Delivery',color:'#017E84', bg:'#D1ECF1'},
-  collection: {icon:'',label:'RM Collection',  bg:'#E6F7F7'},
-  courier:    {icon:'',label:'Courier',color:'#856404', bg:'#FFF3CD'},
-  personal:   {icon:'',label:'Personal',        bg:'#E2E3E5'},
+  staff:      {icon:'🗺️',label:'Staff Trip',     bg:'#EDE0EA'},
+  delivery:   {icon:'🚚',label:'Goods Delivery',color:'#017E84', bg:'#D1ECF1'},
+  collection: {icon:'▸',label:'RM Collection',  bg:'#E6F7F7'},
+  courier:    {icon:'▸',label:'Courier',color:'#856404', bg:'#FFF3CD'},
+  personal:   {icon:'▸',label:'Personal',        bg:'#E2E3E5'},
 }
 
 const BSTATUS = {

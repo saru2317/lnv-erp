@@ -85,10 +85,10 @@ export default function KPIReport({ kpiMaster, actuals, fy = '2025-26' }) {
       {/* KPI Tiles */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:18}}>
         {[
-          { icon:'', label:'Cumulative Score',   val:`${totalScore.toFixed(1)} / ${totalWt}`, sub:`${overallPct}% achievement`, color:'#714B67', bg:'#EDE0EA' },
-          { icon:'', label:'Green KPIs (≥ 90%)', val:greenCt,   sub:'On track',        color:'#00A09D', bg:'#D4EDDA' },
-          { icon:'', label:'Yellow (70–89%)',     val:yellowCt,  sub:'Needs attention', color:'#856404', bg:'#FFF3CD' },
-          { icon:'', label:'Red KPIs (< 70%)',   val:redCt,     sub:'Immediate action',color:'#D9534F', bg:'#F8D7DA' },
+          { icon:'▸', label:'Cumulative Score',   val:`${totalScore.toFixed(1)} / ${totalWt}`, sub:`${overallPct}% achievement`, color:'#714B67', bg:'#EDE0EA' },
+          { icon:'🎯', label:'Green KPIs (≥ 90%)', val:greenCt,   sub:'On track',        color:'#00A09D', bg:'#D4EDDA' },
+          { icon:'▸', label:'Yellow (70–89%)',     val:yellowCt,  sub:'Needs attention', color:'#856404', bg:'#FFF3CD' },
+          { icon:'🎯', label:'Red KPIs (< 70%)',   val:redCt,     sub:'Immediate action',color:'#D9534F', bg:'#F8D7DA' },
         ].map(t => (
           <div key={t.label} style={{background:'#fff', borderRadius:10, padding:'14px 16px',
             border:`1px solid var(--odoo-border)`, boxShadow:'0 1px 4px rgba(0,0,0,.06)',

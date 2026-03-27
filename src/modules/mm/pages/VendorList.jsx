@@ -28,7 +28,8 @@ export default function VendorList() {
       </div>
       
       {viewMode === 'normal' && (
-      <table className="mm-tbl">
+        <div>
+          <table className="mm-tbl">
         <thead><tr><th><input type="checkbox"/></th><th>Code</th><th>Vendor Name</th><th>GSTIN</th><th>City</th><th>Category</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           {VENDORS.map(v => (
@@ -48,7 +49,7 @@ export default function VendorList() {
           ))}
         </tbody>
       </table>
-          </div>
+        </div>
       )}
 
       {viewMode === 'detail' && (

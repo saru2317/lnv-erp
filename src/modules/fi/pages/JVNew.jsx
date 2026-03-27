@@ -68,10 +68,10 @@ export default function JVNew() {
 
   // Status indicator
   const getBalStatus = () => {
-    if (balanced) return {icon:'', label:'Balanced', color:'var(--odoo-green)'}
-    if (absDiff <= 1.00) return {icon:'', label:`Auto Round-Off: ${fmtDisp(absDiff)}`, color:'var(--odoo-blue)'}
-    if (absDiff <= 10)   return {icon:'', label:`Difference: ${fmtDisp(absDiff)} — Check entries`, color:'var(--odoo-orange)'}
-    return {icon:'', label:`Difference: ${fmtDisp(absDiff)} — Cannot post`, color:'var(--odoo-red)'}
+    if (balanced) return {icon:'▸', label:'Balanced', color:'var(--odoo-green)'}
+    if (absDiff <= 1.00) return {icon:'▸', label:`Auto Round-Off: ${fmtDisp(absDiff)}`, color:'var(--odoo-blue)'}
+    if (absDiff <= 10)   return {icon:'▸', label:`Difference: ${fmtDisp(absDiff)} — Check entries`, color:'var(--odoo-orange)'}
+    return {icon:'▸', label:`Difference: ${fmtDisp(absDiff)} — Cannot post`, color:'var(--odoo-red)'}
   }
   const balStatus = getBalStatus()
 

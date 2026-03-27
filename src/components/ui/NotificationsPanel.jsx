@@ -5,46 +5,46 @@ import { useAuth } from '@hooks/useAuth'
 // ── DEMO NOTIFICATIONS ────────────────────────────────
 const ALL_NOTIFICATIONS = [
   // Critical / Urgent
-  { id:'N001', type:'critical', module:'FI',  icon:'', title:'GSTR-3B Filing Due Today',
+  { id:'N001', type:'critical', module:'FI',  icon:'▸', title:'GSTR-3B Filing Due Today',
     body:'March 2026 return must be filed by 20 Mar. Net payable: ₹1,62,000.',
     path:'/fi/gstr3b', time:'2 min ago', read:false, roles:['admin','accounts'] },
-  { id:'N002', type:'critical', module:'MM',  icon:'', title:'3 Items Below Reorder Level',
+  { id:'N002', type:'critical', module:'MM',  icon:'▸', title:'3 Items Below Reorder Level',
     body:'Masking Tape (12 rolls), Burner Nozzle (3 nos), Phosphating Chemical (85 kg).',
     path:'/reports/inventory', time:'15 min ago', read:false, roles:['admin','manager','operations'] },
-  { id:'N003', type:'critical', module:'FI',  icon:'', title:'Vendor Payment Overdue — Lakshmi Mills',
+  { id:'N003', type:'critical', module:'FI',  icon:'▸', title:'Vendor Payment Overdue — Lakshmi Mills',
     body:'Invoice #LTM/2026/0124 — ₹1,42,000 overdue by 12 days.',
     path:'/fi/payments', time:'1 hr ago', read:false, roles:['admin','accounts'] },
 
   // Warnings
-  { id:'N004', type:'warning', module:'TM',  icon:'', title:'Vehicle Document Expiring — TN38 IJ 7890',
+  { id:'N004', type:'warning', module:'TM',  icon:'▸', title:'Vehicle Document Expiring — TN38 IJ 7890',
     body:'FC, Insurance and Road Tax all expire today. Renew immediately.',
     path:'/tm/vehicles', time:'2 hrs ago', read:false, roles:['admin','manager','transport'] },
-  { id:'N005', type:'warning', module:'PM',  icon:'', title:'Preventive Maintenance Due — Oven #2',
+  { id:'N005', type:'warning', module:'PM',  icon:'▸', title:'Preventive Maintenance Due — Oven #2',
     body:'Scheduled PM overdue by 3 days. Raise work order.',
     path:'/pm', time:'3 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N006', type:'warning', module:'QM',  icon:'', title:'NCR #QM-089 Awaiting Action',
+  { id:'N006', type:'warning', module:'QM',  icon:'▸', title:'NCR #QM-089 Awaiting Action',
     body:'Quality hold on Job J-2026-044 — TVS Motor batch. Root cause pending.',
     path:'/qm/ncr', time:'4 hrs ago', read:true,  roles:['admin','manager','operations'] },
 
   // Info
-  { id:'N007', type:'info', module:'SD',  icon:'', title:'Sales Order #SO-2026-0124 Confirmed',
+  { id:'N007', type:'info', module:'SD',  icon:'▸', title:'Sales Order #SO-2026-0124 Confirmed',
     body:'Ashok Leyland — ₹3,91,680. Delivery due 20 Mar 2026.',
     path:'/sd/sales', time:'5 hrs ago', read:true,  roles:['admin','sales','accounts'] },
-  { id:'N008', type:'info', module:'MM',  icon:'', title:'GRN #GRN-2026-031 Completed',
+  { id:'N008', type:'info', module:'MM',  icon:'▸', title:'GRN #GRN-2026-031 Completed',
     body:'Lakshmi Textile Mills — 500 kg Powder Coat received and inspected.',
     path:'/mm/grn', time:'6 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N009', type:'info', module:'PP',  icon:'', title:'Job #J-2026-047 Started',
+  { id:'N009', type:'info', module:'PP',  icon:'▸', title:'Job #J-2026-047 Started',
     body:'TVS Motor batch — Epoxy coating. Qty: 500. Est. completion: 19 Mar.',
     path:'/pp/wo', time:'7 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N010', type:'info', module:'HCM', icon:'', title:'Leave Request — Selvam D.',
+  { id:'N010', type:'info', module:'HCM', icon:'▸', title:'Leave Request — Selvam D.',
     body:'Leave applied: 21–22 Mar 2026 (2 days). Pending approval.',
     path:'/hcm/leave', time:'Yesterday', read:true,  roles:['admin','hr','manager'] },
 
   // Success
-  { id:'N011', type:'success', module:'FI',  icon:'', title:'Bank Reconciliation Completed',
+  { id:'N011', type:'success', module:'FI',  icon:'▸', title:'Bank Reconciliation Completed',
     body:'Feb 2026 bank recon done. All entries matched. Difference: ₹0.',
     path:'/fi/bank-recon', time:'Yesterday', read:true,  roles:['admin','accounts'] },
-  { id:'N012', type:'success', module:'SD',  icon:'', title:'Payment Received — TVS Motors',
+  { id:'N012', type:'success', module:'SD',  icon:'▸', title:'Payment Received — TVS Motors',
     body:'₹9,80,000 received against Invoice #INV-2026-0083. Fully settled.',
     path:'/fi/receipts', time:'2 days ago', read:true,  roles:['admin','accounts','sales'] },
 ]

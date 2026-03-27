@@ -4,33 +4,33 @@ import React, { useState } from 'react'
 const AVATAR_COLORS = ['#714B67','#E06F39','#00A09D','#017E84','#8E44AD','#1A5276','#196F3D','#B03A37','#B7860B','#4A235A']
 
 const MODULES_LIST = [
-  {k:'sd',   icon:'', name:'Sales (SD)'},
-  {k:'mm',   icon:'', name:'Purchase (MM)'},
-  {k:'wm',   icon:'', name:'Warehouse (WM)'},
-  {k:'fi',   icon:'', name:'Finance (FI)'},
-  {k:'pp',   icon:'', name:'Production (PP)'},
-  {k:'qm',   icon:'', name:'Quality (QM)'},
-  {k:'pm',   icon:'', name:'Maintenance (PM)'},
-  {k:'hcm',  icon:'', name:'HR (HCM)'},
-  {k:'crm',  icon:'', name:'CRM'},
-  {k:'am',   icon:'', name:'Assets'},
-  {k:'tm',   icon:'', name:'Transport'},
+  {k:'sd',   icon:'▸', name:'Sales (SD)'},
+  {k:'mm',   icon:'▸', name:'Purchase (MM)'},
+  {k:'wm',   icon:'▸', name:'Warehouse (WM)'},
+  {k:'fi',   icon:'▸', name:'Finance (FI)'},
+  {k:'pp',   icon:'▸', name:'Production (PP)'},
+  {k:'qm',   icon:'▸', name:'Quality (QM)'},
+  {k:'pm',   icon:'▸', name:'Maintenance (PM)'},
+  {k:'hcm',  icon:'▸', name:'HR (HCM)'},
+  {k:'crm',  icon:'▸', name:'CRM'},
+  {k:'am',   icon:'▸', name:'Assets'},
+  {k:'tm',   icon:'▸', name:'Transport'},
   {k:'vm',   icon:'🪪', name:'Visitor'},
-  {k:'cn',   icon:'', name:'Canteen'},
-  {k:'civil',icon:'', name:'Civil'},
-  {k:'config',icon:'',name:'Config'},
-  {k:'mdm',   icon:'', name:'MDM'},
+  {k:'cn',   icon:'▸', name:'Canteen'},
+  {k:'civil',icon:'▸', name:'Civil'},
+  {k:'config',icon:'▸',name:'Config'},
+  {k:'mdm',   icon:'▸', name:'MDM'},
 ]
 
 const PERMS_LIST = [
-  {k:'view',    icon:'', name:'View Records',    sub:'Read-only access'},
-  {k:'create',  icon:'', name:'Create Records',   sub:'Add new entries'},
-  {k:'edit',    icon:'', name:'Edit Records',     sub:'Modify existing'},
-  {k:'delete',  icon:'', name:'Delete Records',   sub:'Remove entries'},
-  {k:'approve', icon:'', name:'Approve / Reject', sub:'Workflow approvals'},
-  {k:'export',  icon:'', name:'Export Data',       sub:'Excel / PDF export'},
-  {k:'reports', icon:'', name:'View Reports',      sub:'MIS & analytics'},
-  {k:'settings',icon:'', name:'System Settings',  sub:'Config & setup'},
+  {k:'view',    icon:'▸', name:'View Records',    sub:'Read-only access'},
+  {k:'create',  icon:'▸', name:'Create Records',   sub:'Add new entries'},
+  {k:'edit',    icon:'▸', name:'Edit Records',     sub:'Modify existing'},
+  {k:'delete',  icon:'▸', name:'Delete Records',   sub:'Remove entries'},
+  {k:'approve', icon:'▸', name:'Approve / Reject', sub:'Workflow approvals'},
+  {k:'export',  icon:'▸', name:'Export Data',       sub:'Excel / PDF export'},
+  {k:'reports', icon:'▸', name:'View Reports',      sub:'MIS & analytics'},
+  {k:'settings',icon:'▸', name:'System Settings',  sub:'Config & setup'},
 ]
 
 const ROLE_MOD = {
@@ -239,11 +239,11 @@ export default function UserManagement() {
       {/* STAT CARDS */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, marginBottom:20}}>
         {[
-          {label:'Total Users',       val:stats.total,    icon:'', clr:'var(--odoo-purple)', f:'all'},
-          {label:'Active Users',      val:stats.active,   icon:'', clr:'var(--odoo-green)',  f:'active'},
+          {label:'Total Users',       val:stats.total,    icon:'👤', clr:'var(--odoo-purple)', f:'all'},
+          {label:'Active Users',      val:stats.active,   icon:'👤', clr:'var(--odoo-green)',  f:'active'},
           {label:'Online Now',        val:stats.online,   icon:'🟢', clr:'var(--odoo-orange)', f:'online'},
-          {label:'Inactive / Locked', val:stats.inactive, icon:'', clr:'var(--odoo-red)',    f:'inactive'},
-          {label:'Roles Defined',     val:6,              icon:'', clr:'#8E44AD',            f:null},
+          {label:'Inactive / Locked', val:stats.inactive, icon:'▸', clr:'var(--odoo-red)',    f:'inactive'},
+          {label:'Roles Defined',     val:6,              icon:'🔐', clr:'#8E44AD',            f:null},
         ].map((s,i) => (
           <div key={i} onClick={()=>s.f&&setFStatus(s.f)}
             style={{background:'#fff', borderRadius:12, padding:'16px 18px',

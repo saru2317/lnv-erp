@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   {to:'/civil/bills',        label:' Bills'},
 ]
 const SIDEBAR_GROUPS = [
-  { label:'Project Management', icon:'', items:[
+  { label:'Project Management', icon:'▸', items:[
     {to:'/civil',           label:'Civil Dashboard'},
     {to:'/civil/projects',  label:'Project List'},
     {to:'/civil/boq',       label:'Bill of Quantities (BOQ)'},

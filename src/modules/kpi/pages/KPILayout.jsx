@@ -22,16 +22,16 @@ const NAV_ITEMS = [
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'KPI Reports', icon:'', items:[
+  { label:'KPI Reports', icon:'📦', items:[
     { to:'/kpi',            label:' KPI Performance Report' },
     { to:'/kpi/scorecard',  label:' Individual Scorecard' },
     { to:'/kpi/incentive',  label:' Incentive Calculator' },
   ]},
-  { label:'Data Entry', icon:'', items:[
+  { label:'Data Entry', icon:'▸', items:[
     { to:'/kpi/entry',      label:' Monthly Entry' },
     { to:'/kpi/targets',    label:' Target Setting' },
   ]},
-  { label:'Configuration', icon:'', items:[
+  { label:'Configuration', icon:'⚙️', items:[
     { to:'/kpi/master',     label:' KPI Master' },
     { to:'/kpi/assign',     label:' KPI Assignment' },
     { to:'/kpi/employees',  label:' Employees / Roles' },

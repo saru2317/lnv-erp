@@ -4,28 +4,34 @@ import { useAuth } from '@hooks/useAuth'
 import UniversalSearch from '@components/ui/UniversalSearch'
 import NotificationsPanel from '@components/ui/NotificationsPanel'
 import styles from './AppShell.module.css'
+import {
+  Home, ShoppingCart, Package, Warehouse, DollarSign,
+  Factory, CheckCircle, Wrench, Users, Handshake,
+  ShieldCheck, Settings, Truck, Building2, HardHat,
+  BadgeCheck, UtensilsCrossed, BarChart2, Target, Database
+} from 'lucide-react'
 
 const ALL_MODULES = [
-  { key:'home',    label:'Home',        icon:'' },
-  { key:'sd',      label:'Sales',       icon:'' },
-  { key:'mm',      label:'Purchase',    icon:'' },
-  { key:'wm',      label:'Warehouse',   icon:'' },
-  { key:'fi',      label:'Finance',     icon:'' },
-  { key:'pp',      label:'Production',  icon:'' },
-  { key:'qm',      label:'Quality',     icon:'' },
-  { key:'pm',      label:'Maintenance', icon:'' },
-  { key:'hcm',     label:'HR',          icon:'' },
-  { key:'crm',     label:'CRM',         icon:'' },
-  { key:'admin',   label:'Admin',       icon:'' },
-  { key:'config',  label:'Config',      icon:'' },
-  { key:'tm',      label:'Transport',   icon:'' },
-  { key:'am',      label:'Assets',      icon:'' },
-  { key:'civil',   label:'Civil',       icon:'' },
-  { key:'vm',      label:'Visitor',     icon:'🪪' },
-  { key:'cn',      label:'Canteen',     icon:'' },
-  { key:'reports', label:'Reports',     icon:'' },
-  { key:'kpi',     label:'KPI / KRA',   icon:'' },
-  { key:'mdm',     label:'MDM',         icon:'' },
+  { key:'home',    label:'Home',        icon: Home },
+  { key:'sd',      label:'Sales',       icon: ShoppingCart },
+  { key:'mm',      label:'Purchase',    icon: Package },
+  { key:'wm',      label:'Warehouse',   icon: Warehouse },
+  { key:'fi',      label:'Finance',     icon: DollarSign },
+  { key:'pp',      label:'Production',  icon: Factory },
+  { key:'qm',      label:'Quality',     icon: CheckCircle },
+  { key:'pm',      label:'Maintenance', icon: Wrench },
+  { key:'hcm',     label:'HR',          icon: Users },
+  { key:'crm',     label:'CRM',         icon: Handshake },
+  { key:'admin',   label:'Admin',       icon: ShieldCheck },
+  { key:'config',  label:'Config',      icon: Settings },
+  { key:'tm',      label:'Transport',   icon: Truck },
+  { key:'am',      label:'Assets',      icon: Building2 },
+  { key:'civil',   label:'Civil',       icon: HardHat },
+  { key:'vm',      label:'Visitor',     icon: BadgeCheck },
+  { key:'cn',      label:'Canteen',     icon: UtensilsCrossed },
+  { key:'reports', label:'Reports',     icon: BarChart2 },
+  { key:'kpi',     label:'KPI / KRA',   icon: Target },
+  { key:'mdm',     label:'MDM',         icon: Database },
 ]
 
 const ROLE_COLORS = {
@@ -60,7 +66,9 @@ export default function AppShell() {
         <div className={styles.topRight}>
           <div className={styles.shellDate}>{now}</div>
           <NotificationsPanel />
-          <button className={styles.iconBtn} onClick={() => navigate('/config')}></button>
+          <button className={styles.iconBtn} onClick={() => navigate('/config')}>
+            <Settings size={15} />
+          </button>
           <span className={styles.roleBadge} style={{ borderColor: ROLE_COLORS[user?.role] }}>
             {user?.role?.toUpperCase()}
           </span>
@@ -76,15 +84,16 @@ export default function AppShell() {
         </div>
       </header>
 
-      {/* Module Nav Bar — flat, scrollable */}
+      {/* Module Nav Bar */}
       <nav className={styles.modNav}>
         {ALL_MODULES.map(m => {
           if (!hasAccess(m.key)) return null
+          const Icon = m.icon
           return (
             <div key={m.key}
               className={`${styles.navItem} ${currentMod === m.key ? styles.active : ''}`}
               onClick={() => navigate('/' + m.key)}>
-              <span className={styles.modIcon}>{m.icon}</span>
+              <Icon size={13} className={styles.modIcon} />
               {m.label}
             </div>
           )

@@ -5,41 +5,41 @@ import { useAuth } from '@hooks/useAuth'
 // ── SIDEBAR DATA ──────────────────────────────────────────
 const SIDEBAR_GROUPS = [
   { key:'operations', label:'Operations', color:'#017E84', items:[
-    { label:'Sales (SD)',        icon:'', path:'/sd',  desc:'Orders · Invoices' },
-    { label:'Purchase (MM)',     icon:'', path:'/mm',  desc:'POs · Vendors · GRN' },
-    { label:'Warehouse (WM)',    icon:'', path:'/wm',  desc:'Stock · Transfers' },
-    { label:'Production (PP)',   icon:'', path:'/pp',  desc:'Jobs · Coating' },
-    { label:'Quality (QM)',      icon:'', path:'/qm',  desc:'Inspection · NCR' },
-    { label:'Maintenance (PM)',  icon:'', path:'/pm',  desc:'Breakdown · PM' },
+    { label:'Sales (SD)',        icon:'🛒', path:'/sd',  desc:'Orders · Invoices' },
+    { label:'Purchase (MM)',     icon:'📦', path:'/mm',  desc:'POs · Vendors · GRN' },
+    { label:'Warehouse (WM)',    icon:'🏭', path:'/wm',  desc:'Stock · Transfers' },
+    { label:'Production (PP)',   icon:'⚙️', path:'/pp',  desc:'Jobs · Coating' },
+    { label:'Quality (QM)',      icon:'✅', path:'/qm',  desc:'Inspection · NCR' },
+    { label:'Maintenance (PM)',  icon:'🔧', path:'/pm',  desc:'Breakdown · PM' },
   ]},
   { key:'people', label:'People', color:'#6C3483', items:[
-    { label:'HR (HCM)',          icon:'', path:'/hcm', desc:'Payroll · Leave' },
-    { label:'CRM',               icon:'', path:'/crm', desc:'Leads · Deals' },
-    { label:'KPI / KRA',         icon:'', path:'/kpi', desc:'Performance' },
+    { label:'HR (HCM)',          icon:'👥', path:'/hcm', desc:'Payroll · Leave' },
+    { label:'CRM',               icon:'🤝', path:'/crm', desc:'Leads · Deals' },
+    { label:'KPI / KRA',         icon:'🎯', path:'/kpi', desc:'Performance' },
   ]},
   { key:'finance', label:'Finance', color:'#196F3D', items:[
-    { label:'Finance (FI)',      icon:'', path:'/fi',      desc:'GST · P&L' },
-    { label:'Reports',           icon:'', path:'/reports', desc:'Analytics' },
+    { label:'Finance (FI)',      icon:'💰', path:'/fi',      desc:'GST · P&L' },
+    { label:'Reports',           icon:'📊', path:'/reports', desc:'Analytics' },
   ]},
   { key:'support', label:'Support', color:'#E06F39', items:[
-    { label:'Transport',         icon:'', path:'/tm',    desc:'Trips · Fleet' },
-    { label:'Assets',            icon:'', path:'/am',    desc:'Fixed Assets' },
-    { label:'Civil',             icon:'', path:'/civil', desc:'Projects' },
+    { label:'Transport',         icon:'🚛', path:'/tm',    desc:'Trips · Fleet' },
+    { label:'Assets',            icon:'🏗️', path:'/am',    desc:'Fixed Assets' },
+    { label:'Civil',             icon:'👷', path:'/civil', desc:'Projects' },
     { label:'Visitor',           icon:'🪪', path:'/vm',    desc:'Gate Entry' },
-    { label:'Canteen',           icon:'', path:'/cn',    desc:'Meals' },
+    { label:'Canteen',           icon:'🍽️', path:'/cn',    desc:'Meals' },
   ]},
   { key:'system', label:'System', color:'#714B67', items:[
-    { label:'Admin',             icon:'', path:'/admin',  desc:'Users · Roles' },
-    { label:'Config',            icon:'', path:'/config', desc:'Settings' },
-    { label:'MDM',               icon:'', path:'/mdm',   desc:'Master Data' },
+    { label:'Admin',             icon:'🛡️', path:'/admin',  desc:'Users · Roles' },
+    { label:'Config',            icon:'⚙️', path:'/config', desc:'Settings' },
+    { label:'MDM',               icon:'🗄️', path:'/mdm',   desc:'Master Data' },
   ]},
 ]
 
 const KPI_DATA = [
-  { icon:'', bg:'#EDE0EA', label:'Total Revenue',    val:'21.59Cr', trend:'18.2% vs LY',  up:true },
-  { icon:'', bg:'#D4EDDA', label:'Open Orders',      val:'1,248',   trend:'67 Pending',   up:true },
-  { icon:'', bg:'#D1ECF1', label:'Active Customers', val:'342',     trend:'28 New',        up:true },
-  { icon:'', bg:'#F8D7DA', label:'Stock Alerts',     val:'14',      trend:'Needs Reorder', up:false },
+  { icon:'💰', bg:'#EDE0EA', label:'Total Revenue',    val:'21.59Cr', trend:'18.2% vs LY',  up:true },
+  { icon:'📦', bg:'#D4EDDA', label:'Open Orders',      val:'1,248',   trend:'67 Pending',   up:true },
+  { icon:'👥', bg:'#D1ECF1', label:'Active Customers', val:'342',     trend:'28 New',        up:true },
+  { icon:'⚠️', bg:'#F8D7DA', label:'Stock Alerts',     val:'14',      trend:'Needs Reorder', up:false },
 ]
 
 const BAR_DATA = [
@@ -50,21 +50,21 @@ const BAR_DATA = [
 
 const TILES = [
   { color:'#714B67', label:'SD · Sales', items:[
-    { icon:'', name:'Sales Orders',    count:'67',  sub:'Open orders',     badge:'3 Due',    bc:'#E06F39', path:'/sd/sales'     },
-    { icon:'', name:'Invoices',        count:'12',  sub:'Pending payment', badge:'2 Overdue',bc:'#D9534F', path:'/sd/invoices'  },
-    { icon:'', name:'Customer Master', count:'342', sub:'Active',          badge:null,       bc:null,      path:'/sd/customers' },
-    { icon:'', name:'Deliveries',      count:'8',   sub:'Pending dispatch', badge:null,      bc:null,      path:'/sd/deliveries'},
+    { icon:'📋', name:'Sales Orders',    count:'67',  sub:'Open orders',     badge:'3 Due',    bc:'#E06F39', path:'/sd/sales'     },
+    { icon:'🧾', name:'Invoices',        count:'12',  sub:'Pending payment', badge:'2 Overdue',bc:'#D9534F', path:'/sd/invoices'  },
+    { icon:'👥', name:'Customer Master', count:'342', sub:'Active',          badge:null,       bc:null,      path:'/sd/customers' },
+    { icon:'🚚', name:'Deliveries',      count:'8',   sub:'Pending dispatch', badge:null,      bc:null,      path:'/sd/deliveries'},
   ]},
   { color:'#00A09D', label:'MM · Materials', items:[
-    { icon:'', name:'Purchase Orders', count:'23',  sub:'Open POs',        badge:null,      bc:null,      path:'/mm/po'        },
-    { icon:'', name:'Stock Overview',  count:'186', sub:'Material items',  badge:'14 Low',  bc:'#D9534F', path:'/mm/materials' },
-    { icon:'', name:'Vendors',         count:'48',  sub:'Active vendors',  badge:null,      bc:null,      path:'/mm/vendors'   },
-    { icon:'', name:'Goods Receipt',   count:'5',   sub:'Pending GRN',     badge:null,      bc:null,      path:'/mm/grn'       },
+    { icon:'📦', name:'Purchase Orders', count:'23',  sub:'Open POs',        badge:null,      bc:null,      path:'/mm/po'        },
+    { icon:'📊', name:'Stock Overview',  count:'186', sub:'Material items',  badge:'14 Low',  bc:'#D9534F', path:'/mm/materials' },
+    { icon:'🏢', name:'Vendors',         count:'48',  sub:'Active vendors',  badge:null,      bc:null,      path:'/mm/vendors'   },
+    { icon:'✅', name:'Goods Receipt',   count:'5',   sub:'Pending GRN',     badge:null,      bc:null,      path:'/mm/grn'       },
   ]},
   { color:'#E06F39', label:'PP · Production', items:[
-    { icon:'', name:'Production Orders', count:'9',  sub:'In progress',    badge:null,      bc:null,      path:'/pp/wo'        },
-    { icon:'', name:'Bill of Materials', count:'34', sub:'Active BOMs',    badge:null,      bc:null,      path:'/pp/bom'       },
-    { icon:'', name:'Work Orders',       count:'15', sub:'Open',           badge:'4 Done',  bc:'#00A09D', path:'/pp/wo'        },
+    { icon:'⚙️', name:'Production Orders', count:'9',  sub:'In progress',    badge:null,      bc:null,      path:'/pp/wo'        },
+    { icon:'📋', name:'Bill of Materials', count:'34', sub:'Active BOMs',    badge:null,      bc:null,      path:'/pp/bom'       },
+    { icon:'🔧', name:'Work Orders',       count:'15', sub:'Open',           badge:'4 Done',  bc:'#00A09D', path:'/pp/wo'        },
   ]},
 ]
 
@@ -77,23 +77,23 @@ const RECENT_TXN = [
 ]
 
 const QUICK = [
-  { icon:'', label:'New Sales Order',    path:'/sd/sales/new'   },
-  { icon:'', label:'New Purchase Order', path:'/mm/po/new'      },
-  { icon:'', label:'Create Invoice',     path:'/sd/invoices/new'},
-  { icon:'', label:'Goods Receipt',      path:'/mm/grn/new'     },
-  { icon:'', label:'Add Customer',       path:'/sd/customers'   },
-  { icon:'', label:'Sales Report',       path:'/sd/reports'     },
-  { icon:'', label:'Production Order',   path:'/pp/wo/new'      },
-  { icon:'', label:'Analytics',          path:'/reports'        },
+  { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new'   },
+  { icon:'📦', label:'New Purchase Order', path:'/mm/po/new'      },
+  { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new'},
+  { icon:'✅', label:'Goods Receipt',      path:'/mm/grn/new'     },
+  { icon:'👤', label:'Add Customer',       path:'/sd/customers'   },
+  { icon:'📊', label:'Sales Report',       path:'/sd/reports'     },
+  { icon:'⚙️', label:'Production Order',   path:'/pp/wo/new'      },
+  { icon:'📈', label:'Analytics',          path:'/reports'        },
 ]
 
 const FAVS = [
-  { icon:'', label:'Dashboard',      path:'/home'         },
-  { icon:'', label:'Sales Order',    path:'/sd/sales'     },
-  { icon:'', label:'Purchase Order', path:'/mm/po'        },
-  { icon:'', label:'Stock Overview', path:'/mm/materials' },
-  { icon:'', label:'Customer Master',path:'/sd/customers' },
-  { icon:'', label:'Sales Report',   path:'/sd/reports'   },
+  { icon:'🏠', label:'Dashboard',      path:'/home'         },
+  { icon:'📋', label:'Sales Order',    path:'/sd/sales'     },
+  { icon:'📦', label:'Purchase Order', path:'/mm/po'        },
+  { icon:'📊', label:'Stock Overview', path:'/mm/materials' },
+  { icon:'👥', label:'Customer Master',path:'/sd/customers' },
+  { icon:'📊', label:'Sales Report',   path:'/sd/reports'   },
 ]
 
 // ── Sidebar Component ─────────────────────────────────────

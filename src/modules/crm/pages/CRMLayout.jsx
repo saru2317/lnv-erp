@@ -23,34 +23,34 @@ const LostAnalysis      = lazy(() => import('./LostAnalysis'))
 const CRMReports        = lazy(() => import('./CRMReports'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Overview', icon:'', items:[
+  { label:'Overview', icon:'▸', items:[
     { to:'/crm',                   label:'CRM Dashboard' },
   ]},
-  { label:'Lead Management', icon:'', items:[
+  { label:'Lead Management', icon:'▸', items:[
     { to:'/crm/leads',             label:'Lead List' },
     { to:'/crm/leads/new',         label:'New Lead' },
   ]},
-  { label:'Opportunities', icon:'', items:[
+  { label:'Opportunities', icon:'📦', items:[
     { to:'/crm/opportunities',     label:'Opportunity Pipeline' },
     { to:'/crm/opportunities/new', label:'New Opportunity' },
   ]},
-  { label:'Activities', icon:'', items:[
+  { label:'Activities', icon:'▸', items:[
     { to:'/crm/activities',        label:'Activity Log' },
   ]},
-  { label:'Quotations', icon:'', items:[
+  { label:'Quotations', icon:'▸', items:[
     { to:'/crm/quotations',        label:'Quotation List' },
     { to:'/crm/quotations/new',    label:'New Quotation' },
   ]},
-  { label:'Customers', icon:'', items:[
+  { label:'Customers', icon:'👥', items:[
     { to:'/crm/customers',         label:'Customer Master' },
     { to:'/crm/contacts',          label:'Contacts' },
     { to:'/crm/complaints',        label:'Complaints / Tickets' },
   ]},
-  { label:'Performance', icon:'', items:[
+  { label:'Performance', icon:'▸', items:[
     { to:'/crm/targets',           label:'Sales Targets' },
     { to:'/crm/lost-analysis',     label:'Lost Analysis' },
   ]},
-  { label:'Reports', icon:'', items:[
+  { label:'Reports', icon:'📦', items:[
     { to:'/crm/reports',           label:'CRM Reports' },
   ]},
 ]

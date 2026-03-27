@@ -323,10 +323,10 @@ export default function CRMReports() {
                   <div className="fi-panel-body">
                     <div style={{display:'grid',gap:'8px'}}>
                       {[
-                        {icon:'',title:'Hot Opportunity',desc:'Star Fab Works — ₹12L deal. 60% win prob. Competitor detected. Revise pricing.'},
-                        {icon:'',title:'Quick Win',desc:'Meenakshi Pharma — No competitor. Demo done. Follow up NOW for proposal acceptance.'},
-                        {icon:'',title:'At Risk',desc:'Velocity Auto — 5 days since last contact. Customer may be evaluating others.'},
-                        {icon:'',title:'Upsell Opportunity',desc:'Sri Lakshmi Mills — Long-time customer. Offer AMC upgrade to Premium plan.'},
+                        {icon:'▸',title:'Hot Opportunity',desc:'Star Fab Works — ₹12L deal. 60% win prob. Competitor detected. Revise pricing.'},
+                        {icon:'▸',title:'Quick Win',desc:'Meenakshi Pharma — No competitor. Demo done. Follow up NOW for proposal acceptance.'},
+                        {icon:'▸',title:'At Risk',desc:'Velocity Auto — 5 days since last contact. Customer may be evaluating others.'},
+                        {icon:'▸',title:'Upsell Opportunity',desc:'Sri Lakshmi Mills — Long-time customer. Offer AMC upgrade to Premium plan.'},
                       ].map(item=>(
                         <div key={item.title} style={{padding:'10px',background:'#F8F9FA',borderRadius:'6px',display:'flex',gap:'10px'}}>
                           <div style={{fontSize:'20px'}}>{item.icon}</div>

@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import { ROLES, ALL_MODULES } from './_configData'
 
 const PERMISSIONS = [
-  { k:'view',     icon:'',  label:'View',     sub:'Read records' },
-  { k:'create',   icon:'',  label:'Create',   sub:'Add new entries' },
-  { k:'edit',     icon:'',  label:'Edit',     sub:'Modify existing' },
-  { k:'delete',   icon:'',  label:'Delete',   sub:'Remove entries' },
-  { k:'approve',  icon:'',  label:'Approve',  sub:'Workflow approval' },
+  { k:'view',     icon:'▸',  label:'View',     sub:'Read records' },
+  { k:'create',   icon:'➕',  label:'Create',   sub:'Add new entries' },
+  { k:'edit',     icon:'✏️',  label:'Edit',     sub:'Modify existing' },
+  { k:'delete',   icon:'🗑️',  label:'Delete',   sub:'Remove entries' },
+  { k:'approve',  icon:'▸',  label:'Approve',  sub:'Workflow approval' },
   { k:'export',   icon:'⬇',  label:'Export',   sub:'Download data' },
-  { k:'reports',  icon:'',  label:'Reports',  sub:'View reports' },
-  { k:'settings', icon:'',  label:'Settings', sub:'Config access' },
+  { k:'reports',  icon:'📊',  label:'Reports',  sub:'View reports' },
+  { k:'settings', icon:'⚙️',  label:'Settings', sub:'Config access' },
 ]
 
 // Default permission set per role

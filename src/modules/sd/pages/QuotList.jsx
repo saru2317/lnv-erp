@@ -44,7 +44,8 @@ export default function QuotList() {
 
       {/* NORMAL VIEW */}
       {viewMode === 'normal' && (
-        <div className="dc">
+        <div>
+          <div className="dc">
           <table className="sd-tbl">
             <thead><tr><th>QT #</th><th>Date</th><th>Valid Till</th><th>Customer</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
@@ -71,7 +72,7 @@ export default function QuotList() {
               ))}
             </tbody>
           </table>
-          </div>
+        </div>
       )}
 
       {/* DETAIL VIEW */}

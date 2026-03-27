@@ -18,8 +18,8 @@ const INVOICES  = [
 ]
 
 const RETURN_TYPES = [
-  { id:'material', label:'Material Return', icon:'', desc:'Physical goods returned to factory. Stock gets credited back.' },
-  { id:'credit',   label:'Credit Note Only', icon:'', desc:'No material return. Only financial credit note issued to customer.' },
+  { id:'material', label:'Material Return', icon:'📦', desc:'Physical goods returned to factory. Stock gets credited back.' },
+  { id:'credit',   label:'Credit Note Only', icon:'✏️', desc:'No material return. Only financial credit note issued to customer.' },
   { id:'both',     label:'Material + Credit Note', icon:'↩', desc:'Material returned AND credit note issued. Full return process.' },
 ]
 

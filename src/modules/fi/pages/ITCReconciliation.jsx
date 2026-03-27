@@ -338,12 +338,12 @@ export default function ITCReconciliation() {
           <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',padding:18}}>
             <h3 style={{fontFamily:'Syne,sans-serif',fontSize:14,marginBottom:16}}> Next Steps</h3>
             {[
-              { step:1, icon:'', action:'Follow up with 2 suppliers who haven\'t filed GSTR-1', urgent:true },
-              { step:2, icon:'', action:'Remove blocked invoices from ITC claim', urgent:true },
-              { step:3, icon:'', action:'Verify GSTIN for all new vendors', urgent:false },
-              { step:4, icon:'', action:'File GSTR-1 (outward supplies) by 11th', urgent:false },
-              { step:5, icon:'', action:'Compute GSTR-3B with eligible ITC only', urgent:false },
-              { step:6, icon:'', action:'Pay net GST liability after ITC offset', urgent:false },
+              { step:1, icon:'▸', action:'Follow up with 2 suppliers who haven\'t filed GSTR-1', urgent:true },
+              { step:2, icon:'▸', action:'Remove blocked invoices from ITC claim', urgent:true },
+              { step:3, icon:'▸', action:'Verify GSTIN for all new vendors', urgent:false },
+              { step:4, icon:'▸', action:'File GSTR-1 (outward supplies) by 11th', urgent:false },
+              { step:5, icon:'▸', action:'Compute GSTR-3B with eligible ITC only', urgent:false },
+              { step:6, icon:'▸', action:'Pay net GST liability after ITC offset', urgent:false },
             ].map(s => (
               <div key={s.step} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:'1px solid var(--odoo-border)'}}>
                 <span style={{width:22,height:22,borderRadius:'50%',background:s.urgent?'var(--odoo-red)':'var(--odoo-purple)',

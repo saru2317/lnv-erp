@@ -13,13 +13,13 @@ const AuditByUser    = lazy(() => import('./AuditByUser'))
 const UserManagement = lazy(() => import('./UserManagement'))
 
 const SIDEBAR_GROUPS = [
-  { label:'Audit Trail', icon:'', items:[
+  { label:'Audit Trail', icon:'▸', items:[
     {to:'/admin',                label:'Audit Dashboard'},
     {to:'/admin/audit/logs',     label:'Full Audit Log'},
     {to:'/admin/audit/module',   label:'Audit by Module'},
     {to:'/admin/audit/user',     label:'Audit by User'},
   ]},
-  { label:'Administration', icon:'', items:[
+  { label:'Administration', icon:'🛡️', items:[
     {to:'/admin/users',          label:'User Management'},
     {to:'/admin/approvals',      label:'Approval Inbox'},
     {to:'/admin/listview',       label:'List View Settings'},

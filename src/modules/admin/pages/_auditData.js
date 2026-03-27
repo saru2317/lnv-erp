@@ -66,12 +66,12 @@ export const AUDIT_LOGS = [
 ]
 
 export const ACTION_CONFIG = {
-  CREATE: {cls:'audit-badge-create',rowCls:'audit-row-create',icon:''},
-  UPDATE: {cls:'audit-badge-update',rowCls:'audit-row-update',icon:''},
-  DELETE: {cls:'audit-badge-delete',rowCls:'audit-row-delete',icon:''},
-  LOGIN:  {cls:'audit-badge-login', rowCls:'audit-row-login', icon:''},
+  CREATE: {cls:'audit-badge-create',rowCls:'audit-row-create',icon:'▸'},
+  UPDATE: {cls:'audit-badge-update',rowCls:'audit-row-update',icon:'▸'},
+  DELETE: {cls:'audit-badge-delete',rowCls:'audit-row-delete',icon:'▸'},
+  LOGIN:  {cls:'audit-badge-login', rowCls:'audit-row-login', icon:'▸'},
   EXPORT: {cls:'audit-badge-export',rowCls:'audit-row-export',icon:'⬇'},
-  APPROVE:{cls:'audit-badge-approve',rowCls:'audit-row-update',icon:''},
+  APPROVE:{cls:'audit-badge-approve',rowCls:'audit-row-update',icon:'▸'},
 }
 
 export const MODULES = ['All','SD','MM','WM','FI','PP','QM','PM','HCM','AUTH']

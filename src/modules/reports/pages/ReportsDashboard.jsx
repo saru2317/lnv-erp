@@ -34,14 +34,14 @@ const TOP_CUSTOMERS = [
 
 // Module health
 const MODULE_HEALTH = [
-  { mod:'SD · Sales',      icon:'', open:24, alerts:2, status:'normal' },
-  { mod:'MM · Purchase',   icon:'', open:8,  alerts:1, status:'warning' },
-  { mod:'PP · Production', icon:'', open:9,  alerts:0, status:'good' },
-  { mod:'FI · Finance',    icon:'', open:12, alerts:3, status:'critical' },
-  { mod:'QM · Quality',    icon:'', open:3,  alerts:1, status:'normal' },
-  { mod:'PM · Maintenance',icon:'', open:5,  alerts:2, status:'warning' },
-  { mod:'WM · Warehouse',  icon:'', open:14, alerts:1, status:'normal' },
-  { mod:'HCM · HR',        icon:'', open:0,  alerts:0, status:'good' },
+  { mod:'SD · Sales',      icon:'▸', open:24, alerts:2, status:'normal' },
+  { mod:'MM · Purchase',   icon:'▸', open:8,  alerts:1, status:'warning' },
+  { mod:'PP · Production', icon:'▸', open:9,  alerts:0, status:'good' },
+  { mod:'FI · Finance',    icon:'▸', open:12, alerts:3, status:'critical' },
+  { mod:'QM · Quality',    icon:'▸', open:3,  alerts:1, status:'normal' },
+  { mod:'PM · Maintenance',icon:'▸', open:5,  alerts:2, status:'warning' },
+  { mod:'WM · Warehouse',  icon:'▸', open:14, alerts:1, status:'normal' },
+  { mod:'HCM · HR',        icon:'▸', open:0,  alerts:0, status:'good' },
 ]
 
 const HS = {
@@ -85,14 +85,14 @@ export default function ReportsDashboard() {
       {/* KPI strip — 8 cards */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:18 }}>
         {[
-          { icon:'', label:'Revenue (MTD)',    ...MONTH_DATA.revenue,    path:'/reports/sales',    bg:'#EDE0EA' },
-          { icon:'', label:'Purchases (MTD)',  ...MONTH_DATA.purchases,  path:'/reports/purchase', bg:'#D1ECF1' },
-          { icon:'', label:'Gross Profit',     ...MONTH_DATA.gross_profit,path:'/reports/finance', bg:'#D4EDDA' },
-          { icon:'', label:'Stock Value',      ...MONTH_DATA.stock_val,  path:'/reports/inventory',bg:'#FEF8E6' },
-          { icon:'', label:'Production Jobs',  ...MONTH_DATA.production, path:'/reports/production',bg:'#E6F7F7' },
-          { icon:'', label:'Overdue AR',       ...MONTH_DATA.overdue_ar, path:'/reports/finance', bg:'#F8D7DA' },
-          { icon:'', label:'Open POs',         ...MONTH_DATA.open_po,    path:'/reports/purchase', bg:'#FFF3CD' },
-          { icon:'', label:'Quality Pass Rate',...MONTH_DATA.quality_pass,path:'/reports/quality', bg:'#E6F7F7' },
+          { icon:'▸', label:'Revenue (MTD)',    ...MONTH_DATA.revenue,    path:'/reports/sales',    bg:'#EDE0EA' },
+          { icon:'📦', label:'Purchases (MTD)',  ...MONTH_DATA.purchases,  path:'/reports/purchase', bg:'#D1ECF1' },
+          { icon:'▸', label:'Gross Profit',     ...MONTH_DATA.gross_profit,path:'/reports/finance', bg:'#D4EDDA' },
+          { icon:'📊', label:'Stock Value',      ...MONTH_DATA.stock_val,  path:'/reports/inventory',bg:'#FEF8E6' },
+          { icon:'⚙️', label:'Production Jobs',  ...MONTH_DATA.production, path:'/reports/production',bg:'#E6F7F7' },
+          { icon:'▸', label:'Overdue AR',       ...MONTH_DATA.overdue_ar, path:'/reports/finance', bg:'#F8D7DA' },
+          { icon:'▸', label:'Open POs',         ...MONTH_DATA.open_po,    path:'/reports/purchase', bg:'#FFF3CD' },
+          { icon:'✅', label:'Quality Pass Rate',...MONTH_DATA.quality_pass,path:'/reports/quality', bg:'#E6F7F7' },
         ].map(k => (
           <div key={k.label} onClick={() => nav(k.path)}
             style={{ background:'#fff', borderRadius:8, padding:'14px 16px',
@@ -261,14 +261,14 @@ export default function ReportsDashboard() {
             color:'var(--odoo-dark)', marginBottom:14 }}>Quick Reports</h4>
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {[
-              { icon:'', label:'Sales Report',          sub:'Revenue · Customers · Trends',    path:'/reports/sales',      color:'#714B67' },
-              { icon:'', label:'Purchase Report',       sub:'Vendors · POs · GRN',             path:'/reports/purchase',   color:'#017E84' },
-              { icon:'', label:'Inventory Report',      sub:'Stock · Movement · Aging',        path:'/reports/inventory',  color:'#E06F39' },
-              { icon:'', label:'Finance Report',        sub:'P&L · Balance Sheet · Cash Flow', path:'/reports/finance',    color:'#196F3D' },
-              { icon:'', label:'Production Report',     sub:'Jobs · Efficiency · WIP',         path:'/reports/production', color:'#1A5276' },
-              { icon:'', label:'Quality Report',        sub:'Inspections · NCR · Pass Rate',   path:'/reports/quality',    color:'#6C3483' },
-              { icon:'', label:'HR Report',             sub:'Attendance · Payroll · Leaves',   path:'/reports/hr',         color:'#784212' },
-              { icon:'', label:'Transport Report',      sub:'Trips · Fuel · Fleet Cost',       path:'/reports/transport',  color:'#E06F39' },
+              { icon:'📋', label:'Sales Report',          sub:'Revenue · Customers · Trends',    path:'/reports/sales',      color:'#714B67' },
+              { icon:'📦', label:'Purchase Report',       sub:'Vendors · POs · GRN',             path:'/reports/purchase',   color:'#017E84' },
+              { icon:'📊', label:'Inventory Report',      sub:'Stock · Movement · Aging',        path:'/reports/inventory',  color:'#E06F39' },
+              { icon:'💰', label:'Finance Report',        sub:'P&L · Balance Sheet · Cash Flow', path:'/reports/finance',    color:'#196F3D' },
+              { icon:'⚙️', label:'Production Report',     sub:'Jobs · Efficiency · WIP',         path:'/reports/production', color:'#1A5276' },
+              { icon:'✅', label:'Quality Report',        sub:'Inspections · NCR · Pass Rate',   path:'/reports/quality',    color:'#6C3483' },
+              { icon:'👥', label:'HR Report',             sub:'Attendance · Payroll · Leaves',   path:'/reports/hr',         color:'#784212' },
+              { icon:'📊', label:'Transport Report',      sub:'Trips · Fuel · Fleet Cost',       path:'/reports/transport',  color:'#E06F39' },
             ].map(r => (
               <div key={r.label} onClick={() => nav(r.path)}
                 style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px',

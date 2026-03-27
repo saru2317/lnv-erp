@@ -18,19 +18,19 @@ const NAV_ITEMS = [
 ]
 
 const SIDEBAR_GROUPS = [
-  { label:'Trip Management', icon:'', items:[
+  { label:'Trip Management', icon:'🗺️', items:[
     { to:'/tm',             label:'TM Dashboard' },
     { to:'/tm/booking',     label:'Trip Booking & Planning' },
     { to:'/tm/trip/new',    label:'New Trip Sheet' },
     { to:'/tm/trips',       label:'Trip History' },
   ]},
-  { label:'Fleet & Compliance', icon:'', items:[
+  { label:'Fleet & Compliance', icon:'🚛', items:[
     { to:'/tm/vehicles',    label:'Vehicle Master' },
     { to:'/tm/fuel',        label:'Fuel Log' },
     { to:'/tm/compliance',  label:'FC / Tax / Insurance' },
     { to:'/tm/drivers',     label:'Driver Register' },
   ]},
-  { label:'Reports', icon:'', items:[
+  { label:'Reports', icon:'📦', items:[
     { to:'/tm/fuel',        label:'Fuel Analysis' },
     { to:'/tm/trips',       label:'Trip Report' },
   ]},
