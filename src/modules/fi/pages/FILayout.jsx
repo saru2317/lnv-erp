@@ -37,6 +37,7 @@ const CreditNoteList     = lazy(() => import('./CreditNoteList'))
 const ProfitabilityReport= lazy(() => import('./ProfitabilityReport'))
 const BudgetVsActual     = lazy(() => import('./BudgetVsActual'))
 const InterModuleJournals= lazy(() => import('./InterModuleJournals'))
+const DayBook            = lazy(() => import('./DayBook'))
 
 const NAV_ITEMS = [
   { to: '/fi',          label: ' Home' },
@@ -56,6 +57,7 @@ const SIDEBAR_GROUPS = [
       { to: '/fi/ledger',       label: 'General Ledger (FBL3N)' },
       { to: '/fi/trial',        label: 'Trial Balance' },
       { to: '/fi/coa',          label: 'Chart of Accounts' },
+      { to: '/fi/daybook',      label: 'Day Book' },
       { to: '/fi/inter-module', label: 'Auto Journals' },
     ]
   },
@@ -138,6 +140,7 @@ export default function FILayout() {
           <Route path="payments"             element={<VendorPayments />} />
           <Route path="bank-recon"           element={<BankRecon />} />
           <Route path="coa"                  element={<ChartOfAccounts />} />
+          <Route path="daybook"               element={<DayBook />} />
           <Route path="cogm"                 element={<COGMReport />} />
           <Route path="cost-center"          element={<CostCenterLedger />} />
           <Route path="fixed-assets"         element={<FixedAssetRegister />} />

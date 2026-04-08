@@ -1,116 +1,78 @@
-/**
- * AuthContext — Manages user session, role, permissions
- */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import api from '@services/api'
-import toast from 'react-hot-toast'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 export const AuthContext = createContext(null)
 
-// Role → accessible modules map
-export const ROLE_MODULES = {
-  // ── Core Roles ────────────────────────────────────────
-  admin:      ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','vm','cn','admin','config','reports','kpi','mdm'],
-  manager:    ['home','pp','qm','pm','wm','mm','tm','am','vm','reports','kpi','mdm'],
-  accounts:   ['home','fi','sd','mm','am','reports','kpi','mdm'],
-  operations: ['home','pp','qm','pm','wm','mm','tm','reports'],
-  hr:         ['home','hcm','cn','vm','reports','kpi'],
-  sales:      ['home','sd','crm','reports'],
-  // ── Extended Roles ────────────────────────────────────
-  transport:  ['home','tm','mm'],
-  civil:      ['home','civil','am','mm'],
-  viewer:     ['home','sd','mm','pp','fi'],
-}
-
-// ── Per-role permissions (what actions each role can do) ──
-export const ROLE_PERMISSIONS = {
-  admin:      { view:true, create:true, edit:true, delete:true, approve:true, export:true, reports:true, settings:true },
-  manager:    { view:true, create:true, edit:true, delete:false, approve:true, export:true, reports:true, settings:false },
-  accounts:   { view:true, create:true, edit:true, delete:false, approve:true, export:true, reports:true, settings:false },
-  operations: { view:true, create:true, edit:true, delete:false, approve:false, export:false, reports:true, settings:false },
-  hr:         { view:true, create:true, edit:true, delete:false, approve:true, export:true, reports:true, settings:false },
-  sales:      { view:true, create:true, edit:true, delete:false, approve:false, export:false, reports:true, settings:false },
-  transport:  { view:true, create:true, edit:true, delete:false, approve:true, export:true, reports:true, settings:false },
-  civil:      { view:true, create:true, edit:true, delete:false, approve:true, export:true, reports:true, settings:false },
-  viewer:     { view:true, create:false, edit:false, delete:false, approve:false, export:false, reports:true, settings:false },
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
+  const [user,    setUser]    = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Rehydrate from localStorage on mount
+  // ── On app start — restore session ──────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem('lnv_user')
-    const token  = localStorage.getItem('lnv_token')
-    if (stored && token) {
-      setUser(JSON.parse(stored))
+    const token    = localStorage.getItem('lnv_token')
+    const userData = localStorage.getItem('lnv_user')
+    if (token && userData) {
+      setUser(JSON.parse(userData))
     }
     setLoading(false)
   }, [])
 
-  const login = useCallback(async (credentials) => {
-    try {
-      const { data } = await api.post('/auth/login', credentials)
-      localStorage.setItem('lnv_token', data.token)
-      localStorage.setItem('lnv_user', JSON.stringify(data.user))
-      setUser(data.user)
-      toast.success(`Welcome back, ${data.user.name}!`)
-      return { success: true }
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid credentials'
-      toast.error(msg)
-      return { success: false, message: msg }
-    }
-  }, [])
+  // ── Real API Login ───────────────────────────────────────
+  const login = async (email, password) => {
+    const res  = await fetch(`${BASE_URL}/auth/login`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Login failed')
 
-  // Demo login (no backend needed for dev)
-  const demoLogin = useCallback((role = 'admin') => {
-    const demoUsers = {
-      admin:      { id: 1, name: 'Saravana Kumar', role: 'admin',      email: 'admin@lnv.com' },
-      manager:    { id: 2, name: 'Ramesh P',       role: 'manager',    email: 'manager@lnv.com' },
-      accounts:   { id: 3, name: 'Priya S',        role: 'accounts',   email: 'accounts@lnv.com' },
-      operations: { id: 4, name: 'Karthik M',      role: 'operations', email: 'ops@lnv.com' },
-      hr:         { id: 5, name: 'Kavitha R',      role: 'hr',         email: 'hr@lnv.com' },
-      sales:      { id: 6, name: 'Vijay T',        role: 'sales',      email: 'sales@lnv.com' },
-    }
-    const user = demoUsers[role]
-    localStorage.setItem('lnv_token', `demo_token_${role}`)
-    localStorage.setItem('lnv_user', JSON.stringify(user))
-    setUser(user)
-    toast.success(`Logged in as ${user.name} (${role})`)
-  }, [])
+    localStorage.setItem('lnv_token', data.token)
+    localStorage.setItem('lnv_user',  JSON.stringify(data.user))
+    setUser(data.user)
+    return data.user
+  }
 
-  const logout = useCallback(() => {
+  // ── Demo login (fallback if backend not running) ─────────
+  const demoLogin = (role) => {
+    const demoUser = {
+      id: 0, empCode: 'DEMO',
+      name: 'Saravana Kumar',
+      email: 'admin@lnverp.com',
+      role: role.toUpperCase(),
+    }
+    localStorage.setItem('lnv_user', JSON.stringify(demoUser))
+    setUser(demoUser)
+  }
+
+  // ── Logout ───────────────────────────────────────────────
+  const logout = () => {
     localStorage.removeItem('lnv_token')
     localStorage.removeItem('lnv_user')
     setUser(null)
-    toast.success('Logged out successfully')
-  }, [])
+  }
 
-  const hasAccess = useCallback((module) => {
+  // ── hasAccess helper ─────────────────────────────────────
+  const MODULE_ACCESS = {
+    ADMIN:      ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','admin','config','tm','am','civil','vm','cn','reports','kpi','mdm'],
+    MANAGER:    ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','reports','kpi'],
+    ACCOUNTS:   ['home','fi','sd','mm','am','reports'],
+    PRODUCTION: ['home','pp','qm','pm','wm','mm','tm','reports'],
+    HR:         ['home','hcm','cn','vm','reports'],
+    SALES:      ['home','sd','crm','reports'],
+  }
+
+  const hasAccess = (moduleKey) => {
     if (!user) return false
-    return ROLE_MODULES[user.role]?.includes(module) ?? false
-  }, [user])
-
-  // Check if user can perform a specific action
-  const canDo = useCallback((action) => {
-    if (!user) return false
-    return ROLE_PERMISSIONS[user.role]?.[action] ?? false
-  }, [user])
-
-  // Get list of modules for current user
-  const userModules = ROLE_MODULES[user?.role] ?? []
+    const role = user.role?.toUpperCase()
+    return MODULE_ACCESS[role]?.includes(moduleKey) ?? false
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, demoLogin, logout, hasAccess, canDo, userModules, ROLE_MODULES, ROLE_PERMISSIONS }}>
+    <AuthContext.Provider value={{ user, loading, login, demoLogin, logout, hasAccess }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
-  return ctx
-}
+export const useAuth = () => useContext(AuthContext)
