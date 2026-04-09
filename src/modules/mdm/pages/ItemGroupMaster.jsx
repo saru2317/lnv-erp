@@ -1,4 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+
 
 const INIT = { code:'', name:'', parentGroup:'', description:'', active:true }
 
@@ -14,11 +18,30 @@ const SAMPLE = [
 ]
 
 export default function ItemGroupMaster() {
-  const [rows, setRows]     = useState(SAMPLE)
+  const [rows, setRows]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState('')
   const [form, setForm]     = useState(INIT)
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [search, setSearch] = useState('')
+
+
+  // ── Fetch from backend ──────────────────────────────────
+  const fetchData = async () => {
+    try {
+      setLoading(true); setError('')
+      const res  = await fetch(`${BASE_URL}/mdm/item-group`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load')
+      setRows(data.data || [])
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { fetchData() }, [])
 
   const filtered = rows.filter(r =>
     r.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,14 +52,23 @@ export default function ItemGroupMaster() {
   const openEdit = (r) => { setForm({...r}); setEditId(r.id); setShowForm(true) }
   const cancel   = () => { setShowForm(false); setForm(INIT); setEditId(null) }
 
-  const save = () => {
+  const save = async () => {
     if (!form.code || !form.name) { alert('Code and Name are required!'); return }
-    if (editId) {
-      setRows(rows.map(r => r.id === editId ? {...form, id: editId} : r))
-    } else {
-      setRows([...rows, {...form, id: Date.now()}])
-    }
-    cancel()
+    setSaving(true)
+    try {
+      const url    = editId ? `${BASE_URL}/mdm/item-group/${editId}` : `${BASE_URL}/mdm/item-group`
+      const method = editId ? 'PATCH' : 'POST'
+      const res    = await fetch(url, {
+        method, headers: { 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` },
+        body: JSON.stringify({...form, code: form.code.toUpperCase()}),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Save failed')
+      if (editId) setRows(rows.map(r => r.id===editId ? data.data : r))
+      else        setRows([...rows, data.data])
+      cancel()
+    } catch (err) { alert('Error: ' + err.message) }
+    finally { setSaving(false) }
   }
 
   const inp = (field) => ({
@@ -57,13 +89,14 @@ export default function ItemGroupMaster() {
             Item Group Master
           </h2>
           <p style={{ fontSize:12, color:'#6C757D', margin:'3px 0 0' }}>
-            MDM › Item Group &nbsp;|&nbsp; {rows.length} groups configured
+            MDM › Item Group &nbsp;|&nbsp; {rows.length} groups configured{error && <span style={{ color:'#D9534F', marginLeft:8 }}>⚠️ {error}</span>}
           </p>
         </div>
         <button onClick={openNew} style={{ padding:'8px 18px', background:'#714B67', color:'#fff',
           border:'none', borderRadius:6, fontSize:13, fontWeight:700, cursor:'pointer' }}>
           + New Group
         </button>
+        <button onClick={fetchData} style={{ padding:'8px 14px', background:'#fff', color:'#714B67', border:'1.5px solid #714B67', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer', marginRight:8 }}>🔄 Refresh</button>
       </div>
 
       <div style={{ display:'flex', gap:10, marginBottom:14 }}>
@@ -166,7 +199,7 @@ export default function ItemGroupMaster() {
               <button onClick={cancel} style={{ padding:'8px 18px', background:'#fff', color:'#6C757D',
                 border:'1.5px solid #E0D5E0', borderRadius:5, fontSize:13, cursor:'pointer' }}>Cancel</button>
               <button onClick={save} style={{ padding:'8px 18px', background:'#714B67', color:'#fff',
-                border:'none', borderRadius:5, fontSize:13, fontWeight:700, cursor:'pointer' }}>💾 Save</button>
+                border:'none', borderRadius:5, fontSize:13, fontWeight:700, cursor:'pointer' }}>{saving ? '⏳ Saving...' : '💾 Save'}</button>
             </div>
           </div>
         </div>

@@ -1,4 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+
 
 const INIT = { code:'', name:'', category:'', paymentTerms:'', description:'', active:true }
 const CATEGORIES   = ['Manufacturer','Trader','Service Provider','Importer','Labour Contractor','Government','Other']
@@ -16,11 +20,30 @@ const SAMPLE = [
 ]
 
 export default function SupplierTypeMaster() {
-  const [rows, setRows]     = useState(SAMPLE)
+  const [rows, setRows]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState('')
   const [form, setForm]     = useState(INIT)
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [search, setSearch] = useState('')
+
+
+  // ── Fetch from backend ──────────────────────────────────
+  const fetchData = async () => {
+    try {
+      setLoading(true); setError('')
+      const res  = await fetch(`${BASE_URL}/mdm/supplier-type`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load')
+      setRows(data.data || [])
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { fetchData() }, [])
 
   const filtered = rows.filter(r =>
     r.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -30,11 +53,23 @@ export default function SupplierTypeMaster() {
   const openNew  = () => { setForm(INIT); setEditId(null); setShowForm(true) }
   const openEdit = (r) => { setForm({...r}); setEditId(r.id); setShowForm(true) }
   const cancel   = () => { setShowForm(false); setForm(INIT); setEditId(null) }
-  const save = () => {
+  const save = async () => {
     if (!form.code||!form.name) { alert('Code and Name required!'); return }
-    if (editId) setRows(rows.map(r=>r.id===editId?{...form,id:editId}:r))
-    else        setRows([...rows,{...form,id:Date.now()}])
-    cancel()
+    setSaving(true)
+    try {
+      const url = editId ? `${BASE_URL}/mdm/supplier-type/${editId}` : `${BASE_URL}/mdm/supplier-type`
+      const res = await fetch(url, {
+        method: editId?'PATCH':'POST',
+        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` },
+        body: JSON.stringify({...form, code: form.code.toUpperCase()}),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Save failed')
+      if (editId) setRows(rows.map(r => r.id===editId ? data.data : r))
+      else        setRows([...rows, data.data])
+      cancel()
+    } catch (err) { alert('Error: ' + err.message) }
+    finally { setSaving(false) }
   }
 
   const inp = (field) => ({
@@ -165,7 +200,7 @@ export default function SupplierTypeMaster() {
               <button onClick={cancel} style={{ padding:'8px 18px', background:'#fff', color:'#6C757D',
                 border:'1.5px solid #E0D5E0', borderRadius:5, fontSize:13, cursor:'pointer' }}>Cancel</button>
               <button onClick={save} style={{ padding:'8px 18px', background:'#714B67', color:'#fff',
-                border:'none', borderRadius:5, fontSize:13, fontWeight:700, cursor:'pointer' }}>💾 Save</button>
+                border:'none', borderRadius:5, fontSize:13, fontWeight:700, cursor:'pointer' }}>{saving ? '⏳ Saving...' : '💾 Save'}</button>
             </div>
           </div>
         </div>
