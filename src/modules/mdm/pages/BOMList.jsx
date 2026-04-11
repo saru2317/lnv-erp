@@ -8,6 +8,7 @@ const authHdrs  = () => ({ 'Content-Type': 'application/json', Authorization: `B
 const BLANK_BOM  = { bomNo:'', itemCode:'', itemName:'', revision:'A', uom:'Nos', baseQty:'1', isPrimary:true, altBom:'1', plant:'MAIN' }
 const autoGenBomNo = () => `BOM-${new Date().getFullYear().toString().slice(-2)}${String(Date.now()).slice(-5)}`
 const BLANK_LINE = { itemId:'', itemCode:'', itemName:'', qty:'1', uom:'Nos', wastage:'0', ict:'L', asm:false, sls:false, validFrom:'', validTo:'', remarks:'' }
+const BLANK_BYPRODUCT = { _id:'', itemId:'', itemCode:'', itemName:'', qty:'', uom:'Nos', recoveryPct:'100', unitPrice:'0', remarks:'' }
 
 // ── Tree node component ───────────────────────────────────
 function TreeNode({ line, depth=0, items }) {
@@ -48,8 +49,31 @@ function TreeNode({ line, depth=0, items }) {
 function BOMForm({ bom, items, onSave, onCancel }) {
   const isEdit = !!bom?.id
   const [form,  setForm]  = useState(bom ? bom : { ...BLANK_BOM, bomNo: autoGenBomNo() })
-  const [lines, setLines] = useState(bom?.lines || [])
-  const [saving,setSaving]= useState(false)
+  const [lines,      setLines]      = useState(bom?.lines || [])
+  const [byproducts, setByproducts] = useState(bom?.byproducts || [])
+  const [activeTab,  setActiveTab]  = useState('components')
+  const [saving,     setSaving]     = useState(false)
+
+  const addBP  = () => setByproducts(b => [...b, { ...BLANK_BYPRODUCT, _id: Date.now() }])
+  const delBP  = (id) => setByproducts(b => b.filter(x => x._id !== id))
+  const updBP  = (id, key, val) => setByproducts(b => b.map(x => {
+    if (x._id !== id) return x
+    const updated = { ...x, [key]: val }
+    if (key === 'itemId') {
+      const found = items.find(it => String(it.id) === String(val))
+      if (found) { updated.itemCode = found.code; updated.itemName = found.name; updated.uom = found.uom }
+    }
+    return updated
+  }))
+
+  // Auto-calculate scrap value per byproduct
+  const scrapValue = (bp) => {
+    const qty   = parseFloat(bp.qty)       || 0
+    const price = parseFloat(bp.unitPrice) || 0
+    const rec   = parseFloat(bp.recoveryPct) / 100 || 0
+    return (qty * price * rec).toFixed(2)
+  }
+  const totalScrapValue = byproducts.reduce((s, bp) => s + parseFloat(scrapValue(bp)), 0).toFixed(2)
   const [itemSearch, setItemSearch] = useState('')
 
   const addLine = () => setLines(l => [...l, { ...BLANK_LINE, _id: Date.now() }])
@@ -86,12 +110,26 @@ function BOMForm({ bom, items, onSave, onCancel }) {
       return toast.error('All component lines need an Item selected!')
     setSaving(true)
     try {
-      const payload = { ...form, lines: lines.map(l => ({
-        itemId:  l.itemId,
-        qty:     l.qty,
-        wastage: l.wastage || 0,
-        remarks: l.remarks || '',
-      }))}
+      const payload = {
+        ...form,
+        lines: lines.map(l => ({
+          itemId:  l.itemId,
+          qty:     l.qty,
+          wastage: l.wastage || 0,
+          remarks: l.remarks || '',
+        })),
+        byproducts: byproducts.map(bp => ({
+          itemId:      bp.itemId,
+          itemCode:    bp.itemCode,
+          itemName:    bp.itemName,
+          qty:         parseFloat(bp.qty) || 0,
+          uom:         bp.uom,
+          recoveryPct: parseFloat(bp.recoveryPct) || 100,
+          unitPrice:   parseFloat(bp.unitPrice)   || 0,
+          scrapValue:  parseFloat(scrapValue(bp))  || 0,
+          remarks:     bp.remarks || '',
+        }))
+      }
       const url    = isEdit ? `${BASE_URL}/bom/${bom.id}` : `${BASE_URL}/bom`
       const method = isEdit ? 'PATCH' : 'POST'
       const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify(payload) })
@@ -228,11 +266,34 @@ function BOMForm({ bom, items, onSave, onCancel }) {
             </div>
           </div>
 
-          {/* BOM Lines Section */}
+          {/* Tab Switcher */}
+          <div style={{ display:'flex', gap:4, marginBottom:12 }}>
+            {[
+              { id:'components', label:`🔩 Components (${lines.length})` },
+              { id:'byproducts', label:`♻️ Byproducts (${byproducts.length})` },
+            ].map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                style={{ padding:'8px 20px', borderRadius:6, fontSize:12, fontWeight:700,
+                  cursor:'pointer', border:'1.5px solid',
+                  borderColor: activeTab===t.id ? '#714B67' : '#E0D5E0',
+                  background: activeTab===t.id ? '#714B67' : '#fff',
+                  color: activeTab===t.id ? '#fff' : '#6C757D' }}>
+                {t.label}
+              </button>
+            ))}
+            {totalScrapValue > 0 && (
+              <div style={{ marginLeft:'auto', background:'#D4EDDA', borderRadius:6,
+                padding:'8px 16px', fontSize:12, fontWeight:700, color:'#155724' }}>
+                ♻️ Total Scrap Recovery: ₹{parseFloat(totalScrapValue).toLocaleString('en-IN')}
+              </div>
+            )}
+          </div>
+
+          {/* COMPONENTS TAB */}
+          {activeTab === 'components' && (
           <div style={{ border:'1px solid #E0D5E0', borderRadius:8, overflow:'hidden' }}>
             <div style={{ background:'#F8F4F8', padding:'10px 16px',
-              display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#714B67',
+              display:'flex', justifyContent:'space-between', alignItems:'center' }}>              <div style={{ fontSize:11, fontWeight:700, color:'#714B67',
                 textTransform:'uppercase', letterSpacing:.5 }}>
                 🔩 Components ({lines.length})
               </div>
@@ -379,6 +440,146 @@ function BOMForm({ bom, items, onSave, onCancel }) {
               </div>
             )}
           </div>
+          )}
+
+          {/* BYPRODUCTS TAB */}
+          {activeTab === 'byproducts' && (
+            <div style={{ border:'1px solid #E0D5E0', borderRadius:8, overflow:'hidden' }}>
+              <div style={{ background:'#F8F4F8', padding:'10px 16px',
+                display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:'#714B67',
+                    textTransform:'uppercase', letterSpacing:.5 }}>
+                    ♻️ Byproducts / Co-products ({byproducts.length})
+                  </span>
+                  <span style={{ fontSize:11, color:'#6C757D' }}>
+                    Items produced alongside main product (scrap, waste, co-products)
+                  </span>
+                </div>
+                <button onClick={addBP}
+                  style={{ padding:'6px 14px', background:'#00A09D', color:'#fff',
+                    border:'none', borderRadius:5, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                  + Add Byproduct
+                </button>
+              </div>
+
+              <div style={{ maxHeight:320, overflowY:'auto', overflowX:'auto' }}>
+                <table style={{ width:'100%', minWidth:1000, borderCollapse:'collapse' }}>
+                  <thead style={{ position:'sticky', top:0, background:'#F0EEF0', zIndex:5 }}>
+                    <tr>
+                      {[
+                        {l:'#',              w:40},
+                        {l:'Item Code',      w:150},
+                        {l:'Byproduct Name', w:220},
+                        {l:'Qty',            w:80},
+                        {l:'UOM',            w:70},
+                        {l:'Recovery %',     w:90},
+                        {l:'Unit Price (₹)', w:110},
+                        {l:'Scrap Value (₹)',w:120},
+                        {l:'Remarks',        w:140},
+                        {l:'',               w:30},
+                      ].map(h => (
+                        <th key={h.l} style={{ padding:'8px 10px', fontSize:10, fontWeight:700,
+                          color:'#6C757D', textAlign:'center', textTransform:'uppercase',
+                          letterSpacing:.4, borderBottom:'1px solid #E0D5E0',
+                          width:h.w, whiteSpace:'nowrap' }}>{h.l}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byproducts.map((bp, idx) => (
+                      <tr key={bp._id} style={{ borderBottom:'1px solid #F0EEF0' }}>
+                        <td style={{ padding:'6px 8px', textAlign:'center', fontSize:11,
+                          color:'#714B67', fontWeight:700 }}>{idx+1}</td>
+                        <td style={{ padding:'4px 6px', width:150 }}>
+                          <select style={{ ...inp, fontSize:11, fontFamily:'DM Mono,monospace' }}
+                            value={bp.itemId}
+                            onChange={e => updBP(bp._id, 'itemId', e.target.value)}>
+                            <option value=''>-- Select --</option>
+                            {items.map(i => <option key={i.id} value={i.id}>{i.code}</option>)}
+                          </select>
+                        </td>
+                        <td style={{ padding:'4px 6px' }}>
+                          <input style={{ ...inp, fontSize:11, background:'#F8F7FA' }}
+                            value={bp.itemName} readOnly placeholder="Auto-filled" />
+                        </td>
+                        <td style={{ padding:'4px 6px', width:80 }}>
+                          <input style={{ ...inp, fontSize:11 }} type='number'
+                            value={bp.qty} min="0" step="0.001"
+                            onChange={e => updBP(bp._id, 'qty', e.target.value)} />
+                        </td>
+                        <td style={{ padding:'4px 6px', width:70 }}>
+                          <input style={{ ...inp, fontSize:11, background:'#F8F7FA' }}
+                            value={bp.uom} readOnly />
+                        </td>
+                        <td style={{ padding:'4px 6px', width:90 }}>
+                          <div style={{ position:'relative' }}>
+                            <input style={{ ...inp, fontSize:11, paddingRight:20 }} type='number'
+                              value={bp.recoveryPct} min="0" max="100"
+                              onChange={e => updBP(bp._id, 'recoveryPct', e.target.value)} />
+                            <span style={{ position:'absolute', right:8, top:'50%',
+                              transform:'translateY(-50%)', fontSize:11, color:'#6C757D' }}>%</span>
+                          </div>
+                        </td>
+                        <td style={{ padding:'4px 6px', width:110 }}>
+                          <div style={{ position:'relative' }}>
+                            <span style={{ position:'absolute', left:8, top:'50%',
+                              transform:'translateY(-50%)', fontSize:11, color:'#6C757D' }}>₹</span>
+                            <input style={{ ...inp, fontSize:11, paddingLeft:20 }} type='number'
+                              value={bp.unitPrice} min="0"
+                              onChange={e => updBP(bp._id, 'unitPrice', e.target.value)} />
+                          </div>
+                        </td>
+                        <td style={{ padding:'4px 6px', width:120, textAlign:'center' }}>
+                          <span style={{ padding:'4px 10px', borderRadius:6, fontSize:12,
+                            fontWeight:700, background:'#D4EDDA', color:'#155724' }}>
+                            ₹{parseFloat(scrapValue(bp)).toLocaleString('en-IN')}
+                          </span>
+                        </td>
+                        <td style={{ padding:'4px 6px' }}>
+                          <input style={{ ...inp, fontSize:11 }}
+                            value={bp.remarks}
+                            onChange={e => updBP(bp._id, 'remarks', e.target.value)}
+                            placeholder="e.g. Recyclable, Dispose" />
+                        </td>
+                        <td style={{ padding:'4px 6px', width:30, textAlign:'center' }}>
+                          <span onClick={() => delBP(bp._id)}
+                            style={{ cursor:'pointer', color:'#DC3545', fontSize:16, fontWeight:700 }}>✕</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {byproducts.length === 0 && (
+                      <tr><td colSpan={10} style={{ padding:24, textAlign:'center',
+                        color:'#6C757D', fontSize:12 }}>
+                        No byproducts — click "+ Add Byproduct" to add scrap, waste or co-products
+                      </td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Byproduct summary */}
+              {byproducts.length > 0 && (
+                <div style={{ padding:'10px 16px', background:'#F8F7FA',
+                  borderTop:'1px solid #E0D5E0', display:'flex', gap:24,
+                  fontSize:11, color:'#6C757D', flexWrap:'wrap' }}>
+                  <span>Byproducts: <strong style={{ color:'#714B67' }}>{byproducts.length}</strong></span>
+                  <span>Full Recovery (100%): <strong style={{ color:'#155724' }}>
+                    {byproducts.filter(b => +b.recoveryPct === 100).length}
+                  </strong></span>
+                  <span>Partial Recovery: <strong style={{ color:'#856404' }}>
+                    {byproducts.filter(b => +b.recoveryPct > 0 && +b.recoveryPct < 100).length}
+                  </strong></span>
+                  <span>Dispose (0%): <strong style={{ color:'#DC3545' }}>
+                    {byproducts.filter(b => +b.recoveryPct === 0).length}
+                  </strong></span>
+                  <span style={{ marginLeft:'auto', fontWeight:700, color:'#155724', fontSize:12 }}>
+                    💰 Total Scrap Recovery: ₹{parseFloat(totalScrapValue).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
