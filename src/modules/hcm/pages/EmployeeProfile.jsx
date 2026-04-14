@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const EMP = {id:'EMP-001',name:'Ramesh Kumar',dept:'Production',desg:'Plant Manager',type:'Staff',grade:'M3',
   doj:'01 Jan 2018',shift:'General',ctc:540000,basic:22500,status:'Active',ph:'9876543210',
@@ -18,10 +18,53 @@ const TABS = ['Overview','Attendance','Leave','Payslips','Documents']
 
 export default function EmployeeProfile() {
   const nav = useNavigate()
+  const { empCode } = useParams()
   const [tab, setTab] = useState('Overview')
+  const [emp, setEmp] = useState(EMP) // use static EMP as default, replace with API later
+
+  // Fetch real employee if empCode provided
+  React.useEffect(() => {
+    if (!empCode) return
+    const token = localStorage.getItem('lnv_token')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/employees/${empCode}`,
+      { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data) {
+          const e = d.data
+          const extra = JSON.parse(e.remarks || '{}')
+          setEmp({
+            ...EMP,
+            id:        e.empCode,
+            name:      e.name || '—',
+            dept:      e.department || '—',
+            desg:      e.designation || '—',
+            type:      extra.category || 'Worker',
+            grade:     extra.gradeCode || '—',
+            shift:     extra.shiftCode || 'G',
+            doj:       e.doj ? new Date(e.doj).toLocaleDateString('en-IN') : '—',
+            dob:       e.dob ? new Date(e.dob).toLocaleDateString('en-IN') : '—',
+            ctc:       parseFloat(e.basicSalary || 0) * 12,
+            basic:     parseFloat(e.basicSalary || 0),
+            ph:        e.phone || '—',
+            email:     e.email || '—',
+            addr:      e.address || '—',
+            pan:       e.pan || '—',
+            esi:       e.esiNo || '—',
+            bank:      `${extra.bankName || 'Bank'} - ${e.bankAccount || '—'}`,
+            pf:        e.pfNo || '—',
+            aadhaar:   extra.aadhaar || '—',
+            gender:    extra.gender || '—',
+            marital:   extra.maritalStatus || '—',
+            blood:     extra.bloodGroup || '—',
+            emergency: extra.emergencyContact || '—',
+          })
+        }
+      }).catch(() => {})
+  }, [empCode])
   const isToday = (date) => {
     const today = new Date()
-    const bday = new Date(EMP.dob)
+    const bday = new Date(emp.dob)
     return bday.getDate()===today.getDate() && bday.getMonth()===today.getMonth()
   }
 
@@ -32,15 +75,15 @@ export default function EmployeeProfile() {
         <div style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
           <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'var(--odoo-purple)',
             display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',
-            fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'26px',flexShrink:0}}>RK</div>
+            fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'26px',flexShrink:0}}>{emp.name?.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
           <div style={{flex:1}}>
             <div style={{display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'20px',color:'var(--odoo-dark)'}}>{EMP.name}</div>
-              {isToday(EMP.dob) && <span style={{background:'#FFF3CD',color:'#856404',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}> Birthday Today!</span>}
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'20px',color:'var(--odoo-dark)'}}>{emp.name}</div>
+              {isToday(emp.dob) && <span style={{background:'#FFF3CD',color:'#856404',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}> Birthday Today!</span>}
             </div>
-            <div style={{color:'var(--odoo-purple)',fontWeight:'600',fontSize:'14px',marginTop:'2px'}}>{EMP.desg} · {EMP.dept}</div>
+            <div style={{color:'var(--odoo-purple)',fontWeight:'600',fontSize:'14px',marginTop:'2px'}}>{emp.desg} · {emp.dept}</div>
             <div style={{display:'flex',gap:'12px',marginTop:'8px',flexWrap:'wrap'}}>
-              {[['Emp ID',EMP.id],['DOJ',EMP.doj],['Type',EMP.type],['Grade',EMP.grade],['Shift',EMP.shift]].map(([l,v])=>(
+              {[['Emp ID',emp.id],['DOJ',emp.doj],['Type',emp.type],['Grade',emp.grade],['Shift',emp.shift]].map(([l,v])=>(
                 <div key={l} style={{fontSize:'11px'}}>
                   <span style={{color:'var(--odoo-gray)'}}>{l}: </span>
                   <strong>{v}</strong>
@@ -49,8 +92,9 @@ export default function EmployeeProfile() {
             </div>
           </div>
           <div style={{display:'flex',gap:'8px',flexShrink:0}}>
-            <button className="btn btn-s sd-bsm">Edit</button>
-            <button className="btn btn-p sd-bsm" onClick={() => nav('/hcm/pay/payslip')}>Payslip</button>
+            <button className="btn btn-s sd-bsm" onClick={()=>nav('/hcm/employees')}>← Back</button>
+            <button className="btn btn-s sd-bsm" onClick={()=>nav(`/hcm/employees/edit/${emp.id}`)}>✏️ Edit</button>
+            <button className="btn btn-p sd-bsm" onClick={()=>nav('/hcm/pay/payslip')}>Payslip</button>
           </div>
         </div>
       </div>
@@ -72,9 +116,9 @@ export default function EmployeeProfile() {
           <div className="fi-panel">
             <div className="fi-panel-hdr"><h3> Personal Details</h3></div>
             <div className="fi-panel-body">
-              {[[' Mobile',EMP.ph],[' Email',EMP.email],[' DOB',`${EMP.dob} (42 yrs)`],
-                ['🩸 Blood',EMP.blood],[' Gender',EMP.gender],[' Marital',EMP.marital],
-                [' Address',EMP.addr],['🆘 Emergency',EMP.emergency]].map(([l,v])=>(
+              {[[' Mobile',emp.ph],[' Email',emp.email],[' DOB',emp.dob],
+                ['🩸 Blood',emp.blood],[' Gender',emp.gender],[' Marital',emp.marital],
+                [' Address',emp.addr],['🆘 Emergency',emp.emergency]].map(([l,v])=>(
                 <div key={l} style={{display:'flex',gap:'8px',padding:'7px 0',borderBottom:'1px solid var(--odoo-border)',fontSize:'12px'}}>
                   <span style={{minWidth:'120px',color:'var(--odoo-gray)',fontWeight:'600'}}>{l}</span>
                   <span style={{fontWeight:'600'}}>{v}</span>
@@ -86,8 +130,8 @@ export default function EmployeeProfile() {
             <div className="fi-panel" style={{marginBottom:'14px'}}>
               <div className="fi-panel-hdr"><h3> ID & Statutory</h3></div>
               <div className="fi-panel-body">
-                {[['Aadhaar',EMP.aadhaar],['PAN',EMP.pan],['Bank A/C',EMP.bank],
-                  ['PF No.',EMP.pf],['ESI No.',EMP.esi]].map(([l,v])=>(
+                {[['Aadhaar',emp.aadhaar],['PAN',emp.pan],['Bank A/C',emp.bank],
+                  ['PF No.',emp.pf],['ESI No.',emp.esi]].map(([l,v])=>(
                   <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--odoo-border)',fontSize:'12px'}}>
                     <span style={{color:'var(--odoo-gray)',fontWeight:'600'}}>{l}</span>
                     <span style={{fontFamily:'DM Mono,monospace',fontWeight:'600'}}>{v}</span>

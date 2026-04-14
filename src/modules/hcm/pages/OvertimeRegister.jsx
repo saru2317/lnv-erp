@@ -13,6 +13,7 @@ const OT_RECORDS = [
 export default function OvertimeRegister() {
   const [chip, setChip] = useState('All')
   const [records, setRecords] = useState(OT_RECORDS)
+  const [viewRec, setViewRec] = useState(null)
 
   const approve = (id) => setRecords(recs => recs.map(r => r.id===id ? {...r,status:'Approved',approved_hrs:r.hrs,ot_pay:Math.round(r.basic_hourly*r.hrs*r.ot_rate),sb:'badge-pass'} : r))
   const reject = (id) => setRecords(recs => recs.map(r => r.id===id ? {...r,status:'Rejected',sb:'badge-fail'} : r))
@@ -81,10 +82,10 @@ export default function OvertimeRegister() {
                 {r.status==='Pending' && (
                   <div style={{display:'flex',gap:'4px'}}>
                     <button className="btn-xs pri" onClick={()=>approve(r.id)}>Approve</button>
-                    <button className="btn-xs" onClick={()=>reject(r.id)} style={{color:'var(--odoo-red)'}}></button>
+                    <button className="btn-xs" onClick={()=>reject(r.id)} style={{color:'var(--odoo-red)'}}>✕ Reject</button>
                   </div>
                 )}
-                {r.status!=='Pending' && <button className="btn-xs">View</button>}
+                {r.status!=='Pending' && <button className="btn-xs" onClick={()=>setViewRec(r)}>👁 View</button>}
               </td>
             </tr>
           ))}
@@ -101,6 +102,49 @@ export default function OvertimeRegister() {
           </tr>
         </tfoot>
       </table>
+
+      {viewRec && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',
+          display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
+          <div style={{background:'#fff',borderRadius:10,width:500,
+            overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,.3)'}}>
+            <div style={{background:'#714B67',padding:'14px 20px',
+              display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <h3 style={{color:'#fff',margin:0,fontFamily:'Syne,sans-serif',
+                fontSize:15,fontWeight:700}}>OT Details — {viewRec.id}</h3>
+              <span onClick={()=>setViewRec(null)}
+                style={{color:'#fff',cursor:'pointer',fontSize:20}}>✕</span>
+            </div>
+            <div style={{padding:20,display:'flex',flexDirection:'column',gap:10}}>
+              {[
+                ['Employee', viewRec.name+' ('+viewRec.emp+')'],
+                ['Department', viewRec.dept],
+                ['Type', viewRec.type],
+                ['Shift', viewRec.shift],
+                ['Date', viewRec.date],
+                ['Claimed Hours', viewRec.hrs+' hrs'],
+                ['Approved Hours', viewRec.approved_hrs||'—'],
+                ['OT Rate', viewRec.ot_rate+'×'],
+                ['OT Pay', viewRec.ot_pay>0?'₹'+viewRec.ot_pay:'—'],
+                ['Status', viewRec.status],
+              ].map(([l,v])=>(
+                <div key={l} style={{display:'flex',justifyContent:'space-between',
+                  padding:'7px 0',borderBottom:'1px solid #F0EEF0',fontSize:13}}>
+                  <span style={{color:'#6C757D',fontWeight:600}}>{l}</span>
+                  <span style={{fontWeight:700}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{padding:'12px 20px',borderTop:'1px solid #E0D5E0',
+              display:'flex',justifyContent:'flex-end',background:'#F8F7FA'}}>
+              <button onClick={()=>setViewRec(null)}
+                style={{padding:'8px 20px',background:'#714B67',color:'#fff',
+                  border:'none',borderRadius:6,fontSize:13,fontWeight:700,
+                  cursor:'pointer'}}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
