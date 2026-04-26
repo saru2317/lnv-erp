@@ -1,63 +1,110 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const RCM_ROWS = [
-  { serv:'Legal Services',         vendor:'Advocate Shankar & Co.',  date:'05 Mar', amt:50000,  cgst:4500, sgst:4500, igst:0,   rcm:9000,  status:'paid'    },
-  { serv:'GTA (Freight)',           vendor:'Chennai Cargo Pvt Ltd',   date:'08 Mar', amt:18000,  cgst:0,    sgst:0,    igst:1800, rcm:1800,  status:'pending' },
-  { serv:'Security Services',       vendor:'Vijay Security (Unreg.)', date:'10 Mar', amt:25000,  cgst:2250, sgst:2250, igst:0,   rcm:4500,  status:'paid'    },
-  { serv:'Sponsorship Services',    vendor:'Event Organizers Ltd',    date:'12 Mar', amt:100000, cgst:9000, sgst:9000, igst:0,   rcm:18000, status:'pending' },
-  { serv:'Import of Services',      vendor:'Foreign Consultant',      date:'14 Mar', amt:150000, cgst:0,    sgst:0,    igst:27000,rcm:27000, status:'paid'    },
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-export default function RCMRegister() {
-  const totalRCM = RCM_ROWS.reduce((s,r)=>s+r.rcm,0)
-  const paidRCM  = RCM_ROWS.filter(r=>r.status==='paid').reduce((s,r)=>s+r.rcm,0)
+function MonthYearPicker({ month, year, onChange }) {
   return (
-    <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">RCM Register <small>Reverse Charge Mechanism · Self-Invoice Liability</small></div>
-        <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">+ New RCM Entry</button>
-          <button className="btn btn-p sd-bsm">Push to GSTR-3B</button>
-        </div>
-      </div>
-      <div className="fi-alert warn" style={{marginBottom:16}}>
-         Under RCM, <strong>you (recipient) pay GST</strong> directly to govt — not the vendor. Self-invoice required. ITC available only after payment.
-      </div>
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)',marginBottom:20}}>
-        {[
-          {cls:'purple',l:'Total RCM Liability', v:`₹${totalRCM.toLocaleString('en-IN')}`, s:'This month'},
-          {cls:'green', l:'RCM Paid',             v:`₹${paidRCM.toLocaleString('en-IN')}`,  s:'Cash paid to govt'},
-          {cls:'red',   l:'RCM Pending',          v:`₹${(totalRCM-paidRCM).toLocaleString('en-IN')}`, s:'To be paid'},
-        ].map(k=>(
-          <div key={k.l} className={`fi-kpi-card ${k.cls}`}>
-            <div className="fi-kpi-label">{k.l}</div>
-            <div className="fi-kpi-value">{k.v}</div>
-            <div className="fi-kpi-sub">{k.s}</div>
-          </div>
-        ))}
-      </div>
-      <table className="fi-data-table">
-        <thead><tr><th>Service Type</th><th>Vendor</th><th>Date</th><th>Amount</th><th>CGST</th><th>SGST</th><th>IGST</th><th>RCM Liability</th><th>Status</th></tr></thead>
-        <tbody>
-          {RCM_ROWS.map((r,i)=>(
-            <tr key={i}>
-              <td style={{fontSize:12,fontWeight:600}}>{r.serv}</td>
-              <td style={{fontSize:12}}>{r.vendor}</td>
-              <td>{r.date}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:12}}>₹{r.amt.toLocaleString('en-IN')}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-green)'}}>{r.cgst>0?`₹${r.cgst.toLocaleString('en-IN')}`:'—'}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-green)'}}>{r.sgst>0?`₹${r.sgst.toLocaleString('en-IN')}`:'—'}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-blue)'}}>{r.igst>0?`₹${r.igst.toLocaleString('en-IN')}`:'—'}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:13,fontWeight:700,color:'var(--odoo-purple)'}}>₹{r.rcm.toLocaleString('en-IN')}</td>
-              <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,
-                background:r.status==='paid'?'#D4EDDA':'#FFF3CD',
-                color:r.status==='paid'?'#155724':'#856404'}}>
-                {r.status==='paid'?' Paid':' Pending'}
-              </span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+      <select className="sd-search" value={month} onChange={e=>onChange(parseInt(e.target.value),year)} style={{width:90}}>
+        {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+      </select>
+      <select className="sd-search" value={year} onChange={e=>onChange(month,parseInt(e.target.value))} style={{width:80}}>
+        {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+      </select>
     </div>
   )
 }
+
+function GSTKpi({ label, value, sub, cls }) {
+  return (
+    <div className={`fi-kpi-card ${cls}`}>
+      <div className="fi-kpi-label">{label}</div>
+      <div className="fi-kpi-value">{value}</div>
+      <div className="fi-kpi-sub">{sub}</div>
+    </div>
+  )
+}
+
+export default function RCMRegister() {
+  const now = new Date()
+  const [month,   setMonth]   = useState(now.getMonth()+1)
+  const [year,    setYear]    = useState(now.getFullYear())
+  const [rows,    setRows]    = useState([])
+  const [total,   setTotal]   = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/gst/rcm?month=${month}&year=${year}`, { headers: hdr2() })
+      const d    = await res.json()
+      setRows(d.data||[])
+      setTotal(d.totalRCM||0)
+    } catch {} finally { setLoading(false) }
+  }, [month, year])
+  useEffect(() => { load() }, [load])
+
+  return (
+    <div>
+      <div className="fi-lv-hdr">
+        <div className="fi-lv-title">RCM Register <small>Reverse Charge Mechanism — Unregistered Purchases</small></div>
+        <div className="fi-lv-actions">
+          <MonthYearPicker month={month} year={year} onChange={(m,y)=>{setMonth(m);setYear(y)}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
+        </div>
+      </div>
+
+      <div className="fi-alert warn">
+        RCM applies when purchasing from unregistered vendors. You must pay GST on their behalf and report in GSTR-3B Table 3.1(d).
+      </div>
+
+      {loading ? <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
+        <table className="fi-data-table">
+          <thead><tr>
+            <th>GRN No.</th><th>Vendor (Unregistered)</th><th>Date</th>
+            <th style={{textAlign:'right'}}>Taxable</th>
+            <th style={{textAlign:'right'}}>RCM CGST</th>
+            <th style={{textAlign:'right'}}>RCM SGST</th>
+            <th style={{textAlign:'right'}}>Total RCM</th>
+          </tr></thead>
+          <tbody>
+            {rows.length===0 ? (
+              <tr><td colSpan={7} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No RCM purchases for {MONTHS[month]} {year}
+              </td></tr>
+            ) : rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:12,color:'var(--odoo-purple)'}}>{r.grnNo}</td>
+                <td style={{fontWeight:600,fontSize:12}}>{r.vendorName}</td>
+                <td style={{fontSize:11}}>{r.grnDate?new Date(r.grnDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(r.taxableAmt||0)}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.rcmCGST||0)}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.rcmSGST||0)}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR((r.rcmCGST||0)+(r.rcmSGST||0))}</td>
+              </tr>
+            ))}
+          </tbody>
+          {rows.length>0&&(
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #E0D5E0'}}>
+                <td colSpan={6} style={{padding:'8px 12px',color:'#714B67'}}>TOTAL RCM LIABILITY</td>
+                <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:14}}>{INR(total)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════
+// SAVE AS: GSTR9.jsx (Annual — computed from monthly data)
+// ══════════════════════════════════════

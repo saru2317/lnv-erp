@@ -46,6 +46,7 @@ const BLANK = {
   // Statutory
   hsnNo:'', igst:'', cgst:'', sgst:'',
   sacNo:'', sacIgst:'', sacCgst:'', sacSgst:'',
+  gstCategory:'taxable', itcEligibility:'full',
   // Extra
   inspectionRequired:false, includeInInventoryCost:true,
   // UOM Conversions (array)
@@ -591,6 +592,84 @@ export default function ItemMaster() {
                 </div>
               </div>
             </div>
+
+            {/* ── GST Category + ITC Eligibility ── */}
+            <div style={{ marginTop:16, border:'1px solid var(--odoo-border)', borderRadius:6, padding:14, background:'#FAFAFA' }}>
+              <div style={{ fontWeight:700, fontSize:12, color:'#714B67', marginBottom:12 }}>
+                GST Classification &amp; ITC Eligibility
+                <span style={{ marginLeft:8, fontSize:10, fontWeight:400, color:'#6C757D' }}>
+                  Controls auto-journal posting and ITC reconciliation
+                </span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+
+                {/* GST Category */}
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }}>
+                    GST Category (Output Tax)
+                  </label>
+                  <select style={{ ...inp, cursor:'pointer' }}
+                    value={form.gstCategory ?? 'taxable'}
+                    onChange={e => setForm(p => ({ ...p, gstCategory: e.target.value }))}>
+                    <option value="taxable">Taxable — Standard GST applies</option>
+                    <option value="exempt">Exempt — No GST (Schedule 1)</option>
+                    <option value="nil_rated">Nil Rated — 0% GST</option>
+                    <option value="zero_rated">Zero Rated — Export / SEZ</option>
+                    <option value="non_gst">Non-GST Supply — Outside GST scope</option>
+                  </select>
+                  <div style={{ marginTop:6, fontSize:11, color:'#6C757D' }}>
+                    {form.gstCategory === 'taxable'   && 'CGST/SGST or IGST will be charged on sales invoices'}
+                    {form.gstCategory === 'exempt'     && 'No output GST on sales. ITC reversal may apply.'}
+                    {form.gstCategory === 'nil_rated'  && '0% GST. Reported in GSTR-1 but no tax charged.'}
+                    {form.gstCategory === 'zero_rated' && 'Exports / SEZ supply. Refund of ITC available.'}
+                    {form.gstCategory === 'non_gst'    && 'Petroleum, alcohol etc. GST not applicable.'}
+                  </div>
+                </div>
+
+                {/* ITC Eligibility */}
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }}>
+                    ITC Eligibility (Input Tax Credit)
+                  </label>
+                  <select style={{ ...inp, cursor:'pointer',
+                    background: form.itcEligibility === 'blocked' ? '#FFF3F3' :
+                                form.itcEligibility === 'full'    ? '#F0FFF4' : '#FFFEF0',
+                    borderColor: form.itcEligibility === 'blocked' ? '#DC3545' :
+                                 form.itcEligibility === 'full'    ? '#28A745' : '#FFC107',
+                  }}
+                    value={form.itcEligibility ?? 'full'}
+                    onChange={e => setForm(p => ({ ...p, itcEligibility: e.target.value }))}>
+                    <option value="full">Full ITC — 100% claimable</option>
+                    <option value="partial">Partial ITC — 50% (motor vehicle / mixed use)</option>
+                    <option value="blocked">Blocked — Sec 17(5) — NEVER claim</option>
+                    <option value="na">N/A — Sales item (no ITC applicable)</option>
+                    <option value="capital">Capital Goods — ITC over 60 months</option>
+                  </select>
+                  {form.itcEligibility === 'blocked' && (
+                    <div style={{ marginTop:6, padding:'6px 10px', background:'#FFF3F3', border:'1px solid #FFCDD2',
+                      borderRadius:4, fontSize:11, color:'#C62828', fontWeight:600 }}>
+                      Sec 17(5): Food, personal vehicle, club membership, beauty services, construction — ITC blocked. Claiming this will attract GST notice + 18% interest.
+                    </div>
+                  )}
+                  {form.itcEligibility === 'full' && (
+                    <div style={{ marginTop:6, fontSize:11, color:'#155724' }}>
+                      Full ITC claimed on purchase. Posted to Dr 1610/1620/1630 (CGST/SGST/IGST Input).
+                    </div>
+                  )}
+                  {form.itcEligibility === 'partial' && (
+                    <div style={{ marginTop:6, fontSize:11, color:'#856404' }}>
+                      50% ITC only. Remaining 50% added to item cost.
+                    </div>
+                  )}
+                  {form.itcEligibility === 'capital' && (
+                    <div style={{ marginTop:6, fontSize:11, color:'#0C5460' }}>
+                      Capital goods: 1/60th ITC per month. Track in Fixed Asset Register.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
 

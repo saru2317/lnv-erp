@@ -1,9 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
 
 export default function NCRNew() {
   const nav = useNavigate()
-  const [saved, setSaved] = useState(false)
+  const [saved,  setSaved]  = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [ncrNo,  setNcrNo]  = useState('Auto-generated')
+  const [form, setForm] = useState({
+    severity:'Minor', source:'PP — Production',
+    refType:'', refNo:'', itemName:'',
+    ncQty:'', unit:'Kg',
+    description:'', immediateAction:'', rootCause:'',
+    assignedTo:'', disposition:'On Hold — Pending Review',
+  })
+
+  useEffect(()=>{
+    fetch(`${BASE_URL}/qm/ncr/next-no`,
+      { headers:{ Authorization:`Bearer ${getToken()}` }})
+      .then(r=>r.json()).then(d=>setNcrNo(d.ncrNo||'NCR-AUTO'))
+      .catch(()=>{})
+  },[])
+
+  const saveNCR = async () => {
+    if (!form.itemName || !form.description)
+      return toast.error('Item and description required!')
+    setSaving(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/qm/ncr`,
+        { method:'POST', headers:authHdrs(),
+          body:JSON.stringify({
+            ...form,
+            source: form.source.split(' ')[0]||'PP',
+          })})
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      setSaved(true)
+    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
+  }
 
   if (saved) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
@@ -117,7 +155,7 @@ export default function NCRNew() {
       <div className="fi-form-acts">
         <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}> Cancel</button>
         <button className="btn btn-s sd-bsm">Save Draft</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Submit NCR</button>
+        <button className="btn btn-p sd-bsm" disabled={saving} onClick={saveNCR}>{saving?'⏳ Saving...':'Submit NCR'}</button>
         <div className="fi-status-flow">
           <span className="fi-sf-step act"> NCR</span><span className="fi-sf-arr">›</span>
           <span className="fi-sf-step">Root Cause</span><span className="fi-sf-arr">›</span>

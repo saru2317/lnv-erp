@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
 
 const RECENT_LOTS = [
   {lot:'QIL-048',date:'28 Feb',mat:'Ring Yarn (30s)',qty:400,pass:394,fail:6,yield:98.5,ncr:'—',sb:'badge-pass'},
@@ -16,6 +18,20 @@ const OPEN_NCRS = [
 
 export default function QMDashboard() {
   const nav = useNavigate()
+  const [stats, setStats] = useState({passRate:0,openNCRs:0,openCAPAs:0,totalLots:0})
+  const [recentLots, setRecentLots] = useState([])
+  const [openNCRs,   setOpenNCRs]   = useState([])
+
+  useEffect(()=>{
+    const h = { headers:{ Authorization:`Bearer ${getToken()}` } }
+    fetch(`${BASE_URL}/qm/dashboard`, h)
+      .then(r=>r.json()).then(d=>setStats(d)).catch(()=>{})
+    fetch(`${BASE_URL}/qm/inspection`, h)
+      .then(r=>r.json()).then(d=>setRecentLots((d.data||[]).slice(0,4))).catch(()=>{})
+    fetch(`${BASE_URL}/qm/ncr?status=OPEN`, h)
+      .then(r=>r.json()).then(d=>setOpenNCRs((d.data||[]).slice(0,3))).catch(()=>{})
+  },[])
+
   return (
     <div>
       <div className="fi-lv-hdr">
@@ -27,10 +43,10 @@ export default function QMDashboard() {
       </div>
 
       <div className="qm-kpi-grid">
-        {[{cls:'green', ic:'',l:'Overall Pass Rate', v:'97.4%', s:'842 lots inspected MTD'},
+        {[{cls:'green', ic:'',l:'Overall Pass Rate', v:`${stats.passRate||0}%`, s:`${stats.totalLots||0} lots total`},
           {cls:'red',   ic:'',l:'Rejections (MTD)',  v:'62 Kg', s:'0.34% rejection rate'},
-          {cls:'orange',ic:'',l:'Open NCRs',         v:'8',     s:'3 critical pending'},
-          {cls:'blue',  ic:'',l:'Certificates Issued',v:'48',   s:'All shipments covered'},
+          {cls:'orange',ic:'',l:'Open NCRs',         v:stats.openNCRs||0, s:'Pending closure'},
+          {cls:'blue',  ic:'',l:'Open CAPAs',          v:stats.openCAPAs||0, s:'Action pending'},
         ].map(k=>(
           <div key={k.l} className={`qm-kpi-card ${k.cls}`}>
             <div className="qm-kpi-icon">{k.ic}</div>

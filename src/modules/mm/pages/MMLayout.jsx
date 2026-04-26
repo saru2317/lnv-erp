@@ -12,8 +12,6 @@ const MMDashboard    = lazy(() => import('./MMDashboard'))
 const POList         = lazy(() => import('./POList'))
 const PONew          = lazy(() => import('./PONew'))
 const POView         = lazy(() => import('./POView'))
-const GRNList        = lazy(() => import('./GRNList'))
-const GRNNew         = lazy(() => import('./GRNNew'))
 const VendorInvList  = lazy(() => import('./VendorInvList'))
 const VendorInvNew   = lazy(() => import('./VendorInvNew'))
 const VendorList     = lazy(() => import('./VendorList'))
@@ -24,7 +22,6 @@ const RFQList        = lazy(() => import('./RFQList'))
 const PendingPO      = lazy(() => import('./PendingPO'))
 const MaterialList   = lazy(() => import('./MaterialList'))
 const POReport       = lazy(() => import('./POReport'))
-const ReturnList     = lazy(() => import('./ReturnList'))
 const PRList         = lazy(() => import('./PRList'))
 const PRNew          = lazy(() => import('./PRNew'))
 const CSList         = lazy(() => import('./CSList'))
@@ -33,7 +30,6 @@ const CSNew          = lazy(() => import('./CSNew'))
 const NAV_ITEMS = [
   { to: '/mm',             label: ' Home',             icon: '' },
   { to: '/mm/po',          label: ' Purchase Orders',   icon: '' },
-  { to: '/mm/grn',         label: ' GRN / Receipt',     icon: '' },
   { to: '/mm/invoices',    label: ' Vendor Invoice',    icon: '' },
   { to: '/mm/vendors',     label: ' Vendors',           icon: '' },
   { to: '/mm/payments',    label: ' Payments',          icon: '' },
@@ -52,14 +48,7 @@ const SIDEBAR_GROUPS = [
       { to: '/mm/po/pending',   label: 'Pending POs' },
     ]
   },
-  {
-    label: 'Goods Receipt', icon: '',
-    items: [
-      { to: '/mm/grn',          label: 'GRN List (MB51)' },
-      { to: '/mm/grn/new',      label: 'Record GRN (MIGO)' },
-      { to: '/mm/returns',      label: 'Purchase Returns' },
-    ]
-  },
+
   {
     label: 'Vendor Invoice', icon: '',
     items: [
@@ -105,8 +94,6 @@ export default function MMLayout() {
           <Route path="po/new"    element={<PONew />} />
           <Route path="po/pending"element={<PendingPO />} />
           <Route path="po/:id"    element={<POView />} />
-          <Route path="grn"       element={<GRNList />} />
-          <Route path="grn/new"   element={<GRNNew />} />
           <Route path="invoices"  element={<VendorInvList />} />
           <Route path="invoices/new" element={<VendorInvNew />} />
           <Route path="vendors"   element={<VendorList />} />
@@ -116,7 +103,6 @@ export default function MMLayout() {
           <Route path="rfq"       element={<RFQList />} />
           <Route path="materials" element={<MaterialList />} />
           <Route path="report"    element={<POReport />} />
-          <Route path="returns"   element={<ReturnList />} />
           <Route path="pr"          element={<PRList />} />
           <Route path="pr/new"      element={<PRNew />} />
           <Route path="cs"          element={<CSList />} />

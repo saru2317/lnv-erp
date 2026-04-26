@@ -32,6 +32,7 @@ const MDMModule       = lazy(() => import('@modules/mdm/pages/MDMLayout'))
 const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
 
+
 export default function App() {
   return (
       <AuthProvider>

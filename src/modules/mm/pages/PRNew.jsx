@@ -1,227 +1,291 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { mmApi } from '../services/mmApi'
 
-const DEPARTMENTS = ['Production','Maintenance','Quality','Admin','Stores','HR','Finance','IT']
-const PRIORITIES  = ['Normal','Urgent','Low']
-const UOM_LIST    = ['Nos','Kg','Ltrs','Mtrs','Box','Set','Pair','Roll','Sheet','Pack']
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs = () => ({ 'Content-Type':'application/json',
+  Authorization:`Bearer ${getToken()}` })
 
-const EMPTY_ITEM  = { desc:'', spec:'', uom:'Nos', qty:'', estRate:'', purpose:'', vendorSug:'', budgetCode:'' }
+const inp = { padding:'7px 10px', border:'1.5px solid #E0D5E0',
+  borderRadius:5, fontSize:12, outline:'none', width:'100%',
+  boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
+
+const EMPTY_LINE = {
+  itemCode:'', itemName:'', specification:'',
+  qty:1, unit:'Nos', requiredBy:'',
+  estimatedRate:'', purpose:'', remarks:''
+}
 
 export default function PRNew() {
   const nav = useNavigate()
-  const [prNo]         = useState('PR-2026-0042')
-  const [date, setDate]= useState(new Date().toISOString().split('T')[0])
-  const [dept, setDept]= useState('Production')
-  const [reqBy, setReqBy] = useState('')
-  const [authBy, setAuthBy]= useState('')
-  const [reqDate, setReqDate]= useState('')
-  const [priority, setPriority]= useState('Normal')
-  const [csReqd, setCsReqd]= useState(true)
-  const [remarks, setRemarks]= useState('')
-  const [items, setItems]= useState([{...EMPTY_ITEM},{...EMPTY_ITEM},{...EMPTY_ITEM}])
-  const [saved, setSaved]= useState(false)
+  const [items,   setItems]   = useState([])
+  const [saving,  setSaving]  = useState(false)
+  const [prNo,    setPrNo]    = useState('PR-AUTO')
+  const [lines,   setLines]   = useState([{...EMPTY_LINE}])
+  const [hdr,     setHdr]     = useState({
+    department:'', requestedBy:'', requestedByName:'',
+    priority:'Normal', remarks:''
+  })
 
-  const updateItem = (i, field, val) => {
-    const copy = [...items]
-    copy[i] = {...copy[i], [field]: val}
-    setItems(copy)
-  }
-  const addItem    = () => setItems([...items, {...EMPTY_ITEM}])
-  const removeItem = i  => setItems(items.filter((_,idx)=>idx!==i))
+  useEffect(()=>{
+    // Load items from master
+    mmApi.getItems().then(d=>setItems(d.data||[])).catch(()=>{})
+    // Get next PR number
+    fetch(`${BASE_URL}/mm/pr/next-no`,
+      { headers:{ Authorization:`Bearer ${getToken()}` }})
+      .then(r=>r.json())
+      .then(d=>setPrNo(d.prNo||'PR-AUTO'))
+      .catch(()=>{})
+  },[])
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(()=>{ if(csReqd) nav('/mm/cs/new'); else nav('/mm/pr'); }, 1200)
+  const updateLine = (i, field, val) =>
+    setLines(prev=>prev.map((l,idx)=>idx===i?{...l,[field]:val}:l))
+
+  const addLine = () => setLines(p=>[...p,{...EMPTY_LINE}])
+  const delLine = i  => setLines(p=>p.filter((_,idx)=>idx!==i))
+
+  const onItemSelect = (i, code) => {
+    const item = items.find(it=>it.itemCode===code)
+    updateLine(i,'itemCode',code)
+    if (item) updateLine(i,'itemName',item.itemName)
   }
 
-  const inp = {
-    padding:'7px 10px', border:'1.5px solid var(--odoo-border)', borderRadius:5,
-    fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--odoo-dark)',
-    outline:'none', background:'#fff', width:'100%', boxSizing:'border-box',
+  const save = async (submit=false) => {
+    if (!hdr.department) return toast.error('Department required!')
+    if (!lines[0].itemName) return toast.error('Add at least one item!')
+    setSaving(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/mm/pr`,
+        { method:'POST', headers:authHdrs(),
+          body:JSON.stringify({ ...hdr, lines }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      // Auto submit if requested
+      if (submit) {
+        const sRes = await fetch(`${BASE_URL}/mm/pr/${data.data.id}/submit`,
+          { method:'POST', headers:authHdrs(), body:'{}' })
+        const sData = await sRes.json()
+        toast.success(sData.message)
+      } else {
+        toast.success(data.message)
+      }
+      nav('/mm/pr')
+    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
-  const lbl = { fontSize:11, fontWeight:700, color:'var(--odoo-gray)',
-    textTransform:'uppercase', letterSpacing:.5, marginBottom:4, display:'block' }
 
   return (
-    <div style={{maxWidth:1200}}>
-      {/* Header */}
+    <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">New Purchase Indent <small>{prNo}</small></div>
+        <div className="fi-lv-title">
+          New Purchase Indent <small>{prNo}</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/pr')}>← Back</button>
-          <button className="btn btn-s sd-bsm">Print</button>
-          <button className="btn btn-p sd-bsm" onClick={handleSave}>
-            {saved ? ' Saved!' : ' Save & Submit'}
+          <button className="btn btn-s sd-bsm"
+            onClick={()=>nav('/mm/pr')}>✕ Cancel</button>
+          <button className="btn btn-s sd-bsm"
+            disabled={saving} onClick={()=>save(false)}>
+            💾 Save Draft
+          </button>
+          <button className="btn btn-p sd-bsm"
+            disabled={saving} onClick={()=>save(true)}>
+            📤 Submit to HOD
           </button>
         </div>
       </div>
 
-      {saved && (
-        <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,
-          padding:'10px 16px',marginBottom:16,fontSize:13,color:'#155724',fontWeight:600}}>
-           PR {prNo} saved! {csReqd ? 'Redirecting to Comparative Statement entry…' : 'Redirecting to PR list…'}
+      {/* Header */}
+      <div style={{ background:'#fff', borderRadius:8,
+        border:'1px solid #E0D5E0', padding:16, marginBottom:14 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:'#714B67',
+          marginBottom:12, fontFamily:'Syne,sans-serif' }}>
+          📋 Indent Header
         </div>
-      )}
-
-      {/* Form header */}
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
-        padding:20,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-
-        {/* Company banner */}
-        <div style={{background:'linear-gradient(135deg,#4A3050,#714B67)',borderRadius:6,
-          padding:'12px 20px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr',
+          gap:12, marginBottom:12 }}>
           <div>
-            <div style={{fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:800,color:'#F5C518'}}>P C S</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,.7)',marginTop:2}}>Auto Coats · Purchase Department</div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>PR Number</label>
+            <input style={{ ...inp, background:'#F8F9FA',
+              color:'#714B67', fontWeight:700 }}
+              value={prNo} readOnly />
           </div>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,color:'#fff'}}>PURCHASE INDENT</div>
-            <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:600,color:'#F5C518'}}>{prNo}</div>
-          </div>
-          <div style={{textAlign:'right',fontSize:11,color:'rgba(255,255,255,.7)'}}>
-            <div>Date: <strong style={{color:'#fff'}}>{date}</strong></div>
-          </div>
-        </div>
-
-        {/* Fields grid */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:16}}>
-          {[
-            ['PR No.',       prNo,    null,         false],
-            ['Date',         date,    setDate,      true, 'date'],
-            ['Department',   dept,    null,         true, 'select', DEPARTMENTS],
-            ['Priority',     priority,setPriority,  true, 'select', PRIORITIES],
-            ['Requested By', reqBy,   setReqBy,     true],
-            ['Required By Date', reqDate, setReqDate, true, 'date'],
-            ['Authorised By',authBy,  setAuthBy,    true],
-          ].map(([label, val, setter, editable, type, opts])=>(
-            <div key={label}>
-              <label style={lbl}>{label}</label>
-              {!editable
-                ? <div style={{...inp, background:'#F8F9FA', color:'var(--odoo-purple)', fontWeight:700}}>{val}</div>
-                : type==='select'
-                  ? <select style={inp} value={val} onChange={e=>setter(e.target.value)}>
-                      {opts.map(o=><option key={o}>{o}</option>)}
-                    </select>
-                  : <input style={inp} type={type||'text'} value={val} onChange={e=>setter(e.target.value)} />
-              }
-            </div>
-          ))}
-          {/* CS Required toggle */}
           <div>
-            <label style={lbl}>Comparative Statement?</label>
-            <div style={{display:'flex',gap:8,marginTop:4}}>
-              {[true,false].map(v=>(
-                <div key={String(v)} onClick={()=>setCsReqd(v)}
-                  style={{flex:1,padding:'7px',textAlign:'center',borderRadius:5,cursor:'pointer',
-                    fontWeight:700,fontSize:12,transition:'all .15s',
-                    background: csReqd===v ? (v?'#EDE0EA':'#D4EDDA') : '#F8F9FA',
-                    color: csReqd===v ? (v?'var(--odoo-purple)':'#155724') : 'var(--odoo-gray)',
-                    border:`1.5px solid ${csReqd===v?(v?'var(--odoo-purple)':'#C3E6CB'):'var(--odoo-border)'}`}}>
-                  {v ? ' Yes — CS Required' : ' No — Direct PO'}
-                </div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>Department *</label>
+            <select style={{ ...inp, cursor:'pointer' }}
+              value={hdr.department}
+              onChange={e=>setHdr(p=>({...p,department:e.target.value}))}>
+              <option value="">-- Select Department --</option>
+              {['Production','Quality','Maintenance','Admin','Warehouse',
+                'Accounts','HR','Sales','Purchase','IT'].map(d=>(
+                <option key={d}>{d}</option>
               ))}
-            </div>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>Priority</label>
+            <select style={{ ...inp, cursor:'pointer' }}
+              value={hdr.priority}
+              onChange={e=>setHdr(p=>({...p,priority:e.target.value}))}>
+              {['Normal','Urgent','Low'].map(p=>(
+                <option key={p}>{p}</option>
+              ))}
+            </select>
           </div>
         </div>
-
-        {csReqd && (
-          <div style={{background:'#EDE0EA',border:'1px solid var(--odoo-border)',borderRadius:6,
-            padding:'8px 14px',fontSize:12,color:'var(--odoo-purple)',fontWeight:600,marginBottom:14}}>
-             Comparative Statement workflow will be triggered after saving this PR.
-            Purchase team must collect quotes from minimum 3 vendors before HOD approval.
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr',
+          gap:12 }}>
+          <div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>Requested By *</label>
+            <input style={inp} value={hdr.requestedByName}
+              onChange={e=>setHdr(p=>({...p,
+                requestedByName:e.target.value,
+                requestedBy:e.target.value}))}
+              placeholder="HOD / Requestor name" />
           </div>
-        )}
+          <div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>PR Date</label>
+            <input style={{ ...inp, background:'#F8F9FA' }}
+              value={new Date().toLocaleDateString('en-IN')} readOnly />
+          </div>
+          <div>
+            <label style={{ fontSize:11, fontWeight:700, color:'#495057',
+              display:'block', marginBottom:3,
+              textTransform:'uppercase' }}>Remarks</label>
+            <input style={inp} value={hdr.remarks}
+              onChange={e=>setHdr(p=>({...p,remarks:e.target.value}))}
+              placeholder="Any notes..." />
+          </div>
+        </div>
+      </div>
 
-        {/* Items table */}
-        <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,color:'var(--odoo-dark)',
-          marginBottom:12,paddingBottom:8,borderBottom:'2px solid var(--odoo-border)',
-          display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span>Item Details</span>
-          <button onClick={addItem}
-            style={{padding:'4px 12px',borderRadius:5,fontSize:11,fontWeight:700,
-              background:'var(--odoo-purple)',color:'#fff',border:'none',cursor:'pointer'}}>
-            + Add Row
+      {/* Line Items */}
+      <div style={{ background:'#fff', borderRadius:8,
+        border:'1px solid #E0D5E0', overflow:'hidden',
+        marginBottom:14 }}>
+        <div style={{ background:'#F8F4F8', padding:'10px 16px',
+          display:'flex', justifyContent:'space-between',
+          alignItems:'center', borderBottom:'1px solid #E0D5E0' }}>
+          <span style={{ fontSize:12, fontWeight:700, color:'#714B67' }}>
+            📦 Items Required
+          </span>
+          <button onClick={addLine}
+            style={{ padding:'4px 12px', background:'#714B67',
+              color:'#fff', border:'none', borderRadius:5,
+              fontSize:11, cursor:'pointer', fontWeight:600 }}>
+            + Add Item
           </button>
         </div>
-
-        <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%',borderCollapse:'collapse',minWidth:900}}>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse',
+            fontSize:12, minWidth:900 }}>
             <thead>
-              <tr>
-                {['S.No','Item Description','Specification','UOM','Qty Required',
-                  'Purpose / Remarks','Est. Rate (₹)','Budget Code','Vendor Suggestion',''].map(h=>(
-                  <th key={h} style={{padding:'8px 10px',background:'var(--odoo-purple)',
-                    color:'#fff',fontSize:11,fontWeight:700,textAlign:'center',
-                    border:'1px solid rgba(255,255,255,.2)',whiteSpace:'nowrap'}}>{h}</th>
+              <tr style={{ background:'#F8F4F8',
+                borderBottom:'2px solid #E0D5E0' }}>
+                {['#','Item','Specification','Qty','Unit',
+                  'Required By','Est. Rate','Purpose',''].map(h=>(
+                  <th key={h} style={{ padding:'8px 10px',
+                    fontSize:10, fontWeight:700, color:'#6C757D',
+                    textAlign:'left', textTransform:'uppercase',
+                    letterSpacing:.3, whiteSpace:'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {items.map((item, idx)=>(
-                <tr key={idx} style={{background:idx%2===0?'#fff':'#F8F9FA'}}>
-                  <td style={{padding:'6px 10px',textAlign:'center',fontWeight:700,
-                    color:'var(--odoo-gray)',border:'1px solid var(--odoo-border)',width:40}}>{idx+1}</td>
-                  {[
-                    ['desc','text',220,'Item name (e.g. Battery 12V 65AH)'],
-                    ['spec','text',120,'Brand / Make'],
-                    ['uom','select',70,null],
-                    ['qty','number',70,'0'],
-                    ['purpose','text',160,'Reason for purchase'],
-                    ['estRate','number',90,'0.00'],
-                    ['budgetCode','text',90,'Budget code'],
-                    ['vendorSug','text',130,'Preferred vendor'],
-                  ].map(([field,type,w,ph])=>(
-                    <td key={field} style={{padding:'4px 6px',border:'1px solid var(--odoo-border)',width:w}}>
-                      {field==='uom'
-                        ? <select value={item.uom} onChange={e=>updateItem(idx,'uom',e.target.value)}
-                            style={{...inp,padding:'5px 6px',width:'100%'}}>
-                            {UOM_LIST.map(u=><option key={u}>{u}</option>)}
-                          </select>
-                        : <input type={type} value={item[field]} placeholder={ph}
-                            onChange={e=>updateItem(idx,field,e.target.value)}
-                            style={{...inp,padding:'5px 8px',width:'100%'}} />
-                      }
-                    </td>
-                  ))}
-                  <td style={{padding:'4px 6px',textAlign:'center',border:'1px solid var(--odoo-border)'}}>
-                    {items.length>1 &&
-                      <button onClick={()=>removeItem(idx)}
-                        style={{background:'#F8D7DA',color:'#721C24',border:'none',
-                          borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:12}}></button>}
+              {lines.map((l,i)=>(
+                <tr key={i} style={{ borderBottom:'1px solid #F0EEF0' }}>
+                  <td style={{ padding:'6px 10px', color:'#6C757D',
+                    fontWeight:700, textAlign:'center',
+                    width:30 }}>{i+1}</td>
+                  <td style={{ padding:'4px 8px', minWidth:180 }}>
+                    <select style={{ ...inp, fontSize:11,
+                      marginBottom:3, cursor:'pointer' }}
+                      value={l.itemCode}
+                      onChange={e=>onItemSelect(i,e.target.value)}>
+                      <option value="">-- Select Item --</option>
+                      {items.map(it=>(
+                        <option key={it.itemCode} value={it.itemCode}>
+                          {it.itemName}
+                        </option>
+                      ))}
+                    </select>
+                    {!l.itemCode && (
+                      <input style={{ ...inp, fontSize:11 }}
+                        placeholder="Or type item name"
+                        value={l.itemName}
+                        onChange={e=>updateLine(i,'itemName',e.target.value)} />
+                    )}
+                  </td>
+                  <td style={{ padding:'4px 8px', minWidth:120 }}>
+                    <input style={{ ...inp, fontSize:11 }}
+                      placeholder="Brand/spec/grade"
+                      value={l.specification}
+                      onChange={e=>updateLine(i,'specification',e.target.value)} />
+                  </td>
+                  <td style={{ padding:'4px 8px', width:70 }}>
+                    <input type="number" style={{ ...inp, fontSize:11 }}
+                      min={0} value={l.qty}
+                      onChange={e=>updateLine(i,'qty',e.target.value)} />
+                  </td>
+                  <td style={{ padding:'4px 8px', width:80 }}>
+                    <select style={{ ...inp, fontSize:11, cursor:'pointer' }}
+                      value={l.unit}
+                      onChange={e=>updateLine(i,'unit',e.target.value)}>
+                      {['Nos','Kg','Ltr','Mtr','Box','Set','Pcs',
+                        'MT','Roll','Pack'].map(u=>(
+                        <option key={u}>{u}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td style={{ padding:'4px 8px', width:120 }}>
+                    <input type="date" style={{ ...inp, fontSize:11 }}
+                      value={l.requiredBy}
+                      onChange={e=>updateLine(i,'requiredBy',e.target.value)} />
+                  </td>
+                  <td style={{ padding:'4px 8px', width:100 }}>
+                    <input type="number" style={{ ...inp, fontSize:11 }}
+                      placeholder="Est. rate"
+                      value={l.estimatedRate}
+                      onChange={e=>updateLine(i,'estimatedRate',e.target.value)} />
+                  </td>
+                  <td style={{ padding:'4px 8px', minWidth:140 }}>
+                    <input style={{ ...inp, fontSize:11 }}
+                      placeholder="Purpose / reason"
+                      value={l.purpose}
+                      onChange={e=>updateLine(i,'purpose',e.target.value)} />
+                  </td>
+                  <td style={{ padding:'4px 8px', width:40 }}>
+                    {lines.length>1 && (
+                      <button onClick={()=>delLine(i)}
+                        style={{ background:'#DC3545', color:'#fff',
+                          border:'none', borderRadius:4,
+                          padding:'3px 7px', cursor:'pointer',
+                          fontSize:12 }}>✕</button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        {/* Remarks */}
-        <div style={{marginTop:16}}>
-          <label style={lbl}>Remarks / Special Instructions</label>
-          <textarea value={remarks} onChange={e=>setRemarks(e.target.value)}
-            rows={3} style={{...inp,resize:'vertical'}}
-            placeholder="Any special requirements, urgency notes, technical specifications…" />
-        </div>
       </div>
 
-      {/* Signature block */}
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',
-        padding:20,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-        <div style={{fontFamily:'Syne,sans-serif',fontSize:13,fontWeight:700,
-          color:'var(--odoo-dark)',marginBottom:14}}>Approval Signatures</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
-          {['Requested By','Checked By','HOD Approval','Purchase Manager','GM / MD Approval'].map(s=>(
-            <div key={s} style={{border:'1px solid var(--odoo-border)',borderRadius:6,overflow:'hidden'}}>
-              <div style={{background:'var(--odoo-purple)',padding:'6px 10px',
-                fontSize:11,fontWeight:700,color:'#fff',textAlign:'center'}}>{s}</div>
-              <div style={{height:50,background:'#F8F9FA'}} />
-              <div style={{background:'#F0EEEB',padding:'5px 10px',
-                fontSize:10,color:'var(--odoo-gray)',textAlign:'center'}}>
-                Date: ___________
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Info */}
+      <div style={{ background:'#D1ECF1', padding:'10px 16px',
+        borderRadius:8, fontSize:12, color:'#0C5460',
+        border:'1px solid #BEE5EB' }}>
+        💡 <strong>Save Draft</strong> → save and continue editing later &nbsp;|&nbsp;
+        <strong>Submit to HOD</strong> → send for approval immediately
       </div>
     </div>
   )

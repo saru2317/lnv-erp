@@ -1,148 +1,544 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import toast from 'react-hot-toast'
 
-const MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb']
-const TARGET_MONTHLY = 1950000
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs = () => ({ Authorization: `Bearer ${getToken()}` })
 
-const MONTHLY_DATA = [
-  {m:'Apr 2024',budget:1900000,actual:1820000,headcount:142},
-  {m:'May',budget:1900000,actual:1835000,headcount:143},
-  {m:'Jun',budget:1920000,actual:1850000,headcount:144},
-  {m:'Jul',budget:1920000,actual:1860000,headcount:145},
-  {m:'Aug',budget:1930000,actual:1858000,headcount:145},
-  {m:'Sep',budget:1930000,actual:1872000,headcount:146},
-  {m:'Oct',budget:1940000,actual:1875000,headcount:146},
-  {m:'Nov',budget:1940000,actual:1880000,headcount:147},
-  {m:'Dec',budget:1950000,actual:1890000,headcount:147},
-  {m:'Jan 2025',budget:1950000,actual:1830000,headcount:146},
-  {m:'Feb',budget:1950000,actual:1840000,headcount:148},
-]
-
-const DEPT_ECOST = [
-  {dept:'Production',budget:780000,actual:742000,headcount:45,target_hc:50},
-  {dept:'Quality',budget:210000,actual:198000,headcount:12,target_hc:14},
-  {dept:'Maintenance',budget:160000,actual:152000,headcount:8,target_hc:10},
-  {dept:'Accounts',budget:180000,actual:175000,headcount:9,target_hc:10},
-  {dept:'HR & Admin',budget:110000,actual:108000,headcount:5,target_hc:6},
-  {dept:'Sales',budget:200000,actual:195000,headcount:8,target_hc:8},
-  {dept:'Warehouse',budget:180000,actual:170000,headcount:11,target_hc:12},
-]
+const MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar']
+const MONTHS_FULL = ['April','May','June','July','August','September',
+  'October','November','December','January','February','March']
+const FMT  = n => Number(n||0).toLocaleString('en-IN')
+const FMTL = n => (Number(n||0)/100000).toFixed(2) // in Lakhs
+const FMTC = n => '₹'+FMT(n)
 
 export default function PayBillControl() {
-  const [period, setPeriod] = useState('FY 2024-25')
+  const fyStart = new Date().getMonth() >= 3
+    ? new Date().getFullYear() : new Date().getFullYear()-1
+  const [fy,       setFY]       = useState(fyStart)
+  const [slips,    setSlips]    = useState([])
+  const [employees,setEmployees]= useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [view,     setView]     = useState('monthwise') // monthwise | empwise | summary
+  const [category, setCategory] = useState('All')
+  const [dept,     setDept]     = useState('All')
+  const printRef = useRef()
 
-  const feb = MONTHLY_DATA[MONTHLY_DATA.length-1]
-  const ytd_actual = MONTHLY_DATA.reduce((s,m)=>s+m.actual,0)
-  const ytd_budget = MONTHLY_DATA.reduce((s,m)=>s+m.budget,0)
-  const ytd_savings = ytd_budget - ytd_actual
+  // FY months: Apr(4) to Mar(3) of next year
+  const fyMonths = [4,5,6,7,8,9,10,11,12,1,2,3]
+  const fyLabel  = `${fy}-${String(fy+1).slice(2)}`
+
+  const getYearForMonth = m => m >= 4 ? fy : fy+1
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Fetch all slips for FY
+      const allSlips = []
+      for (const m of fyMonths) {
+        const y = getYearForMonth(m)
+        const res = await fetch(
+          `${BASE_URL}/payroll/slips?month=${m}&year=${y}`,
+          { headers:authHdrs() })
+        const data = await res.json()
+        if (data.data) allSlips.push(...data.data)
+      }
+      setSlips(allSlips)
+
+      const eRes = await fetch(`${BASE_URL}/employees`, { headers:authHdrs() })
+      const eData = await eRes.json()
+      setEmployees(eData.data||[])
+    } catch(e){ toast.error(e.message) } finally { setLoading(false) }
+  }, [fy])
+
+  useEffect(()=>{ fetchData() }, [fetchData])
+
+  // Build month-wise summary
+  const monthSummary = fyMonths.map((m,idx) => {
+    const monthSlips = slips.filter(s=>s.month===m && s.year===getYearForMonth(m))
+    const filtered   = monthSlips.filter(s =>
+      (category==='All'||s.category===category) &&
+      (dept==='All'||s.department===dept))
+    return {
+      month: MONTHS[idx],
+      monthNo: m,
+      employees: filtered.length,
+      gross:     filtered.reduce((s,sl)=>s+parseFloat(sl.grossEarnings||0),0),
+      pf:        filtered.reduce((s,sl)=>s+parseFloat(sl.pfEmployee||0),0),
+      esi:       filtered.reduce((s,sl)=>s+parseFloat(sl.esiEmployee||0),0),
+      pt:        filtered.reduce((s,sl)=>s+parseFloat(sl.pt||0),0),
+      lop:       filtered.reduce((s,sl)=>s+parseFloat(sl.lopDeduction||0),0),
+      net:       filtered.reduce((s,sl)=>s+parseFloat(sl.netPay||0),0),
+      paid:      filtered.filter(s=>s.paymentStatus==='PAID').length,
+      pending:   filtered.filter(s=>s.paymentStatus==='PENDING').length,
+    }
+  })
+
+  // Build employee-wise FY summary
+  const empMap = {}
+  slips.forEach(s => {
+    if (!empMap[s.empCode]) {
+      empMap[s.empCode] = {
+        empCode:s.empCode, empName:s.empName,
+        department:s.department, category:s.category,
+        months:{}, totalGross:0, totalNet:0, totalPF:0, totalESI:0
+      }
+    }
+    const mIdx = fyMonths.indexOf(s.month)
+    if (mIdx>=0) empMap[s.empCode].months[mIdx] = parseFloat(s.netPay||0)
+    empMap[s.empCode].totalGross += parseFloat(s.grossEarnings||0)
+    empMap[s.empCode].totalNet   += parseFloat(s.netPay||0)
+    empMap[s.empCode].totalPF    += parseFloat(s.pfEmployee||0)
+    empMap[s.empCode].totalESI   += parseFloat(s.esiEmployee||0)
+  })
+  const empList = Object.values(empMap).filter(e =>
+    (category==='All'||e.category===category) &&
+    (dept==='All'||e.department===dept))
+
+  // Overall totals
+  const totals = {
+    gross: monthSummary.reduce((s,m)=>s+m.gross,0),
+    net:   monthSummary.reduce((s,m)=>s+m.net,0),
+    pf:    monthSummary.reduce((s,m)=>s+m.pf,0),
+    esi:   monthSummary.reduce((s,m)=>s+m.esi,0),
+    lop:   monthSummary.reduce((s,m)=>s+m.lop,0),
+  }
+
+  const depts = ['All',...new Set(employees.map(e=>e.department).filter(Boolean))]
+
+  const handlePrint = () => {
+    const w = window.open('','_blank')
+    w.document.write(`<html><head>
+      <title>Pay Bill Control ${fyLabel}</title>
+      <style>
+        body{font-family:Arial,sans-serif;font-size:9px;margin:10px}
+        table{width:100%;border-collapse:collapse}
+        th,td{border:1px solid #ccc;padding:3px 5px;text-align:right}
+        th{background:#714B67;color:#fff;text-align:center}
+        .left{text-align:left}
+        .total{background:#EDE0EA;font-weight:bold}
+        @media print{@page{size:A3 landscape;margin:8mm}}
+      </style></head><body>
+      ${printRef.current.innerHTML}
+      </body></html>`)
+    w.document.close(); w.focus()
+    setTimeout(()=>{w.print();w.close()},500)
+  }
 
   return (
-    <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Pay Bill Control <small>E-Cost Target vs Actual</small></div>
-        <div className="fi-lv-actions">
-          <select className="fi-filter-select" onChange={e=>setPeriod(e.target.value)}>
-            <option>FY 2024-25</option><option>Feb 2025</option>
-          </select>
-          <button className="btn btn-s sd-bsm">Export Report</button>
+    <div style={{ padding:16, background:'#F8F7FA', minHeight:'100%' }}>
+      {/* Header */}
+      <div style={{ background:'#fff', borderRadius:8, border:'1px solid #E0D5E0',
+        padding:'12px 16px', marginBottom:14,
+        display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+        <div style={{ fontFamily:'Syne,sans-serif', fontWeight:800,
+          fontSize:16, color:'#714B67' }}>
+          💰 Employee Cost Control Plan
         </div>
+        <div style={{ fontSize:12, color:'#6C757D',
+          background:'#EDE0EA', padding:'3px 10px', borderRadius:10,
+          fontWeight:700 }}>FY {fyLabel}</div>
+
+        {/* FY selector */}
+        <select value={fy} onChange={e=>setFY(parseInt(e.target.value))}
+          style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
+            borderRadius:5, fontSize:12, cursor:'pointer' }}>
+          {[2023,2024,2025,2026].map(y=>(
+            <option key={y} value={y}>{y}-{String(y+1).slice(2)}</option>
+          ))}
+        </select>
+
+        {/* Category */}
+        <select value={category} onChange={e=>setCategory(e.target.value)}
+          style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
+            borderRadius:5, fontSize:12, cursor:'pointer' }}>
+          {['All','Worker','Staff','Contractor'].map(c=><option key={c}>{c}</option>)}
+        </select>
+
+        {/* Dept */}
+        <select value={dept} onChange={e=>setDept(e.target.value)}
+          style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
+            borderRadius:5, fontSize:12, cursor:'pointer' }}>
+          {depts.map(d=><option key={d}>{d}</option>)}
+        </select>
+
+        {/* View toggle */}
+        <div style={{ display:'flex', gap:0, borderRadius:6,
+          overflow:'hidden', border:'1px solid #E0D5E0' }}>
+          {[['monthwise','📅 Month Wise'],['empwise','👤 Emp Wise'],
+            ['summary','📊 Summary']].map(([v,l])=>(
+            <button key={v} onClick={()=>setView(v)}
+              style={{ padding:'6px 12px', border:'none', cursor:'pointer',
+                fontSize:11, fontWeight:600,
+                background:view===v?'#714B67':'#fff',
+                color:view===v?'#fff':'#6C757D' }}>{l}</button>
+          ))}
+        </div>
+
+        <button onClick={handlePrint}
+          style={{ marginLeft:'auto', padding:'6px 16px',
+            background:'#714B67', color:'#fff', border:'none',
+            borderRadius:5, fontSize:12, cursor:'pointer', fontWeight:700 }}>
+          🖨️ Print
+        </button>
       </div>
 
-      <div className="hcm-kpi-grid">
-        {[{cls:'purple',l:'MTD E-Cost Target',v:`₹${(TARGET_MONTHLY/100000).toFixed(1)}L`,s:'All departments'},
-          {cls:'green', l:'MTD E-Cost Actual',v:`₹${(feb.actual/100000).toFixed(2)}L`,s:`Savings: ₹${((TARGET_MONTHLY-feb.actual)/1000).toFixed(0)}K`},
-          {cls:'blue',  l:'YTD Budget (11 mo)',v:`₹${(ytd_budget/1000000).toFixed(2)}Cr`,s:'Apr 2024 – Feb 2025'},
-          {cls:'orange',l:'YTD Savings',v:`₹${(ytd_savings/100000).toFixed(1)}L`,s:`${Math.round(ytd_savings/ytd_budget*100)}% under budget`},
+      {/* FY KPI */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)',
+        gap:10, marginBottom:14 }}>
+        {[
+          { l:'Total Gross (FY)',    v:FMTC(totals.gross), c:'#0C5460', bg:'#D1ECF1' },
+          { l:'Total PF (FY)',       v:FMTC(totals.pf),    c:'#714B67', bg:'#EDE0EA' },
+          { l:'Total ESI (FY)',      v:FMTC(totals.esi),   c:'#856404', bg:'#FFF3CD' },
+          { l:'LOP Deductions (FY)', v:FMTC(totals.lop),   c:'#DC3545', bg:'#F8D7DA' },
+          { l:'Net Paid (FY)',       v:FMTC(totals.net),   c:'#155724', bg:'#D4EDDA' },
         ].map(k=>(
-          <div key={k.l} className={`hcm-kpi-card ${k.cls}`}>
-            <div className="hcm-kpi-label">{k.l}</div>
-            <div className="hcm-kpi-value">{k.v}</div>
-            <div className="hcm-kpi-sub">{k.s}</div>
+          <div key={k.l} style={{ background:k.bg, borderRadius:8,
+            padding:'10px 14px', border:`1px solid ${k.c}22` }}>
+            <div style={{ fontSize:10, color:k.c, fontWeight:700,
+              textTransform:'uppercase', letterSpacing:.4 }}>{k.l}</div>
+            <div style={{ fontSize:16, fontWeight:800, color:k.c,
+              fontFamily:'Syne,sans-serif', marginTop:2 }}>{k.v}</div>
+            <div style={{ fontSize:10, color:k.c, opacity:.7 }}>
+              ₹{FMTL(totals.net)} L
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Monthly trend chart (CSS bars) */}
-      <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>Monthly E-Cost Trend — FY 2024-25</h3></div>
-        <div className="fi-panel-body">
-          <div style={{display:'flex',gap:'6px',alignItems:'flex-end',height:'120px',paddingBottom:'24px',position:'relative'}}>
-            {/* Target line */}
-            <div style={{position:'absolute',left:0,right:0,height:'1px',background:'var(--odoo-red)',
-              bottom:`${(TARGET_MONTHLY/2200000)*100}%`,opacity:.5}}></div>
-            {MONTHLY_DATA.map((m,i)=>{
-              const maxV = 2200000, pctB = m.budget/maxV*100, pctA = m.actual/maxV*100
-              const under = m.actual <= m.budget
-              return (
-                <div key={m.m} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',height:'100%'}}>
-                  <div style={{flex:1,width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',position:'relative'}}>
-                    <div style={{height:`${pctB}%`,width:'50%',background:'#EDE0EA',position:'absolute',left:0,bottom:0,borderRadius:'3px 3px 0 0'}}></div>
-                    <div style={{height:`${pctA}%`,width:'50%',background:under?'var(--odoo-green)':'var(--odoo-red)',position:'absolute',right:0,bottom:0,borderRadius:'3px 3px 0 0'}}></div>
-                  </div>
-                  <div style={{fontSize:'9px',fontWeight:'600',color:'var(--odoo-gray)',textAlign:'center'}}>{m.m}</div>
-                </div>
-              )
-            })}
+      <div ref={printRef}>
+        {/* Print title */}
+        <div style={{ textAlign:'center', marginBottom:10,
+          padding:'6px 0', borderBottom:'2px solid #714B67' }}>
+          <div style={{ fontWeight:800, fontSize:14 }}>
+            Employee Cost Control Plan — FY {fyLabel}
           </div>
-          <div style={{display:'flex',gap:'14px',justifyContent:'center',fontSize:'11px',marginTop:'4px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'12px',height:'12px',background:'#EDE0EA',borderRadius:'2px'}}></span>Budget</div>
-            <div style={{display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'12px',height:'12px',background:'var(--odoo-green)',borderRadius:'2px'}}></span>Actual (Under)</div>
-            <div style={{display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'12px',height:'12px',background:'var(--odoo-red)',borderRadius:'2px'}}></span>Actual (Over)</div>
+          <div style={{ fontSize:11, color:'#6C757D' }}>
+            {category!=='All'?`Category: ${category} | `:''}
+            {dept!=='All'?`Dept: ${dept}`:'All Departments'} |
+            Value in ₹
           </div>
         </div>
-      </div>
 
-      {/* Dept-wise */}
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Department-wise E-Cost Control — Feb 2025</div>
-        <div style={{padding:'0'}}>
-          <table className="fi-data-table">
-            <thead><tr>
-              <th>Department</th><th>Target HC</th><th>Actual HC</th>
-              <th>E-Cost Budget</th><th>E-Cost Actual</th><th>Variance</th><th>% Utilization</th>
-            </tr></thead>
-            <tbody>
-              {DEPT_ECOST.map(d=>{
-                const variance = d.budget - d.actual
-                const pct = Math.round(d.actual/d.budget*100)
-                return (
-                  <tr key={d.dept}>
-                    <td><strong>{d.dept}</strong></td>
-                    <td style={{textAlign:'center'}}>{d.target_hc}</td>
-                    <td style={{textAlign:'center',color:d.headcount>=d.target_hc?'var(--odoo-green)':'var(--odoo-orange)',fontWeight:'700'}}>{d.headcount}</td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px'}}>₹{d.budget.toLocaleString()}</td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700'}}>₹{d.actual.toLocaleString()}</td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',
-                      color:variance>=0?'var(--odoo-green)':'var(--odoo-red)'}}>
-                      {variance>=0?'+':''}₹{Math.abs(variance).toLocaleString()}
-                    </td>
-                    <td>
-                      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                        <div style={{background:'#F0EEEB',borderRadius:'4px',height:'7px',width:'60px'}}>
-                          <div style={{width:`${Math.min(pct,100)}%`,height:'100%',borderRadius:'4px',
-                            background:pct>100?'var(--odoo-red)':pct>90?'var(--odoo-orange)':'var(--odoo-green)'}}></div>
-                        </div>
-                        <span style={{fontWeight:'700',fontSize:'12px',color:pct>100?'var(--odoo-red)':'var(--odoo-green)'}}>{pct}%</span>
-                      </div>
+        {/* ── MONTH WISE VIEW ── */}
+        {view==='monthwise' && (
+          <div style={{ border:'1px solid #E0D5E0', borderRadius:8,
+            overflow:'hidden' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead style={{ background:'#714B67' }}>
+                <tr>
+                  {['Month','Employees','Gross Salary','PF Dedn',
+                    'ESI Dedn','PT','LOP Dedn','Total Dedn',
+                    'Net Payable','Paid','Pending','Status'].map(h=>(
+                    <th key={h} style={{ padding:'10px 12px', fontSize:10,
+                      fontWeight:700, color:'#fff', textAlign:'center',
+                      whiteSpace:'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {monthSummary.map((m,i)=>(
+                  <tr key={m.month} style={{ borderBottom:'1px solid #F0EEF0',
+                    background: m.net===0?'#F8F9FA':i%2===0?'#fff':'#FDFBFD' }}>
+                    <td style={{ padding:'9px 12px', fontWeight:700,
+                      color:'#714B67', fontSize:13 }}>{m.month}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'center',
+                      fontWeight:600 }}>{m.employees||'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:12 }}>
+                      {m.gross>0?FMTC(m.gross):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:11,
+                      color:'#714B67' }}>
+                      {m.pf>0?FMTC(m.pf):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:11,
+                      color:'#856404' }}>
+                      {m.esi>0?FMTC(m.esi):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:11,
+                      color:'#0C5460' }}>
+                      {m.pt>0?FMTC(m.pt):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:11,
+                      color:'#DC3545' }}>
+                      {m.lop>0?FMTC(m.lop):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:11,
+                      color:'#721C24' }}>
+                      {m.gross>0?FMTC(m.pf+m.esi+m.pt+m.lop):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:13,
+                      fontWeight:800, color:'#155724' }}>
+                      {m.net>0?FMTC(m.net):'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'center',
+                      fontWeight:700, color:'#155724' }}>
+                      {m.paid>0?m.paid:'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'center',
+                      fontWeight:700,
+                      color:m.pending>0?'#856404':'#6C757D' }}>
+                      {m.pending>0?m.pending:'—'}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'center' }}>
+                      {m.net===0 ? (
+                        <span style={{ fontSize:10, color:'#6C757D' }}>—</span>
+                      ) : m.pending===0 ? (
+                        <span style={{ padding:'2px 8px', borderRadius:10,
+                          fontSize:10, fontWeight:700,
+                          background:'#D4EDDA', color:'#155724' }}>✅ PAID</span>
+                      ) : (
+                        <span style={{ padding:'2px 8px', borderRadius:10,
+                          fontSize:10, fontWeight:700,
+                          background:'#FFF3CD', color:'#856404' }}>⏳ PENDING</span>
+                      )}
                     </td>
                   </tr>
-                )
-              })}
-            </tbody>
-            <tfoot>
-              <tr style={{background:'#EDE0EA',fontWeight:'700'}}>
-                <td>Total</td>
-                <td style={{textAlign:'center'}}>{DEPT_ECOST.reduce((s,d)=>s+d.target_hc,0)}</td>
-                <td style={{textAlign:'center',color:'var(--odoo-green)'}}>{DEPT_ECOST.reduce((s,d)=>s+d.headcount,0)}</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹{DEPT_ECOST.reduce((s,d)=>s+d.budget,0).toLocaleString()}</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹{DEPT_ECOST.reduce((s,d)=>s+d.actual,0).toLocaleString()}</td>
-                <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>
-                  +₹{DEPT_ECOST.reduce((s,d)=>s+(d.budget-d.actual),0).toLocaleString()}
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                ))}
+              </tbody>
+              {/* Totals row */}
+              <tfoot style={{ background:'#EDE0EA',
+                borderTop:'2px solid #714B67' }}>
+                <tr>
+                  <td style={{ padding:'10px 12px', fontWeight:800,
+                    color:'#714B67', fontSize:13 }}>
+                    ANNUAL TOTAL
+                  </td>
+                  <td style={{ padding:'10px 12px', textAlign:'center',
+                    fontWeight:800, color:'#714B67' }}>
+                    {monthSummary.reduce((s,m)=>s+m.employees,0)}
+                  </td>
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    fontSize:13 }}>{FMTC(totals.gross)}</td>
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    color:'#714B67' }}>{FMTC(totals.pf)}</td>
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    color:'#856404' }}>{FMTC(totals.esi)}</td>
+                  <td />
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    color:'#DC3545' }}>{FMTC(totals.lop)}</td>
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800 }}>
+                    {FMTC(totals.pf+totals.esi+totals.lop)}</td>
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    fontSize:14, color:'#155724' }}>{FMTC(totals.net)}</td>
+                  <td colSpan={3} style={{ padding:'10px 12px',
+                    textAlign:'center', fontSize:11, color:'#714B67',
+                    fontWeight:700 }}>₹{FMTL(totals.net)} Lakhs</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+
+        {/* ── EMP WISE VIEW (like Autocats format) ── */}
+        {view==='empwise' && (
+          <div style={{ overflowX:'auto', border:'1px solid #E0D5E0',
+            borderRadius:8, overflow:'hidden' }}>
+            <table style={{ borderCollapse:'collapse', fontSize:11,
+              background:'#fff', minWidth:1400 }}>
+              <thead style={{ background:'#714B67',
+                position:'sticky', top:0, zIndex:10 }}>
+                <tr>
+                  <th style={{ padding:'8px 10px', color:'#fff',
+                    fontSize:10, fontWeight:700, textAlign:'left',
+                    minWidth:40 }}>Sl</th>
+                  <th style={{ padding:'8px 10px', color:'#fff',
+                    fontSize:10, fontWeight:700, textAlign:'left',
+                    minWidth:60 }}>Emp Code</th>
+                  <th style={{ padding:'8px 10px', color:'#fff',
+                    fontSize:10, fontWeight:700, textAlign:'left',
+                    minWidth:140 }}>Employee Name</th>
+                  <th style={{ padding:'8px 10px', color:'#fff',
+                    fontSize:10, fontWeight:700, textAlign:'left',
+                    minWidth:80 }}>Dept</th>
+                  <th style={{ padding:'8px 10px', color:'#fff',
+                    fontSize:10, fontWeight:700, textAlign:'center',
+                    minWidth:50 }}>Cat</th>
+                  {MONTHS.map(m=>(
+                    <th key={m} style={{ padding:'8px 6px', color:'#fff',
+                      fontSize:9, fontWeight:700, textAlign:'right',
+                      minWidth:70 }}>{m}</th>
+                  ))}
+                  <th style={{ padding:'8px 10px', color:'#FFD700',
+                    fontSize:10, fontWeight:800, textAlign:'right',
+                    minWidth:90 }}>FY Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={18} style={{ padding:40,
+                    textAlign:'center', color:'#6C757D' }}>⏳ Loading...</td></tr>
+                ) : empList.length===0 ? (
+                  <tr><td colSpan={18} style={{ padding:40,
+                    textAlign:'center', color:'#6C757D' }}>
+                    No payroll data for FY {fyLabel}. Run payroll first!
+                  </td></tr>
+                ) : empList.map((e,i)=>(
+                  <tr key={e.empCode} style={{ borderBottom:'1px solid #F0EEF0',
+                    background:i%2===0?'#fff':'#FDFBFD' }}>
+                    <td style={{ padding:'7px 10px', color:'#6C757D',
+                      textAlign:'center', fontSize:10 }}>{i+1}</td>
+                    <td style={{ padding:'7px 10px',
+                      fontFamily:'DM Mono,monospace', fontWeight:700,
+                      color:'#714B67', fontSize:10 }}>{e.empCode}</td>
+                    <td style={{ padding:'7px 10px', fontWeight:600,
+                      fontSize:12 }}>{e.empName}</td>
+                    <td style={{ padding:'7px 10px', fontSize:10,
+                      color:'#6C757D' }}>{e.department}</td>
+                    <td style={{ padding:'7px 10px', textAlign:'center' }}>
+                      <span style={{ padding:'1px 6px', borderRadius:10,
+                        fontSize:9, fontWeight:700,
+                        background:e.category==='Worker'?'#FDE8D8':
+                          e.category==='Staff'?'#D1ECF1':'#EDE0EA',
+                        color:e.category==='Worker'?'#E06F39':
+                          e.category==='Staff'?'#0C5460':'#714B67' }}>
+                        {e.category?.slice(0,2)||'WK'}
+                      </span>
+                    </td>
+                    {fyMonths.map((_,idx)=>{
+                      const val = e.months[idx]||0
+                      return (
+                        <td key={idx} style={{ padding:'7px 6px',
+                          textAlign:'right',
+                          fontFamily:'DM Mono,monospace', fontSize:10,
+                          color:val>0?'#1C1C1C':'#CCC' }}>
+                          {val>0?FMT(val):'—'}
+                        </td>
+                      )
+                    })}
+                    <td style={{ padding:'7px 10px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:12,
+                      fontWeight:800, color:'#155724',
+                      background:'#F0FFF4' }}>
+                      {FMTC(e.totalNet)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              {/* Totals */}
+              {empList.length>0 && (
+                <tfoot style={{ background:'#EDE0EA',
+                  borderTop:'2px solid #714B67',
+                  position:'sticky', bottom:0 }}>
+                  <tr>
+                    <td colSpan={5} style={{ padding:'8px 10px',
+                      fontWeight:800, color:'#714B67', fontSize:12 }}>
+                      TOTAL ({empList.length} employees)
+                    </td>
+                    {fyMonths.map((_,idx)=>{
+                      const monthTotal = empList.reduce((s,e)=>s+(e.months[idx]||0),0)
+                      return (
+                        <td key={idx} style={{ padding:'8px 6px',
+                          textAlign:'right',
+                          fontFamily:'DM Mono,monospace', fontSize:11,
+                          fontWeight:800,
+                          color:monthTotal>0?'#155724':'#CCC' }}>
+                          {monthTotal>0?FMT(monthTotal):'—'}
+                        </td>
+                      )
+                    })}
+                    <td style={{ padding:'8px 10px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:13,
+                      fontWeight:800, color:'#155724',
+                      background:'#D4EDDA' }}>
+                      {FMTC(empList.reduce((s,e)=>s+e.totalNet,0))}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        )}
+
+        {/* ── SUMMARY VIEW (category wise like pay bill) ── */}
+        {view==='summary' && (
+          <div style={{ border:'1px solid #E0D5E0', borderRadius:8,
+            overflow:'hidden' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead style={{ background:'#714B67' }}>
+                <tr>
+                  <th style={{ padding:'10px 12px', color:'#fff',
+                    textAlign:'left', fontSize:10 }}>Category</th>
+                  <th style={{ padding:'10px 12px', color:'#fff',
+                    textAlign:'center', fontSize:10 }}>Employees</th>
+                  {MONTHS.map(m=>(
+                    <th key={m} style={{ padding:'10px 8px', color:'#fff',
+                      textAlign:'right', fontSize:9 }}>{m}</th>
+                  ))}
+                  <th style={{ padding:'10px 12px', color:'#FFD700',
+                    textAlign:'right', fontSize:10, fontWeight:800 }}>FY Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {['Worker','Staff','Contractor'].map((cat,ci)=>{
+                  const catSlips = slips.filter(s=>s.category===cat)
+                  const catMonths = fyMonths.map(m=>{
+                    const ms = catSlips.filter(s=>s.month===m && s.year===getYearForMonth(m))
+                    return ms.reduce((s,sl)=>s+parseFloat(sl.netPay||0),0)
+                  })
+                  const catTotal = catMonths.reduce((s,v)=>s+v,0)
+                  const catEmps  = new Set(catSlips.map(s=>s.empCode)).size
+                  if (catEmps===0) return null
+                  return (
+                    <tr key={cat} style={{ borderBottom:'1px solid #F0EEF0',
+                      background:ci%2===0?'#fff':'#FDFBFD' }}>
+                      <td style={{ padding:'9px 12px', fontWeight:700,
+                        fontSize:13, color:'#714B67' }}>{cat}</td>
+                      <td style={{ padding:'9px 12px', textAlign:'center',
+                        fontWeight:700 }}>{catEmps}</td>
+                      {catMonths.map((v,idx)=>(
+                        <td key={idx} style={{ padding:'9px 8px',
+                          textAlign:'right',
+                          fontFamily:'DM Mono,monospace', fontSize:10,
+                          color:v>0?'#1C1C1C':'#CCC' }}>
+                          {v>0?FMTL(v):'—'}
+                        </td>
+                      ))}
+                      <td style={{ padding:'9px 12px', textAlign:'right',
+                        fontFamily:'DM Mono,monospace', fontSize:13,
+                        fontWeight:800, color:'#155724' }}>
+                        ₹{FMTL(catTotal)}L
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot style={{ background:'#EDE0EA',
+                borderTop:'2px solid #714B67' }}>
+                <tr>
+                  <td style={{ padding:'10px 12px', fontWeight:800,
+                    color:'#714B67', fontSize:13 }}>TOTAL</td>
+                  <td style={{ padding:'10px 12px', textAlign:'center',
+                    fontWeight:800 }}>
+                    {new Set(slips.map(s=>s.empCode)).size}
+                  </td>
+                  {fyMonths.map((m,idx)=>{
+                    const ms = slips.filter(s=>s.month===m &&
+                      s.year===getYearForMonth(m))
+                    const v  = ms.reduce((s,sl)=>s+parseFloat(sl.netPay||0),0)
+                    return (
+                      <td key={idx} style={{ padding:'10px 8px',
+                        textAlign:'right',
+                        fontFamily:'DM Mono,monospace', fontSize:11,
+                        fontWeight:800, color:'#155724' }}>
+                        {v>0?FMTL(v):'—'}
+                      </td>
+                    )
+                  })}
+                  <td style={{ padding:'10px 12px', textAlign:'right',
+                    fontFamily:'DM Mono,monospace', fontSize:14,
+                    fontWeight:800, color:'#155724' }}>
+                    ₹{FMTL(totals.net)}L
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

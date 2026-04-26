@@ -1,91 +1,328 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const WCS = ['BLW-01 · Blow Room','CRD-01 · Carding','DRW-01 · Drawing 1st','DRW-02 · Drawing 2nd','RFM-01 · Ring Frame 01','RFM-02 · Ring Frame 02','OE-02 · Open End','WD-01 · Winding']
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
+const hdr2 = () => ({ Authorization:`Bearer ${getToken()}` })
+
+const inp = { padding:'8px 10px', border:'1.5px solid #E0D5E0', borderRadius:5, fontSize:12, outline:'none', width:'100%', boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
+const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
+
+const TIME_UNITS = ['MIN','HR','SEC']
 
 export default function RoutingNew() {
-  const nav = useNavigate()
-  const [ops, setOps] = useState([
-    {id:1,seq:10,op:'Blow Room Mixing',wc:'BLW-01 · Blow Room',setup:'30',run:'0.5',uom:'min/Kg'},
-    {id:2,seq:20,op:'Carding',wc:'CRD-01 · Carding',setup:'20',run:'0.8',uom:'min/Kg'},
-  ])
-  const [nid,setNid]=useState(3)
-  const [saved,setSaved]=useState(false)
+  const nav     = useNavigate()
+  const { id }  = useParams()
 
-  const add=()=>{setOps([...ops,{id:nid,seq:(ops.length+1)*10,op:'',wc:WCS[0],setup:'',run:'',uom:'min/Kg'}]);setNid(nid+1)}
-  const del=id=>setOps(ops.filter(o=>o.id!==id))
-  const upd=(id,f,v)=>setOps(ops.map(o=>o.id===id?{...o,[f]:v}:o))
+  const [routingNo, setRoutingNo] = useState('Auto-generated')
+  const [header,    setHeader]    = useState({ itemCode:'', itemName:'', plant:'MAIN', baseQty:'1', uom:'Nos', isActive:true })
+  const [ops,       setOps]       = useState([])
+  const [items,     setItems]     = useState([])
+  const [processes, setProcesses] = useState([])  // from PP Config
+  const [ppConfig,  setPPConfig]  = useState(null)
+  const [saving,    setSaving]    = useState(false)
+  const [loading,   setLoading]   = useState(true)
 
-  if(saved) return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}></div>
-      <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',color:'var(--odoo-green)'}}>RTE-005 Created!</div>
-      <div style={{display:'flex',gap:'10px'}}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}>← Routing List</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(false)}>New Routing</button>
-      </div>
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [rN, rI, rC] = await Promise.all([
+        fetch(`${BASE_URL}/mdm/routing/next-no`, { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/item`,            { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/config`,           { headers: hdr2() }),
+      ])
+      const [dN, dI, dC] = await Promise.all([rN.json(), rI.json(), rC.json()])
+      setRoutingNo(dN.routingNo || dN.nextNo || 'RTE-AUTO')
+      setItems(dI.data || [])
+
+      if (dC.data) {
+        setPPConfig(dC.data)
+        const procs = Array.isArray(dC.data.processes) ? dC.data.processes : JSON.parse(dC.data.processes || '[]')
+        setProcesses(procs)
+        // Auto-load ops from PP Config if new routing
+        if (!id) {
+          setOps(procs.map((p, i) => ({
+            opNo:        String((i+1)*10),
+            processName: p.name,
+            wcId:        p.machine || '',
+            setupTime:   '0',
+            machineTime: '0',
+            laborTime:   '0',
+            unit:        'MIN',
+            remarks:     '',
+          })))
+        }
+      }
+
+      // If editing — load existing routing
+      if (id) {
+        const rE  = await fetch(`${BASE_URL}/mdm/routing/${id}`, { headers: hdr2() })
+        const dE  = await rE.json()
+        if (dE.data) {
+          const r = dE.data
+          setRoutingNo(r.routingNo)
+          setHeader({ itemCode:r.itemCode||'', itemName:r.itemName||'', plant:r.plant||'MAIN', baseQty:r.baseQty||'1', uom:r.uom||'Nos', isActive:r.isActive!==false })
+          setOps((r.operations||[]).map(o => ({
+            opNo:        o.opNo,
+            processName: o.processName || o.processCode || '',
+            wcId:        o.wcId || '',
+            setupTime:   String(o.setupTime||0),
+            machineTime: String(o.machineTime||0),
+            laborTime:   String(o.laborTime||0),
+            unit:        o.unit || 'MIN',
+            remarks:     o.remarks || '',
+          })))
+        }
+      }
+    } catch (e) { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [id])
+  useEffect(() => { load() }, [load])
+
+  const hSet = k => e => setHeader(h => ({ ...h, [k]: typeof e === 'object' ? e.target.value : e }))
+
+  const onItemSelect = e => {
+    const item = items.find(i => i.code === e.target.value)
+    setHeader(h => ({ ...h, itemCode: e.target.value, itemName: item?.name || h.itemName, uom: item?.uom || h.uom }))
+  }
+
+  const addOp = () => {
+    const lastSeq = ops.length > 0 ? parseInt(ops[ops.length-1].opNo) : 0
+    setOps(o => [...o, { opNo:String(lastSeq+10), processName:'', wcId:'', setupTime:'0', machineTime:'0', laborTime:'0', unit:'MIN', remarks:'' }])
+  }
+
+  const delOp  = i => setOps(o => o.filter((_,j)=>j!==i))
+  const updOp  = (i,k,v) => setOps(o => o.map((x,j) => j!==i ? x : {...x,[k]:v}))
+
+  // Load all ops from PP Config
+  const loadFromConfig = () => {
+    if (!processes.length) return toast.error('No PP Config found. Set up PP Configurator first.')
+    setOps(processes.map((p,i) => ({
+      opNo:        String((i+1)*10),
+      processName: p.name,
+      wcId:        p.machine || '',
+      setupTime:   '0',
+      machineTime: '0',
+      laborTime:   '0',
+      unit:        'MIN',
+      remarks:     '',
+    })))
+    toast.success(`${processes.length} operations loaded from PP Config (${ppConfig?.industryName})`)
+  }
+
+  const save = async () => {
+    if (!header.itemName) return toast.error('Item / Product is required')
+    if (!ops.length)      return toast.error('Add at least one operation')
+    const emptyOp = ops.find(o => !o.processName)
+    if (emptyOp) return toast.error(`Operation ${emptyOp.opNo} — Process name is required`)
+
+    setSaving(true)
+    try {
+      const payload = {
+        routingNo,
+        itemCode:  header.itemCode,
+        itemName:  header.itemName,
+        plant:     header.plant,
+        baseQty:   parseFloat(header.baseQty),
+        uom:       header.uom,
+        isActive:  header.isActive,
+        operations: ops.map(o => ({
+          opNo:        o.opNo,
+          processName: o.processName,
+          wcId:        o.wcId,
+          setupTime:   parseFloat(o.setupTime||0),
+          machineTime: parseFloat(o.machineTime||0),
+          laborTime:   parseFloat(o.laborTime||0),
+          unit:        o.unit,
+          remarks:     o.remarks,
+        }))
+      }
+      const url    = id ? `${BASE_URL}/mdm/routing/${id}` : `${BASE_URL}/mdm/routing`
+      const method = id ? 'PUT' : 'POST'
+      const res    = await fetch(url, { method, headers: hdr(), body: JSON.stringify(payload) })
+      const data   = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Save failed')
+      toast.success(id ? 'Routing updated' : `${data.data?.routingNo || routingNo} created!`)
+      nav('/pp/routing')
+    } catch (e) { toast.error(e.message) }
+    finally { setSaving(false) }
+  }
+
+  // Total std time
+  const totalMins = ops.reduce((a,o) => a + parseFloat(o.setupTime||0) + parseFloat(o.machineTime||0), 0)
+
+  if (loading) return <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div>
+
+  const SHdr = ({title,sub}) => (
+    <div style={{background:'linear-gradient(135deg,#714B67,#4A3050)',padding:'8px 14px',borderRadius:'6px 6px 0 0'}}>
+      <div style={{color:'#fff',fontSize:13,fontWeight:700,fontFamily:'Syne,sans-serif'}}>{title}</div>
+      {sub && <div style={{color:'rgba(255,255,255,.6)',fontSize:11,marginTop:1}}>{sub}</div>}
     </div>
   )
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Create Routing <small>CA01 · Define Operations</small></div>
+        <div className="fi-lv-title">
+          {id ? 'Edit Routing' : 'Create Routing'}
+          <small> CA01 · Production Routing</small>
+          <small style={{fontFamily:'DM Mono,monospace',color:'#714B67',marginLeft:8}}>{routingNo}</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}> Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Routing</button>
+          {processes.length > 0 && !id && (
+            <button className="btn btn-s sd-bsm" onClick={loadFromConfig}>
+              Load from PP Config ({ppConfig?.industryName})
+            </button>
+          )}
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing')}>Cancel</button>
+          <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
+            {saving ? 'Saving...' : id ? 'Update Routing' : 'Save Routing'}
+          </button>
         </div>
       </div>
 
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Routing Header</div>
-        <div className="fi-form-sec-body">
-          <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Routing No.</label><input className="fi-form-ctrl" defaultValue="RTE-005" readOnly/></div>
-            <div className="fi-form-grp"><label>Routing Name <span>*</span></label><input className="fi-form-ctrl" placeholder="e.g. Premium Ring Yarn Route"/></div>
-            <div className="fi-form-grp"><label>Finished Product <span>*</span></label>
-              <select className="fi-form-ctrl">
-                <option>MAT-FG-001 · Ring Yarn (30s Count)</option>
-                <option>MAT-FG-002 · Open End Yarn (12s)</option>
-                <option>MAT-FG-005 · Ring Yarn (60s Count)</option>
+      {/* Header */}
+      <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+        <SHdr title="Routing Header" sub="Links this routing to an item/product"/>
+        <div style={{padding:16,background:'#fff'}}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12}}>
+            <div>
+              <label style={lbl}>Item / Product *</label>
+              <select style={{...inp,cursor:'pointer'}} value={header.itemCode} onChange={onItemSelect}>
+                <option value="">-- Select Item --</option>
+                {items.map(i=>(
+                  <option key={i.id} value={i.code}>{i.code} · {i.name}</option>
+                ))}
+              </select>
+              {!items.length && (
+                <input style={{...inp,marginTop:6}} value={header.itemName} onChange={hSet('itemName')} placeholder="Type item name manually..."/>
+              )}
+            </div>
+            <div>
+              <label style={lbl}>Base Qty</label>
+              <input type="number" style={inp} value={header.baseQty} onChange={hSet('baseQty')} placeholder="1"/>
+            </div>
+            <div>
+              <label style={lbl}>UOM</label>
+              <select style={{...inp,cursor:'pointer'}} value={header.uom} onChange={hSet('uom')}>
+                {['Nos','Kg','Metre','Litre','Set','Box'].map(u=><option key={u}>{u}</option>)}
               </select>
             </div>
+            <div>
+              <label style={lbl}>Plant</label>
+              <input style={inp} value={header.plant} onChange={hSet('plant')} placeholder="MAIN"/>
+            </div>
           </div>
-          <div className="fi-form-grp"><label>Description</label><textarea className="fi-form-ctrl" rows={2} placeholder="Routing description..."></textarea></div>
+          <label style={{display:'flex',alignItems:'center',gap:8,marginTop:12,cursor:'pointer',fontSize:13}}>
+            <input type="checkbox" checked={!!header.isActive} onChange={e=>setHeader(h=>({...h,isActive:e.target.checked}))} style={{accentColor:'#714B67',width:15,height:15}}/>
+            Active Routing
+          </label>
         </div>
       </div>
 
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Operations Sequence</div>
-        <div style={{padding:'0'}}>
-          <table className="fi-data-table">
-            <thead><tr><th>#</th><th>Seq</th><th>Operation Name</th><th>Work Centre</th><th>Setup (min)</th><th>Run Time</th><th>UOM</th><th></th></tr></thead>
-            <tbody>
-              {ops.map((o,i)=>(
-                <tr key={o.id}>
-                  <td style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)'}}>{i+1}</td>
-                  <td><input type="number" value={o.seq} onChange={e=>upd(o.id,'seq',e.target.value)} style={{width:'50px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                  <td><input value={o.op} onChange={e=>upd(o.id,'op',e.target.value)} placeholder="Operation name..." style={{width:'160px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                  <td><select value={o.wc} onChange={e=>upd(o.id,'wc',e.target.value)} style={{width:'160px'}}>{WCS.map(w=><option key={w}>{w}</option>)}</select></td>
-                  <td><input type="number" value={o.setup} onChange={e=>upd(o.id,'setup',e.target.value)} placeholder="0" style={{width:'60px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                  <td><input type="number" value={o.run} onChange={e=>upd(o.id,'run',e.target.value)} placeholder="0.0" style={{width:'70px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                  <td><select value={o.uom} onChange={e=>upd(o.id,'uom',e.target.value)} style={{width:'90px'}}>
-                    <option>min/Kg</option><option>min/Nos</option><option>hr/Batch</option>
-                  </select></td>
-                  <td><span onClick={()=>del(o.id)} style={{cursor:'pointer',color:'var(--odoo-red)',fontSize:'14px'}}></span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{padding:'10px 14px'}}>
-            <button className="btn btn-s sd-bsm" onClick={add}>Add Operation</button>
+      {/* Operations */}
+      <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+        <div style={{background:'linear-gradient(135deg,#714B67,#4A3050)',padding:'8px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:'6px 6px 0 0'}}>
+          <div>
+            <span style={{color:'#fff',fontSize:13,fontWeight:700,fontFamily:'Syne,sans-serif'}}>Operations / Stages</span>
+            <span style={{color:'rgba(255,255,255,.6)',fontSize:11,marginLeft:10}}>
+              {ops.length} operations · Std time: {totalMins >= 60 ? `${(totalMins/60).toFixed(1)} hrs` : `${totalMins} min`}
+            </span>
           </div>
+          <button onClick={addOp} style={{padding:'4px 14px',background:'rgba(255,255,255,.2)',color:'#fff',border:'1px solid rgba(255,255,255,.3)',borderRadius:4,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+            + Add Op
+          </button>
         </div>
+
+        {ops.length === 0 ? (
+          <div style={{padding:40,textAlign:'center',color:'#999',background:'#fff',fontSize:13}}>
+            No operations yet.
+            {processes.length > 0
+              ? <span> Click <strong>"Load from PP Config"</strong> above to import {processes.length} stages automatically.</span>
+              : <span> Click <strong>"+ Add Op"</strong> to add operations manually.</span>
+            }
+          </div>
+        ) : (
+          <div style={{background:'#fff'}}>
+            {/* Table header */}
+            <div style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',background:'#F8F4F8',borderBottom:'2px solid #E0D5E0',fontSize:10,fontWeight:700,color:'#6C757D',textTransform:'uppercase'}}>
+              <span>Op#</span><span>Process / Operation</span><span>Work Center</span>
+              <span style={{textAlign:'center'}}>Setup<br/>(min)</span>
+              <span style={{textAlign:'center'}}>Machine<br/>(min)</span>
+              <span style={{textAlign:'center'}}>Labour<br/>(min)</span>
+              <span style={{textAlign:'center'}}>Unit</span>
+              <span>Remarks</span>
+              <span/>
+            </div>
+
+            {ops.map((op, i) => (
+              <div key={i} style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',borderBottom:'1px solid #F0EEF0',alignItems:'center'}}>
+                {/* Op No */}
+                <input style={{...inp,fontFamily:'DM Mono,monospace',fontWeight:800,color:'#714B67',textAlign:'center'}}
+                  value={op.opNo} onChange={e=>updOp(i,'opNo',e.target.value)}/>
+
+                {/* Process name — dropdown from PP config or manual */}
+                {processes.length > 0 ? (
+                  <select style={{...inp,cursor:'pointer'}} value={op.processName} onChange={e=>{
+                    const p = processes.find(x=>x.name===e.target.value)
+                    updOp(i,'processName',e.target.value)
+                    if(p) updOp(i,'wcId',p.machine||op.wcId)
+                  }}>
+                    <option value="">-- Select Process --</option>
+                    {processes.map(p=><option key={p.id||p.name} value={p.name}>{p.name}</option>)}
+                    <option value="__custom">Custom...</option>
+                  </select>
+                ) : (
+                  <input style={inp} value={op.processName} onChange={e=>updOp(i,'processName',e.target.value)} placeholder="e.g. Phosphating"/>
+                )}
+
+                {/* Work Center */}
+                <input style={inp} value={op.wcId} onChange={e=>updOp(i,'wcId',e.target.value)} placeholder="e.g. TANK-01"/>
+
+                {/* Times */}
+                {['setupTime','machineTime','laborTime'].map(k=>(
+                  <input key={k} type="number" step="0.5" min="0"
+                    style={{...inp,textAlign:'center',fontFamily:'DM Mono,monospace'}}
+                    value={op[k]} onChange={e=>updOp(i,k,e.target.value)}/>
+                ))}
+
+                {/* Unit */}
+                <select style={{...inp,cursor:'pointer'}} value={op.unit} onChange={e=>updOp(i,'unit',e.target.value)}>
+                  {TIME_UNITS.map(u=><option key={u}>{u}</option>)}
+                </select>
+
+                {/* Remarks */}
+                <input style={{...inp,fontSize:11}} value={op.remarks} onChange={e=>updOp(i,'remarks',e.target.value)} placeholder="Notes..."/>
+
+                {/* Delete */}
+                <button onClick={()=>delOp(i)} style={{background:'none',border:'none',color:'#DC3545',cursor:'pointer',fontSize:16,padding:'0 4px'}}>✕</button>
+              </div>
+            ))}
+
+            {/* Total row */}
+            <div style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',background:'#F8F4F8',fontSize:11,fontWeight:700,color:'#714B67'}}>
+              <span/>
+              <span>{ops.length} ops total</span>
+              <span/>
+              <span style={{textAlign:'center'}}>{ops.reduce((a,o)=>a+parseFloat(o.setupTime||0),0)} min</span>
+              <span style={{textAlign:'center'}}>{ops.reduce((a,o)=>a+parseFloat(o.machineTime||0),0)} min</span>
+              <span style={{textAlign:'center'}}>{ops.reduce((a,o)=>a+parseFloat(o.laborTime||0),0)} min</span>
+              <span/>
+              <span style={{color:'#6C757D'}}>Total: {totalMins} min ({(totalMins/60).toFixed(1)} hrs)</span>
+              <span/>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/routing')}> Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save Routing</button>
+      {/* Footer */}
+      <div style={{display:'flex',justifyContent:'flex-end',gap:10,padding:'8px 0 20px'}}>
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing')}>Cancel</button>
+        <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
+          {saving ? 'Saving...' : id ? 'Update Routing' : 'Save Routing'}
+        </button>
       </div>
     </div>
   )

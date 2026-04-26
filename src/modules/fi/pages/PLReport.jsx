@@ -1,132 +1,112 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
 
 export default function PLReport() {
-  const [open, setOpen] = useState({income:true,cogs:true,mfg:true,opex:true,fin:true})
-  const tog = k => setOpen(p => ({...p,[k]:!p[k]}))
+  const [pl,      setPL]      = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [from,    setFrom]    = useState(`${new Date().getFullYear()}-04-01`)
+  const [to,      setTo]      = useState(new Date().toISOString().split('T')[0])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/pl?from=${from}&to=${to}`, { headers: hdr2() })
+      const data = await res.json()
+      setPL(data.data)
+    } catch { toast.error('Failed to load P&L') }
+    finally { setLoading(false) }
+  }, [from, to])
+  useEffect(() => { load() }, [load])
+
+  const [open, setOpen] = useState({ income:true, directExp:true, indirectExp:true })
+  const tog = k => setOpen(p=>({...p,[k]:!p[k]}))
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Profit & Loss Statement <small>February 2025</small></div>
+        <div className="fi-lv-title">Profit &amp; Loss Statement</div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select"><option>Feb 2025</option><option>Jan 2025</option><option>Q3 FY25</option><option>FY 2024-25</option></select>
+          <input type="date" className="sd-search" value={from} onChange={e=>setFrom(e.target.value)} style={{width:140}}/>
+          <span style={{color:'#6C757D',fontSize:12}}>to</span>
+          <input type="date" className="sd-search" value={to} onChange={e=>setTo(e.target.value)} style={{width:140}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
           <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-s sd-bsm">Print</button>
         </div>
       </div>
 
-      <div className="fi-panel-eq">
-        {/* P&L Statement */}
-        <div className="fin-report">
-          <div className="fin-report-hdr"><h2>Profit & Loss Account</h2><span>Month ended 28 Feb 2025</span></div>
-
-          {/* INCOME */}
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('income')}>{open.income?'▾':'►'} INCOME</div>
-            {open.income && <>
-              <div className="fin-row drillable"><span className="fn">Sales Revenue (Net of Returns)</span><span className="fv pos">₹48,60,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>B2B Sales</span><span className="fv" style={{fontSize:'12px'}}>₹41,20,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>B2C Sales</span><span className="fv" style={{fontSize:'12px'}}>₹7,40,000</span></div>
-              <div className="fin-row"><span className="fn">Other Income</span><span className="fv">₹24,000</span></div>
-              <div className="fin-row sub"><span className="fn">Total Income</span><span className="fv" style={{color:'var(--odoo-green)'}}>₹48,84,000</span></div>
-            </>}
+      {loading ? <div style={{padding:30,textAlign:'center'}}>Loading P&L...</div>
+      : pl && (
+        <div style={{maxWidth:700}}>
+          {/* Net Profit highlight */}
+          <div style={{background:pl.netProfit>=0?'#D4EDDA':'#F8D7DA',border:`2px solid ${pl.netProfit>=0?'#C3E6CB':'#F5C6CB'}`,borderRadius:8,padding:'12px 20px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontWeight:800,fontSize:16,color:pl.netProfit>=0?'#155724':'#721C24',fontFamily:'Syne,sans-serif'}}>
+              {pl.netProfit>=0?'Net Profit':'Net Loss'}
+            </div>
+            <div style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:22,color:pl.netProfit>=0?'#155724':'#721C24'}}>
+              {INR(Math.abs(pl.netProfit))}
+            </div>
+            <div style={{fontSize:12,color:pl.netProfit>=0?'#155724':'#721C24'}}>
+              Margin: {pl.totalIncome>0?((pl.netProfit/pl.totalIncome)*100).toFixed(1):0}%
+            </div>
           </div>
 
-          {/* COGS */}
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('cogs')}>{open.cogs?'▾':'►'} COST OF GOODS SOLD (COGS)</div>
-            {open.cogs && <>
-              <div className="fin-row"><span className="fn">Opening Stock</span><span className="fv">₹38,40,000</span></div>
-              <div className="fin-row"><span className="fn">+ Purchases (Raw Material — MM)</span><span className="fv">₹28,40,000</span></div>
-              <div className="fin-row"><span className="fn">− Closing Stock (WM)</span><span className="fv neg">₹40,40,000</span></div>
-              <div className="fin-row sub"><span className="fn">Total COGS</span><span className="fv neg">₹26,40,000</span></div>
-            </>}
-          </div>
+          <div className="fin-report">
+            <div className="fin-report-hdr"><h2>Profit &amp; Loss Account</h2><span>{from} to {to}</span></div>
 
-          {/* COGM from PP */}
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('mfg')}>{open.mfg?'▾':'►'} COST OF GOODS MANUFACTURED (COGM — from PP)</div>
-            {open.mfg && <>
-              <div className="fin-row drillable"><span className="fn">Direct Material Consumed (WM → PP)</span><span className="fv">₹18,40,000</span></div>
-              <div className="fin-row drillable"><span className="fn">Direct Labour (HCM Payroll)</span><span className="fv">₹4,80,000</span></div>
-              <div className="fin-row drillable"><span className="fn">Manufacturing Overhead</span><span className="fv">₹2,60,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Power & Fuel</span><span className="fv" style={{fontSize:'12px'}}>₹1,20,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Maintenance Repairs (PM)</span><span className="fv" style={{fontSize:'12px'}}>₹48,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Quality Control (QM)</span><span className="fv" style={{fontSize:'12px'}}>₹22,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Factory Depreciation</span><span className="fv" style={{fontSize:'12px'}}>₹42,000</span></div>
-              <div className="fin-row l2"><span className="fn" style={{fontSize:'12px',color:'var(--odoo-gray)'}}>Other Factory Overhead</span><span className="fv" style={{fontSize:'12px'}}>₹28,000</span></div>
-              <div className="fin-row sub"><span className="fn">Total COGM</span><span className="fv neg">₹25,80,000</span></div>
-            </>}
-          </div>
+            {/* INCOME */}
+            <div className="fin-section">
+              <div className="fin-sec-title" onClick={()=>tog('income')}>{open.income?'▾':'►'} INCOME</div>
+              {open.income && pl.incomeAccts.filter(a=>a.net>0).map(a=>(
+                <div key={a.code} className="fin-row">
+                  <span className="fn">{a.code} · {a.name}</span>
+                  <span className="fv pos">{INR(a.net)}</span>
+                </div>
+              ))}
+              <div className="fin-row total"><span className="fn">Total Income</span><span className="fv pos">{INR(pl.totalIncome)}</span></div>
+            </div>
 
-          {/* OPERATING EXPENSES */}
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('opex')}>{open.opex?'▾':'►'} OPERATING EXPENSES</div>
-            {open.opex && <>
-              <div className="fin-row drillable"><span className="fn">Salary & Wages (HCM)</span><span className="fv">₹8,40,000</span></div>
-              <div className="fin-row"><span className="fn">Rent & Utilities</span><span className="fv">₹1,20,000</span></div>
-              <div className="fin-row"><span className="fn">Freight & Logistics (SD)</span><span className="fv">₹84,000</span></div>
-              <div className="fin-row"><span className="fn">Admin & Other Expenses</span><span className="fv">₹90,000</span></div>
-              <div className="fin-row sub"><span className="fn">Total OpEx</span><span className="fv neg">₹11,34,000</span></div>
-            </>}
-          </div>
+            {/* DIRECT EXPENSES */}
+            <div className="fin-section">
+              <div className="fin-sec-title" onClick={()=>tog('directExp')}>{open.directExp?'▾':'►'} DIRECT EXPENSES</div>
+              {open.directExp && pl.expenseAccts.filter(a=>a.subType?.includes('Direct')&&a.net>0).map(a=>(
+                <div key={a.code} className="fin-row">
+                  <span className="fn">{a.code} · {a.name}</span>
+                  <span className="fv neg">{INR(a.net)}</span>
+                </div>
+              ))}
+              <div className="fin-row">
+                <span className="fn">Gross Profit</span>
+                <span className="fv pos">{INR(pl.totalIncome - pl.expenseAccts.filter(a=>a.subType?.includes('Direct')).reduce((s,a)=>s+a.net,0))}</span>
+              </div>
+            </div>
 
-          <div className="fin-row" style={{padding:'12px 20px',background:'#F8F9FA',fontWeight:'700',fontSize:'14px'}}>
-            <span>EBITDA</span>
-            <span style={{color:'var(--odoo-green)',fontFamily:'Syne,sans-serif',fontSize:'18px'}}>₹11,30,000</span>
-          </div>
-
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('fin')}>{open.fin?'▾':'►'} FINANCE COSTS</div>
-            {open.fin && <>
-              <div className="fin-row"><span className="fn">Bank Interest</span><span className="fv">₹24,000</span></div>
-              <div className="fin-row"><span className="fn">Loan Interest (Term Loan)</span><span className="fv">₹62,000</span></div>
-              <div className="fin-row sub"><span className="fn">Total Finance Costs</span><span className="fv neg">₹86,000</span></div>
-            </>}
-          </div>
-
-          <div className="fin-row gt"><span>NET PROFIT (PAT)</span><span className="fv">₹10,44,000</span></div>
-        </div>
-
-        {/* Ratios + Breakdown */}
-        <div>
-          <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3> Key Ratios</h3></div>
-            <div className="fi-panel-body">
-              {[
-                {l:'Gross Margin',v:'45.8%',c:'var(--odoo-green)'},
-                {l:'Net Profit Margin',v:'21.4%',c:'var(--odoo-green)'},
-                {l:'EBITDA Margin',v:'23.1%',c:'var(--odoo-green)'},
-                {l:'COGM % of Revenue',v:'52.9%',c:'var(--odoo-orange)'},
-                {l:'OpEx Ratio',v:'23.2%',c:'var(--odoo-orange)'},
-                {l:'Revenue Growth (MoM)',v:'↑ 11.7%',c:'var(--odoo-green)'},
-              ].map(r=>(
-                <div key={r.l} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #F0EEEB',fontSize:'13px'}}>
-                  <span>{r.l}</span><strong style={{color:r.c}}>{r.v}</strong>
+            {/* INDIRECT EXPENSES */}
+            <div className="fin-section">
+              <div className="fin-sec-title" onClick={()=>tog('indirectExp')}>{open.indirectExp?'▾':'►'} INDIRECT EXPENSES</div>
+              {open.indirectExp && pl.expenseAccts.filter(a=>!a.subType?.includes('Direct')&&a.net>0).map(a=>(
+                <div key={a.code} className="fin-row">
+                  <span className="fn">{a.code} · {a.name}</span>
+                  <span className="fv neg">{INR(a.net)}</span>
                 </div>
               ))}
             </div>
-          </div>
-          <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>Cost Breakdown</h3></div>
-            <div className="fi-panel-body">
-              {[
-                {l:'COGS',v:'54%',pct:54,c:'var(--odoo-purple)'},
-                {l:'COGM',v:'53%',pct:53,c:'var(--odoo-blue)'},
-                {l:'Salary',v:'17%',pct:17,c:'var(--odoo-orange)'},
-                {l:'Net Profit',v:'21%',pct:21,c:'var(--odoo-green)'},
-              ].map(r=>(
-                <div key={r.l} style={{marginBottom:'10px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'3px'}}><span>{r.l}</span><span>{r.v}</span></div>
-                  <div style={{background:'#F0EEEB',borderRadius:'4px',height:'8px'}}>
-                    <div style={{width:`${r.pct}%`,height:'100%',background:r.c,borderRadius:'4px'}}></div>
-                  </div>
-                </div>
-              ))}
+
+            <div className="fin-row total">
+              <span className="fn">{pl.netProfit>=0?'NET PROFIT':'NET LOSS'}</span>
+              <span className={`fv ${pl.netProfit>=0?'pos':'neg'}`}>{INR(Math.abs(pl.netProfit))}</span>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
+

@@ -1,5 +1,11 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
+const authHdrs2= () => ({ Authorization:`Bearer ${getToken()}` })
 
 // Test parameters per product
 const TEST_PARAMS = {
@@ -29,12 +35,68 @@ const TEST_PARAMS = {
 const SOURCES = ['PP — Production WO','MM — Incoming GRN','SD — Pre-shipment']
 
 export default function InspectionNew() {
-  const nav = useNavigate()
+  const nav    = useNavigate()
+  const {id}   = useParams()
   const [product, setProduct] = useState('Ring Yarn (30s Count)')
-  const [source, setSource] = useState('PP — Production WO')
-  const [tests, setTests] = useState(TEST_PARAMS['Ring Yarn (30s Count)'].map((t,i)=>({...t,id:i})))
-  const [qty, setQty] = useState('400')
-  const [saved, setSaved] = useState(false)
+  const [source,  setSource]  = useState('PP — Production WO')
+  const [tests,   setTests]   = useState(TEST_PARAMS['Ring Yarn (30s Count)'].map((t,i)=>({...t,id:i})))
+  const [qty,     setQty]     = useState('400')
+  const [saved,   setSaved]   = useState(false)
+  const [saving,  setSaving]  = useState(false)
+  const [lotNo,   setLotNo]   = useState('Auto-generated')
+  const [grns,    setGRNs]    = useState([])
+  const [selGRN,  setSelGRN]  = useState(null)
+  const [hdr, setHdr] = useState({
+    refType:'', refNo:'', refId:'',
+    vendorName:'', batchNo:'',
+    inspector:'', qualityPlan:'',
+    inspDate: new Date().toISOString().split('T')[0],
+  })
+
+  useEffect(()=>{
+    fetch(`${BASE_URL}/qm/inspection/next-no`,
+      { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setLotNo(d.lotNo||'QIL-AUTO'))
+      .catch(()=>{})
+    fetch(`${BASE_URL}/qm/pending-grns`,
+      { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setGRNs(d.data||[]))
+      .catch(()=>{})
+    if (id) {
+      fetch(`${BASE_URL}/qm/inspection/${id}`,
+        { headers:authHdrs2() })
+        .then(r=>r.json())
+        .then(d=>{
+          if (d.data) {
+            setProduct(d.data.itemName)
+            setQty(d.data.lotQty)
+            setHdr(p=>({...p,...d.data}))
+            if (d.data.tests?.length>0) {
+              setTests(d.data.tests.map((t,i)=>({...t,id:i,
+                param:t.paramName, result:t.result||''})))
+            }
+          }
+        }).catch(()=>{})
+    }
+  },[id])
+
+  const loadGRN = (grnId) => {
+    const g = grns.find(g=>g.id===parseInt(grnId))
+    if (!g) return
+    setSelGRN(g)
+    const line = g.lines?.[0]
+    setProduct(line?.itemName||product)
+    setQty(String(parseFloat(line?.receivedQty||0)))
+    setHdr(p=>({...p,
+      refType:'GRN', refNo:g.grnNo, refId:g.id,
+      vendorName:g.vendorName||'',
+      batchNo:line?.batchNo||'',
+    }))
+    if (line?.itemName && TEST_PARAMS[line.itemName]) {
+      setTests(TEST_PARAMS[line.itemName].map((t,i)=>({...t,id:i,result:''})))
+    }
+    toast.success(`GRN ${g.grnNo} loaded`)
+  }
 
   const switchProduct = (p) => {
     setProduct(p)
@@ -81,7 +143,40 @@ export default function InspectionNew() {
         <div className="fi-lv-title">New Inspection Lot <small>QA01 · Inspection Recording</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}> Cancel</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
+          <button className="btn btn-p sd-bsm" disabled={saving} onClick={async()=>{
+          setSaving(true)
+          try {
+            const passT = tests.filter(t=>getStatus(t)==='pass').length
+            const failT = tests.filter(t=>getStatus(t)==='fail').length
+            const yldPct= tests.length>0?Math.round(passT/tests.length*100):0
+            const res = await fetch(id?`${BASE_URL}/qm/inspection/${id}`:`${BASE_URL}/qm/inspection`,
+              { method:id?'PATCH':'POST', headers:authHdrs(),
+                body:JSON.stringify({
+                  ...hdr,
+                  source: source.split(' ')[0]||'PP',
+                  itemName:product,
+                  lotQty:parseFloat(qty||0),
+                  sampleQty:Math.ceil(parseFloat(qty||0)*0.05),
+                  passQty:parseFloat(qty||0)*passT/Math.max(tests.length,1),
+                  failQty:parseFloat(qty||0)*failT/Math.max(tests.length,1),
+                  yieldPct:yldPct,
+                  result:overallResult?.toUpperCase()||'PENDING',
+                  status:'OPEN',
+                  tests:tests.map(t=>({
+                    paramName:t.param, spec:t.spec, unit:t.unit,
+                    limit_lo:t.limit_lo, limit_hi:t.limit_hi,
+                    result:t.result,
+                    status:getStatus(t)==='pass'?'PASS':getStatus(t)==='fail'?'FAIL':'PENDING'
+                  }))
+                })})
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+            toast.success(data.message)
+            setSaved(true)
+          } catch(e){ toast.error(e.message) } finally { setSaving(false) }
+        }}>
+        {saving?'⏳ Saving...':'Save & Result'}
+      </button>
         </div>
       </div>
 
@@ -103,11 +198,23 @@ export default function InspectionNew() {
               </select>
             </div>
             <div className="fi-form-grp"><label>Reference (WO / GRN)</label>
-              <select className="fi-form-ctrl">
-                <option>WO-2025-019 · Ring Yarn (30s)</option>
-                <option>WO-2025-020 · Compact Sliver</option>
-                <option>GRN-2025-019 · Cotton Bale</option>
-              </select>
+              {source.startsWith('MM') ? (
+                <select className="fi-form-ctrl"
+                  value={hdr.refId}
+                  onChange={e=>{ if(e.target.value) loadGRN(e.target.value) }}>
+                  <option value="">-- Select GRN --</option>
+                  {grns.map(g=>(
+                    <option key={g.id} value={g.id}>
+                      {g.grnNo} · {g.vendorName}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input className="fi-form-ctrl"
+                  value={hdr.refNo}
+                  onChange={e=>setHdr(p=>({...p,refNo:e.target.value}))}
+                  placeholder="WO-2026-001" />
+              )}
             </div>
             <div className="fi-form-grp"><label>Product / Material <span>*</span></label>
               <select className="fi-form-ctrl" value={product} onChange={e=>switchProduct(e.target.value)}>

@@ -15,7 +15,7 @@ const CUSTOMER_TYPES = [
 
 const BLANK = {
   // General
-  code:'', name:'', type:'B', gstin:'', phone:'', email:'', creditDays:'30',
+  code:'', name:'', type:'B', gstin:'', gstRegType:'registered', phone:'', email:'', creditDays:'30',
   // Address
   address:'', city:'', state:'Tamil Nadu', pincode:'',
   // Additional
@@ -217,6 +217,30 @@ function CustomerForm({ customer, onSave, onCancel, rows = [] }) {
                         borderColor: form.gstin && !validateGSTIN(form.gstin) ? '#DC3545' : '#E0D5E0' }} />
                     {form.gstin && !validateGSTIN(form.gstin) && (
                       <span style={{ fontSize:10, color:'#DC3545' }}>Invalid GSTIN format</span>
+                    )}
+                  </FG>
+                  <FG label="GST Registration Type">
+                    <select {...F('gstRegType')} style={{ ...inp, cursor:'pointer',
+                      background: form.gstRegType==='unregistered'?'#FFF3CD':
+                                  form.gstRegType==='composition'?'#D1ECF1':'#fff',
+                      borderColor: form.gstRegType==='unregistered'?'#FFC107':
+                                   form.gstRegType==='composition'?'#17A2B8':'#E0D5E0',
+                    }}>
+                      <option value="registered">Registered (Regular) — B2B</option>
+                      <option value="unregistered">Unregistered — B2C (Consumer)</option>
+                      <option value="composition">Composition Dealer</option>
+                      <option value="sez">SEZ / Export Customer</option>
+                      <option value="overseas">Overseas / Export</option>
+                    </select>
+                    {form.gstRegType==='unregistered' && (
+                      <div style={{fontSize:10,color:'#856404',marginTop:3,fontWeight:600}}>
+                        B2C — GST charged and paid by you. Invoice reported as B2C in GSTR-1.
+                      </div>
+                    )}
+                    {form.gstRegType==='sez' && (
+                      <div style={{fontSize:10,color:'#155724',marginTop:3,fontWeight:600}}>
+                        Zero-rated supply. No GST charged. LUT/Bond required. ITC refund available.
+                      </div>
                     )}
                   </FG>
                   <FG label="PAN No">

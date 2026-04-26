@@ -1,141 +1,219 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const AUTO_JVS = [
-  {jv:'JV-2025-0148',date:'28 Feb',src:'SD',srcName:'Sales (SD)',event:'Invoice Posted — INV-2025-042 · ABC Textiles',
-   dr:[{acct:'1300 · Accounts Receivable',amt:'₹2,36,000'}],
-   cr:[{acct:'5100 · Sales Revenue',amt:'₹2,00,000'},{acct:'2200 · GST CGST Payable',amt:'₹18,000'},{acct:'2210 · GST SGST Payable',amt:'₹18,000'}],
-   total:'₹2,36,000',sb:'badge-posted'},
-  {jv:'JV-2025-0147',date:'27 Feb',src:'MM',srcName:'Procurement (MM)',event:'Vendor Invoice Received — VINV-2025-012 · Lakshmi Textiles',
-   dr:[{acct:'1400 · Stock / Inventory',amt:'₹1,76,271'},{acct:'1600 · GST ITC CGST',amt:'₹10,576'},{acct:'1600 · GST ITC SGST',amt:'₹10,576'}],
-   cr:[{acct:'2100 · Accounts Payable',amt:'₹2,08,000'}],
-   total:'₹2,08,000',sb:'badge-posted'},
-  {jv:'JV-2025-0143',date:'24 Feb',src:'WM',srcName:'Warehouse (WM)',event:'Goods Issue — GI-2025-042 to Production WO-017',
-   dr:[{acct:'6100 · COGS — Direct Material',amt:'₹1,44,000'}],
-   cr:[{acct:'1400 · Stock / Inventory',amt:'₹1,44,000'}],
-   total:'₹1,44,000',sb:'badge-posted'},
-  {jv:'JV-2025-0142',date:'23 Feb',src:'PP',srcName:'Production (PP)',event:'Work Order WO-2025-017 Closed — Ring Yarn 30s 500 Kg',
-   dr:[{acct:'6110 · COGM — Direct Labour',amt:'₹1,44,000'},{acct:'6120 · COGM — Mfg Overhead',amt:'₹68,000'},{acct:'1410 · Finished Goods',amt:'₹2,12,000'}],
-   cr:[{acct:'6100 · COGS — Direct Material',amt:'₹6,20,000'}],
-   total:'₹8,24,000',sb:'badge-posted'},
-  {jv:'JV-2025-0141',date:'22 Feb',src:'PM',srcName:'Maintenance (PM)',event:'Work Order MO-2025-009 — Machine M-102 Repair Completed',
-   dr:[{acct:'6700 · Maintenance Expense',amt:'₹48,000'}],
-   cr:[{acct:'2100 · Accounts Payable (service vendor)',amt:'₹48,000'}],
-   total:'₹48,000',sb:'badge-posted'},
-  {jv:'JV-2025-0139',date:'20 Feb',src:'HCM',srcName:'Payroll (HCM)',event:'Payroll Run — Feb 2025 · All Employees',
-   dr:[{acct:'6200 · Salary & Wages',amt:'₹8,40,000'},{acct:'6210 · Provident Fund',amt:'₹1,00,800'},{acct:'6220 · ESI',amt:'₹37,800'}],
-   cr:[{acct:'1200 · Bank — HDFC',amt:'₹7,98,000'},{acct:'2300 · TDS Payable',amt:'₹42,000'},{acct:'2310 · PF Payable',amt:'₹1,00,800'},{acct:'2320 · ESI Payable',amt:'₹37,800'}],
-   total:'₹9,78,600',sb:'badge-posted'},
-  {jv:'JV-2025-0138',date:'19 Feb',src:'SD',srcName:'Sales (SD)',event:'Customer Payment Received — ABC Textiles — REC-024',
-   dr:[{acct:'1200 · Bank — HDFC',amt:'₹4,72,000'}],
-   cr:[{acct:'1300 · Accounts Receivable',amt:'₹4,72,000'}],
-   total:'₹4,72,000',sb:'badge-posted'},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
 
-const SRC_COLORS = {SD:'var(--odoo-green)',MM:'var(--odoo-orange)',WM:'var(--odoo-blue)',PP:'var(--odoo-purple)',PM:'var(--odoo-red)',HCM:'#8E44AD'}
+const SRC_COLORS = {
+  SD:'#D4EDDA', MM:'#FFF3CD', WM:'#D1ECF1',
+  PP:'#EDE0EA', PM:'#F8D7DA', HCM:'#F4ECF7', FI:'#E2E3E5'
+}
+const SRC_TEXT = {
+  SD:'#155724', MM:'#856404', WM:'#0C5460',
+  PP:'#714B67', PM:'#721C24', HCM:'#6C3483', FI:'#383d41'
+}
+const SRC_LABELS = {
+  SD:'Sales', MM:'Purchase', PP:'Production',
+  WM:'Warehouse', HCM:'Payroll', PM:'Maintenance', FI:'Finance'
+}
 
 export default function InterModuleJournals() {
-  const [sel, setSel] = useState(null)
-  const [filter, setFilter] = useState('All')
+  const nav = useNavigate()
+  const [jes,      setJes]      = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [filter,   setFilter]   = useState('All')
+  const [expanded, setExpanded] = useState({})
+  const [search,   setSearch]   = useState('')
 
-  const filtered = filter==='All' ? AUTO_JVS : AUTO_JVS.filter(j=>j.src===filter)
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const results = await Promise.all(
+        ['SD','MM','PP','WM','HCM','PM'].map(t =>
+          fetch(`${BASE_URL}/fi/je?refType=${t}`, { headers: hdr2() })
+            .then(r => r.json()).catch(() => ({ data: [] }))
+        )
+      )
+      const all = results.flatMap(r => r.data || [])
+        .sort((a,b) => new Date(b.date) - new Date(a.date))
+      setJes(all)
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const toggle = id => setExpanded(e => ({ ...e, [id]: !e[id] }))
+
+  const SOURCES = ['All','SD','MM','PP','WM','HCM','PM']
+  const shown   = jes.filter(j => {
+    const ms = filter === 'All' || j.refType === filter
+    const mt = !search ||
+      j.narration?.toLowerCase().includes(search.toLowerCase()) ||
+      j.jeNo?.includes(search)
+    return ms && mt
+  })
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Auto Journal Entries <small>Cross-Module Accounting Integration</small></div>
+        <div className="fi-lv-title">
+          Inter-Module Journals
+          <small> Auto-posted JVs from all modules</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">Export</button>
+          <input className="sd-search" placeholder="Search JV / narration..."
+            value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
         </div>
       </div>
 
-      <div className="fi-alert info"> Every transaction in SD, MM, WM, PP, PM, HCM automatically posts a Journal Entry here. Finance team gets real-time accounting — no manual re-entry.</div>
-
-      <div className="fi-chips">
-        {['All','SD','MM','WM','PP','PM','HCM'].map(s=>(
-          <div key={s} className={`fi-chip${filter===s?' on':''}`} onClick={() => setFilter(s)}>{s}</div>
-        ))}
+      <div style={{background:'#EDE0EA',borderRadius:6,padding:'8px 14px',marginBottom:12,fontSize:12,color:'#714B67'}}>
+        All journals auto-posted by other modules appear here.
+        SD → Sales JV · MM → Purchase JV · HCM → Payroll JV · PP → COGM JV · WM → GI/GR JV
       </div>
 
-      {/* Module Integration Map */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'14px'}}>
-        {[
-          {src:'SD',icon:'▸',name:'Sales',ev:'Invoice → AR Dr / Revenue Cr\nReceipt → Bank Dr / AR Cr\nCredit Note → Revenue Dr / AR Cr'},
-          {src:'MM',icon:'▸',name:'Purchase',ev:'PO Receipt → Stock Dr / AP Cr\nVendor Pay → AP Dr / Bank Cr\nReturn → AP Dr / Stock Cr'},
-          {src:'WM',icon:'▸',name:'Warehouse',ev:'Goods Issue → COGS Dr / Stock Cr\nGoods Receipt → Stock Dr / AP Cr\nAdjust → COGS Dr/Cr / Stock Cr/Dr'},
-          {src:'PP',icon:'▸',name:'Production',ev:'WO Close → COGM Dr / FG Dr / Stock Cr\nLabour → COGM Labour Dr\nOverhead → COGM Overhead Dr'},
-          {src:'PM',icon:'▸',name:'Maintenance',ev:'Work Order → Maint Exp Dr / AP Cr\nCapex → FA Dr / AP Cr\nDepreciation → Dep Dr / Acc Dep Cr'},
-          {src:'HCM',icon:'▸',name:'Payroll',ev:'Payroll Run → Salary Dr / Bank Cr\nPF/ESI → PF Dr / PF Payable Cr\nTDS → TDS Payable Cr'},
-        ].map(m=>(
-          <div key={m.src} style={{background:'#fff',borderRadius:'8px',padding:'12px',boxShadow:'0 1px 4px rgba(0,0,0,.08)',borderLeft:`4px solid ${SRC_COLORS[m.src]}`}}>
-            <div style={{fontWeight:'700',marginBottom:'6px',display:'flex',gap:'6px',alignItems:'center'}}>
-              <span>{m.icon}</span><span style={{color:SRC_COLORS[m.src]}}>{m.src} — {m.name}</span>
-            </div>
-            <div style={{fontSize:'11px',color:'var(--odoo-gray)',lineHeight:'1.6',whiteSpace:'pre-line'}}>{m.ev}</div>
+      {/* Source filter chips */}
+      <div className="pp-chips">
+        {SOURCES.map(s => (
+          <div key={s} className={`pp-chip${filter===s?' on':''}`} onClick={()=>setFilter(s)}>
+            {SRC_LABELS[s]||s}
+            <span>{s==='All' ? jes.length : jes.filter(j=>j.refType===s).length}</span>
           </div>
         ))}
       </div>
 
-      <table className="fi-data-table">
-        <thead><tr>
-          <th>JV No.</th><th>Date</th><th>Source</th><th>Event / Transaction</th><th>Total</th><th>Status</th><th></th>
-        </tr></thead>
-        <tbody>
-          {filtered.map(r=>(
-            <tr key={r.jv} onClick={() => setSel(r)}>
-              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{r.jv}</strong></td>
-              <td>{r.date}</td>
-              <td>
-                <span className="badge" style={{background:SRC_COLORS[r.src]+'22',color:SRC_COLORS[r.src],border:`1px solid ${SRC_COLORS[r.src]}66`,fontWeight:'700'}}>
-                  {r.src}
-                </span>
-              </td>
-              <td style={{maxWidth:'320px',fontSize:'12px'}}>{r.event}</td>
-              <td style={{fontWeight:'700'}}>{r.total}</td>
-              <td><span className={`badge ${r.sb}`}>Auto-Posted</span></td>
-              <td onClick={e=>e.stopPropagation()}>
-                <button className="btn-xs" onClick={() => setSel(r)}>View JV ▼</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* JV Drill-down */}
-      {sel && (
-        <div className="fi-modal-overlay" onClick={() => setSel(null)}>
-          <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
-            <div className="fi-modal-hdr">
-              <h3> {sel.jv} · {sel.srcName} Auto-Journal</h3>
-              <span className="fi-modal-close" onClick={() => setSel(null)}></span>
-            </div>
-            <div className="fi-modal-body">
-              <div style={{background:'#F8F9FA',padding:'10px 14px',borderRadius:'6px',marginBottom:'16px',fontSize:'13px'}}>
-                <strong>Event:</strong> {sel.event}<br/>
-                <strong>Source Module:</strong> <span style={{color:SRC_COLORS[sel.src],fontWeight:'700'}}>{sel.srcName}</span> &nbsp;&nbsp;
-                <strong>Date:</strong> {sel.date} &nbsp;&nbsp;
-                <strong>Total:</strong> <span style={{fontFamily:'Syne,sans-serif',fontWeight:'800',color:'var(--odoo-purple)'}}>{sel.total}</span>
-              </div>
-              <table className="fi-data-table" style={{marginBottom:'16px'}}>
-                <thead><tr><th>Dr/Cr</th><th>Account</th><th>Amount</th></tr></thead>
-                <tbody>
-                  {sel.dr.map((d,i)=>(
-                    <tr key={'d'+i}><td><span style={{background:'#FDEDEC',color:'var(--odoo-red)',padding:'2px 8px',borderRadius:'4px',fontSize:'11px',fontWeight:'700'}}>DR</span></td><td>{d.acct}</td><td className="dr">{d.amt}</td></tr>
-                  ))}
-                  {sel.cr.map((c,i)=>(
-                    <tr key={'c'+i}><td><span style={{background:'#EAF9F6',color:'var(--odoo-green)',padding:'2px 8px',borderRadius:'4px',fontSize:'11px',fontWeight:'700'}}>CR</span></td><td>{c.acct}</td><td className="cr">{c.amt}</td></tr>
-                  ))}
-                  <tr style={{background:'#EDE0EA',fontWeight:'700'}}>
-                    <td colSpan={2} style={{padding:'10px 14px',fontFamily:'Syne,sans-serif'}}>TOTAL (Balanced)</td>
-                    <td style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)'}}>{sel.total}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style={{display:'flex',gap:'8px'}}>
-                <button className="btn btn-s sd-bsm" onClick={() => setSel(null)}>Close</button>
-                <button className="btn btn-p sd-bsm"> View in Ledger</button>
-              </div>
-            </div>
+      {loading ? (
+        <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading auto JVs...</div>
+      ) : shown.length === 0 ? (
+        <div style={{padding:60,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8,background:'#fff'}}>
+          <div style={{fontSize:36,marginBottom:10}}>🔗</div>
+          <div style={{fontWeight:700,fontSize:15,color:'#333'}}>No inter-module journals yet</div>
+          <div style={{fontSize:12,marginTop:4}}>
+            Post sales invoices, GRNs, payroll or production orders — they auto-create JVs here.
           </div>
+        </div>
+      ) : (
+        <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+          {/* Header */}
+          <div style={{display:'grid',gridTemplateColumns:'28px 140px 80px 1fr 120px 80px',
+            padding:'7px 14px',background:'#F8F4F8',borderBottom:'2px solid #E0D5E0',
+            fontSize:10,fontWeight:700,color:'#6C757D',gap:8,textTransform:'uppercase'}}>
+            <span/><span>JV No.</span><span>Source</span>
+            <span>Narration</span>
+            <span style={{textAlign:'right'}}>Amount</span>
+            <span style={{textAlign:'center'}}>Action</span>
+          </div>
+
+          {shown.map((j, idx) => {
+            const isOpen = !!expanded[j.id]
+            const bg     = SRC_COLORS[j.refType] || '#EEE'
+            const tx     = SRC_TEXT[j.refType]   || '#333'
+            return (
+              <div key={j.id} style={{borderBottom: idx<shown.length-1?'1px solid #F0EEF0':'none'}}>
+                {/* Voucher row */}
+                <div onClick={() => toggle(j.id)} style={{
+                  display:'grid',gridTemplateColumns:'28px 140px 80px 1fr 120px 80px',
+                  padding:'10px 14px',gap:8,cursor:'pointer',alignItems:'center',
+                  background: isOpen ? '#FDF8FC' : idx%2===0 ? '#fff' : '#FDFBFD',
+                }}>
+                  <span style={{
+                    color:'#714B67',fontSize:13,fontWeight:700,textAlign:'center',
+                    display:'inline-block',
+                    transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition:'transform .15s'
+                  }}>›</span>
+
+                  <span style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:12,color:'#714B67'}}>
+                    {j.jeNo}
+                  </span>
+
+                  <span>
+                    <span style={{background:bg,color:tx,padding:'2px 8px',borderRadius:4,fontSize:10,fontWeight:700}}>
+                      {SRC_LABELS[j.refType]||j.refType}
+                    </span>
+                  </span>
+
+                  <div>
+                    <div style={{fontSize:12,fontWeight:600,color:'#333'}}>{j.narration}</div>
+                    <div style={{fontSize:10,color:'#6C757D',marginTop:2}}>
+                      {new Date(j.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+                      {j.refNo && <span style={{marginLeft:8,fontFamily:'DM Mono,monospace'}}>Ref: {j.refNo}</span>}
+                    </div>
+                  </div>
+
+                  <span style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:13,color:tx}}>
+                    {INR(j.totalDebit)}
+                  </span>
+
+                  <div style={{textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+                    <button className="btn-xs" onClick={()=>nav('/fi/daybook')}>View</button>
+                  </div>
+                </div>
+
+                {/* Expanded lines — Tally drill-down */}
+                {isOpen && (
+                  <div style={{background:'#FDF8FC',borderTop:'1px solid #E0D5E0'}}>
+                    <div style={{
+                      display:'grid',gridTemplateColumns:'28px 140px 80px 1fr 1fr 120px',
+                      padding:'5px 14px',background:bg,
+                      fontSize:9,fontWeight:700,color:tx,gap:8,textTransform:'uppercase'
+                    }}>
+                      <span/><span>#</span><span/>
+                      <span>Debit Account</span><span>Credit Account</span>
+                      <span style={{textAlign:'right'}}>Amount</span>
+                    </div>
+
+                    {(j.lines||[]).map((l, li) => (
+                      <div key={li} style={{
+                        display:'grid',gridTemplateColumns:'28px 140px 80px 1fr 1fr 120px',
+                        padding:'6px 14px',borderBottom:'1px solid #F0EEF0',
+                        gap:8,alignItems:'center',
+                        background: li%2===0 ? '#fff' : '#FDFBFD',
+                        fontSize:12,
+                      }}>
+                        <span/><span style={{color:'#6C757D',fontSize:11}}>{li+1}</span><span/>
+
+                        {/* Dr account — click → GL */}
+                        <span
+                          style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67',
+                            cursor: l.debitAcctCode?'pointer':'default',
+                            textDecoration: l.debitAcctCode?'underline':'none'}}
+                          onClick={()=>l.debitAcctCode&&nav(`/fi/ledger?acct=${l.debitAcctCode}`)}>
+                          {l.debitAcctCode||'—'}
+                        </span>
+
+                        {/* Cr account — click → GL */}
+                        <span
+                          style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67',
+                            cursor: l.creditAcctCode?'pointer':'default',
+                            textDecoration: l.creditAcctCode?'underline':'none'}}
+                          onClick={()=>l.creditAcctCode&&nav(`/fi/ledger?acct=${l.creditAcctCode}`)}>
+                          {l.creditAcctCode||'—'}
+                        </span>
+
+                        <span style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,
+                          color: parseFloat(l.debit)>0 ? 'var(--odoo-red)' : 'var(--odoo-green)'}}>
+                          {parseFloat(l.debit)>0 ? INR(l.debit) : parseFloat(l.credit)>0 ? INR(l.credit) : '—'}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Voucher sub-total */}
+                    <div style={{
+                      display:'grid',gridTemplateColumns:'28px 140px 80px 1fr 1fr 120px',
+                      padding:'6px 14px',background:bg,fontSize:11,fontWeight:800,color:tx,gap:8
+                    }}>
+                      <span/><span>Total</span><span/><span/><span/>
+                      <span style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(j.totalDebit)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

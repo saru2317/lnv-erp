@@ -1,68 +1,91 @@
-import React, { useState } from 'react'
-const PAY = [
-  {no:'PAY-2025-022',date:'27 Feb',vend:'Aruna Industries',    inv:'VINV-2025-009',amt:'₹48,500', mode:'RTGS',  ref:'UTR987654321',sb:'badge-paid',sl:'Cleared'},
-  {no:'PAY-2025-021',date:'25 Feb',vend:'Lakshmi Textiles',    inv:'VINV-2025-010',amt:'₹66,000', mode:'NEFT',  ref:'UTR123456789',sb:'badge-paid',sl:'Cleared'},
-  {no:'PAY-2025-020',date:'20 Feb',vend:'Coimbatore Spares',   inv:'VINV-2025-008',amt:'₹32,000', mode:'Cheque',ref:'CHQ-004521',  sb:'badge-paid',sl:'Cleared'},
-  {no:'PAY-2025-019',date:'15 Feb',vend:'Sri Murugan Traders', inv:'VINV-2025-006',amt:'₹18,200', mode:'NEFT',  ref:'UTR998877665',sb:'badge-pending',sl:'Processing'},
-]
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+
 export default function VendorPayments() {
-  const [showForm, setShowForm] = useState(false)
+  const nav = useNavigate()
+  const [payments, setPayments] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/je?refType=MM`, { headers: hdr2() })
+      const data = await res.json()
+      setPayments(data.data || [])
+    } catch { toast.error('Failed to load payments') }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const shown = payments.filter(p =>
+    !search ||
+    p.narration?.toLowerCase().includes(search.toLowerCase()) ||
+    p.jeNo?.includes(search) ||
+    p.refNo?.includes(search)
+  )
+  const total = shown.reduce((a,p) => a + parseFloat(p.totalDebit||0), 0)
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Vendor Payments <small>Outgoing Payments Register</small></div>
+        <div className="fi-lv-title">Vendor Payments <small>Outgoing Payment Register</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>Record Payment</button>
+          <input className="sd-search" placeholder="Search payment / vendor..."
+            value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/fi/voucher?type=PV')}>
+            Record Payment (PV)
+          </button>
         </div>
       </div>
-      {showForm && (
-        <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">New Vendor Payment</div>
-          <div className="fi-form-sec-body">
-            <div className="fi-form-row">
-              <div className="fi-form-grp"><label>Payment No.</label><input className="fi-form-ctrl" defaultValue="PAY-2025-023" readOnly/></div>
-              <div className="fi-form-grp"><label>Vendor <span>*</span></label>
-                <select className="fi-form-ctrl"><option>Lakshmi Textile Mills</option><option>Coimbatore Spares</option><option>Aruna Industries</option></select>
-              </div>
-              <div className="fi-form-grp"><label>Payment Date <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-02-28"/></div>
-            </div>
-            <div className="fi-form-row">
-              <div className="fi-form-grp"><label>Vendor Invoice Ref</label>
-                <select className="fi-form-ctrl"><option>VINV-2025-012</option><option>VINV-2025-011</option></select>
-              </div>
-              <div className="fi-form-grp"><label>TDS Applicable</label>
-                <select className="fi-form-ctrl"><option>No TDS</option><option>Sec 194C (1%)</option><option>Sec 194J (10%)</option><option>Sec 194H (5%)</option></select>
-              </div>
-              <div className="fi-form-grp"><label>Net Amount <span>*</span></label><input type="number" className="fi-form-ctrl" placeholder="0"/></div>
-            </div>
-            <div className="fi-form-row">
-              <div className="fi-form-grp"><label>Payment Mode</label>
-                <select className="fi-form-ctrl"><option>NEFT</option><option>RTGS</option><option>Cheque</option><option>Cash</option></select>
-              </div>
-              <div className="fi-form-grp"><label>Bank Account</label>
-                <select className="fi-form-ctrl"><option>1200 · Bank HDFC Current</option><option>1100 · Cash in Hand</option></select>
-              </div>
-              <div className="fi-form-grp"><label>UTR / Cheque No.</label><input className="fi-form-ctrl" placeholder="Reference number"/></div>
-            </div>
-            <div className="fi-form-acts">
-              <button className="btn btn-s sd-bsm" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>Save Payment</button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      <div style={{background:'#F8D7DA',borderRadius:8,padding:'10px 16px',marginBottom:12,
+        display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontWeight:700,color:'#721C24'}}>Total Payments — {shown.length} vouchers</span>
+        <span style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:18,color:'#721C24'}}>{INR(total)}</span>
+      </div>
+
       <table className="fi-data-table">
-        <thead><tr><th>Payment No.</th><th>Date</th><th>Vendor</th><th>Invoice Ref</th><th>Amount</th><th>Mode</th><th>UTR / Ref</th><th>Status</th></tr></thead>
-        <tbody>{PAY.map(r=>(
-          <tr key={r.no}>
-            <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{r.no}</strong></td>
-            <td>{r.date}</td><td>{r.vend}</td>
-            <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{r.inv}</td>
-            <td style={{fontWeight:'700'}}>{r.amt}</td><td>{r.mode}</td>
-            <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{r.ref}</td>
-            <td><span className={`badge ${r.sb}`}>{r.sl}</span></td>
-          </tr>
-        ))}</tbody>
+        <thead><tr>
+          <th>Voucher No.</th><th>Date</th><th>Vendor / Narration</th>
+          <th>Invoice Ref</th><th style={{textAlign:'right'}}>Amount</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          {loading ? (
+            <tr><td colSpan={6} style={{padding:30,textAlign:'center'}}>Loading...</td></tr>
+          ) : shown.length === 0 ? (
+            <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+              No payments recorded yet.
+              <button className="btn-xs pri" style={{marginLeft:10}}
+                onClick={()=>nav('/fi/voucher?type=PV')}>Record First Payment →</button>
+            </td></tr>
+          ) : shown.map(p => (
+            <tr key={p.id}>
+              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{p.jeNo}</strong></td>
+              <td style={{fontSize:11}}>{new Date(p.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
+              <td style={{fontWeight:600,fontSize:12,maxWidth:280}}>{p.narration}</td>
+              <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{p.refNo||'—'}</td>
+              <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-red)',fontSize:13}}>{INR(p.totalDebit)}</td>
+              <td><button className="btn-xs" onClick={()=>nav('/fi/daybook')}>View</button></td>
+            </tr>
+          ))}
+        </tbody>
+        {shown.length > 0 && (
+          <tfoot>
+            <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #E0D5E0'}}>
+              <td colSpan={4} style={{padding:'8px 12px',color:'#714B67'}}>TOTAL</td>
+              <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-red)',fontSize:14}}>{INR(total)}</td>
+              <td/>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   )

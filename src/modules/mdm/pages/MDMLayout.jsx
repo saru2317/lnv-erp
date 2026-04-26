@@ -22,6 +22,7 @@ const ItemTypeMaster     = lazy(() => import('./ItemTypeMaster'))
 const MaterialTypeMaster = lazy(() => import('./MaterialTypeMaster'))
 const SupplierTypeMaster = lazy(() => import('./SupplierTypeMaster'))
 const ProcessMaster      = lazy(() => import('./ProcessMaster'))
+const PaymentTermsMaster = lazy(() => import('./PaymentTermsMaster'))
 
 const NAV = [
   { to:'/mdm',           label:'Dashboard' },
@@ -52,6 +53,7 @@ const SIDEBAR = [
     { to:'/mdm/supplier-type', label:'Supplier Type'       },
   ]},
   { label:'Finance Masters', icon:'💰', items:[
+    { to:'/mdm/payment-terms', label:'Payment Terms'     },
     { to:'/mdm/accounts',      label:'Chart of Accounts'   },
     { to:'/mdm/cost-centers',  label:'Cost Centers'        },
   ]},
@@ -81,6 +83,7 @@ export default function MDMLayout() {
           <Route path="process"               element={<ProcessMaster />}      />
           <Route path="customers"             element={<CustomerMaster />}     />
           <Route path="vendors"               element={<VendorMaster />}       />
+          <Route path="payment-terms"         element={<PaymentTermsMaster />} />
           <Route path="accounts"              element={<ChartOfAccounts />}    />
           <Route path="cost-centers"          element={<CostCenters />}        />
           <Route path="warehouse"             element={<WarehouseMaster />}    />

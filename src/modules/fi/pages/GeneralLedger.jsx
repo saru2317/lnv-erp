@@ -1,108 +1,103 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const ACCOUNTS_LIST = [
-  {code:'1100',name:'Cash in Hand'},
-  {code:'1200',name:'Bank — HDFC Current'},
-  {code:'1300',name:'Accounts Receivable (AR)'},
-  {code:'1400',name:'Stock / Inventory'},
-  {code:'1500',name:'Fixed Assets — P&M'},
-  {code:'2100',name:'Accounts Payable (AP)'},
-  {code:'2200',name:'GST Payable'},
-  {code:'5100',name:'Sales Revenue'},
-  {code:'6100',name:'COGS — Direct Material'},
-  {code:'6200',name:'Salary & Wages'},
-]
-
-const LEDGER_DATA = {
-  '1200': {
-    name:'Bank — HDFC Current', opening:'₹18,42,000 Cr', totalDr:'₹5,93,000', totalCr:'₹15,07,000', closing:'₹27,56,000 Cr',
-    rows:[
-      {date:'01 Feb',jv:'—',narr:'Opening Balance',ref:'—',dr:'',cr:'',bal:'₹18,42,000 Cr',balCls:'pos'},
-      {date:'05 Feb',jv:'JV-2025-0130',narr:'Payment to Lakshmi Textiles (MM)',ref:'PAY-018',dr:'₹66,000',cr:'',bal:'₹17,76,000 Cr',balCls:'pos'},
-      {date:'10 Feb',jv:'JV-2025-0135',narr:'Receipt from ABC Textiles (SD)',ref:'REC-024',dr:'',cr:'₹4,72,000',bal:'₹22,48,000 Cr',balCls:'pos'},
-      {date:'15 Feb',jv:'JV-2025-0138',narr:'Salary Feb advance (HCM)',ref:'SAL-002',dr:'₹4,20,000',cr:'',bal:'₹18,28,000 Cr',balCls:'pos'},
-      {date:'20 Feb',jv:'JV-2025-0142',narr:'Receipt from MNO Fabrics (SD)',ref:'REC-028',dr:'',cr:'₹8,50,000',bal:'₹26,78,000 Cr',balCls:'pos'},
-      {date:'26 Feb',jv:'JV-2025-0146',narr:'Receipt from XYZ Industries (SD)',ref:'REC-031',dr:'',cr:'₹1,85,000',bal:'₹28,63,000 Cr',balCls:'pos'},
-      {date:'27 Feb',jv:'JV-2025-0147',narr:'Payment to Aruna Industries (MM)',ref:'PAY-022',dr:'₹48,500',cr:'',bal:'₹28,14,500 Cr',balCls:'pos'},
-      {date:'28 Feb',jv:'JV-2025-0148',narr:'Bank charges Feb 2025',ref:'BNK-001',dr:'₹58,500',cr:'',bal:'₹27,56,000 Cr',balCls:'pos'},
-    ]
-  },
-  '1300': {
-    name:'Accounts Receivable (AR)', opening:'₹8,40,000 Dr', totalDr:'₹48,60,000', totalCr:'₹44,80,000', closing:'₹12,20,000 Dr',
-    rows:[
-      {date:'01 Feb',jv:'—',narr:'Opening Balance',ref:'—',dr:'',cr:'',bal:'₹8,40,000 Dr',balCls:'pos'},
-      {date:'24 Feb',jv:'JV-2025-0144',narr:'Sales to MNO Fabrics INV-041 (SD)',ref:'INV-041',dr:'₹3,54,000',cr:'',bal:'₹11,94,000 Dr',balCls:'pos'},
-      {date:'28 Feb',jv:'JV-2025-0148',narr:'Sales to ABC Textiles INV-042 (SD)',ref:'INV-042',dr:'₹2,36,000',cr:'',bal:'₹14,30,000 Dr',balCls:'pos'},
-      {date:'20 Feb',jv:'JV-2025-0142',narr:'Payment received MNO Fabrics',ref:'REC-028',dr:'',cr:'₹8,50,000',bal:'₹5,80,000 Dr',balCls:'pos'},
-      {date:'26 Feb',jv:'JV-2025-0146',narr:'Payment received XYZ Industries',ref:'REC-031',dr:'',cr:'₹1,85,000',bal:'₹3,95,000 Dr',balCls:'pos'},
-      {date:'28 Feb',jv:'—',narr:'Closing Balance',ref:'—',dr:'',cr:'',bal:'₹12,20,000 Dr',balCls:'pos'},
-    ]
-  },
-  '5100': {
-    name:'Sales Revenue', opening:'₹0', totalDr:'₹0', totalCr:'₹48,60,000', closing:'₹48,60,000 Cr',
-    rows:[
-      {date:'24 Feb',jv:'JV-2025-0144',narr:'Sales to MNO Fabrics (SD)',ref:'INV-041',dr:'',cr:'₹3,00,000',bal:'₹3,00,000 Cr',balCls:'pos'},
-      {date:'26 Feb',jv:'JV-2025-0145',narr:'Sales — surface treatment lot',ref:'INV-039',dr:'',cr:'₹28,00,000',bal:'₹31,00,000 Cr',balCls:'pos'},
-      {date:'28 Feb',jv:'JV-2025-0148',narr:'Sales to ABC Textiles (SD)',ref:'INV-042',dr:'',cr:'₹2,00,000',bal:'₹33,00,000 Cr',balCls:'pos'},
-      {date:'28 Feb',jv:'JV-2025-0149',narr:'Other sales — Feb 2025',ref:'—',dr:'',cr:'₹15,60,000',bal:'₹48,60,000 Cr',balCls:'pos'},
-    ]
-  },
-}
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
 
 export default function GeneralLedger() {
-  const [acct, setAcct] = useState('1200')
-  const data = LEDGER_DATA[acct] || LEDGER_DATA['1200']
+  const [urlParams] = useSearchParams()
+  const [accts,   setAccts]   = useState([])
+  const [selAcct, setSelAcct] = useState(urlParams.get('acct') || '')
+  const [gl,      setGL]      = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [from,    setFrom]    = useState(`${new Date().getFullYear()}-04-01`)
+  const [to,      setTo]      = useState(new Date().toISOString().split('T')[0])
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/fi/coa`, { headers: hdr2() }).then(r=>r.json()).then(d=>setAccts(d.data||[])).catch(()=>{})
+  }, [])
+
+  const load = async (code) => {
+    if (!code) return
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/gl/${code}?from=${from}&to=${to}`, { headers: hdr2() })
+      const data = await res.json()
+      setGL(data.data)
+    } catch { toast.error('Failed to load GL') }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { if (selAcct) load(selAcct) }, [selAcct, from, to])
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">General Ledger <small>FBL3N · Account Statement</small></div>
+        <div className="fi-lv-title">General Ledger <small>FB03 · Account Statement</small></div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select" value={acct} onChange={e => setAcct(e.target.value)}>
-            {ACCOUNTS_LIST.map(a => <option key={a.code} value={a.code}>{a.code} · {a.name}</option>)}
+          <select className="sd-search" value={selAcct} onChange={e=>setSelAcct(e.target.value)} style={{width:280}}>
+            <option value="">-- Select Account --</option>
+            {accts.map(a=><option key={a.code} value={a.code}>{a.code} · {a.name}</option>)}
           </select>
-          <button className="btn btn-s sd-bsm">Export</button>
+          <input type="date" className="sd-search" value={from} onChange={e=>setFrom(e.target.value)} style={{width:140}}/>
+          <span style={{color:'#6C757D',fontSize:12}}>to</span>
+          <input type="date" className="sd-search" value={to} onChange={e=>setTo(e.target.value)} style={{width:140}}/>
         </div>
       </div>
 
-      <div className="fi-filter-bar">
-        <div className="fi-filter-search"><input placeholder="Search narration, JV no..."/></div>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
-        <button className="btn btn-s sd-bsm"> Reset</button>
-      </div>
-
-      <div className="acct-strip">
-        {[
-          {l:'Account',v:`${acct} · ${data.name}`},
-          {l:'Opening Balance',v:data.opening},
-          {l:'Total Debits (MTD)',v:data.totalDr},
-          {l:'Total Credits (MTD)',v:data.totalCr},
-          {l:'Closing Balance',v:data.closing},
-        ].map(i => (
-          <div key={i.l} className="acct-strip-item"><span>{i.l}</span><div>{i.v}</div></div>
-        ))}
-      </div>
-
-      <table className="fi-data-table">
-        <thead><tr>
-          <th>Date</th><th>JV No.</th><th>Narration</th><th>Ref</th>
-          <th>Debit (₹)</th><th>Credit (₹)</th><th>Balance (₹)</th>
-        </tr></thead>
-        <tbody>
-          {data.rows.map((r,i) => (
-            <tr key={i} style={i===0||i===data.rows.length-1 ? {background:'#EDE0EA',fontWeight:'700'} : {}}>
-              <td>{r.date}</td>
-              <td><span style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'var(--odoo-purple)'}}>{r.jv}</span></td>
-              <td>{r.narr}</td>
-              <td style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{r.ref}</td>
-              <td className="dr">{r.dr}</td>
-              <td className="cr">{r.cr}</td>
-              <td className={`bal ${r.balCls}`}>{r.bal}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!selAcct ? (
+        <div style={{padding:60,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8,background:'#fff'}}>
+          Select an account above to view ledger entries
+        </div>
+      ) : loading ? (
+        <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading GL...</div>
+      ) : gl ? (
+        <div>
+          {/* Account header */}
+          <div style={{background:'#714B67',borderRadius:8,padding:'12px 16px',marginBottom:12,display:'flex',justifyContent:'space-between',color:'#fff'}}>
+            <div><div style={{fontWeight:800,fontSize:15,fontFamily:'Syne,sans-serif'}}>{gl.account.code} · {gl.account.name}</div>
+            <div style={{fontSize:11,opacity:.7,marginTop:2}}>{gl.account.type} · {gl.account.subType}</div></div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:18}}>{INR(gl.closingBalance)}</div>
+              <div style={{fontSize:11,opacity:.7}}>{gl.closingSide}</div>
+            </div>
+          </div>
+          <table className="fi-data-table">
+            <thead><tr>
+              <th>Date</th><th>JV No.</th><th>Narration</th><th>Ref</th>
+              <th style={{textAlign:'right',color:'var(--odoo-red)'}}>Debit</th>
+              <th style={{textAlign:'right',color:'var(--odoo-green)'}}>Credit</th>
+              <th style={{textAlign:'right'}}>Balance</th>
+            </tr></thead>
+            <tbody>
+              {gl.rows.length===0 ? <tr><td colSpan={7} style={{padding:30,textAlign:'center',color:'#6C757D'}}>No transactions in period</td></tr>
+              : gl.rows.map((r,i)=>(
+                <tr key={i} style={{borderBottom:'1px solid #F0EEF0'}}>
+                  <td style={{fontSize:11}}>{new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</td>
+                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'var(--odoo-purple)'}}>{r.jeNo}</td>
+                  <td style={{fontSize:12,maxWidth:250}}>{r.narration}</td>
+                  <td style={{fontSize:11,color:'#6C757D'}}>{r.refNo||'—'}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:r.debit>0?'var(--odoo-red)':'#DDD'}}>{r.debit>0?INR(r.debit):'—'}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:r.credit>0?'var(--odoo-green)':'#DDD'}}>{r.credit>0?INR(r.credit):'—'}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(r.balance)} <span style={{fontSize:10,color:'#6C757D'}}>{r.balSide}</span></td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #E0D5E0'}}>
+                <td colSpan={4} style={{padding:'8px 10px',color:'#714B67'}}>TOTAL</td>
+                <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-red)'}}>{INR(gl.totalDr)}</td>
+                <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>{INR(gl.totalCr)}</td>
+                <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:14,color:'#714B67'}}>{INR(gl.closingBalance)} {gl.closingSide}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      ) : null}
     </div>
   )
 }
+

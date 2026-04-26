@@ -1,72 +1,83 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const EWBS = [
-  { no:'EWB-2026-0041', inv:'INV-2026-0082', party:'Ashok Leyland',      mode:'Road',    veh:'TN38AK1234', from:'Ranipet',    to:'Chennai',     val:391680, date:'05 Mar', exp:'08 Mar', status:'active'  },
-  { no:'EWB-2026-0042', inv:'INV-2026-0083', party:'TVS Motors',          mode:'Road',    veh:'TN38BK5678', from:'Ranipet',    to:'Hosur',       val:812160, date:'08 Mar', exp:'11 Mar', status:'active'  },
-  { no:'EWB-2026-0043', inv:'INV-2026-0081', party:'Coimbatore Spinners', mode:'Road',    veh:'TN37CK9012', from:'Ranipet',    to:'Coimbatore',  val:142800, date:'01 Mar', exp:'04 Mar', status:'expired' },
-  { no:'EWB-2026-0044', inv:'PO-2026-0051',  party:'Rajesh Chemicals',    mode:'Rail',    veh:'RAIL-XXXXXX',from:'Chennai',    to:'Ranipet',     val:95000,  date:'10 Mar', exp:'15 Mar', status:'transit' },
-  { no:'EWB-2026-0045', inv:'INV-2026-0084', party:'ARS Cotton Mills',    mode:'Road',    veh:'TN38DK3456', from:'Ranipet',    to:'Erode',       val:282068, date:'12 Mar', exp:'15 Mar', status:'delivered'},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-const ST = {
-  active:   {label:'🟢 Active',    bg:'#D4EDDA',color:'#155724'},
-  expired:  {label:' Expired',   bg:'#F8D7DA',color:'#721C24'},
-  transit:  {label:' In Transit',bg:'#D1ECF1',color:'#0C5460'},
-  delivered:{label:' Delivered', bg:'#E2E3E5',color:'#383D41'},
+function MonthYearPicker({ month, year, onChange }) {
+  return (
+    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+      <select className="sd-search" value={month} onChange={e=>onChange(parseInt(e.target.value),year)} style={{width:90}}>
+        {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+      </select>
+      <select className="sd-search" value={year} onChange={e=>onChange(month,parseInt(e.target.value))} style={{width:80}}>
+        {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function GSTKpi({ label, value, sub, cls }) {
+  return (
+    <div className={`fi-kpi-card ${cls}`}>
+      <div className="fi-kpi-label">{label}</div>
+      <div className="fi-kpi-value">{value}</div>
+      <div className="fi-kpi-sub">{sub}</div>
+    </div>
+  )
 }
 
 export default function EWayBill() {
+  const [bills, setBills] = useState([])
+  const [loading,setLoading] = useState(true)
+
+  useEffect(() => {
+    // Load from sales invoices (dispatch data)
+    const now = new Date()
+    fetch(`${BASE_URL}/fi/gst/gstr1?month=${now.getMonth()+1}&year=${now.getFullYear()}`, { headers: hdr2() })
+      .then(r=>r.json()).then(d=>setBills(d.invoices||[])).catch(()=>[])
+      .finally(()=>setLoading(false))
+  },[])
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">E-Way Bill <small>Goods Movement · Mandatory for value &gt; ₹50,000</small></div>
+        <div className="fi-lv-title">E-Way Bill <small>Consignment &gt; ₹50,000</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm"> Sync Portal</button>
-          <button className="btn btn-p sd-bsm">+ Generate EWB</button>
+          <button className="btn btn-s sd-bsm">Sync</button>
+          <button className="btn btn-p sd-bsm">Generate EWB</button>
         </div>
       </div>
 
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:20}}>
-        {[
-          {cls:'green',  l:'Active EWBs',   v:'2', s:'In transit'},
-          {cls:'red',    l:'Expired',        v:'1', s:'Needs extension'},
-          {cls:'blue',   l:'Delivered',      v:'1', s:'Completed'},
-          {cls:'orange', l:'Expiring Today', v:'2', s:'Action needed'},
-        ].map(k=>(
-          <div key={k.l} className={`fi-kpi-card ${k.cls}`}>
-            <div className="fi-kpi-label">{k.l}</div>
-            <div className="fi-kpi-value">{k.v}</div>
-            <div className="fi-kpi-sub">{k.s}</div>
-          </div>
-        ))}
+      <div className="fi-alert info">
+        E-Way Bill required for goods movement &gt; ₹50,000. Generate on NIC portal (ewaybillgst.gov.in). API integration pending.
       </div>
 
       <table className="fi-data-table">
-        <thead>
-          <tr><th>EWB No.</th><th>Invoice</th><th>Party</th><th>Mode</th><th>Vehicle</th><th>From</th><th>To</th><th>Value</th><th>Valid Till</th><th>Status</th><th>Action</th></tr>
-        </thead>
+        <thead><tr>
+          <th>Invoice No.</th><th>Customer</th>
+          <th style={{textAlign:'right'}}>Value</th>
+          <th>EWB Status</th><th>Valid Till</th><th>Actions</th>
+        </tr></thead>
         <tbody>
-          {EWBS.map(e=>{
-            const s=ST[e.status]
-            return(
-              <tr key={e.no}>
-                <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{e.no}</strong></td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:11}}>{e.inv}</td>
-                <td style={{fontSize:12,fontWeight:600}}>{e.party}</td>
-                <td>{e.mode}</td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:11}}>{e.veh}</td>
-                <td>{e.from}</td><td>{e.to}</td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:600}}>₹{e.val.toLocaleString('en-IN')}</td>
-                <td style={{color:e.status==='expired'?'var(--odoo-red)':'var(--odoo-dark)',fontWeight:e.status==='expired'?700:400}}>{e.exp}</td>
-                <td><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:s.bg,color:s.color}}>{s.label}</span></td>
-                <td style={{display:'flex',gap:4}}>
-                  {e.status==='active'&&<button className="btn-xs">Extend</button>}
-                  {e.status==='expired'&&<button className="btn-xs pri"> Renew</button>}
-                  <button className="btn-xs">Print</button>
-                </td>
-              </tr>
-            )
-          })}
+          {loading ? <tr><td colSpan={6} style={{padding:30,textAlign:'center'}}>Loading...</td></tr>
+          : bills.filter(b=>parseFloat(b.totalAmt||b.grandTotal||0)>=50000).length===0
+          ? <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>No invoices above ₹50,000 this month</td></tr>
+          : bills.filter(b=>parseFloat(b.totalAmt||b.grandTotal||0)>=50000).map((b,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:12,color:'var(--odoo-purple)'}}>{b.invoiceNo}</td>
+              <td>{b.customerName||b.custName}</td>
+              <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(b.totalAmt||b.grandTotal||0)}</td>
+              <td><span style={{background:'#FFF3CD',color:'#856404',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:700}}>Not Generated</span></td>
+              <td style={{color:'#6C757D',fontSize:12}}>—</td>
+              <td><button className="btn-xs">Generate EWB</button></td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

@@ -1,5 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { mmApi } from '../services/mmApi'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
 
 const N_ITEMS   = 5
 const GST_RATES = [0, 0.05, 0.12, 0.18, 0.28]
@@ -11,7 +16,8 @@ const emptyItem = () => ({
 })
 
 const emptySupplier = (label) => ({
-  label, name:'', supplyType:'Intrastate', quoteRef:'', quoteDate:'',
+  label, name:'', vendorCode:'', supplyType:'Intrastate',
+  quoteRef:'', quoteDate:'',
   deliveryTerms:'Door Delivery', paymentTerms:'Against Delivery',
   items: Array.from({length:N_ITEMS}, emptyItem),
 })
@@ -49,7 +55,7 @@ function fmt(n) {
   return '₹' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})
 }
 
-function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
+function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight, vendors=[], quotedVendors=[] }) {
   const updateSup = (field, val) => onChange({...sup, [field]:val})
   const updateItem = (i, field, val) => {
     const items = [...sup.items]
@@ -94,11 +100,32 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
         display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
         <div style={{fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:13,
           minWidth:100}}>Supplier {['I','II','III'][idx]}</div>
-        <div style={{flex:1,minWidth:180}}>
-          <input value={sup.name} placeholder="Supplier / Vendor Name"
-            onChange={e=>updateSup('name',e.target.value)}
+        <div style={{flex:1,minWidth:200}}>
+          <select value={sup.name}
+            onChange={e=>{
+              const allV = quotedVendors.length>0 ? quotedVendors : vendors
+              const found = allV.find(v=>(v.vendorName||v)===e.target.value)
+              updateSup('name', e.target.value)
+              if (found?.vendorCode) updateSup('vendorCode', found.vendorCode)
+            }}
             style={{width:'100%',borderRadius:4,border:'none',
-              fontSize:12,fontWeight:600,background:'rgba(255,255,255,.2)',color:'#fff',outline:'none','::placeholder':{color:'rgba(255,255,255,.6)'}}} />
+              fontSize:12,fontWeight:600,
+              background:'rgba(255,255,255,.15)',
+              color: sup.name?'#fff':'rgba(255,255,255,.6)',
+              outline:'none',cursor:'pointer',padding:'3px 6px'}}>
+            <option value="" style={{color:'#333'}}>-- Select Supplier --</option>
+            {(quotedVendors.length>0 ? quotedVendors : vendors)
+              .filter((v,i,arr)=>
+                arr.findIndex(x=>(x.vendorCode||x)===(v.vendorCode||v))===i
+              )
+              .map((v,i)=>(
+                <option key={`sup-${i}-${v.vendorCode||v}`}
+                  value={v.vendorName||v}
+                  style={{color:'#333'}}>
+                  {v.vendorCode ? `${v.vendorCode} — ${v.vendorName}` : v}
+                </option>
+              ))}
+          </select>
         </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           {[['Supply Type',sup.supplyType,v=>updateSup('supplyType',v),
@@ -263,15 +290,175 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight }) {
 
 export default function CSNew() {
   const nav = useNavigate()
-  const [csNo]    = useState('CS-2026-0019')
-  const [prNo, setPrNo]     = useState('PR-2026-0041')
-  const [date, setDate]     = useState(new Date().toISOString().split('T')[0])
-  const [prepBy, setPrepBy] = useState('')
+  const [csNo,    setCsNo]  = useState('CS-AUTO')
+  const [prNo,    setPrNo]  = useState('')
+  const [prs,     setPrs]   = useState([])
+  const [vendorList, setVendorList] = useState([])
+  const [rfqInfo,    setRfqInfo]    = useState(null)
+  const [activeBlocks, setActiveBlocks] = useState(3)
+  const [quotedVendors,setQuotedVendors]= useState([])
+  const [date,    setDate]  = useState(new Date().toISOString().split('T')[0])
+  const [prepBy,  setPrepBy]= useState(
+    JSON.parse(localStorage.getItem('lnv_user')||'{}')?.name||
+    localStorage.getItem('lnv_userName')||''
+  )
   const [selectedSup, setSelectedSup] = useState('')
-  const [reason, setReason] = useState('')
+  const [reason,  setReason]  = useState('')
   const [remarks, setRemarks] = useState('')
-  const [saved, setSaved]   = useState(false)
-  const [approved, setApproved] = useState(false)
+  const [saved,   setSaved]   = useState(false)
+  const [approved,setApproved]= useState(false)
+  const [saving,  setSaving]  = useState(false)
+
+  // Load PRs + generate CS number + auto-load PR/RFQ data from URL
+  useEffect(()=>{
+    const urlParams  = new URLSearchParams(window.location.search)
+    const prIdFromUrl  = urlParams.get('pr')
+    const prNoFromUrl  = urlParams.get('prNo')
+    const rfqIdFromUrl = urlParams.get('rfq')
+
+    mmApi.getPRList()
+      .then(d=>setPrs(d.data||[]))
+      .catch(()=>{})
+
+    // Load vendor master for dropdowns
+    mmApi.getVendors()
+      .then(d=>setVendorList(d.data||[]))
+      .catch(()=>{})
+
+    fetch(`${BASE_URL}/mm/cs/next-no`,
+      {headers:{Authorization:`Bearer ${getToken()}`}})
+      .then(r=>r.json())
+      .then(d=>setCsNo(d.csNo||'CS-2026-0001'))
+      .catch(()=>{})
+
+    // Helper: fill supplier blocks from item list
+    const fillSupplierItems = (itemLines) => {
+      const mapped = itemLines.slice(0,5).map(l=>({
+        desc: l.itemName||'', spec: l.specification||l.spec||'',
+        uom:  l.unit||'Nos', qty:  String(parseFloat(l.qty||1)),
+        rate:'', discPct:0, packing:0, freight:0,
+        cutting:0, gstPct:18, loading:0
+      }))
+      const padded = [
+        ...mapped,
+        ...Array.from({length:Math.max(0,5-mapped.length)},
+          ()=>({desc:'',spec:'',uom:'Nos',qty:'',rate:'',
+            discPct:0,packing:0,freight:0,cutting:0,gstPct:18,loading:0}))
+      ]
+      return padded
+    }
+
+    // ── LOAD FROM RFQ (with supplier quotes) ──────────────
+    if (rfqIdFromUrl) {
+      fetch(`${BASE_URL}/mm/rfq/${rfqIdFromUrl}`,
+        {headers:{Authorization:`Bearer ${getToken()}`}})
+        .then(r=>r.json())
+        .then(d=>{
+          const rfq    = d.data
+          if (!rfq) return
+          // Set PR no from RFQ
+          if (rfq.prNo) setPrNo(rfq.prNo)
+
+          const rfqLines  = rfq.lines||[]
+          const rfqQuotes = rfq.quotes||[]
+
+          // Fill item descriptions from RFQ lines
+          const itemRows = fillSupplierItems(rfqLines)
+
+          // Map supplier quotes into supplier blocks
+          const newSuppliers = [0,1,2].map(idx=>{
+            const quote = rfqQuotes[idx]
+            if (quote) {
+              // Parse saved quote lines
+              let qLines = []
+              try { qLines = JSON.parse(quote.lines||'[]') } catch {}
+
+              // Map quote lines with actual rates to item rows
+              const qItems = itemRows.map((row, rowIdx) => {
+                const ql = qLines[rowIdx]
+                if (!ql) return row
+                return {
+                  ...row,
+                  rate:    ql.rate   || ql.rate   || '',
+                  discPct: ql.disc   || ql.discPct|| 0,
+                  packing: ql.packing|| 0,
+                  freight: ql.freight|| 0,
+                  cutting: ql.cutting|| 0,
+                  gstPct:  ql.gst    || ql.gstRate || 18,
+                }
+              })
+
+              return {
+                label:  `Supplier ${['I','II','III'][idx]}`,
+                name:   quote.vendorName||'',
+                supplyType:'Intrastate',
+                quoteRef:  quote.quoteRef||'',
+                quoteDate: quote.quoteDate
+                  ? new Date(quote.quoteDate).toISOString().split('T')[0]
+                  : '',
+                deliveryTerms:'Door Delivery',
+                paymentTerms: 'Against Delivery',
+                items: qItems
+              }
+            }
+            // No quote for this slot - empty with items prefilled
+            return {
+              label:`Supplier ${['I','II','III'][idx]}`,
+              name:'', supplyType:'Intrastate',
+              quoteRef:'', quoteDate:'',
+              deliveryTerms:'Door Delivery',
+              paymentTerms:'Against Delivery',
+              items: itemRows
+            }
+          })
+
+          setSuppliers(newSuppliers)
+
+          const qCount = rfqQuotes.length
+          const quotedVendorList = rfqQuotes.map(q=>({
+            vendorCode: q.vendorCode||'',
+            vendorName: q.vendorName
+          }))
+          setQuotedVendors(quotedVendorList)
+          setRfqInfo({
+            rfqNo: rfq.rfqNo,
+            subject: rfq.subject,
+            quotesReceived: qCount,
+            deadline: rfq.deadline,
+            vendors: rfqQuotes.map(q=>q.vendorName)
+          })
+          // Show only as many supplier blocks as quotes received (min 1)
+          setActiveBlocks(Math.max(1, qCount))
+          if (qCount > 0) {
+            toast.success(`${qCount} supplier quote(s) loaded from RFQ!`)
+          } else {
+            toast(`RFQ items loaded. Add supplier rates.`,
+              {icon:'📋'})
+          }
+        })
+        .catch(e=>toast.error(e.message))
+      return // Don't load PR separately if RFQ loaded
+    }
+
+    // ── LOAD FROM PR directly ─────────────────────────────
+    if (prIdFromUrl) {
+      setPrNo(prNoFromUrl||prIdFromUrl)
+      fetch(`${BASE_URL}/mm/pr/${prIdFromUrl}/items`,
+        {headers:{Authorization:`Bearer ${getToken()}`}})
+        .then(r=>r.json())
+        .then(d=>{
+          const prLines = d.data?.lines||[]
+          if (prLines.length>0) {
+            const itemRows = fillSupplierItems(prLines)
+            setSuppliers(prev=>prev.map(sup=>({
+              ...sup, items:itemRows
+            })))
+            toast.success(`PR ${prNoFromUrl} items loaded!`)
+          }
+        })
+        .catch(()=>{})
+    }
+  },[])
 
   const [suppliers, setSuppliers] = useState([
     emptySupplier('Supplier I'),
@@ -299,8 +486,76 @@ export default function CSNew() {
     return costs.reduce((min,x) => x.cost < min.cost ? x : min, costs[0]).si
   }
 
-  const handleSave = () => { setSaved(true) }
-  const handleApprove = () => { setApproved(true); setTimeout(()=>nav('/mm/po/new'),1000) }
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const itemDesc = suppliers[0].items
+        .filter(i=>i.desc).map(i=>i.desc).join(', ')
+      const payload = {
+        prNo, itemDesc: itemDesc||'Items as per CS',
+        selectedSupplier: selectedSup,
+        remarks,
+        quotes: suppliers
+          .slice(0, activeBlocks)
+          .filter(s=>s.name)
+          .map((s,idx)=>({
+            supplierNo: idx+1,
+            supplierName: s.name,
+            unitRate: parseFloat(s.items[0]?.rate||0),
+            qty: parseFloat(s.items[0]?.qty||1),
+            amount: s.items.reduce((sum,item)=>sum+calcItem(item).totalVal,0),
+            deliveryDays: null,
+            remarks: `Payment: ${s.paymentTerms} | Delivery: ${s.deliveryTerms}`
+          })),
+      }
+      if (!payload.quotes.length)
+        return toast.error('Add at least one supplier with name!')
+      const res = await mmApi.createCS(payload)
+      toast.success(res.message)
+      setCsNo(res.data?.csNo||csNo)
+      setSaved(true)
+    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
+  }
+  const handleApprove = async () => {
+    if (!selectedSup) return toast.error('Select a supplier first!')
+    // Allow CS→PO without prior save (save happens via handleSave separately)
+    const selIdx = ['Supplier I','Supplier II','Supplier III'].indexOf(selectedSup)
+    const selSupplier = suppliers[selIdx>=0?selIdx:0]
+    setSaving(true)
+    try {
+      toast.success('CS sent for HOD Approval!')
+      setApproved(true)
+      // Store for PO creation after HOD approves
+      // Map CS supplier items → PONew format
+      const csItems = (selSupplier?.items||[])
+        .filter(i=>i.desc||i.itemName||i.rate)
+        .map(i=>({
+          itemName:      i.desc||i.itemName||'',
+          specification: i.spec||i.specification||'',
+          unit:          i.uom||i.unit||'Nos',
+          qty:           parseFloat(i.qty||1),
+          rate:          parseFloat(i.rate||0),
+          discount:      parseFloat(i.discPct||i.discount||0),
+          gstRate:       parseFloat(i.gstPct||i.gstRate||18),
+          hsnCode:       i.hsnCode||'',
+        }))
+
+      sessionStorage.setItem('cs_to_po', JSON.stringify({
+        csNo,
+        prNo,
+        selectedSup,
+        reason,
+        vendorName:    selSupplier?.name||'',
+        vendorCode:    selSupplier?.vendorCode||'',
+        paymentTerms:  selSupplier?.paymentTerms||'Net 30 Days',
+        deliveryTerms: selSupplier?.deliveryTerms||'',
+        quoteRef:      selSupplier?.quoteRef||'',
+        supplyType:    selSupplier?.supplyType||'Intrastate',
+        items:         csItems,
+      }))
+      setTimeout(()=>nav('/mm/po/new?from=cs'), 1200)
+    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
+  }
 
   return (
     <div style={{maxWidth:1400}}>
@@ -314,12 +569,12 @@ export default function CSNew() {
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/pr')}>← Back to PR</button>
           <button className="btn btn-s sd-bsm" onClick={()=>nav('/mm/cs/view')}> Print View</button>
           <button className="btn btn-s sd-bsm" onClick={handleSave}>
-            {saved ? ' Saved' : ' Save Draft'}
+            {saved ? ' Saved' : saving?'⏳ Saving...':saved?' Saved':' Save Draft'}
           </button>
           <button className="btn btn-p sd-bsm"
             style={{background:approved?'#155724':'var(--odoo-green)',color:'#fff'}}
             onClick={handleApprove}>
-            {approved ? ' Approved! Raising PO…' : ' HOD Approve & Raise PO'}
+            {saving?'⏳..':approved?' Approved! Raising PO…':' HOD Approve & Raise PO'}
           </button>
         </div>
       </div>
@@ -349,10 +604,10 @@ export default function CSNew() {
         <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
           {[
             ['CS No.',       csNo,    null,       false],
-            ['PR No.',       prNo,    setPrNo,    true],
+            ['PR No.',       prNo,    setPrNo,    true,'pr_select'],
             ['Date',         date,    setDate,    true,'date'],
             ['Prepared By',  prepBy,  setPrepBy,  true],
-            ['Supplier Selected',selectedSup,setSelectedSup,true],
+            ['Supplier Selected',selectedSup,setSelectedSup,true,'sup_select'],
           ].map(([lbl,val,setter,editable,type])=>(
             <div key={lbl}>
               <label style={{fontSize:11,fontWeight:700,
@@ -360,9 +615,20 @@ export default function CSNew() {
               {!editable
                 ? <div style={{padding:'7px 10px',background:'#F8F9FA',borderRadius:5,
                     border:'1px solid var(--odoo-border)',fontSize:12,fontWeight:700,color:'var(--odoo-purple)',fontFamily:'DM Mono,monospace'}}>{val}</div>
-                : <input type={type||'text'} value={val} onChange={e=>setter(e.target.value)}
-                    style={{width:'100%',padding:'7px 10px',border:'1.5px solid var(--odoo-border)',
-                      borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box'}} />
+                : type==='pr_select'
+                  ? <select value={val} onChange={e=>setter(e.target.value)}
+                      style={{width:'100%',padding:'7px 10px',border:'1.5px solid var(--odoo-border)',
+                        borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box',cursor:'pointer'}}>
+                      <option value="">-- Select PR --</option>
+                      {prs.map(p=>(
+                        <option key={p.prNo} value={p.prNo}>
+                          {p.prNo} · {p.department}
+                        </option>
+                      ))}
+                    </select>
+                  : <input type={type||'text'} value={val} onChange={e=>setter(e.target.value)}
+                      style={{width:'100%',padding:'7px 10px',border:'1.5px solid var(--odoo-border)',
+                        borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',boxSizing:'border-box'}} />
               }
             </div>
           ))}
@@ -382,6 +648,58 @@ export default function CSNew() {
         )}
       </div>
 
+      {/* RFQ Info Banner */}
+      {rfqInfo && (
+        <div style={{background:'linear-gradient(135deg,#0C5460,#155724)',
+          borderRadius:8,padding:'12px 16px',marginBottom:14,
+          display:'flex',gap:20,alignItems:'center',flexWrap:'wrap'}}>
+          <div style={{color:'#fff'}}>
+            <div style={{fontSize:10,color:'rgba(255,255,255,.7)',
+              textTransform:'uppercase',letterSpacing:.5}}>Loaded from RFQ</div>
+            <div style={{fontSize:14,fontWeight:800,
+              fontFamily:'Syne,sans-serif'}}>{rfqInfo.rfqNo}</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,.8)'}}>
+              {rfqInfo.subject}
+            </div>
+          </div>
+          <div style={{background:'rgba(255,255,255,.15)',borderRadius:8,
+            padding:'8px 16px',textAlign:'center'}}>
+            <div style={{fontSize:10,color:'rgba(255,255,255,.7)',
+              textTransform:'uppercase'}}>Quotes Received</div>
+            <div style={{fontSize:24,fontWeight:800,color:'#90EE90',
+              fontFamily:'Syne,sans-serif'}}>{rfqInfo.quotesReceived}</div>
+          </div>
+          {rfqInfo.vendors?.length>0 && (
+            <div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,.7)',
+                textTransform:'uppercase',marginBottom:4}}>
+                Suppliers Quoted
+              </div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {rfqInfo.vendors.map((v,i)=>(
+                  <span key={i} style={{padding:'2px 10px',
+                    background:'rgba(255,255,255,.2)',
+                    border:'1px solid rgba(255,255,255,.4)',
+                    borderRadius:12,fontSize:11,color:'#fff',
+                    fontWeight:600}}>
+                    {['I','II','III'][i]} — {v}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {rfqInfo.quotesReceived < 3 && (
+            <div style={{background:'rgba(255,193,7,.2)',
+              border:'1px solid rgba(255,193,7,.5)',
+              borderRadius:6,padding:'6px 12px',fontSize:11,
+              color:'#FFD700'}}>
+              ⚠️ Only {rfqInfo.quotesReceived}/3 quotes received.<br/>
+              Remaining supplier blocks are empty — fill manually.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Legend */}
       <div style={{display:'flex',gap:12,marginBottom:12,flexWrap:'wrap'}}>
         {[
@@ -398,8 +716,10 @@ export default function CSNew() {
       </div>
 
       {/* Supplier blocks */}
-      {suppliers.map((sup, idx) => (
+      {suppliers.slice(0, activeBlocks).map((sup, idx) => (
         <SupplierBlock key={idx} sup={sup} idx={idx}
+          vendors={vendorList}
+          quotedVendors={quotedVendors}
           onChange={updated => {
             const copy = [...suppliers]
             copy[idx] = updated
@@ -410,6 +730,17 @@ export default function CSNew() {
           bgLight={idx===0?'#F0E8EF':idx===1?'#EBF7EB':'#E8F4F8'}
         />
       ))}
+      {activeBlocks < 3 && (
+        <div style={{textAlign:'center',padding:'10px 0'}}>
+          <button onClick={()=>setActiveBlocks(p=>Math.min(p+1,3))}
+            style={{padding:'6px 20px',background:'#F8F4F8',
+              border:'2px dashed #714B67',borderRadius:6,
+              color:'#714B67',fontSize:12,cursor:'pointer',
+              fontWeight:600}}>
+            + Add Supplier Block
+          </button>
+        </div>
+      )}
 
       {/* Comparison summary — auto highlight lowest */}
       {suppliers.some(s=>s.items.some(i=>parseFloat(i.rate)>0)) && (

@@ -1,165 +1,356 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const PRODUCTS = [
-  {id:'p1',label:'MAT-FG-001 · Ring Yarn (30s Count)',bom:'BOM-002 · Ring Yarn v2.1',route:'RTE-001 · Standard Ring Yarn Route',mc:'RFM-01 · Ring Frame Machine 01',
-   comps:[{seq:1,mat:'Cotton Sliver (MAT-001)',reqQty:440,uom:'Kg',avail:480,status:'available'},
-          {seq:2,mat:'Lattice Aprons (MAT-003)',reqQty:4,uom:'Nos',avail:35,status:'available'},
-          {seq:3,mat:'Ring Yarn Bobbin (MAT-008)',reqQty:200,uom:'Nos',avail:350,status:'available'}],
-   ops:[{seq:10,op:'Mixing & Blow Room',wc:'BLW-01',setup:'30 min',run:'0.5 min/Kg',total:'230 min'},
-        {seq:20,op:'Carding',wc:'CRD-01',setup:'20 min',run:'0.8 min/Kg',total:'340 min'},
-        {seq:30,op:'Drawing (1st Pass)',wc:'DRW-01',setup:'15 min',run:'0.4 min/Kg',total:'175 min'},
-        {seq:40,op:'Ring Spinning',wc:'RFM-01',setup:'45 min',run:'2.0 min/Kg',total:'845 min'},
-        {seq:50,op:'Winding & Packing',wc:'WD-01',setup:'20 min',run:'0.3 min/Kg',total:'140 min'}]},
-  {id:'p2',label:'MAT-FG-002 · Open End Yarn (12s)',bom:'BOM-003 · Open End Yarn v1.5',route:'RTE-002 · Open End Route',mc:'OE-02 · Open End Machine',
-   comps:[{seq:1,mat:'Cotton Bale (MAT-002)',reqQty:330,uom:'Kg',avail:80,status:'short'},
-          {seq:2,mat:'OE Rotors (MAT-006)',reqQty:12,uom:'Nos',avail:24,status:'available'}],
-   ops:[{seq:10,op:'Blow Room',wc:'BLW-01',setup:'20 min',run:'0.4 min/Kg',total:'140 min'},
-        {seq:20,op:'Carding',wc:'CRD-01',setup:'20 min',run:'0.8 min/Kg',total:'260 min'},
-        {seq:30,op:'OE Spinning',wc:'OE-02',setup:'30 min',run:'1.5 min/Kg',total:'480 min'},
-        {seq:40,op:'Winding',wc:'WD-01',setup:'15 min',run:'0.2 min/Kg',total:'75 min'}]},
-  {id:'p3',label:'MAT-FG-003 · Compact Cotton Sliver',bom:'BOM-001 · Compact Sliver v2.0',route:'RTE-003 · Compact Sliver Route',mc:'CSP-01 · Compact Spinning',
-   comps:[{seq:1,mat:'Cotton Bale (MAT-002)',reqQty:880,uom:'Kg',avail:480,status:'available'},
-          {seq:2,mat:'Card Clothing (MAT-007)',reqQty:2,uom:'Set',avail:5,status:'available'}],
-   ops:[{seq:10,op:'Blow Room',wc:'BLW-01',setup:'30 min',run:'0.5 min/Kg',total:'430 min'},
-        {seq:20,op:'Carding',wc:'CRD-01',setup:'20 min',run:'0.6 min/Kg',total:'500 min'},
-        {seq:30,op:'Drawing',wc:'DRW-01',setup:'15 min',run:'0.3 min/Kg',total:'255 min'}]},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
+const hdr2 = () => ({ Authorization:`Bearer ${getToken()}` })
+
+const inp = { padding:'8px 10px', border:'1.5px solid #E0D5E0', borderRadius:5, fontSize:12, outline:'none', width:'100%', boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
+const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
+
+const INIT = {
+  itemCode:'', itemName:'', bomNo:'', routingNo:'',
+  plannedQty:'', uom:'Nos',
+  scheduledStart:'', scheduledEnd:'',
+  priority:'Normal', rmMethod:'push',
+  mouldId:'', cavityCount:'', batchSize:'',
+  remarks:'',
+}
 
 export default function WONew() {
   const nav = useNavigate()
-  const [prod, setProd] = useState(PRODUCTS[0])
-  const [qty, setQty] = useState(400)
-  const [done, setDone] = useState(false)
+  const [params] = useSearchParams()
+  const planId   = params.get('planId')
+  const soNo     = params.get('soNo')
 
-  if(done) return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}></div>
-      <div style={{fontFamily:'Syne,sans-serif',fontSize:'22px',fontWeight:'800',color:'var(--odoo-green)'}}>WO-2025-021 Created & Released!</div>
-      <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>Stock reserved · Shop floor notified · FI auto-journal queued</div>
-      <div style={{display:'flex',gap:'10px'}}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Work Orders</button>
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/pp/entry')}> Production Entry</button>
-      </div>
+  const [form,        setForm]        = useState(INIT)
+  const [woNo,        setWoNo]        = useState('Auto-generated')
+  const [config,      setConfig]      = useState(null)
+  const [items,       setItems]       = useState([])
+  const [boms,        setBoms]        = useState([])
+  const [routings,    setRoutings]    = useState([])
+  const [bomComps,    setBomComps]    = useState([])   // BOM components
+  const [operations,  setOperations]  = useState([])   // Routing operations
+  const [saving,      setSaving]      = useState(false)
+  const [loading,     setLoading]     = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [rN, rC, rI, rB, rR] = await Promise.all([
+        fetch(`${BASE_URL}/pp/wo/next-no`,     { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/config`,         { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/item`,          { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/bom`,           { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/routing`,       { headers: hdr2() }),
+      ])
+      const [dN, dC, dI, dB, dR] = await Promise.all([rN.json(), rC.json(), rI.json(), rB.json(), rR.json()])
+      setWoNo(dN.woNo || `WO-${new Date().getFullYear()}-0001`)
+      setConfig(dC.data)
+      setItems(dI.data  || [])
+      setBoms(dB.data   || [])
+      setRoutings(dR.data || [])
+
+      // Pre-fill from plan
+      if (planId) {
+        const rP = await fetch(`${BASE_URL}/pp/plan/${planId}`, { headers: hdr2() })
+        const dP = await rP.json()
+        if (dP.data) setForm(f => ({ ...f, itemCode: dP.data.itemCode, itemName: dP.data.itemName, plannedQty: dP.data.plannedQty, uom: dP.data.uom }))
+      }
+
+      // Pre-fill rm method from config
+      if (dC.data) setForm(f => ({ ...f, rmMethod: dC.data.rmMethod || 'push' }))
+
+    } catch (e) { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [planId])
+  useEffect(() => { load() }, [load])
+
+  const fSet = k => e => setForm(f => ({ ...f, [k]: typeof e === 'object' ? e.target.value : e }))
+
+  // When item changes — load its BOM + routing
+  const onItemChange = async (code) => {
+    setForm(f => ({ ...f, itemCode: code }))
+    const item = items.find(i => i.code === code)
+    if (item) setForm(f => ({ ...f, itemName: item.name, uom: item.uom || f.uom }))
+
+    // Find matching BOM
+    const bom = boms.find(b => b.itemCode === code)
+    if (bom) {
+      setForm(f => ({ ...f, bomNo: bom.bomNo }))
+      const lines = Array.isArray(bom.lines) ? bom.lines : []
+      setBomComps(lines.map(l => ({
+        itemCode: l.itemCode, itemName: l.itemName || l.componentName,
+        reqQty: parseFloat(l.quantity || l.qty || 0),
+        uom: l.uom, stdCost: parseFloat(l.stdCost || 0),
+        status: 'OK'
+      })))
+    }
+
+    // Find matching Routing
+    const routing = routings.find(r => r.itemCode === code)
+    if (routing) {
+      setForm(f => ({ ...f, routingNo: routing.routingNo }))
+      const ops = Array.isArray(routing.operations) ? routing.operations : []
+      setOperations(ops.map((op, i) => ({
+        opNo:      (i+1) * 10,
+        opName:    op.operationName || op.opName,
+        workCenter:op.workCenter || '',
+        machine:   op.machine || '',
+        setupTime: op.setupTime || 0,
+        runTime:   op.runTime || 0,
+        fieldDefs: config?.processes?.find(p => p.name === (op.operationName || op.opName))?.fields || [],
+      })))
+    } else if (config?.processes?.length) {
+      // Use PP Config processes as default operations
+      setOperations(config.processes.map((p, i) => ({
+        opNo:      (i+1) * 10,
+        opName:    p.name,
+        workCenter:p.machine || '',
+        machine:   p.machine || '',
+        fieldDefs: p.fields || [],
+      })))
+    }
+  }
+
+  const save = async (status = 'DRAFT') => {
+    if (!form.itemName) return toast.error('Item is required')
+    if (!form.plannedQty) return toast.error('Planned quantity is required')
+    setSaving(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/pp/wo`, {
+        method: 'POST', headers: hdr(),
+        body: JSON.stringify({
+          ...form, woNo, status,
+          planId: planId ? parseInt(planId) : null,
+          soNo: soNo || null,
+          plannedQty:  parseFloat(form.plannedQty),
+          cavityCount: form.cavityCount ? parseInt(form.cavityCount) : null,
+          batchSize:   form.batchSize   ? parseFloat(form.batchSize) : null,
+          operations,
+          bomComponents: status !== 'DRAFT' ? bomComps : [],  // only push if releasing
+          scheduledStart: form.scheduledStart || null,
+          scheduledEnd:   form.scheduledEnd   || null,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Save failed')
+      toast.success(status === 'DRAFT' ? `${data.data?.woNo} saved as draft` : `${data.data?.woNo} created & released!`)
+      nav('/pp/wo')
+    } catch (e) { toast.error(e.message) }
+    finally { setSaving(false) }
+  }
+
+  const isMould = config?.prodType === 'mould'
+  const isBatch = config?.prodType === 'batch'
+
+  if (loading) return <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div>
+
+  const SHdr = ({title}) => (
+    <div style={{background:'linear-gradient(135deg,#714B67,#4A3050)',padding:'8px 16px',borderRadius:'6px 6px 0 0'}}>
+      <span style={{color:'#fff',fontSize:13,fontWeight:700,fontFamily:'Syne,sans-serif'}}>{title}</span>
     </div>
   )
-
-  const hasShort = prod.comps.some(c=>c.status==='short')
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Create Work Order <small>CO01 · New Production Order</small></div>
+        <div className="fi-lv-title">
+          New Work Order <small>CO01</small>
+          {config && <small style={{background:'#EDE0EA',color:'#714B67',padding:'2px 8px',borderRadius:4,fontFamily:'DM Mono,monospace',marginLeft:8}}>{config.industryName}</small>}
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}> Cancel</button>
-          <button className="btn btn-s sd-bsm">Save Draft</button>
-          <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>Create & Release</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/wo')}>Cancel</button>
+          <button className="btn btn-s sd-bsm" disabled={saving} onClick={()=>save('DRAFT')}>Save Draft</button>
+          <button className="btn btn-p sd-bsm" disabled={saving} onClick={()=>save('RELEASED')}>
+            {saving ? 'Creating...' : 'Create & Release'}
+          </button>
         </div>
       </div>
 
-      {hasShort && <div className="pp-alert warn"> <strong>Material shortage detected!</strong> Some components have insufficient stock. Consider running MRP before releasing.</div>}
-
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">Work Order Header</div>
-        <div className="fi-form-sec-body">
-          <div className="fi-form-row">
-            <div className="fi-form-grp"><label>WO Number</label><input className="fi-form-ctrl" defaultValue="WO-2025-021" readOnly/></div>
-            <div className="fi-form-grp"><label>Production Date <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-03-01"/></div>
-            <div className="fi-form-grp"><label>Due Date <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-03-08"/></div>
-          </div>
-          <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Finished Product <span>*</span></label>
-              <select className="fi-form-ctrl" onChange={e => setProd(PRODUCTS.find(p=>p.id===e.target.value)||PRODUCTS[0])}>
-                {PRODUCTS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}
+      {/* WO Header */}
+      <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+        <SHdr title="Work Order Header" />
+        <div style={{padding:16,background:'#fff'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12,marginBottom:12}}>
+            <div>
+              <label style={lbl}>WO Number</label>
+              <input style={{...inp,background:'#F8F4F8',color:'#714B67',fontWeight:700,fontFamily:'DM Mono,monospace'}} value={woNo} readOnly/>
+            </div>
+            <div>
+              <label style={lbl}>Priority</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.priority} onChange={fSet('priority')}>
+                {['Critical','High','Normal','Low'].map(p=><option key={p}>{p}</option>)}
               </select>
             </div>
-            <div className="fi-form-grp"><label>Planned Quantity <span>*</span></label>
-              <div style={{display:'flex',gap:'8px'}}>
-                <input type="number" className="fi-form-ctrl" value={qty} style={{flex:1}} onChange={e=>setQty(e.target.value)}/>
-                <select className="fi-form-ctrl" style={{width:'80px'}}><option>Kg</option><option>Nos</option><option>Mtr</option></select>
+            <div>
+              <label style={lbl}>Scheduled Start</label>
+              <input type="date" style={inp} value={form.scheduledStart} onChange={fSet('scheduledStart')}/>
+            </div>
+            <div>
+              <label style={lbl}>Scheduled End</label>
+              <input type="date" style={inp} value={form.scheduledEnd} onChange={fSet('scheduledEnd')}/>
+            </div>
+          </div>
+
+          {/* SO reference if from sales */}
+          {soNo && (
+            <div style={{background:'#D1ECF1',border:'1px solid #B8DAFF',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:12,color:'#0C5460'}}>
+              Generated from Sales Order: <strong>{soNo}</strong>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Item + BOM + Routing */}
+      <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+        <SHdr title="Item / Product" />
+        <div style={{padding:16,background:'#fff'}}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12,marginBottom:12}}>
+            <div>
+              <label style={lbl}>Item / Product *</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.itemCode} onChange={e=>onItemChange(e.target.value)}>
+                <option value="">-- Select Item --</option>
+                {items.filter(i=>i.type==='FG'||i.type==='Semi-FG'||!i.type).map(i=>(
+                  <option key={i.id} value={i.code}>{i.code} · {i.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>Planned Qty *</label>
+              <input type="number" style={inp} value={form.plannedQty} onChange={fSet('plannedQty')} placeholder="500"/>
+            </div>
+            <div>
+              <label style={lbl}>UOM</label>
+              <input style={inp} value={form.uom} onChange={fSet('uom')} placeholder="Nos"/>
+            </div>
+            <div>
+              <label style={lbl}>RM Method</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.rmMethod} onChange={fSet('rmMethod')}>
+                <option value="push">Push — Issue on Release</option>
+                <option value="pull">Pull — Backflush on Complete</option>
+                <option value="manual">Manual — Operator Issues</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+            <div>
+              <label style={lbl}>BOM</label>
+              <input style={{...inp,background:'#F8F9FA'}} value={form.bomNo || (bomComps.length?'Auto-detected':'No BOM found')} readOnly/>
+            </div>
+            <div>
+              <label style={lbl}>Routing</label>
+              <input style={{...inp,background:'#F8F9FA'}} value={form.routingNo || (operations.length?'From PP Config':'No Routing')} readOnly/>
+            </div>
+          </div>
+
+          {/* Industry-specific */}
+          {isMould && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,padding:'12px',background:'#EDE0EA',borderRadius:6}}>
+              <div>
+                <label style={lbl}>Mould ID</label>
+                <input style={inp} value={form.mouldId} onChange={fSet('mouldId')} placeholder="M-001"/>
+              </div>
+              <div>
+                <label style={lbl}>Cavity Count</label>
+                <input type="number" style={inp} value={form.cavityCount} onChange={fSet('cavityCount')} placeholder="4"/>
+              </div>
+              <div>
+                <label style={lbl}>Shots Required</label>
+                <input style={{...inp,background:'#F8F9FA',color:'#714B67',fontWeight:700}} readOnly
+                  value={form.cavityCount && form.plannedQty ? `${Math.ceil(parseFloat(form.plannedQty)/parseInt(form.cavityCount))} shots` : '—'}/>
               </div>
             </div>
-            <div className="fi-form-grp"><label>BOM (Auto-loaded)</label>
-              <input className="fi-form-ctrl" value={prod.bom} readOnly/>
+          )}
+          {isBatch && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,padding:'12px',background:'#EDE0EA',borderRadius:6}}>
+              <div>
+                <label style={lbl}>Batch Size (Max per tank/furnace)</label>
+                <input type="number" style={inp} value={form.batchSize} onChange={fSet('batchSize')} placeholder="500"/>
+              </div>
+              <div>
+                <label style={lbl}>Batches Required</label>
+                <input style={{...inp,background:'#F8F9FA',color:'#714B67',fontWeight:700}} readOnly
+                  value={form.batchSize && form.plannedQty ? `${Math.ceil(parseFloat(form.plannedQty)/parseFloat(form.batchSize))} batches` : '—'}/>
+              </div>
             </div>
-          </div>
-          <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Machine / Work Centre <span>*</span></label>
-              <input className="fi-form-ctrl" value={prod.mc} readOnly/>
-            </div>
-            <div className="fi-form-grp"><label>Routing</label>
-              <input className="fi-form-ctrl" value={prod.route} readOnly/>
-            </div>
-            <div className="fi-form-grp"><label>Priority</label>
-              <select className="fi-form-ctrl"><option>Normal</option><option>High</option><option>Urgent</option></select>
-            </div>
-          </div>
-          <div className="fi-form-grp"><label>Remarks / Notes</label>
-            <textarea className="fi-form-ctrl" rows={2} placeholder="Special instructions, quality notes..."></textarea>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Components from BOM */}
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Component Requirements (from BOM)</div>
-        <div style={{padding:'0'}}>
-          <table className="fi-data-table">
-            <thead><tr><th>#</th><th>Component</th><th>Required Qty</th><th>UOM</th><th>Available Stock</th><th>To Issue</th><th>Short</th><th>Status</th></tr></thead>
+      {/* BOM Components */}
+      {bomComps.length > 0 && (
+        <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+          <SHdr title={`BOM Components — ${bomComps.length} materials (${form.rmMethod === 'push' ? 'Will be reserved on release' : form.rmMethod === 'pull' ? 'Will be backflushed on completion' : 'Operator will issue manually'})`}/>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#F8F4F8'}}>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left'}}>Component</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'right'}}>Req Qty</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left'}}>UOM</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'center'}}>Stock Status</th>
+            </tr></thead>
             <tbody>
-              {prod.comps.map(c=>(
-                <tr key={c.seq}>
-                  <td>{c.seq}</td>
-                  <td>{c.mat}</td>
-                  <td>{c.reqQty}</td>
-                  <td>{c.uom}</td>
-                  <td style={{fontWeight:'600',color:c.avail>=c.reqQty?'var(--odoo-green)':'var(--odoo-red)'}}>{c.avail} {c.uom}</td>
-                  <td><input type="number" defaultValue={c.reqQty} style={{width:'70px',border:'1px solid var(--odoo-border)',borderRadius:'4px',padding:'4px 6px',fontSize:'12px'}}/></td>
-                  <td style={{color:c.avail>=c.reqQty?'var(--odoo-green)':'var(--odoo-red)',fontWeight:'600'}}>
-                    {c.avail>=c.reqQty ? '—' : `${c.reqQty-c.avail} ${c.uom}`}
+              {bomComps.map((c, i) => (
+                <tr key={i} style={{borderBottom:'1px solid #F0EEF0',background:c.status==='short'?'#FFF5F5':'#fff'}}>
+                  <td style={{padding:'8px 12px'}}>
+                    <div style={{fontWeight:600,fontSize:12}}>{c.itemName}</div>
+                    <div style={{fontSize:10,color:'#714B67',fontFamily:'DM Mono,monospace'}}>{c.itemCode}</div>
                   </td>
-                  <td><span className={`badge ${c.status==='available'?'badge-done':'badge-hold'}`}>{c.status==='available'?' Available':' Short'}</span></td>
+                  <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:12}}>{c.reqQty}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:'#6C757D'}}>{c.uom}</td>
+                  <td style={{padding:'8px 12px',textAlign:'center'}}>
+                    <span style={{background:c.status==='short'?'#F8D7DA':'#D4EDDA',color:c.status==='short'?'#721C24':'#155724',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:700}}>
+                      {c.status === 'short' ? 'SHORTAGE' : 'Available'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!hasShort && <div className="pp-alert success" style={{margin:'14px'}}>All components available. Stock will be reserved on release.</div>}
         </div>
-      </div>
+      )}
 
-      {/* Operations from Routing */}
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Operations Sequence (from Routing)</div>
-        <div style={{padding:'0'}}>
-          <table className="fi-data-table">
-            <thead><tr><th>Seq</th><th>Operation</th><th>Work Centre</th><th>Setup Time</th><th>Run Time / Unit</th><th>Total Time</th></tr></thead>
+      {/* Operations from Routing / Config */}
+      {operations.length > 0 && (
+        <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+          <SHdr title={`Production Operations — ${operations.length} stages from ${form.routingNo ? 'Routing' : 'PP Config'}`}/>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#F8F4F8'}}>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D'}}>Op#</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left'}}>Operation</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left'}}>Work Center</th>
+              <th style={{padding:'7px 12px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'center'}}>Fields</th>
+            </tr></thead>
             <tbody>
-              {prod.ops.map(o=>(
-                <tr key={o.seq}>
-                  <td><span style={{fontFamily:'DM Mono,monospace',fontSize:'11px',fontWeight:'700',color:'var(--odoo-purple)'}}>{o.seq}</span></td>
-                  <td><strong>{o.op}</strong></td>
-                  <td>{o.wc}</td>
-                  <td>{o.setup}</td>
-                  <td>{o.run}</td>
-                  <td style={{fontWeight:'600',color:'var(--odoo-blue)'}}>{o.total}</td>
+              {operations.map((op, i) => (
+                <tr key={i} style={{borderBottom:'1px solid #F0EEF0'}}>
+                  <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',fontWeight:800,color:'#714B67',fontSize:13}}>{op.opNo}</td>
+                  <td style={{padding:'8px 12px',fontWeight:600,fontSize:12}}>{op.opName}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:'#6C757D'}}>{op.workCenter || '—'}</td>
+                  <td style={{padding:'8px 12px',textAlign:'center',fontSize:11,color:'#6C757D'}}>{op.fieldDefs?.length || 0} fields</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Remarks */}
+      <div style={{border:'1px solid #E0D5E0',borderRadius:8,padding:16,background:'#fff',marginBottom:14}}>
+        <label style={lbl}>Remarks / Special Instructions</label>
+        <textarea style={{...inp,resize:'vertical'}} rows={2} value={form.remarks} onChange={fSet('remarks')} placeholder="Any special instructions for production floor..."/>
       </div>
 
-      <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}> Cancel</button>
-        <button className="btn btn-s sd-bsm">Save Draft</button>
-        <button className="btn btn-s sd-bsm">Release Only</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setDone(true)}>Create & Release</button>
-        <div className="fi-status-flow">
-          <span className="fi-sf-step act"> Create</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">Released</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">In Progress</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">Closed</span>
-        </div>
+      {/* Footer */}
+      <div style={{display:'flex',justifyContent:'flex-end',gap:10,padding:'8px 0 20px'}}>
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/wo')}>Cancel</button>
+        <button className="btn btn-s sd-bsm" disabled={saving} onClick={()=>save('DRAFT')}>Save Draft</button>
+        <button className="btn btn-p sd-bsm" disabled={saving} onClick={()=>save('RELEASED')}>
+          {saving?'Creating...':'Create & Release WO'}
+        </button>
       </div>
     </div>
   )

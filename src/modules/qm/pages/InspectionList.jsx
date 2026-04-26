@@ -1,5 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
 
 const LOTS = [
   {lot:'QIL-048',date:'28 Feb',source:'PP',wo:'WO-2025-019',mat:'Ring Yarn (30s)',qty:400,tested:400,pass:394,fail:6,yield:98.5,ncr:'—',sb:'badge-pass',sl:'Pass'},
@@ -18,12 +22,35 @@ const SOURCE = ['All Sources','PP — Production','MM — Incoming','SD — Pre-
 export default function InspectionList() {
   const nav = useNavigate()
   const [chip, setChip] = useState('All')
-  const [src, setSrc] = useState('All Sources')
+  const [src,  setSrc]  = useState('All Sources')
+  const [lots, setLots] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
-  const filtered = LOTS.filter(l =>
-    (chip==='All' || l.sl===chip) &&
-    (src==='All Sources' || l.source===src.split(' ')[0])
-  )
+  const fetch_ = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/qm/inspection`,
+        { headers:{ Authorization:`Bearer ${getToken()}` }})
+      const data = await res.json()
+      setLots(data.data||[])
+    } catch(e){ toast.error(e.message) }
+    finally { setLoading(false) }
+  },[])
+
+  useEffect(()=>{ fetch_() },[])
+
+  const filtered = lots.filter(l => {
+    const matchChip = chip==='All' ||
+      l.result?.toLowerCase()===chip.toLowerCase()
+    const matchSrc  = src==='All Sources' ||
+      l.source===src.split(' ')[0]
+    const matchSearch = !search ||
+      l.lotNo?.toLowerCase().includes(search.toLowerCase()) ||
+      l.itemName?.toLowerCase().includes(search.toLowerCase()) ||
+      l.refNo?.toLowerCase().includes(search.toLowerCase())
+    return matchChip && matchSrc && matchSearch
+  })
 
   return (
     <div>
@@ -44,7 +71,10 @@ export default function InspectionList() {
       </div>
 
       <div className="fi-filter-bar">
-        <div className="fi-filter-search"><input placeholder="Search lot, material, WO..."/></div>
+        <div className="fi-filter-search">
+          <input placeholder="Search lot, material, WO..."
+            value={search} onChange={e=>setSearch(e.target.value)}/>
+        </div>
         <select className="fi-filter-select" onChange={e=>setSrc(e.target.value)}>
           {SOURCE.map(s=><option key={s}>{s}</option>)}
         </select>
@@ -52,55 +82,63 @@ export default function InspectionList() {
         <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
       </div>
 
+      {loading ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>⏳ Loading...</div>
+      ) : filtered.length===0 ? (
+        <div style={{padding:60,textAlign:'center',color:'#6C757D',
+          background:'#fff',borderRadius:8,border:'2px dashed #E0D5E0'}}>
+          <div style={{fontSize:32}}>🔬</div>
+          <div style={{fontWeight:700,marginTop:8}}>No inspection lots</div>
+          <button className="btn btn-p sd-bsm"
+            style={{marginTop:12}} onClick={()=>nav('/qm/inspection/new')}>
+            + New Inspection
+          </button>
+        </div>
+      ) : (
       <table className="fi-data-table">
         <thead><tr>
-          <th>Lot No.</th><th>Date</th><th>Source</th><th>Ref (WO/GRN)</th>
+          <th>Lot No.</th><th>Date</th><th>Source</th><th>Ref</th>
           <th>Material</th><th>Qty</th><th>Pass</th><th>Fail</th>
           <th>Yield %</th><th>NCR</th><th>Status</th><th>Actions</th>
         </tr></thead>
         <tbody>
-          {filtered.map(l=>(
-            <tr key={l.lot} style={{cursor:'pointer'}} onClick={() => nav('/qm/inspection/new')}>
-              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{l.lot}</strong></td>
-              <td>{l.date}</td>
+          {filtered.map(l=>{
+            const yld = parseFloat(l.yieldPct||0)
+            const yColor = yld>=98?'var(--odoo-green)':yld>=95?'var(--odoo-orange)':'var(--odoo-red)'
+            const rBadge = l.result==='PASS'?'badge-pass':l.result==='FAIL'?'badge-fail':'badge-review'
+            return (
+            <tr key={l.id} style={{cursor:'pointer'}}
+              onClick={()=>nav(`/qm/inspection/${l.id}`)}>
+              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{l.lotNo}</strong></td>
+              <td>{new Date(l.inspDate||l.createdAt).toLocaleDateString('en-IN')}</td>
               <td><span style={{background:'#EDE0EA',color:'var(--odoo-purple)',padding:'2px 7px',borderRadius:'4px',fontSize:'11px',fontWeight:'700'}}>{l.source}</span></td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'var(--odoo-gray)'}}>{l.wo}</td>
-              <td><strong>{l.mat}</strong></td>
-              <td>{l.qty} Kg</td>
-              <td style={{color:'var(--odoo-green)',fontWeight:'600'}}>{l.pass}</td>
-              <td style={{color:l.fail>0?'var(--odoo-red)':'var(--odoo-gray)',fontWeight:l.fail>0?'700':'400'}}>{l.fail||'—'}</td>
+              <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'var(--odoo-gray)'}}>{l.refNo||'—'}</td>
+              <td><strong>{l.itemName}</strong></td>
+              <td>{parseFloat(l.lotQty||0)} {l.unit}</td>
+              <td style={{color:'var(--odoo-green)',fontWeight:'600'}}>{parseFloat(l.passQty||0)}</td>
+              <td style={{color:parseFloat(l.failQty||0)>0?'var(--odoo-red)':'var(--odoo-gray)',fontWeight:parseFloat(l.failQty||0)>0?'700':'400'}}>{parseFloat(l.failQty||0)||'—'}</td>
               <td>
                 <div style={{display:'flex',alignItems:'center',gap:'5px'}}>
                   <div className="yield-bar" style={{width:'50px'}}>
-                    <div className="yield-fill" style={{width:`${l.yield}%`,background:l.yield>=98?'var(--odoo-green)':l.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}></div>
+                    <div className="yield-fill" style={{width:`${yld}%`,background:yColor}}></div>
                   </div>
-                  <span style={{fontSize:'11px',fontWeight:'700',color:l.yield>=98?'var(--odoo-green)':l.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}>{l.yield}%</span>
+                  <span style={{fontSize:'11px',fontWeight:'700',color:yColor}}>{yld.toFixed(1)}%</span>
                 </div>
               </td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:l.ncr==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:l.ncr==='—'?'400':'700'}}>{l.ncr}</td>
-              <td><span className={`badge ${l.sb}`}>{l.sl==='Pass'?' Pass':l.sl==='Fail'?' Fail':' Review'}</span></td>
+              <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:l.ncrNo?'var(--odoo-red)':'var(--odoo-gray)',fontWeight:l.ncrNo?'700':'400'}}>{l.ncrNo||'—'}</td>
+              <td><span className={`badge ${rBadge}`}>{l.result}</span></td>
               <td onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:'4px'}}>
-                  <button className="btn-xs">View</button>
-                  <button className="btn-xs" onClick={() => nav('/print/ir')}>Print</button>
-                  {l.sl==='Review' && <button className="btn-xs pri" onClick={() => nav('/qm/ncr/new')}>Raise NCR</button>}
-                  {l.sl==='Pass' && <button className="btn-xs" onClick={() => nav('/qm/certificates')}> Cert</button>}
+                  <button className="btn-xs" onClick={()=>nav(`/qm/inspection/${l.id}`)}>View</button>
+                  {l.result==='REVIEW'&&<button className="btn-xs pri" onClick={()=>nav('/qm/ncr/new')}>NCR</button>}
+                  {l.result==='PASS'&&<button className="btn-xs" onClick={()=>nav('/qm/certificates')}>Cert</button>}
                 </div>
               </td>
             </tr>
-          ))}
+          )})}
         </tbody>
-        <tfoot>
-          <tr style={{background:'#F8F9FA',fontWeight:'700'}}>
-            <td colSpan={5}>Total ({filtered.length} lots)</td>
-            <td>{filtered.reduce((s,l)=>s+l.qty,0)} Kg</td>
-            <td style={{color:'var(--odoo-green)'}}>{filtered.reduce((s,l)=>s+l.pass,0)}</td>
-            <td style={{color:'var(--odoo-red)'}}>{filtered.reduce((s,l)=>s+l.fail,0)}</td>
-            <td style={{color:'var(--odoo-green)'}}>{(filtered.reduce((s,l)=>s+l.yield,0)/filtered.length).toFixed(1)}% Avg</td>
-            <td colSpan={3}></td>
-          </tr>
-        </tfoot>
       </table>
+      )}
     </div>
   )
 }

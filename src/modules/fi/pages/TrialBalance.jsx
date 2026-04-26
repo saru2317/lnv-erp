@@ -1,74 +1,107 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const TB_ROWS = [
-  {grp:'ASSETS', rows:[]},
-  {code:'1100',name:'Cash in Hand',           oDr:'',          oCr:'',          pDr:'₹2,20,000', pCr:'₹1,80,000', cDr:'₹40,000',     cCr:''},
-  {code:'1200',name:'Bank — HDFC Current',    oDr:'₹18,42,000',oCr:'',          pDr:'₹15,07,000',pCr:'₹5,93,000', cDr:'₹27,56,000',  cCr:''},
-  {code:'1300',name:'Accounts Receivable',    oDr:'₹8,40,000', oCr:'',          pDr:'₹48,60,000',pCr:'₹44,80,000',cDr:'₹12,20,000',  cCr:''},
-  {code:'1400',name:'Stock / Inventory',      oDr:'₹38,40,000',oCr:'',          pDr:'₹8,60,000', pCr:'₹6,60,000', cDr:'₹40,40,000',  cCr:''},
-  {code:'1500',name:'Fixed Assets — P&M',     oDr:'₹62,00,000',oCr:'',          pDr:'',          pCr:'₹42,000',   cDr:'₹61,58,000',  cCr:''},
-  {grp:'LIABILITIES', rows:[]},
-  {code:'2100',name:'Accounts Payable (AP)',   oDr:'',          oCr:'₹4,20,000', pDr:'₹28,40,000',pCr:'₹29,80,000',cDr:'',            cCr:'₹5,60,000'},
-  {code:'2200',name:'GST Payable',            oDr:'',          oCr:'₹2,40,000', pDr:'₹3,24,000', pCr:'₹6,48,000', cDr:'',            cCr:'₹5,64,000'},
-  {code:'2300',name:'Share Capital',          oDr:'',          oCr:'₹50,00,000',pDr:'',          pCr:'',          cDr:'',            cCr:'₹50,00,000'},
-  {code:'2400',name:'Term Loan — HDFC',       oDr:'',          oCr:'₹28,20,000',pDr:'₹1,20,000', pCr:'',          cDr:'',            cCr:'₹27,00,000'},
-  {code:'2500',name:'TDS Payable',            oDr:'',          oCr:'₹84,000',   pDr:'₹84,000',   pCr:'₹1,26,000', cDr:'',            cCr:'₹42,000'},
-  {grp:'INCOME', rows:[]},
-  {code:'5100',name:'Sales Revenue',          oDr:'',          oCr:'',          pDr:'',          pCr:'₹48,60,000',cDr:'',            cCr:'₹48,60,000'},
-  {code:'5200',name:'Other Income',           oDr:'',          oCr:'',          pDr:'',          pCr:'₹24,000',   cDr:'',            cCr:'₹24,000'},
-  {grp:'EXPENSES', rows:[]},
-  {code:'6100',name:'COGS — Direct Material', oDr:'',          oCr:'',          pDr:'₹28,40,000',pCr:'',          cDr:'₹28,40,000',  cCr:''},
-  {code:'6110',name:'COGM — Mfg Cost (PP)',   oDr:'',          oCr:'',          pDr:'₹6,20,000', pCr:'',          cDr:'₹6,20,000',   cCr:''},
-  {code:'6200',name:'Salary & Wages',         oDr:'',          oCr:'',          pDr:'₹8,40,000', pCr:'',          cDr:'₹8,40,000',   cCr:''},
-  {code:'6300',name:'Rent & Utilities',       oDr:'',          oCr:'',          pDr:'₹1,20,000', pCr:'',          cDr:'₹1,20,000',   cCr:''},
-  {code:'6400',name:'Depreciation',           oDr:'',          oCr:'',          pDr:'₹42,000',   pCr:'',          cDr:'₹42,000',     cCr:''},
-  {code:'6500',name:'Finance Charges',        oDr:'',          oCr:'',          pDr:'₹24,000',   pCr:'',          cDr:'₹24,000',     cCr:''},
-  {code:'6600',name:'Freight & Logistics',    oDr:'',          oCr:'',          pDr:'₹84,000',   pCr:'',          cDr:'₹84,000',     cCr:''},
-  {code:'6700',name:'Maintenance Expense (PM)',oDr:'',         oCr:'',          pDr:'₹48,000',   pCr:'',          cDr:'₹48,000',     cCr:''},
-  {code:'6800',name:'Admin & Other Expenses', oDr:'',          oCr:'',          pDr:'₹90,000',   pCr:'',          cDr:'₹90,000',     cCr:''},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
+
+const TYPE_COLORS = {
+  ASSET:     ['#D1ECF1','#0C5460'],
+  LIABILITY: ['#FFF3CD','#856404'],
+  EQUITY:    ['#EDE0EA','#714B67'],
+  INCOME:    ['#D4EDDA','#155724'],
+  EXPENSE:   ['#F8D7DA','#721C24'],
+}
 
 export default function TrialBalance() {
+  const [tb,      setTB]      = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [from,    setFrom]    = useState(`${new Date().getFullYear()}-04-01`)
+  const [to,      setTo]      = useState(new Date().toISOString().split('T')[0])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/trial-balance?from=${from}&to=${to}`, { headers: hdr2() })
+      const data = await res.json()
+      setTB(data.data)
+    } catch { toast.error('Failed to load Trial Balance') }
+    finally { setLoading(false) }
+  }, [from, to])
+  useEffect(() => { load() }, [load])
+
+  const TYPES = ['ASSET','LIABILITY','EQUITY','INCOME','EXPENSE']
+  const [bg2,tx2] = ['#D4EDDA','#155724']
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Trial Balance <small>As of 28 Feb 2025</small></div>
+        <div className="fi-lv-title">Trial Balance <small>Account-wise Debit/Credit Summary</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">Export Excel</button>
-          <button className="btn btn-s sd-bsm">Print</button>
+          <input type="date" className="sd-search" value={from} onChange={e=>setFrom(e.target.value)} style={{width:140}}/>
+          <span style={{color:'#6C757D',fontSize:12}}>to</span>
+          <input type="date" className="sd-search" value={to} onChange={e=>setTo(e.target.value)} style={{width:140}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
-      <div className="fi-alert success">Trial Balance is balanced — Total Debits = Total Credits = <strong>₹1,97,32,000</strong></div>
+      {tb && (
+        <div style={{background:tb.balanced?'#D4EDDA':'#F8D7DA',border:`1px solid ${tb.balanced?'#C3E6CB':'#F5C6CB'}`,borderRadius:6,padding:'8px 14px',marginBottom:12,fontSize:13,color:tb.balanced?'#155724':'#721C24',fontWeight:700}}>
+          {tb.balanced ? '✓ Trial Balance is BALANCED — Dr = Cr' : `⚠ NOT BALANCED — Difference: ${INR(Math.abs((tb.totalDr||0)-(tb.totalCr||0)))}`}
+        </div>
+      )}
 
-      <table className="fi-data-table">
-        <thead><tr>
-          <th>Code</th><th>Account Name</th>
-          <th>Opening Dr</th><th>Opening Cr</th>
-          <th>Period Dr</th><th>Period Cr</th>
-          <th>Closing Dr</th><th>Closing Cr</th>
-        </tr></thead>
-        <tbody>
-          {TB_ROWS.map((r,i) => r.grp ? (
-            <tr key={i}><td colSpan={8} style={{background:'#EDE0EA',fontWeight:'700',padding:'8px 14px',color:'var(--odoo-purple)',fontFamily:'Syne,sans-serif'}}>{r.grp}</td></tr>
-          ) : (
-            <tr key={i}>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-gray)'}}>{r.code}</td>
-              <td>{r.name}</td>
-              <td className="dr">{r.oDr}</td><td className="cr">{r.oCr}</td>
-              <td className="dr">{r.pDr}</td><td className="cr">{r.pCr}</td>
-              <td className="dr">{r.cDr}</td><td className="cr">{r.cCr}</td>
-            </tr>
-          ))}
-          <tr style={{background:'#F8F9FA',fontWeight:'700',fontFamily:'Syne,sans-serif'}}>
-            <td colSpan={2}>TOTALS</td>
-            <td className="dr">₹1,27,22,000</td><td className="cr">₹85,64,000</td>
-            <td className="dr">₹1,54,59,000</td><td className="cr">₹1,45,13,000</td>
-            <td className="dr" style={{fontSize:'14px',color:'var(--odoo-purple)'}}>₹1,97,32,000</td>
-            <td className="cr" style={{fontSize:'14px',color:'var(--odoo-purple)'}}>₹1,97,32,000</td>
-          </tr>
-        </tbody>
-      </table>
+      {loading ? <div style={{padding:30,textAlign:'center'}}>Loading...</div>
+      : tb && (
+        <div>
+          <table className="fi-data-table">
+            <thead><tr>
+              <th>Code</th><th>Account Name</th><th>Type</th>
+              <th style={{textAlign:'right',color:'var(--odoo-red)'}}>Debit</th>
+              <th style={{textAlign:'right',color:'var(--odoo-green)'}}>Credit</th>
+            </tr></thead>
+            <tbody>
+              {TYPES.map(type => {
+                const rows = tb.rows.filter(r=>r.type===type)
+                if (!rows.length) return null
+                const subDr = rows.reduce((a,r)=>a+r.debit,0)
+                const subCr = rows.reduce((a,r)=>a+r.credit,0)
+                const [tbg,ttx] = TYPE_COLORS[type]||['#EEE','#333']
+                return (
+                  <React.Fragment key={type}>
+                    <tr style={{background:tbg}}>
+                      <td colSpan={3} style={{padding:'6px 12px',fontWeight:800,color:ttx,fontSize:11,textTransform:'uppercase',letterSpacing:.5}}>{type}</td>
+                      <td style={{padding:'6px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,color:'var(--odoo-red)'}}>{subDr>0?INR(subDr):'—'}</td>
+                      <td style={{padding:'6px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,color:'var(--odoo-green)'}}>{subCr>0?INR(subCr):'—'}</td>
+                    </tr>
+                    {rows.map((r,i)=>(
+                      <tr key={r.code} style={{borderBottom:'1px solid #F0EEF0',background:i%2===0?'#fff':'#FDFBFD'}}>
+                        <td style={{padding:'7px 12px',fontFamily:'DM Mono,monospace',fontSize:12,color:'#714B67'}}>{r.code}</td>
+                        <td style={{padding:'7px 12px',fontSize:12,paddingLeft:24}}>{r.name}</td>
+                        <td style={{padding:'7px 12px',fontSize:11,color:'#6C757D'}}>{r.subType}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:r.debit>0?'var(--odoo-red)':'#DDD'}}>{r.debit>0?INR(r.debit):'—'}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:r.credit>0?'var(--odoo-green)':'#DDD'}}>{r.credit>0?INR(r.credit):'—'}</td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                )
+              })}
+            </tbody>
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:800,borderTop:'3px solid #714B67'}}>
+                <td colSpan={3} style={{padding:'10px 12px',color:'#714B67',fontSize:13}}>GRAND TOTAL</td>
+                <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:15,color:'var(--odoo-red)'}}>{INR(tb.totalDr)}</td>
+                <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:15,color:'var(--odoo-green)'}}>{INR(tb.totalCr)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
+

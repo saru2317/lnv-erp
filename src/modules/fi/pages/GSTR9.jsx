@@ -1,92 +1,123 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-export default function GSTR9() {
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+function MonthYearPicker({ month, year, onChange }) {
   return (
-    <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">GSTR-9 Annual Return <small>FY 2025–26 · Due: 31 Dec 2026</small></div>
-        <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">Download</button>
-          <button className="btn btn-p sd-bsm">File on Portal</button>
-        </div>
-      </div>
-      <div className="fi-alert info" style={{marginBottom:16}}>
-        ℹ GSTR-9 is the annual summary of all monthly/quarterly returns filed during the year. Reconcile any differences before filing.
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-        {/* Outward Supplies */}
-        <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">Outward Supplies (Sales)</div>
-          <table className="fi-data-table" style={{fontSize:12}}>
-            <thead><tr><th>Nature</th><th>Taxable Value</th><th>IGST</th><th>CGST</th><th>SGST</th></tr></thead>
-            <tbody>
-              {[
-                ['Taxable (B2B)',         '₹1,82,45,000','₹0',      '₹16,42,050','₹16,42,050'],
-                ['Taxable (B2C)',         '₹22,14,000', '₹0',      '₹1,99,260', '₹1,99,260'],
-                ['Zero-Rated Exports',    '₹8,50,000',  '₹0',      '₹0',        '₹0'],
-                ['Nil Rated / Exempt',    '₹3,20,000',  '₹0',      '₹0',        '₹0'],
-                ['RCM (received by us)', '₹3,43,000',  '₹61,740', '₹0',        '₹0'],
-              ].map(([n,...v])=>(
-                <tr key={n}><td style={{fontWeight:600}}>{n}</td>{v.map((x,i)=><td key={i} style={{fontFamily:'DM Mono,monospace'}}>{x}</td>)}</tr>
-              ))}
-              <tr style={{background:'#EDE0EA',fontWeight:700}}>
-                <td>Total</td><td style={{fontFamily:'DM Mono,monospace'}}>₹2,19,72,000</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹61,740</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹18,41,310</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹18,41,310</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        {/* ITC Summary */}
-        <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">ITC Summary (Annual)</div>
-          <table className="fi-data-table" style={{fontSize:12}}>
-            <thead><tr><th>Nature</th><th>IGST</th><th>CGST</th><th>SGST</th></tr></thead>
-          <tbody>
-            {[
-              ['ITC on Inputs',       '₹0',     '₹8,14,500','₹8,14,500'],
-              ['ITC on Capital Goods','₹0',     '₹52,200',  '₹52,200'],
-              ['ITC on Services',     '₹61,740','₹1,20,000','₹1,20,000'],
-              ['Less: Blocked (17(5)','₹0',     '(₹92,400)','(₹92,400)'],
-              ['Less: Reversed',      '₹0',     '(₹24,000)','(₹24,000)'],
-            ].map(([n,...v])=>(
-              <tr key={n}><td style={{fontWeight:600}}>{n}</td>{v.map((x,i)=><td key={i} style={{fontFamily:'DM Mono,monospace',color:x.startsWith('(')? 'var(--odoo-red)':'var(--odoo-green)'}}>{x}</td>)}</tr>
-            ))}
-            <tr style={{background:'#EDE0EA',fontWeight:700}}>
-              <td>Net ITC</td>
-              <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>₹61,740</td>
-              <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>₹8,70,300</td>
-              <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>₹8,70,300</td>
-            </tr>
-          </tbody>
-          </table>
-        </div>
-        {/* Tax payable */}
-        <div className="fi-form-sec" style={{gridColumn:'1/-1'}}>
-          <div className="fi-form-sec-hdr">Net Tax Payable (Annual)</div>
-          <table className="fi-data-table" style={{fontSize:12}}>
-            <thead><tr><th>Tax Head</th><th>Output Tax</th><th>ITC Available</th><th>Net Payable</th><th>Paid via Cash</th><th>Difference</th></tr></thead>
-            <tbody>
-              {[
-                ['CGST','₹18,41,310','₹8,70,300','₹9,71,010','₹9,71,010','₹0'],
-                ['SGST','₹18,41,310','₹8,70,300','₹9,71,010','₹9,71,010','₹0'],
-                ['IGST','₹61,740',   '₹61,740',  '₹0',       '₹0',       '₹0'],
-                ['Cess', '₹0',       '₹0',        '₹0',       '₹0',       '₹0'],
-              ].map(([n,...v])=>(
-                <tr key={n}><td style={{fontWeight:700}}>{n}</td>{v.map((x,i)=><td key={i} style={{fontFamily:'DM Mono,monospace'}}>{x}</td>)}</tr>
-              ))}
-              <tr style={{background:'#EDE0EA',fontWeight:700}}>
-                <td>TOTAL</td><td style={{fontFamily:'DM Mono,monospace'}}>₹37,44,360</td>
-                <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>₹18,02,340</td>
-                <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-purple)',fontSize:14}}>₹19,42,020</td>
-                <td style={{fontFamily:'DM Mono,monospace'}}>₹19,42,020</td>
-                <td style={{fontFamily:'DM Mono,monospace',color:'var(--odoo-green)',fontWeight:700}}>₹0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+      <select className="sd-search" value={month} onChange={e=>onChange(parseInt(e.target.value),year)} style={{width:90}}>
+        {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+      </select>
+      <select className="sd-search" value={year} onChange={e=>onChange(month,parseInt(e.target.value))} style={{width:80}}>
+        {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+      </select>
     </div>
   )
 }
+
+function GSTKpi({ label, value, sub, cls }) {
+  return (
+    <div className={`fi-kpi-card ${cls}`}>
+      <div className="fi-kpi-label">{label}</div>
+      <div className="fi-kpi-value">{value}</div>
+      <div className="fi-kpi-sub">{sub}</div>
+    </div>
+  )
+}
+
+export default function GSTR9() {
+  const [year,    setYear]    = useState(new Date().getFullYear())
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Load all 12 months and aggregate
+      const results = await Promise.all(
+        Array.from({length:12},(_,i)=>i+1).map(m =>
+          fetch(`${BASE_URL}/fi/gst/gstr3b?month=${m}&year=${m<=3?year+1:year}`, { headers: hdr2() })
+            .then(r=>r.json()).catch(()=>({data:null}))
+        )
+      )
+      const agg = { outputCGST:0, outputSGST:0, outputIGST:0, itcCGST:0, itcSGST:0, itcIGST:0, totalPayable:0 }
+      results.forEach(r => {
+        if (!r.data) return
+        agg.outputCGST   += r.data.outputCGST  ||0
+        agg.outputSGST   += r.data.outputSGST  ||0
+        agg.outputIGST   += r.data.outputIGST  ||0
+        agg.itcCGST      += r.data.itcCGST     ||0
+        agg.itcSGST      += r.data.itcSGST     ||0
+        agg.itcIGST      += r.data.itcIGST     ||0
+        agg.totalPayable += r.data.totalPayable ||0
+      })
+      setData(agg)
+    } catch {} finally { setLoading(false) }
+  }, [year])
+  useEffect(() => { load() }, [load])
+
+  return (
+    <div>
+      <div className="fi-lv-hdr">
+        <div className="fi-lv-title">GSTR-9 <small>Annual GST Return — FY {year}–{year+1}</small></div>
+        <div className="fi-lv-actions">
+          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:100}}>
+            {[2023,2024,2025,2026].map(y=><option key={y}>FY {y}-{y+1}</option>)}
+          </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Compute</button>
+          <button className="btn btn-s sd-bsm">Download JSON</button>
+          <button className="btn btn-p sd-bsm">File GSTR-9</button>
+        </div>
+      </div>
+
+      {loading ? <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Computing Annual Summary...</div>
+      : data ? (
+        <div>
+          <div className="fi-kpi-grid">
+            <GSTKpi label="Total Output GST" cls="red"    value={INR((data.outputCGST)+(data.outputSGST)+(data.outputIGST))} sub="Full year"/>
+            <GSTKpi label="Total ITC Claimed" cls="green" value={INR((data.itcCGST)+(data.itcSGST)+(data.itcIGST))} sub="Input credit"/>
+            <GSTKpi label="Net GST Paid"      cls="orange"value={INR(data.totalPayable)} sub="Cash + ITC"/>
+          </div>
+
+          <table className="fi-data-table" style={{marginTop:14}}>
+            <thead><tr>
+              <th>Table</th><th>Description</th>
+              <th style={{textAlign:'right'}}>CGST (₹)</th>
+              <th style={{textAlign:'right'}}>SGST (₹)</th>
+              <th style={{textAlign:'right'}}>IGST (₹)</th>
+              <th style={{textAlign:'right'}}>Total (₹)</th>
+            </tr></thead>
+            <tbody>
+              {[
+                ['4A', 'Outward Taxable Supplies',    data.outputCGST, data.outputSGST, data.outputIGST],
+                ['6A', 'ITC on Inward Supplies',      data.itcCGST,    data.itcSGST,    data.itcIGST],
+                ['9',  'Net Tax Payable',              Math.max(0,data.outputCGST-data.itcCGST), Math.max(0,data.outputSGST-data.itcSGST), Math.max(0,data.outputIGST-data.itcIGST)],
+                ['9',  'Total Tax Paid (Cash Ledger)', Math.max(0,data.outputCGST-data.itcCGST), Math.max(0,data.outputSGST-data.itcSGST), Math.max(0,data.outputIGST-data.itcIGST)],
+              ].map(([tbl,desc,cgst,sgst,igst])=>(
+                <tr key={tbl+desc}>
+                  <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67'}}>{tbl}</td>
+                  <td style={{fontWeight:600}}>{desc}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(cgst||0)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(sgst||0)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(igst||0)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR((cgst||0)+(sgst||0)+(igst||0))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>No data found</div>}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════
+// SAVE AS: ITCReconciliation.jsx  (keep existing excellent UI, add live summary)
+// ══════════════════════════════════════

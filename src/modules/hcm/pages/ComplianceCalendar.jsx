@@ -1,30 +1,28 @@
 import React from 'react'
-const CALENDAR = [
-  {month:'March 2025',items:[{task:'PF Challan (Feb)',due:'15 Mar',type:'PF',status:'Due',sb:'badge-hold'},{task:'ESI Challan (Feb)',due:'15 Mar',type:'ESI',status:'Due',sb:'badge-hold'},{task:'PT Payment (Q4)',due:'31 Mar',type:'PT',status:'Filed',sb:'badge-pass'},{task:'LWF (Annual)',due:'31 Mar',type:'LWF',status:'Filed',sb:'badge-pass'}]},
-  {month:'April 2025',items:[{task:'PF Challan (Mar)',due:'15 Apr',type:'PF',status:'Upcoming',sb:'badge-released'},{task:'TDS Form 24Q (Q4)',due:'07 Apr',type:'TDS',status:'Upcoming',sb:'badge-released'},{task:'ESI Return (Oct-Mar)',due:'11 Apr',type:'ESI',status:'Upcoming',sb:'badge-released'},{task:'PF Annual Return',due:'30 Apr',type:'PF',status:'Upcoming',sb:'badge-released'}]},
-]
+import { useNavigate } from 'react-router-dom'
+
 export default function ComplianceCalendar() {
+  const nav = useNavigate()
   return (
-    <div>
-      <div className="fi-lv-hdr"><div className="fi-lv-title">Compliance Calendar <small>All statutory due dates</small></div></div>
-      {CALENDAR.map(c=>(
-        <div key={c.month} className="fi-panel" style={{marginBottom:'14px'}}>
-          <div className="fi-panel-hdr"><h3> {c.month}</h3></div>
-          <div style={{padding:'0'}}>
-            <table className="fi-data-table" style={{margin:0}}>
-              <thead><tr><th>Task</th><th>Type</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody>{c.items.map(i=>(
-                <tr key={i.task}><td><strong>{i.task}</strong></td>
-                <td><span style={{background:'#EDE0EA',color:'var(--odoo-purple)',padding:'2px 7px',borderRadius:'4px',fontSize:'11px',fontWeight:'700'}}>{i.type}</span></td>
-                <td style={{fontWeight:'700'}}>{i.due}</td>
-                <td><span className={`badge ${i.sb}`}>{i.status}</span></td>
-                <td><button className="btn-xs">{i.status==='Filed'?'View':'Prepare'}</button></td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+    <div style={{ padding:40, textAlign:'center' }}>
+      <div style={{ fontSize:48, marginBottom:16 }}>📅</div>
+      <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800,
+        color:'#714B67', marginBottom:8 }}>📅 Compliance Calendar</h2>
+      <p style={{ color:'#6C757D', fontSize:14, marginBottom:24 }}>
+        Statutory due dates and reminders
+      </p>
+      <div style={{ display:'inline-block', padding:'10px 20px',
+        background:'#FFF3CD', borderRadius:8, fontSize:13,
+        color:'#856404', fontWeight:600, border:'1px solid #FFEEBA' }}>
+        🚧 Coming Soon — Under Development
+      </div>
+      <br/><br/>
+      <button onClick={()=>nav('/hcm')}
+        style={{ padding:'8px 20px', background:'#714B67', color:'#fff',
+          border:'none', borderRadius:6, fontSize:13,
+          cursor:'pointer', fontWeight:600 }}>
+        ← Back to HCM Dashboard
+      </button>
     </div>
   )
 }

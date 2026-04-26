@@ -1,79 +1,238 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const STOCKS = [
-  {code:'MAT-001',desc:'Compact Cotton Sliver',   cat:'Raw Material',bin:'BIN-A12',uom:'Kg',  op:200,  in_:400, out:120, cur:480,  reord:200, val:'₹4,08,000',b:'badge-ok',       bl:' OK',         cc:''},
-  {code:'MAT-002',desc:'Ring Yarn (30s Count)',    cat:'Raw Material',bin:'BIN-B04',uom:'Kg',  op:150,  in_:0,   out:70,  cur:80,   reord:200, val:'₹96,000',  b:'badge-critical',  bl:' Critical',  cc:'var(--odoo-red)'},
-  {code:'MAT-003',desc:'Lattice Aprons (Set)',     cat:'Spares',      bin:'BIN-C05',uom:'Nos', op:80,   in_:0,   out:45,  cur:35,   reord:50,  val:'₹36,750',  b:'badge-low',       bl:' Low',       cc:'var(--odoo-orange)'},
-  {code:'MAT-004',desc:'Packing Boxes Double Wall',cat:'Packing',     bin:'BIN-F06',uom:'Nos', op:500,  in_:1000,out:650, cur:850,  reord:500, val:'₹1,70,000',b:'badge-ok',        bl:' OK',         cc:''},
-  {code:'MAT-005',desc:'Solvent Chemical 30%',     cat:'Chemicals',   bin:'BIN-E10',uom:'Litre',op:70, in_:30,  out:75,  cur:25,   reord:100, val:'₹12,500',  b:'badge-low',       bl:' Low',       cc:'var(--odoo-orange)'},
-  {code:'MAT-006',desc:'Open End Yarn (12s)',       cat:'Raw Material',bin:'BIN-A08',uom:'Kg',  op:300,  in_:200, out:180, cur:320,  reord:150, val:'₹2,88,000',b:'badge-ok',        bl:' OK',         cc:''},
-  {code:'MAT-007',desc:'Lubricant Oil (Machine)',   cat:'Spares',      bin:'BIN-G02',uom:'Litre',op:40, in_:20,  out:35,  cur:25,   reord:20,  val:'₹6,250',   b:'badge-ok',        bl:' OK',         cc:''},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const fmtC = n => '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+
+const STATUS_STYLE = {
+  OK:       { bg:'#D4EDDA', color:'#155724', label:'OK'       },
+  LOW:      { bg:'#FFF3CD', color:'#856404', label:'Low'      },
+  CRITICAL: { bg:'#F8D7DA', color:'#721C24', label:'Critical' },
+  ZERO:     { bg:'#E9ECEF', color:'#495057', label:'Zero'     },
+}
 
 export default function StockList() {
-  const [chip, setChip] = useState('all')
+  const nav = useNavigate()
+  const [stocks,  setStocks]  = useState([])
+  const [loading, setLoading] = useState(true)
+  const [chip,    setChip]    = useState('all')
+  const [search,  setSearch]  = useState('')
+
+  const fetchStock = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/wm/stock`,
+        { headers:{ Authorization:`Bearer ${getToken()}` }})
+      const data = await res.json()
+      setStocks(data.data||[])
+    } catch(e){ toast.error(e.message) }
+    finally { setLoading(false) }
+  },[])
+
+  useEffect(()=>{ fetchStock() },[])
+
+  const filtered = stocks.filter(s => {
+    const matchChip = chip==='all' ||
+      (chip==='low' && ['LOW','CRITICAL','ZERO'].includes(s.status)) ||
+      s.category?.toLowerCase().includes(chip)
+    const matchSearch = !search ||
+      s.itemCode?.toLowerCase().includes(search.toLowerCase()) ||
+      s.itemName?.toLowerCase().includes(search.toLowerCase())
+    return matchChip && matchSearch
+  })
+
+  const totalValue = stocks.reduce((s,i)=>s+parseFloat(i.value||0),0)
+
   return (
     <div>
-      <div className="wm-lv-hdr">
-        <div className="wm-lv-title">Stock Overview <small>MB52 · Current Inventory</small></div>
-        <div className="wm-lv-actions">
-          <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/print/stn')}>Print</button>
-          <button className="btn btn-s sd-bsm">Report</button>
-          <button className="btn btn-p sd-bsm">Issue Stock</button>
+      {/* Sticky header */}
+      <div style={{ position:'sticky', top:0, zIndex:100,
+        background:'#F8F4F8',
+        borderBottom:'2px solid #E0D5E0',
+        boxShadow:'0 2px 8px rgba(0,0,0,.08)' }}>
+        <div className="lv-hdr">
+          <div className="lv-ttl">
+            Stock Overview <small>MB52 · Current Inventory</small>
+          </div>
+          <div className="lv-acts">
+            <input placeholder="Search material, code..."
+              value={search} onChange={e=>setSearch(e.target.value)}
+              style={{ padding:'6px 12px',
+                border:'1px solid #E0D5E0',
+                borderRadius:5, fontSize:12, width:180 }} />
+            <button className="btn btn-s sd-bsm"
+              onClick={fetchStock}>↻</button>
+            <button className="btn btn-s sd-bsm">Export</button>
+            <button className="btn btn-p sd-bsm"
+              onClick={()=>nav('/wm/goods-issue')}>
+              📤 Issue Stock
+            </button>
+          </div>
         </div>
       </div>
-      <div className="wm-chips">
-        {[{k:'all',l:'All',n:'86'},{k:'rm',l:'Raw Material',n:'24'},{k:'sp',l:'Spares',n:'18'},{k:'pk',l:'Packing',n:'12'},{k:'low',l:'Low Stock',n:'4',red:true}].map(c => (
-          <div key={c.k} className={`wm-chip${chip===c.k?' on':''}`}
-            style={c.red && chip!==c.k?{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}:{}}
-            onClick={() => setChip(c.k)}>
-            {c.l} <span>{c.n}</span>
+
+      {/* KPIs */}
+      <div style={{ display:'grid',
+        gridTemplateColumns:'repeat(4,1fr)',
+        gap:10, marginBottom:12 }}>
+        {[
+          { l:'Total SKUs',    v:stocks.length,
+            c:'#714B67', bg:'#EDE0EA' },
+          { l:'Stock Value',   v:fmtC(totalValue),
+            c:'#155724', bg:'#D4EDDA' },
+          { l:'Low Stock',
+            v:stocks.filter(s=>s.status==='LOW').length,
+            c:'#856404', bg:'#FFF3CD' },
+          { l:'Critical / Zero',
+            v:stocks.filter(s=>['CRITICAL','ZERO'].includes(s.status)).length,
+            c:'#DC3545', bg:'#F8D7DA' },
+        ].map(k=>(
+          <div key={k.l} style={{ background:k.bg,
+            borderRadius:8, padding:'10px 14px',
+            border:`1px solid ${k.c}22` }}>
+            <div style={{ fontSize:10, color:k.c,
+              fontWeight:700, textTransform:'uppercase' }}>
+              {k.l}
+            </div>
+            <div style={{ fontSize:k.l==='Stock Value'?15:22,
+              fontWeight:800, color:k.c,
+              fontFamily:'Syne,sans-serif' }}>
+              {k.v}
+            </div>
           </div>
         ))}
       </div>
-      <div className="wm-filter-bar">
-        <div className="wm-filter-search"><input placeholder="Search material, code, bin..."/></div>
-        <select className="wm-filter-select"><option>All Locations</option><option>Main Store</option><option>Warehouse B</option><option>Production Floor</option></select>
-        <select className="wm-filter-select"><option>All Categories</option><option>Raw Material</option><option>Spares</option><option>Packing</option><option>Chemicals</option></select>
-        <select className="wm-filter-select"><option>All Stock Status</option><option>OK</option><option>Low</option><option>Critical</option><option>Zero</option></select>
+
+      {/* Chips */}
+      <div className="mm-chips" style={{ marginBottom:10 }}>
+        {[['all','All'],['raw material','Raw Material'],
+          ['spares','Spares'],['packing','Packing'],
+          ['low','⚠️ Low Stock']].map(([k,l])=>(
+          <div key={k} className={`mm-chip${chip===k?' on':''}`}
+            onClick={()=>setChip(k)}
+            style={k==='low'&&chip!==k
+              ?{color:'#DC3545',borderColor:'#DC3545'}:{}}>
+            {l}
+          </div>
+        ))}
       </div>
-      <table className="wm-data-table">
-        <thead><tr>
-          <th><input type="checkbox"/></th>
-          <th>Material Code</th><th>Description</th><th>Category</th>
-          <th>Location / Bin</th><th>UOM</th>
-          <th>Opening</th><th>In</th><th>Out</th><th>Current Stock</th>
-          <th>Reorder Lvl</th><th>Value (₹)</th><th>Status</th>
-        </tr></thead>
-        <tbody>
-          {STOCKS.map(s => (
-            <tr key={s.code}>
-              <td><input type="checkbox"/></td>
-              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{s.code}</strong></td>
-              <td>{s.desc}</td><td>{s.cat}</td>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{s.bin}</td>
-              <td>{s.uom}</td>
-              <td style={{color:'var(--odoo-gray)'}}>{s.op}</td>
-              <td style={{color:'var(--odoo-green)',fontWeight:s.in_>0?'700':'400'}}>{s.in_}</td>
-              <td style={{color:'var(--odoo-red)',fontWeight:s.out>0?'700':'400'}}>{s.out}</td>
-              <td><strong style={s.cc?{color:s.cc}:{}}>{s.cur}</strong></td>
-              <td style={{color:'var(--odoo-gray)'}}>{s.reord}</td>
-              <td>{s.val}</td>
-              <td><span className={`badge ${s.b}`}>{s.bl}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',fontSize:'12px',color:'var(--odoo-gray)'}}>
-        <span>Showing 7 of 86 records · Total Value: <strong>₹42,80,000</strong></span>
-        <div style={{display:'flex',gap:'5px'}}>
-          <button className="btn btn-s sd-bsm">‹ Prev</button>
-          <button className="btn btn-p sd-bsm">1</button>
-          <button className="btn btn-s sd-bsm">2</button>
-          <button className="btn btn-s sd-bsm">Next ›</button>
+
+      {loading ? (
+        <div style={{ padding:40, textAlign:'center',
+          color:'#6C757D' }}>⏳ Loading stock...</div>
+      ) : (
+        <div style={{ border:'1px solid #E0D5E0',
+          borderRadius:8, overflow:'hidden' }}>
+          <table style={{ width:'100%',
+            borderCollapse:'collapse', fontSize:12 }}>
+            <thead style={{ background:'#F8F4F8',
+              position:'sticky', top:60 }}>
+              <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
+                {['','Code','Material','Category',
+                  'UOM','Received','Issued',
+                  'Balance','Reorder Lvl',
+                  'Value','Status'].map(h=>(
+                  <th key={h} style={{ padding:'8px 10px',
+                    fontSize:10, fontWeight:700,
+                    color:'#6C757D', textAlign:'left',
+                    textTransform:'uppercase',
+                    letterSpacing:.3,
+                    whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((s,i)=>{
+                const sc = STATUS_STYLE[s.status]||STATUS_STYLE.OK
+                return (
+                  <tr key={s.id} style={{
+                    borderBottom:'1px solid #F0EEF0',
+                    background:
+                      s.status==='CRITICAL'||s.status==='ZERO'
+                        ?'#FFF5F5'
+                        :s.status==='LOW'?'#FFFEF0'
+                        :i%2===0?'#fff':'#FDFBFD' }}>
+                    <td style={{ padding:'8px 10px', width:30 }}>
+                      <input type="checkbox" />
+                    </td>
+                    <td style={{ padding:'8px 10px' }}>
+                      <strong style={{ color:'#714B67',
+                        fontFamily:'DM Mono,monospace',
+                        fontSize:11 }}>{s.itemCode}</strong>
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      fontWeight:600, minWidth:160 }}>
+                      {s.itemName}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      fontSize:11, color:'#6C757D' }}>
+                      {s.category}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'center' }}>{s.uom}</td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'right', color:'#155724',
+                      fontWeight:600,
+                      fontFamily:'DM Mono,monospace' }}>
+                      {parseFloat(s.inQty||0).toFixed(2)}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'right', color:'#DC3545',
+                      fontWeight:600,
+                      fontFamily:'DM Mono,monospace' }}>
+                      {parseFloat(s.outQty||0).toFixed(2)}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'right', fontWeight:800,
+                      fontFamily:'DM Mono,monospace',
+                      color:sc.color }}>
+                      {parseFloat(s.balanceQty||0).toFixed(2)}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'right', color:'#6C757D',
+                      fontFamily:'DM Mono,monospace' }}>
+                      {parseFloat(s.reorderQty||0)}
+                    </td>
+                    <td style={{ padding:'8px 10px',
+                      textAlign:'right',
+                      fontFamily:'DM Mono,monospace',
+                      fontWeight:600 }}>
+                      {fmtC(s.value)}
+                    </td>
+                    <td style={{ padding:'8px 10px' }}>
+                      <span style={{ padding:'2px 8px',
+                        borderRadius:10, fontSize:10,
+                        fontWeight:700,
+                        background:sc.bg, color:sc.color }}>
+                        {sc.label}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            <tfoot style={{ background:'#F8F4F8',
+              borderTop:'2px solid #714B67' }}>
+              <tr>
+                <td colSpan={9} style={{ padding:'10px 12px',
+                  fontWeight:800, color:'#714B67',
+                  fontFamily:'Syne,sans-serif' }}>
+                  Total Stock Value
+                </td>
+                <td style={{ padding:'10px 12px',
+                  textAlign:'right', fontWeight:800,
+                  fontFamily:'DM Mono,monospace',
+                  fontSize:14, color:'#155724' }}>
+                  {fmtC(totalValue)}
+                </td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   )
 }

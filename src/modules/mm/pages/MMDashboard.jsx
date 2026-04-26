@@ -1,28 +1,80 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { mmApi } from '../services/mmApi'
+
+const fmtC = n => '₹'+Number(n||0).toLocaleString('en-IN')
+const fmtL = n => '₹'+(Number(n||0)/100000).toFixed(1)+'L'
 
 export default function MMDashboard() {
   const nav = useNavigate()
+  const [stats,   setStats]   = useState(null)
+  const [pos,     setPOs]     = useState([])
+  const [invs,    setInvs]    = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(()=>{
+    Promise.all([
+      mmApi.dashboard(),
+      mmApi.getPOList(),
+      mmApi.getInvoices('?status=PENDING'),
+    ]).then(([dash, poData, invData])=>{
+      setStats(dash)
+      setPOs((poData.data||[]).slice(0,5))
+      setInvs((invData.data||[]).slice(0,5))
+    }).catch(e=>toast.error(e.message))
+      .finally(()=>setLoading(false))
+  },[])
+
+  if (loading) return (
+    <div style={{ padding:60, textAlign:'center', color:'#6C757D' }}>
+      ⏳ Loading MM Dashboard...
+    </div>
+  )
+
   return (
     <div>
       <div className="lv-hdr">
         <div className="lv-ttl">MM · Materials Management <small>Dashboard</small></div>
         <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>＋ New PO</button>
+          <button className="btn btn-s sd-bsm"
+            onClick={()=>nav('/mm/grn/new')}>📦 Record GRN</button>
+          <button className="btn btn-p sd-bsm"
+            onClick={()=>nav('/mm/po/new')}>＋ New PO</button>
         </div>
       </div>
-      <div className="mm-alert warn"> <strong>5 Purchase Orders</strong> are pending GRN for more than 7 days.{' '}
-        <span onClick={() => nav('/mm/po/pending')} style={{cursor:'pointer',textDecoration:'underline',fontWeight:700}}>View Pending POs →</span>
-      </div>
+
+      {stats?.pendingGRN>0 && (
+        <div className="mm-alert warn">
+          ⚠️ <strong>{stats.pendingGRN} Purchase Orders</strong> are
+          pending GRN.{' '}
+          <span onClick={()=>nav('/mm/po/pending')}
+            style={{ cursor:'pointer', textDecoration:'underline',
+              fontWeight:700 }}>View Pending POs →</span>
+        </div>
+      )}
+
       <div className="mm-kpi-grid">
         {[
-          {cls:'pur',ic:'',lb:'Purchase Orders (MTD)',val:'₹28.4L',sub:'18 POs · 3 pending approval',to:'/mm/po'},
-          {cls:'grn',ic:'',lb:'GRN Received (MTD)',  val:'₹21.6L',sub:'14 GRNs · 4 POs awaiting',to:'/mm/grn'},
-          {cls:'orn',ic:'',lb:'Vendor Invoices Due', val:'₹8.2L', sub:'6 invoices · 2 overdue',to:'/mm/invoices'},
-          {cls:'blu',ic:'',lb:'Active Vendors',      val:'24',    sub:'3 new this month',to:'/mm/vendors'},
-        ].map(k => (
-          <div key={k.lb} className={`mm-kpi ${k.cls}`} onClick={() => nav(k.to)}>
+          { cls:'pur', ic:'🛒', lb:'Purchase Orders (MTD)',
+            val: fmtL(stats?.poMTD?.amount||0),
+            sub:`${stats?.poMTD?.count||0} POs · ${stats?.pendingPO||0} pending`,
+            to:'/mm/po' },
+          { cls:'grn', ic:'📦', lb:'GRN Received (MTD)',
+            val:`${stats?.grnMTD?.count||0} GRNs`,
+            sub:`${stats?.pendingGRN||0} POs awaiting receipt`,
+            to:'/mm/grn' },
+          { cls:'orn', ic:'🧾', lb:'Vendor Invoices Due',
+            val:fmtL(stats?.pendingInv?.amount||0),
+            sub:`${stats?.pendingInv?.count||0} invoices · ${stats?.overdue||0} overdue`,
+            to:'/mm/invoices' },
+          { cls:'blu', ic:'🏢', lb:'Pending Actions',
+            val:((stats?.pendingPO||0)+(stats?.overdue||0)),
+            sub:'POs to approve + overdue invoices',
+            to:'/mm/po' },
+        ].map(k=>(
+          <div key={k.lb} className={`mm-kpi ${k.cls}`}
+            onClick={()=>nav(k.to)}>
             <div className="mm-kpi-ic">{k.ic}</div>
             <div className="mm-kpi-lb">{k.lb}</div>
             <div className="mm-kpi-val">{k.val}</div>
@@ -30,58 +82,91 @@ export default function MMDashboard() {
           </div>
         ))}
       </div>
+
       <div className="mm-pg-grid">
+        {/* Recent POs */}
         <div className="mm-panel">
-          <div className="mm-ph"><h3>Recent Purchase Orders</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/po')}>View All</button></div>
-          <table className="mm-tbl">
-            <thead><tr><th>PO No.</th><th>Vendor</th><th>Amount</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              {[
-                {id:'PO-2025-042',v:'Lakshmi Textile Mills', a:'₹4,85,000',b:'mm-bdg-approved',l:'Approved'},
-                {id:'PO-2025-041',v:'Coimbatore Spares Co.',  a:'₹1,20,000',b:'mm-bdg-sent',    l:'Sent'},
-                {id:'PO-2025-040',v:'Sri Murugan Traders',    a:'₹2,36,500',b:'mm-bdg-received', l:'GRN Done'},
-                {id:'PO-2025-039',v:'Aruna Industries',       a:'₹88,200',  b:'mm-bdg-partial',  l:'Partial GRN'},
-                {id:'PO-2025-038',v:'KG Denim Ltd.',          a:'₹6,42,000',b:'mm-bdg-draft',    l:'Draft'},
-              ].map(p => (
-                <tr key={p.id} onClick={() => nav(`/mm/po/${p.id}`)}>
-                  <td><strong style={{color:'var(--odoo-purple)',fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{p.id}</strong></td>
-                  <td>{p.v}</td><td><strong>{p.a}</strong></td>
-                  <td><span className={`mm-badge ${p.b}`}>{p.l}</span></td>
-                  <td onClick={e=>e.stopPropagation()}><button className="btn-xs">View</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mm-panel">
-          <div className="mm-ph"><h3>Vendor Payables</h3><button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/ledger')}>View Ledger</button></div>
-          <div className="mm-pb">
-            {[
-              {n:'Lakshmi Textile Mills', p:80, c:'var(--odoo-red)',    b:'mm-bdg-overdue',l:'₹1,42,000'},
-              {n:'Coimbatore Spares Co.', p:55, c:'var(--odoo-orange)', b:'mm-bdg-pending',l:'₹88,500'},
-              {n:'Sri Murugan Traders',   p:30, c:'var(--odoo-purple)', b:'mm-bdg-pending',l:'₹36,200'},
-              {n:'Aruna Industries',      p:100,c:'var(--odoo-green)',  b:'mm-bdg-paid',   l:'Paid'},
-            ].map(v => (
-              <div key={v.n} style={{marginBottom:'10px'}}>
-                <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px',fontSize:'12px'}}>
-                  <span>{v.n}</span><span className={`mm-badge ${v.b}`}>{v.l}</span>
-                </div>
-                <div style={{height:'6px',background:'#F0EEEB',borderRadius:'3px'}}>
-                  <div style={{width:`${v.p}%`,height:'100%',background:v.c,borderRadius:'3px'}}></div>
-                </div>
-              </div>
-            ))}
+          <div className="mm-ph">
+            <h3>Recent Purchase Orders</h3>
+            <button className="btn btn-s sd-bsm"
+              onClick={()=>nav('/mm/po')}>View All</button>
           </div>
+          {pos.length===0 ? (
+            <div style={{ padding:30, textAlign:'center', color:'#6C757D',
+              fontSize:12 }}>No POs yet</div>
+          ) : (
+            <table className="mm-tbl">
+              <thead>
+                <tr><th>PO No.</th><th>Vendor</th><th>Amount</th>
+                  <th>Status</th><th></th></tr>
+              </thead>
+              <tbody>
+                {pos.map(p=>(
+                  <tr key={p.id} onClick={()=>nav(`/mm/po/${p.id}`)}>
+                    <td><strong style={{ color:'var(--odoo-purple)',
+                      fontFamily:'DM Mono,monospace', fontSize:11 }}>
+                      {p.poNo}</strong></td>
+                    <td style={{ fontSize:12 }}>{p.vendorName}</td>
+                    <td><strong>{fmtC(p.totalAmount)}</strong></td>
+                    <td><span style={{ padding:'2px 6px', borderRadius:8,
+                      fontSize:10, fontWeight:700,
+                      background:p.status==='DRAFT'?'#E9ECEF':'#D4EDDA',
+                      color:p.status==='DRAFT'?'#383D41':'#155724' }}>
+                      {p.status}</span></td>
+                    <td onClick={e=>e.stopPropagation()}>
+                      <button className="btn-xs">View</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      </div>
-      <div className="mm-panel">
-        <div className="mm-ph"><h3> Quick Actions</h3></div>
-        <div className="mm-pb" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/po/new')}>New Purchase Order</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/mm/grn/new')}>Record GRN</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/invoices/new')}>Enter Vendor Invoice</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/vendors/new')}>Add Vendor</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/mm/rfq')}> Create RFQ</button>
+
+        {/* Vendor Payables */}
+        <div className="mm-panel">
+          <div className="mm-ph">
+            <h3>Vendor Payables</h3>
+            <button className="btn btn-s sd-bsm"
+              onClick={()=>nav('/mm/invoices')}>View All</button>
+          </div>
+          {invs.length===0 ? (
+            <div style={{ padding:30, textAlign:'center', color:'#6C757D',
+              fontSize:12 }}>No pending invoices</div>
+          ) : (
+            <div className="mm-pb">
+              {invs.map(inv=>{
+                const isOverdue = inv.dueDate &&
+                  new Date(inv.dueDate)<new Date()
+                return (
+                  <div key={inv.id} style={{ display:'flex',
+                    alignItems:'center', gap:10,
+                    padding:'10px 0',
+                    borderBottom:'1px solid #F0EEF0' }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:13 }}>
+                        {inv.vendorName}</div>
+                      <div style={{ fontSize:11, color:'#6C757D' }}>
+                        {inv.invNo} · Due: {inv.dueDate
+                          ?new Date(inv.dueDate).toLocaleDateString('en-IN')
+                          :'—'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontWeight:800, fontSize:14,
+                        color:isOverdue?'#DC3545':'#856404',
+                        fontFamily:'DM Mono,monospace' }}>
+                        {fmtC(inv.balance)}</div>
+                      {isOverdue && (
+                        <span style={{ fontSize:10, color:'#DC3545',
+                          fontWeight:700 }}>OVERDUE</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

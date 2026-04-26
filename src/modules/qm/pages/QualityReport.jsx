@@ -1,138 +1,247 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import toast from 'react-hot-toast'
 
-const MONTHLY_DATA = [
-  {prod:'Ring Yarn (30s)',lots:18,qty:7200,pass:7130,fail:70,yield:98.5,ncrs:1,certs:18},
-  {prod:'Ring Yarn (40s)',lots:12,qty:4800,pass:4610,fail:190,yield:95.8,ncrs:2,certs:12},
-  {prod:'OE Yarn (12s)', lots:8, qty:4704,pass:4640,fail:64, yield:98.6,ncrs:1,certs:8},
-  {prod:'Compact Sliver',lots:10,qty:7920,pass:7920,fail:0,  yield:100, ncrs:0,certs:10},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
 
-const DEFECT_TYPES = [
-  {type:'Twist Variation',cnt:28,pct:45,clr:'var(--odoo-red)'},
-  {type:'Strength Below Spec',cnt:16,pct:26,clr:'var(--odoo-orange)'},
-  {type:'Nep Count High',cnt:12,pct:19,clr:'var(--odoo-blue)'},
-  {type:'Count Variation',cnt:6,pct:10,clr:'var(--odoo-purple)'},
-]
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function QualityReport() {
-  const [month, setMonth] = useState('February 2025')
+  const [lots,    setLots]    = useState([])
+  const [ncrs,    setNCRs]    = useState([])
+  const [capas,   setCAPAs]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [period,  setPeriod]  = useState('All')
 
-  const totals = MONTHLY_DATA.reduce((acc,r) => ({
-    lots:acc.lots+r.lots, qty:acc.qty+r.qty,
-    pass:acc.pass+r.pass, fail:acc.fail+r.fail,
-    ncrs:acc.ncrs+r.ncrs, certs:acc.certs+r.certs
-  }), {lots:0,qty:0,pass:0,fail:0,ncrs:0,certs:0})
-  const avgYield = (totals.pass/totals.qty*100).toFixed(1)
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [rL, rN, rC] = await Promise.all([
+        fetch(`${BASE_URL}/qm/inspection`, { headers: hdr2() }),
+        fetch(`${BASE_URL}/qm/ncr`,        { headers: hdr2() }),
+        fetch(`${BASE_URL}/qm/capa`,       { headers: hdr2() }),
+      ])
+      const [dL, dN, dC] = await Promise.all([rL.json(), rN.json(), rC.json()])
+      setLots(dL.data  || [])
+      setNCRs(dN.data  || [])
+      setCAPAs(dC.data || [])
+    } catch { toast.error('Failed to load quality report') }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  // Filter by period
+  const filterByPeriod = items => {
+    if (period === 'All') return items
+    const now = new Date()
+    const cutoff = new Date()
+    if (period === 'This Month') { cutoff.setDate(1); cutoff.setHours(0,0,0,0) }
+    else if (period === 'Last 3 Months') cutoff.setMonth(now.getMonth() - 3)
+    else if (period === 'Last 6 Months') cutoff.setMonth(now.getMonth() - 6)
+    return items.filter(i => new Date(i.createdAt || i.inspDate || i.date) >= cutoff)
+  }
+
+  const filtLots = filterByPeriod(lots)
+  const filtNcrs = filterByPeriod(ncrs)
+
+  // Product-wise summary
+  const productSummary = useMemo(() => {
+    const map = {}
+    filtLots.forEach(l => {
+      const key = l.itemName || 'Unknown'
+      if (!map[key]) map[key] = { prod:key, lots:0, qty:0, pass:0, fail:0, ncrs:0, certs:0 }
+      map[key].lots++
+      map[key].qty    += parseFloat(l.lotQty || 0)
+      map[key].pass   += parseFloat(l.passQty || 0)
+      map[key].fail   += parseFloat(l.failQty || 0)
+      if (l.result === 'PASS') map[key].certs++
+    })
+    filtNcrs.forEach(n => {
+      const key = n.itemName || 'Unknown'
+      if (map[key]) map[key].ncrs++
+    })
+    return Object.values(map).map(r => ({
+      ...r,
+      yield: r.qty > 0 ? ((r.pass / r.qty) * 100).toFixed(1) : '0.0'
+    })).sort((a, b) => b.lots - a.lots)
+  }, [filtLots, filtNcrs])
+
+  // Defect type from NCRs
+  const defectSummary = useMemo(() => {
+    const map = {}
+    filtNcrs.forEach(n => {
+      // Extract defect type from description
+      const key = n.description?.split(' ')[0]?.slice(0, 20) || 'Other'
+      if (!map[key]) map[key] = { type: key, cnt: 0 }
+      map[key].cnt++
+    })
+    const total = Object.values(map).reduce((a, v) => a + v.cnt, 0)
+    return Object.values(map)
+      .map(d => ({ ...d, pct: total > 0 ? Math.round((d.cnt / total) * 100) : 0 }))
+      .sort((a, b) => b.cnt - a.cnt)
+      .slice(0, 6)
+  }, [filtNcrs])
+
+  // Monthly trend
+  const monthlyTrend = useMemo(() => {
+    const map = {}
+    filtLots.forEach(l => {
+      const m = new Date(l.inspDate || l.createdAt).getMonth()
+      const k = MONTHS[m].slice(0, 3)
+      if (!map[k]) map[k] = { month: k, lots: 0, pass: 0, ncrs: 0 }
+      map[k].lots++
+      if (l.result === 'PASS') map[k].pass++
+    })
+    filtNcrs.forEach(n => {
+      const m = new Date(n.date || n.createdAt).getMonth()
+      const k = MONTHS[m].slice(0, 3)
+      if (map[k]) map[k].ncrs++
+    })
+    return Object.values(map)
+  }, [filtLots, filtNcrs])
+
+  // Overall KPIs
+  const totalLots  = filtLots.length
+  const totalPass  = filtLots.filter(l => l.result === 'PASS').length
+  const totalFail  = filtLots.filter(l => l.result === 'FAIL').length
+  const totalNcrs  = filtNcrs.length
+  const overallYield = totalLots > 0 ? ((totalPass / totalLots) * 100).toFixed(1) : 0
+  const openCapas  = capas.filter(c => c.status !== 'Closed').length
+
+  const COLORS = ['var(--odoo-red)','var(--odoo-orange)','var(--odoo-blue)','var(--odoo-purple)','#28A745','#6C757D']
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Quality Report <small>{month}</small></div>
+        <div className="fi-lv-title">Quality Report <small>QM Analytics &amp; Summary</small></div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select" onChange={e=>setMonth(e.target.value)}>
-            <option>February 2025</option><option>January 2025</option><option>March 2025</option>
+          <select className="sd-search" value={period} onChange={e => setPeriod(e.target.value)} style={{ width: 160 }}>
+            {['This Month','Last 3 Months','Last 6 Months','All'].map(p => <option key={p}>{p}</option>)}
           </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
           <button className="btn btn-s sd-bsm">Export PDF</button>
         </div>
       </div>
 
-      <div className="qm-kpi-grid">
-        {[{cls:'green', ic:'',l:'Avg Yield Rate',  v:`${avgYield}%`, s:`${totals.lots} lots · ${(totals.qty/1000).toFixed(1)} T inspected`},
-          {cls:'red',   ic:'',l:'Total Rejections', v:`${totals.fail} Kg`,s:`${(totals.fail/totals.qty*100).toFixed(2)}% rejection rate`},
-          {cls:'orange',ic:'',l:'NCRs Raised',      v:totals.ncrs,  s:'4 closed · 4 open'},
-          {cls:'blue',  ic:'',l:'Certs Issued',     v:totals.certs, s:'COC + Test Reports'},
-        ].map(k=>(
-          <div key={k.l} className={`qm-kpi-card ${k.cls}`}>
-            <div className="qm-kpi-icon">{k.ic}</div>
-            <div className="qm-kpi-label">{k.l}</div>
-            <div className="qm-kpi-value">{k.v}</div>
-            <div className="qm-kpi-sub">{k.s}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="fi-panel-grid">
-        {/* Yield by product */}
-        <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>Yield by Product</h3></div>
-          <div className="fi-panel-body">
-            {MONTHLY_DATA.map(r=>(
-              <div key={r.prod} style={{marginBottom:'14px'}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'4px'}}>
-                  <strong>{r.prod}</strong>
-                  <span style={{fontWeight:'700',color:r.yield>=98?'var(--odoo-green)':r.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}>{r.yield}%</span>
-                </div>
-                <div className="yield-bar">
-                  <div className="yield-fill" style={{width:`${r.yield}%`,background:r.yield>=98?'var(--odoo-green)':r.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}></div>
-                </div>
-                <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginTop:'2px'}}>{r.lots} lots · {r.qty} Kg inspected</div>
+      {loading ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#6C757D' }}>Loading quality data...</div>
+      ) : (
+        <>
+          {/* KPI cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: 16 }}>
+            {[
+              ['Insp. Lots',  totalLots,      '#EDE0EA','#714B67'],
+              ['Passed',      totalPass,      '#D4EDDA','#155724'],
+              ['Failed',      totalFail,      '#F8D7DA','#721C24'],
+              ['Overall Yield',`${overallYield}%`,'#D1ECF1','#0C5460'],
+              ['NCRs Raised', totalNcrs,      '#FFF3CD','#856404'],
+              ['Open CAPAs',  openCapas,      '#F8D7DA','#721C24'],
+            ].map(([l, v, bg, c]) => (
+              <div key={l} style={{ background: bg, borderRadius: 8, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: c, fontFamily: 'DM Mono,monospace' }}>{v}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: c, opacity: .8 }}>{l}</div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Defect Pareto */}
-        <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>Defect Pareto Analysis</h3></div>
-          <div className="fi-panel-body">
-            {DEFECT_TYPES.map(d=>(
-              <div key={d.type} style={{marginBottom:'12px'}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'4px'}}>
-                  <span>{d.type}</span>
-                  <strong style={{color:d.clr}}>{d.cnt} Kg ({d.pct}%)</strong>
-                </div>
-                <div className="yield-bar">
-                  <div className="yield-fill" style={{width:`${d.pct}%`,background:d.clr}}></div>
-                </div>
-              </div>
-            ))}
-            <div className="pp-alert info" style={{marginTop:'12px',padding:'8px 12px',fontSize:'11px'}}>
-               Top 2 defects account for 71% of rejections → focus CAPA on twist variation & strength control
+          {totalLots === 0 ? (
+            <div style={{ background: '#fff', border: '1px solid #E0D5E0', borderRadius: 8, padding: 60, textAlign: 'center', color: '#6C757D' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#333' }}>No quality data for selected period</div>
+              <div style={{ fontSize: 12, marginTop: 6 }}>Create inspection lots in Inspection Register to see reports here.</div>
             </div>
-          </div>
-        </div>
-      </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
 
-      {/* Detail Table */}
-      <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr">Product-wise Quality Summary — {month}</div>
-        <div style={{padding:'0'}}>
-          <table className="fi-data-table">
-            <thead><tr>
-              <th>Product</th><th>Lots</th><th>Total Qty (Kg)</th>
-              <th>Pass</th><th>Fail</th><th>Yield %</th><th>NCRs</th><th>Certificates</th>
-            </tr></thead>
-            <tbody>
-              {MONTHLY_DATA.map(r=>(
-                <tr key={r.prod}>
-                  <td><strong>{r.prod}</strong></td>
-                  <td style={{textAlign:'center'}}>{r.lots}</td>
-                  <td>{r.qty.toLocaleString()}</td>
-                  <td style={{color:'var(--odoo-green)',fontWeight:'600'}}>{r.pass.toLocaleString()}</td>
-                  <td style={{color:r.fail>0?'var(--odoo-red)':'var(--odoo-gray)',fontWeight:r.fail>0?'700':'400'}}>{r.fail||'—'}</td>
-                  <td>
-                    <span style={{fontWeight:'700',color:r.yield>=98?'var(--odoo-green)':r.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}>{r.yield}%</span>
-                  </td>
-                  <td style={{color:r.ncrs>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:'700',textAlign:'center'}}>{r.ncrs||'—'}</td>
-                  <td style={{textAlign:'center'}}>{r.certs}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{background:'#F8F9FA',fontWeight:'700'}}>
-                <td>Total</td>
-                <td style={{textAlign:'center'}}>{totals.lots}</td>
-                <td>{totals.qty.toLocaleString()}</td>
-                <td style={{color:'var(--odoo-green)'}}>{totals.pass.toLocaleString()}</td>
-                <td style={{color:'var(--odoo-red)'}}>{totals.fail}</td>
-                <td style={{color:'var(--odoo-green)'}}>{avgYield}% avg</td>
-                <td style={{color:'var(--odoo-orange)',textAlign:'center'}}>{totals.ncrs}</td>
-                <td style={{textAlign:'center'}}>{totals.certs}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+              {/* Product summary table */}
+              <div style={{ border: '1px solid #E0D5E0', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ background: 'linear-gradient(135deg,#714B67,#4A3050)', padding: '8px 14px' }}>
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'Syne,sans-serif' }}>Product-wise Summary</span>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: '#F8F4F8', borderBottom: '2px solid #E0D5E0' }}>
+                      {['Product','Lots','Qty','Pass%','NCRs','Certs'].map(h => (
+                        <th key={h} style={{ padding: '7px 10px', fontSize: 10, fontWeight: 700, color: '#6C757D', textAlign: h==='Product'?'left':'center', textTransform: 'uppercase' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productSummary.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #F0EEF0' }}>
+                        <td style={{ padding: '7px 10px', fontWeight: 600 }}>{r.prod}</td>
+                        <td style={{ padding: '7px 10px', textAlign: 'center', fontFamily: 'DM Mono,monospace', fontWeight: 700 }}>{r.lots}</td>
+                        <td style={{ padding: '7px 10px', textAlign: 'center', fontFamily: 'DM Mono,monospace' }}>{r.qty.toFixed(0)}</td>
+                        <td style={{ padding: '7px 10px', textAlign: 'center' }}>
+                          <span style={{ fontWeight: 700, color: parseFloat(r.yield) >= 98 ? '#155724' : parseFloat(r.yield) >= 90 ? '#856404' : '#DC3545' }}>{r.yield}%</span>
+                        </td>
+                        <td style={{ padding: '7px 10px', textAlign: 'center', fontFamily: 'DM Mono,monospace', color: r.ncrs > 0 ? '#DC3545' : '#155724', fontWeight: 700 }}>{r.ncrs}</td>
+                        <td style={{ padding: '7px 10px', textAlign: 'center', fontFamily: 'DM Mono,monospace', color: '#714B67', fontWeight: 700 }}>{r.certs}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Defect analysis */}
+              <div style={{ border: '1px solid #E0D5E0', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ background: 'linear-gradient(135deg,#714B67,#4A3050)', padding: '8px 14px' }}>
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'Syne,sans-serif' }}>Defect Analysis — Top Issues</span>
+                </div>
+                <div style={{ padding: 14 }}>
+                  {defectSummary.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#999', padding: 30, fontSize: 12 }}>No NCR defect data</div>
+                  ) : defectSummary.map((d, i) => (
+                    <div key={i} style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ fontWeight: 600 }}>{d.type}</span>
+                        <span style={{ fontFamily: 'DM Mono,monospace', fontWeight: 700, color: COLORS[i] }}>{d.cnt} ({d.pct}%)</span>
+                      </div>
+                      <div style={{ height: 8, background: '#E0D5E0', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${d.pct}%`, background: COLORS[i], borderRadius: 4, transition: 'width .5s' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Monthly trend */}
+          {monthlyTrend.length > 0 && (
+            <div style={{ border: '1px solid #E0D5E0', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ background: 'linear-gradient(135deg,#714B67,#4A3050)', padding: '8px 14px' }}>
+                <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'Syne,sans-serif' }}>Monthly Trend</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#F8F4F8', borderBottom: '2px solid #E0D5E0' }}>
+                    {['Month','Lots Inspected','Passed','NCRs Raised','Pass Rate'].map(h => (
+                      <th key={h} style={{ padding: '7px 14px', fontSize: 10, fontWeight: 700, color: '#6C757D', textAlign: 'center', textTransform: 'uppercase' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyTrend.map((m, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #F0EEF0' }}>
+                      <td style={{ padding: '8px 14px', fontWeight: 700, textAlign: 'center' }}>{m.month}</td>
+                      <td style={{ padding: '8px 14px', textAlign: 'center', fontFamily: 'DM Mono,monospace', fontWeight: 700 }}>{m.lots}</td>
+                      <td style={{ padding: '8px 14px', textAlign: 'center', fontFamily: 'DM Mono,monospace', color: '#155724', fontWeight: 700 }}>{m.pass}</td>
+                      <td style={{ padding: '8px 14px', textAlign: 'center', fontFamily: 'DM Mono,monospace', color: m.ncrs > 0 ? '#DC3545' : '#155724', fontWeight: 700 }}>{m.ncrs}</td>
+                      <td style={{ padding: '8px 14px', textAlign: 'center' }}>
+                        <span style={{ fontWeight: 700, color: m.lots > 0 && (m.pass/m.lots)*100 >= 95 ? '#155724' : '#856404' }}>
+                          {m.lots > 0 ? ((m.pass/m.lots)*100).toFixed(1) : 0}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

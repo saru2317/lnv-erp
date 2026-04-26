@@ -1,113 +1,127 @@
-import ListViewToggle from '@components/ui/ListViewToggle'
-import { useListView } from '@hooks/useListView'
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const JVS = [
-  {no:'JV-2025-0148',date:'28 Feb 2025',type:'Sales',   typeB:'badge-filed',   narr:'Sales Invoice INV-2025-042 · ABC Textiles',    dr:'₹2,36,000',cr:'₹2,36,000',sb:'badge-posted',sl:'Posted', src:'SD'},
-  {no:'JV-2025-0147',date:'27 Feb 2025',type:'Purchase',typeB:'badge-pending',  narr:'Vendor Invoice VINV-2025-012 · Lakshmi Textiles',dr:'₹2,08,000',cr:'₹2,08,000',sb:'badge-posted',sl:'Posted', src:'MM'},
-  {no:'JV-2025-0146',date:'26 Feb 2025',type:'Bank',    typeB:'badge-paid',     narr:'Receipt from XYZ Industries — NEFT',             dr:'₹1,85,000',cr:'₹1,85,000',sb:'badge-posted',sl:'Posted', src:'FI'},
-  {no:'JV-2025-0145',date:'25 Feb 2025',type:'Manual JV',typeB:'badge-manual',  narr:'Depreciation — Plant & Machinery Feb 2025',     dr:'₹42,000', cr:'₹42,000', sb:'badge-posted',sl:'Posted', src:'FI'},
-  {no:'JV-2025-0144',date:'24 Feb 2025',type:'Sales',   typeB:'badge-filed',   narr:'Sales Invoice INV-2025-041 · MNO Fabrics',      dr:'₹3,54,000',cr:'₹3,54,000',sb:'badge-posted',sl:'Posted', src:'SD'},
-  {no:'JV-2025-0143',date:'24 Feb 2025',type:'Manual JV',typeB:'badge-manual', narr:'Salary — Feb 2025 payroll (HCM)',                dr:'₹8,40,000',cr:'₹8,40,000',sb:'badge-draft', sl:'Draft',  src:'HCM'},
-  {no:'JV-2025-0142',date:'23 Feb 2025',type:'Production',typeB:'badge-auto',  narr:'COGM — Work Order WO-2025-017 PP Module',       dr:'₹6,20,000',cr:'₹6,20,000',sb:'badge-posted',sl:'Posted', src:'PP'},
-  {no:'JV-2025-0141',date:'22 Feb 2025',type:'Maintenance',typeB:'badge-auto', narr:'PM Cost — Machine M-102 breakdown repair',       dr:'₹48,000', cr:'₹48,000', sb:'badge-posted',sl:'Posted', src:'PM'},
-  {no:'JV-2025-0140',date:'21 Feb 2025',type:'Stock',   typeB:'badge-auto',    narr:'WM — Goods Issue GI-2025-042 to Production',    dr:'₹1,44,000',cr:'₹1,44,000',sb:'badge-posted',sl:'Posted', src:'WM'},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
 
 export default function JVList() {
-  const { viewMode, toggleView } = useListView('FI-JVList')
   const nav = useNavigate()
-  const [chip, setChip] = useState('All')
-  const [modal, setModal] = useState(null)
-  const chips = ['All','Sales','Purchase','Bank','Manual JV','Production','Maintenance']
+  const [jes,     setJes]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search,  setSearch]  = useState('')
+  const [filter,  setFilter]  = useState('All')
+  const [modal,   setModal]   = useState(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/je${search?`?search=${search}`:''}`, { headers: hdr2() })
+      const data = await res.json()
+      setJes(data.data || [])
+    } catch { toast.error('Failed to load journals') }
+    finally { setLoading(false) }
+  }, [search])
+  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t) }, [search])
+
+  const REF_TYPES = ['All','SD','MM','FI','HCM','PP','WM','PM']
+  const shown     = jes.filter(j => filter === 'All' || j.refType === filter)
 
   return (
     <div>
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Journal Entries <small>FB03 · All Postings</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/fi/jv/new')}>New Journal</button>
+          <input className="sd-search" placeholder="Search narration..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/fi/daybook')}>Day Book</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/fi/jv/new')}>New JV</button>
         </div>
       </div>
 
-      <div className="fi-chips">
-        {chips.map(c => (
-          <div key={c} className={`fi-chip${chip===c?' on':''}`} onClick={() => setChip(c)}>{c}</div>
+      <div className="pp-chips">
+        {REF_TYPES.map(t=>(
+          <div key={t} className={`pp-chip${filter===t?' on':''}`} onClick={()=>setFilter(t)}>
+            {t} <span>{t==='All'?jes.length:jes.filter(j=>j.refType===t).length}</span>
+          </div>
         ))}
-      </div>
-
-      <div className="fi-filter-bar">
-        <div className="fi-filter-search"><input placeholder="Search JV no., account, narration..."/></div>
-        <select className="fi-filter-select"><option>All Types</option><option>Sales</option><option>Purchase</option><option>Bank</option><option>Manual JV</option><option>Production</option></select>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
-        <button className="btn btn-s sd-bsm"> Reset</button>
       </div>
 
       <table className="fi-data-table">
         <thead><tr>
-          <th><input type="checkbox"/></th>
-          <th>JV No.</th><th>Date</th><th>Type</th><th>Narration</th>
-          <th>Source</th><th>Debit (₹)</th><th>Credit (₹)</th><th>Status</th><th></th>
+          <th>JV No.</th><th>Date</th><th>Narration</th><th>Ref</th>
+          <th style={{textAlign:'right'}}>Debit</th><th style={{textAlign:'right'}}>Credit</th>
+          <th style={{textAlign:'center'}}>Source</th><th>Actions</th>
         </tr></thead>
         <tbody>
-          {JVS.filter(j => chip==='All' || j.type===chip).map(j => (
-            <tr key={j.no} onClick={() => setModal(j)}>
-              <td onClick={e=>e.stopPropagation()}><input type="checkbox"/></td>
-              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{j.no}</strong></td>
-              <td>{j.date}</td>
-              <td><span className={`badge ${j.typeB}`}>{j.type}</span></td>
-              <td style={{maxWidth:'260px',fontSize:'12px'}}>{j.narr}</td>
-              <td><span className="badge badge-auto" style={{fontSize:'10px'}}>{j.src}</span></td>
-              <td className="dr">{j.dr}</td>
-              <td className="cr">{j.cr}</td>
-              <td><span className={`badge ${j.sb}`}>{j.sl}</span></td>
-              <td onClick={e=>e.stopPropagation()}>
-                {j.sl==='Draft'
-                  ? <button className="btn-xs pri" onClick={() => alert('Posted!')}>Post</button>
-                  : <>
-                    <button className="btn-xs" onClick={() => setModal(j)}>View</button>
-                    <button className="btn-xs" onClick={() => nav('/print/jv')}>Print</button>
-                  </>
-                }
-              </td>
-            </tr>
-          ))}
+          {loading
+            ? <tr><td colSpan={8} style={{padding:30,textAlign:'center'}}>Loading...</td></tr>
+            : shown.length === 0
+            ? <tr><td colSpan={8} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No journal entries yet. <button className="btn-xs pri" onClick={()=>nav('/fi/jv/new')}>Create JV →</button>
+              </td></tr>
+            : shown.map(j=>(
+              <tr key={j.id} style={{cursor:'pointer'}} onClick={()=>setModal(j)}>
+                <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{j.jeNo}</strong></td>
+                <td style={{fontSize:11}}>{new Date(j.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
+                <td style={{fontSize:12,maxWidth:280}}>{j.narration}</td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{j.refNo||'—'}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-red)'}}>{INR(j.totalDebit)}</td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-green)'}}>{INR(j.totalCredit)}</td>
+                <td style={{textAlign:'center'}}>
+                  <span style={{background:'#EDE0EA',color:'#714B67',padding:'2px 6px',borderRadius:4,fontSize:10,fontWeight:700}}>{j.refType||'FI'}</span>
+                </td>
+                <td onClick={e=>e.stopPropagation()}>
+                  <button className="btn-xs" onClick={()=>setModal(j)}>View</button>
+                </td>
+              </tr>
+            ))
+          }
         </tbody>
       </table>
 
       {/* JV Detail Modal */}
       {modal && (
-        <div className="fi-modal-overlay" onClick={() => setModal(null)}>
-          <div className="fi-modal-box" onClick={e=>e.stopPropagation()}>
-            <div className="fi-modal-hdr">
-              <h3> {modal.no}</h3>
-              <span className="fi-modal-close" onClick={() => setModal(null)}></span>
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#fff',borderRadius:10,width:600,maxHeight:'80vh',overflow:'auto',boxShadow:'0 20px 60px rgba(0,0,0,.3)'}}>
+            <div style={{background:'#714B67',padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <strong style={{color:'#fff',fontFamily:'Syne,sans-serif',fontSize:15}}>{modal.jeNo}</strong>
+              <button onClick={()=>setModal(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,.7)',cursor:'pointer',fontSize:20}}>&#x2715;</button>
             </div>
-            <div className="fi-modal-body">
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
-                <div><label style={{fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase',display:'block',marginBottom:'3px'}}>JV Number</label><strong>{modal.no}</strong></div>
-                <div><label style={{fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase',display:'block',marginBottom:'3px'}}>Date</label><strong>{modal.date}</strong></div>
-                <div><label style={{fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase',display:'block',marginBottom:'3px'}}>Status</label><span className={`badge ${modal.sb}`}>{modal.sl}</span></div>
+            <div style={{padding:20}}>
+              <div style={{fontSize:12,color:'#6C757D',marginBottom:12}}>
+                {new Date(modal.date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})}
+                {' · '}{modal.narration}
               </div>
-              <div style={{background:'#F8F9FA',padding:'10px 14px',borderRadius:'6px',marginBottom:'16px',fontSize:'13px'}}>
-                <strong>Narration:</strong> {modal.narr}
-              </div>
-              <table className="fi-data-table" style={{marginBottom:'16px'}}>
-                <thead><tr><th>#</th><th>Account</th><th>Cost Center</th><th>Debit (₹)</th><th>Credit (₹)</th></tr></thead>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <thead><tr style={{background:'#F8F4F8'}}>
+                  <th style={{padding:'6px 10px',textAlign:'left',fontWeight:700,color:'#6C757D'}}>Account</th>
+                  <th style={{padding:'6px 10px',textAlign:'right',fontWeight:700,color:'var(--odoo-red)'}}>Debit</th>
+                  <th style={{padding:'6px 10px',textAlign:'right',fontWeight:700,color:'var(--odoo-green)'}}>Credit</th>
+                  <th style={{padding:'6px 10px',textAlign:'left',fontWeight:700,color:'#6C757D'}}>Narration</th>
+                </tr></thead>
                 <tbody>
-                  <tr><td>1</td><td>1300 · Accounts Receivable</td><td>Sales</td><td className="dr">{modal.dr}</td><td></td></tr>
-                  <tr><td>2</td><td>5100 · Sales Revenue</td><td>Sales</td><td></td><td className="cr" style={{color:'var(--odoo-green)'}}>{modal.cr}</td></tr>
-                  <tr style={{background:'#F8F9FA',fontWeight:'700'}}><td colSpan={3}>TOTAL</td><td className="dr">{modal.dr}</td><td className="cr" style={{color:'var(--odoo-green)'}}>{modal.cr}</td></tr>
+                  {(modal.lines||[]).map((l,i)=>(
+                    <tr key={i} style={{borderBottom:'1px solid #F0EEF0'}}>
+                      <td style={{padding:'6px 10px'}}>{l.debitAcctCode||l.creditAcctCode}</td>
+                      <td style={{padding:'6px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-red)'}}>{l.debit>0?INR(l.debit):''}</td>
+                      <td style={{padding:'6px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>{l.credit>0?INR(l.credit):''}</td>
+                      <td style={{padding:'6px 10px',fontSize:11,color:'#6C757D'}}>{l.narration}</td>
+                    </tr>
+                  ))}
                 </tbody>
+                <tfoot>
+                  <tr style={{background:'#F8F4F8',fontWeight:700}}>
+                    <td style={{padding:'8px 10px'}}>TOTAL</td>
+                    <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-red)'}}>{INR(modal.totalDebit)}</td>
+                    <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-green)'}}>{INR(modal.totalCredit)}</td>
+                    <td/>
+                  </tr>
+                </tfoot>
               </table>
-              <div style={{display:'flex',gap:'8px'}}>
-                <button className="btn btn-s sd-bsm" onClick={() => setModal(null)}>Close</button>
-                <button className="btn btn-s sd-bsm" style={{color:'var(--odoo-red)',borderColor:'var(--odoo-red)'}} onClick={() => setModal(null)}>↩ Reverse JV</button>
-                <button className="btn btn-p sd-bsm" onClick={() => {nav('/fi/ledger'); setModal(null)}}> View in Ledger</button>
-              </div>
             </div>
           </div>
         </div>
@@ -115,3 +129,4 @@ export default function JVList() {
     </div>
   )
 }
+

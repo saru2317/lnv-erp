@@ -1,65 +1,94 @@
-import React, { useState } from 'react'
-const REC = [
-  {no:'REC-2025-031',date:'26 Feb',cust:'XYZ Industries',    inv:'INV-2025-038',amt:'₹1,85,000',mode:'NEFT',  ref:'UTR192837465',sb:'badge-paid',sl:'Cleared'},
-  {no:'REC-2025-030',date:'20 Feb',cust:'MNO Fabrics',        inv:'INV-2025-035',amt:'₹8,50,000',mode:'RTGS',  ref:'UTR564738291',sb:'badge-paid',sl:'Cleared'},
-  {no:'REC-2025-029',date:'15 Feb',cust:'ABC Textiles',       inv:'INV-2025-031',amt:'₹4,72,000',mode:'Cheque',ref:'CHQ-009832',  sb:'badge-paid',sl:'Cleared'},
-  {no:'REC-2025-028',date:'10 Feb',cust:'PQR Spinning',       inv:'INV-2025-026',amt:'₹2,10,000',mode:'NEFT',  ref:'UTR112233445',sb:'badge-pending',sl:'Uncleared'},
-]
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+
 export default function CustomerReceipts() {
-  const [showForm, setShowForm] = useState(false)
+  const nav = useNavigate()
+  const [receipts, setReceipts] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/fi/je?refType=SD`, { headers: hdr2() })
+      const data = await res.json()
+      // Only receipt JEs — bank account debited
+      setReceipts((data.data||[]).filter(j =>
+        j.lines?.some(l => l.debitAcctCode==='1200' || l.debitAcctCode==='1100')
+      ))
+    } catch { toast.error('Failed to load receipts') }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const shown = receipts.filter(r =>
+    !search ||
+    r.narration?.toLowerCase().includes(search.toLowerCase()) ||
+    r.jeNo?.includes(search) ||
+    r.refNo?.includes(search)
+  )
+  const total = shown.reduce((a,r) => a + parseFloat(r.totalCredit||0), 0)
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Customer Receipts <small>Incoming Payments Register</small></div>
+        <div className="fi-lv-title">Customer Receipts <small>Incoming Payment Register</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm" onClick={() => setShowForm(!showForm)}>Record Receipt</button>
+          <input className="sd-search" placeholder="Search receipt / customer..."
+            value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/fi/voucher?type=RV')}>
+            Record Receipt (RV)
+          </button>
         </div>
       </div>
-      {showForm && (
-        <div className="fi-form-sec">
-          <div className="fi-form-sec-hdr">New Receipt Entry</div>
-          <div className="fi-form-sec-body">
-            <div className="fi-form-row">
-              <div className="fi-form-grp"><label>Receipt No.</label><input className="fi-form-ctrl" defaultValue="REC-2025-032" readOnly/></div>
-              <div className="fi-form-grp"><label>Customer <span>*</span></label>
-                <select className="fi-form-ctrl"><option>ABC Textiles Pvt Ltd</option><option>MNO Fabrics</option><option>XYZ Industries</option></select>
-              </div>
-              <div className="fi-form-grp"><label>Receipt Date <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-02-28"/></div>
-            </div>
-            <div className="fi-form-row">
-              <div className="fi-form-grp"><label>Invoice Reference</label>
-                <select className="fi-form-ctrl"><option>INV-2025-042</option><option>INV-2025-041</option></select>
-              </div>
-              <div className="fi-form-grp"><label>Amount <span>*</span></label><input type="number" className="fi-form-ctrl" placeholder="0"/></div>
-              <div className="fi-form-grp"><label>Payment Mode</label>
-                <select className="fi-form-ctrl"><option>NEFT</option><option>RTGS</option><option>Cheque</option><option>Cash</option><option>UPI</option></select>
-              </div>
-            </div>
-            <div className="fi-form-row2">
-              <div className="fi-form-grp"><label>UTR / Cheque / Ref No.</label><input className="fi-form-ctrl" placeholder="UTR number or cheque number"/></div>
-              <div className="fi-form-grp"><label>Bank Account</label>
-                <select className="fi-form-ctrl"><option>1200 · Bank HDFC Current</option><option>1100 · Cash in Hand</option></select>
-              </div>
-            </div>
-            <div className="fi-form-acts">
-              <button className="btn btn-s sd-bsm" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="btn btn-p sd-bsm" onClick={() => setShowForm(false)}>Save Receipt</button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      <div style={{background:'#D4EDDA',borderRadius:8,padding:'10px 16px',marginBottom:12,
+        display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontWeight:700,color:'#155724'}}>Total Receipts — {shown.length} vouchers</span>
+        <span style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:18,color:'#155724'}}>{INR(total)}</span>
+      </div>
+
       <table className="fi-data-table">
-        <thead><tr><th>Receipt No.</th><th>Date</th><th>Customer</th><th>Invoice Ref</th><th>Amount</th><th>Mode</th><th>UTR / Ref</th><th>Status</th></tr></thead>
-        <tbody>{REC.map(r=>(
-          <tr key={r.no}>
-            <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{r.no}</strong></td>
-            <td>{r.date}</td><td>{r.cust}</td>
-            <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{r.inv}</td>
-            <td style={{fontWeight:'700'}}>{r.amt}</td><td>{r.mode}</td>
-            <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{r.ref}</td>
-            <td><span className={`badge ${r.sb}`}>{r.sl}</span></td>
-          </tr>
-        ))}</tbody>
+        <thead><tr>
+          <th>Voucher No.</th><th>Date</th><th>Customer / Narration</th>
+          <th>Invoice Ref</th><th style={{textAlign:'right'}}>Amount</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          {loading ? (
+            <tr><td colSpan={6} style={{padding:30,textAlign:'center'}}>Loading...</td></tr>
+          ) : shown.length === 0 ? (
+            <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+              No receipts recorded yet.
+              <button className="btn-xs pri" style={{marginLeft:10}}
+                onClick={()=>nav('/fi/voucher?type=RV')}>Record First Receipt →</button>
+            </td></tr>
+          ) : shown.map(r => (
+            <tr key={r.id}>
+              <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{r.jeNo}</strong></td>
+              <td style={{fontSize:11}}>{new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
+              <td style={{fontWeight:600,fontSize:12,maxWidth:280}}>{r.narration}</td>
+              <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{r.refNo||'—'}</td>
+              <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-green)',fontSize:13}}>{INR(r.totalCredit)}</td>
+              <td><button className="btn-xs" onClick={()=>nav('/fi/daybook')}>View</button></td>
+            </tr>
+          ))}
+        </tbody>
+        {shown.length > 0 && (
+          <tfoot>
+            <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #E0D5E0'}}>
+              <td colSpan={4} style={{padding:'8px 12px',color:'#714B67'}}>TOTAL</td>
+              <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'var(--odoo-green)',fontSize:14}}>{INR(total)}</td>
+              <td/>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   )

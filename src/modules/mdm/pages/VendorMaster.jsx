@@ -29,7 +29,7 @@ const BANK_ACCT_TYPES = ['Current Account','Saving Account','RDA','Regular Savin
 
 const BLANK = {
   code:'', name:'', type:'B',
-  gstin:'', pan:'', phone:'', altPhone:'', email:'', website:'',
+  gstin:'', gstRegType:'registered', pan:'', phone:'', altPhone:'', email:'', website:'',
   address:'', city:'', state:'Tamil Nadu', pincode:'', country:'India',
   paymentTerms:'Net 30', creditDays:'30', creditLimit:'',
   currency:'INR', priceList:'Standard', vendorCategory:'',
@@ -221,6 +221,37 @@ function VendorForm({ vendor, onSave, onCancel, rows=[] }) {
                   <FG label="GSTIN">
                     <input {...F('gstin')} placeholder="33AABCA1234A1Z5" maxLength={15}
                       style={{ ...inp, fontFamily:'DM Mono,monospace', textTransform:'uppercase' }} />
+                  </FG>
+                  <FG label="GST Registration Type">
+                    <select {...F('gstRegType')} style={{ ...inp, cursor:'pointer',
+                      background: form.gstRegType==='unregistered'?'#FFF3CD':
+                                  form.gstRegType==='composition'?'#D1ECF1':
+                                  form.gstRegType==='non_gst'?'#F8D7DA':'#fff',
+                      borderColor: form.gstRegType==='unregistered'?'#FFC107':
+                                   form.gstRegType==='composition'?'#17A2B8':
+                                   form.gstRegType==='non_gst'?'#DC3545':'#E0D5E0',
+                    }}>
+                      <option value="registered">Registered (Regular)</option>
+                      <option value="composition">Composition Dealer</option>
+                      <option value="unregistered">Unregistered</option>
+                      <option value="non_gst">Non-GST Supply (Petrol/Alcohol)</option>
+                      <option value="sez">SEZ / Export</option>
+                    </select>
+                    {form.gstRegType==='unregistered' && (
+                      <div style={{fontSize:10,color:'#856404',marginTop:3,fontWeight:600}}>
+                        RCM applies — you pay GST to govt. ITC claimable if item eligible.
+                      </div>
+                    )}
+                    {form.gstRegType==='composition' && (
+                      <div style={{fontSize:10,color:'#0C5460',marginTop:3,fontWeight:600}}>
+                        No GST on their invoice. You cannot claim any ITC — full cost absorbed.
+                      </div>
+                    )}
+                    {form.gstRegType==='non_gst' && (
+                      <div style={{fontSize:10,color:'#721C24',marginTop:3,fontWeight:600}}>
+                        Outside GST scope. No ITC available. Cost goes directly to expense.
+                      </div>
+                    )}
                   </FG>
                   <FG label="PAN No">
                     <input {...F('panNo')} placeholder="AABCA1234A" maxLength={10}
