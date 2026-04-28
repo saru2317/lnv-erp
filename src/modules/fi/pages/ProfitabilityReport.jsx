@@ -1,71 +1,127 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
 
-const BY_CUSTOMER = [
-  {name:'ABC Textiles Pvt Ltd', rev:'₹11,80,000',cogs:'₹6,20,000',gp:'₹5,60,000',gpm:'47.5%',netP:'₹3,40,000',npm:'28.8%'},
-  {name:'MNO Fabrics Ltd',       rev:'₹17,70,000',cogs:'₹9,40,000',gp:'₹8,30,000',gpm:'46.9%',netP:'₹4,80,000',npm:'27.1%'},
-  {name:'XYZ Industries',         rev:'₹9,25,000', cogs:'₹5,10,000',gp:'₹4,15,000',gpm:'44.9%',netP:'₹2,20,000',npm:'23.8%'},
-  {name:'PQR Spinning Mills',     rev:'₹9,85,000', cogs:'₹5,70,000',gp:'₹4,15,000',gpm:'42.1%',netP:'₹2,04,000',npm:'20.7%'},
-]
-const BY_PRODUCT = [
-  {name:'Ring Yarn (30s)',     qty:'500 Kg', rev:'₹12,00,000',cogs:'₹8,32,000',gp:'₹3,68,000',gpm:'30.7%'},
-  {name:'Open End Yarn (12s)',qty:'800 Kg', rev:'₹18,00,000',cogs:'₹12,78,000',gp:'₹5,22,000',gpm:'29.0%'},
-  {name:'Cotton Sliver A',    qty:'1200 Kg',rev:'₹10,80,000',cogs:'₹10,62,000',gp:'₹18,000',  gpm:'1.7%'},
-  {name:'Surface Treatment',  qty:'42 Jobs',rev:'₹7,80,000', cogs:'₹2,88,000',gp:'₹4,92,000',gpm:'63.1%'},
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 export default function ProfitabilityReport() {
-  const [view, setView] = useState('customer')
+  const now = new Date()
+  const [month,   setMonth]   = useState(now.getMonth()+1)
+  const [year,    setYear]    = useState(now.getFullYear())
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_URL}/fi/profitability?month=${month}&year=${year}`, { headers: hdr2() })
+      const d = await r.json()
+      setData(d)
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [month, year])
+
+  useEffect(() => { load() }, [load])
+
+  const rows = data?.data || []
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Profitability Analysis <small>Feb 2025 · Customer & Product Wise</small></div>
+        <div className="fi-lv-title">Profitability Report
+          <small> Customer-wise · {MONTHS[month]} {year}</small>
+        </div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option></select>
+          <select className="sd-search" value={month} onChange={e=>setMonth(parseInt(e.target.value))} style={{width:80}}>
+            {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+          </select>
+          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:80}}>
+            {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+          </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
-      <div className="fi-chips">
-        {[['customer','By Customer'],['product','By Product']].map(([k,l])=>(
-          <div key={k} className={`fi-chip${view===k?' on':''}`} onClick={() => setView(k)}>{l}</div>
+
+      <div className="fi-alert info" style={{marginBottom:14}}>
+        GP% is estimated at 35% (standard costing). Link PP Work Orders for actual product cost.
+      </div>
+
+      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:14}}>
+        {[
+          { cls:'purple', label:'Total Revenue',   val:INR(data?.totalRevenue||0), sub:`${rows.length} customers` },
+          { cls:'orange', label:'Total Cost',      val:INR(data?.totalCost||0),    sub:'Estimated COGS' },
+          { cls:'green',  label:'Gross Profit',    val:INR(data?.totalGP||0),      sub:`${data?.totalGPPct||0}% GP%` },
+          { cls:'blue',   label:'Top Customer',    val:rows[0]?.name||'—',         sub:rows[0]?INR(rows[0].revenue):'' },
+        ].map(k=>(
+          <div key={k.label} className={`fi-kpi-card ${k.cls}`}>
+            <div className="fi-kpi-label">{k.label}</div>
+            <div className="fi-kpi-value" style={{fontSize:rows[0]?.name===k.val?13:undefined}}>{k.val}</div>
+            <div className="fi-kpi-sub">{k.sub}</div>
+          </div>
         ))}
       </div>
 
-      {view==='customer' ? (
+      {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
         <table className="fi-data-table">
-          <thead><tr><th>Customer</th><th>Revenue</th><th>COGS</th><th>Gross Profit</th><th>Gross Margin</th><th>Net Profit</th><th>Net Margin</th></tr></thead>
+          <thead><tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th style={{textAlign:'center'}}>Invoices</th>
+            <th style={{textAlign:'right'}}>Revenue</th>
+            <th style={{textAlign:'right'}}>Est. Cost</th>
+            <th style={{textAlign:'right'}}>Gross Profit</th>
+            <th style={{textAlign:'center'}}>GP %</th>
+            <th style={{width:140}}>Revenue Share</th>
+          </tr></thead>
           <tbody>
-            {BY_CUSTOMER.map(r=>(
-              <tr key={r.name}>
-                <td><strong>{r.name}</strong></td>
-                <td style={{fontWeight:'700'}}>{r.rev}</td>
-                <td className="dr">{r.cogs}</td>
-                <td className="cr">{r.gp}</td>
-                <td><strong style={{color:parseFloat(r.gpm)>45?'var(--odoo-green)':'var(--odoo-orange)'}}>{r.gpm}</strong></td>
-                <td className="cr">{r.netP}</td>
-                <td><strong style={{color:parseFloat(r.npm)>25?'var(--odoo-green)':'var(--odoo-orange)'}}>{r.npm}</strong></td>
-              </tr>
-            ))}
-            <tr style={{background:'#EDE0EA',fontWeight:'700',fontFamily:'Syne,sans-serif'}}>
-              <td>TOTAL</td><td>₹48,60,000</td><td className="dr">₹26,40,000</td>
-              <td className="cr">₹22,20,000</td><td>45.7%</td><td className="cr">₹12,44,000</td><td>25.6%</td>
-            </tr>
+            {rows.length===0 ? (
+              <tr><td colSpan={8} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No invoices for {MONTHS[month]} {year}
+              </td></tr>
+            ) : rows.map((r,i)=>{
+              const share = data?.totalRevenue>0 ? Math.round(r.revenue/data.totalRevenue*100) : 0
+              const gpColor = r.gpPct>=30?'#155724':r.gpPct>=20?'#856404':'#DC3545'
+              return (
+                <tr key={i}>
+                  <td style={{color:'#6C757D',fontSize:11}}>{i+1}</td>
+                  <td style={{fontWeight:700,fontSize:12}}>{r.name}</td>
+                  <td style={{textAlign:'center',fontFamily:'DM Mono,monospace'}}>{r.invoices}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(r.revenue)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#6C757D'}}>{INR(r.cost)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,color:'#155724'}}>{INR(r.gp)}</td>
+                  <td style={{textAlign:'center'}}>
+                    <span style={{background:gpColor+'22',color:gpColor,
+                      padding:'2px 10px',borderRadius:10,fontSize:12,fontWeight:800}}>
+                      {r.gpPct}%
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <div style={{flex:1,background:'#F0EEEB',borderRadius:3,height:7,overflow:'hidden'}}>
+                        <div style={{height:'100%',width:`${share}%`,background:'#714B67',borderRadius:3}}/>
+                      </div>
+                      <span style={{fontSize:11,fontFamily:'DM Mono,monospace',color:'#714B67',minWidth:28}}>{share}%</span>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
-        </table>
-      ) : (
-        <table className="fi-data-table">
-          <thead><tr><th>Product</th><th>Qty Produced</th><th>Revenue</th><th>COGM</th><th>Gross Profit</th><th>Gross Margin</th></tr></thead>
-          <tbody>
-            {BY_PRODUCT.map(r=>(
-              <tr key={r.name}>
-                <td><strong>{r.name}</strong></td>
-                <td>{r.qty}</td>
-                <td style={{fontWeight:'700'}}>{r.rev}</td>
-                <td className="dr">{r.cogs}</td>
-                <td className="cr">{r.gp}</td>
-                <td><strong style={{color:parseFloat(r.gpm)>30?'var(--odoo-green)':parseFloat(r.gpm)>10?'var(--odoo-orange)':'var(--odoo-red)'}}>{r.gpm}</strong></td>
+          {rows.length>0&&(
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #714B67'}}>
+                <td colSpan={3} style={{padding:'9px 12px',color:'#714B67'}}>TOTAL</td>
+                <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(data?.totalRevenue)}</td>
+                <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#6C757D'}}>{INR(data?.totalCost)}</td>
+                <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:14,color:'#155724'}}>{INR(data?.totalGP)}</td>
+                <td style={{padding:'9px 12px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:800,color:'#155724'}}>{data?.totalGPPct}%</td>
+                <td/>
               </tr>
-            ))}
-          </tbody>
+            </tfoot>
+          )}
         </table>
       )}
     </div>

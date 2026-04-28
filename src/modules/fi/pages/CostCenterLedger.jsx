@@ -1,94 +1,145 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
 
-const CC_DATA = {
-  'Production': [
-    {acct:'6100 · COGS',narr:'Material issued to WO-017 (WM)',dr:'₹6,20,000',cr:'',bal:'₹6,20,000'},
-    {acct:'6110 · COGM Labour',narr:'Payroll — production workers Feb (HCM)',dr:'₹4,80,000',cr:'',bal:'₹11,00,000'},
-    {acct:'6130 · Power & Fuel',narr:'Electricity bill Feb 2025',dr:'₹1,20,000',cr:'',bal:'₹12,20,000'},
-    {acct:'6700 · Maintenance',narr:'Machine M-102 repair (PM)',dr:'₹48,000',cr:'',bal:'₹12,68,000'},
-    {acct:'6400 · Depreciation',narr:'P&M depreciation Feb 2025',dr:'₹42,000',cr:'',bal:'₹13,10,000'},
-  ],
-  'Sales': [
-    {acct:'6600 · Freight',narr:'Freight — ABC Textiles delivery (SD)',dr:'₹84,000',cr:'',bal:'₹84,000'},
-    {acct:'6800 · Admin',narr:'Sales team expenses',dr:'₹32,000',cr:'',bal:'₹1,16,000'},
-    {acct:'5100 · Revenue',narr:'Sales Revenue Feb 2025 (SD)',dr:'',cr:'₹48,60,000',bal:'₹47,44,000 Cr'},
-  ],
-  'Admin': [
-    {acct:'6300 · Rent',narr:'Office rent Feb 2025',dr:'₹60,000',cr:'',bal:'₹60,000'},
-    {acct:'6800 · Admin',narr:'Stationery & misc.',dr:'₹58,000',cr:'',bal:'₹1,18,000'},
-    {acct:'6200 · Salary',narr:'Admin staff salary Feb (HCM)',dr:'₹1,80,000',cr:'',bal:'₹2,98,000'},
-  ],
-  'HR Dept': [
-    {acct:'6200 · Salary',narr:'Total payroll Feb 2025 (HCM)',dr:'₹8,40,000',cr:'',bal:'₹8,40,000'},
-    {acct:'6210 · PF',narr:'Provident Fund contribution Feb',dr:'₹1,00,800',cr:'',bal:'₹9,40,800'},
-    {acct:'6220 · ESI',narr:'ESI contribution Feb',dr:'₹37,800',cr:'',bal:'₹9,78,600'},
-  ],
-  'Maintenance': [
-    {acct:'6700 · Maintenance',narr:'Annual maintenance contract (PM)',dr:'₹18,000',cr:'',bal:'₹18,000'},
-    {acct:'6700 · Maintenance',narr:'Machine M-102 emergency repair (PM)',dr:'₹30,000',cr:'',bal:'₹48,000'},
-  ],
-}
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-const CC_TOTALS = {
-  'Production':  {total:'₹13,10,000',income:'₹0',net:'₹13,10,000 Cost'},
-  'Sales':       {total:'₹1,16,000', income:'₹48,60,000',net:'₹47,44,000 Profit'},
-  'Admin':       {total:'₹2,98,000', income:'₹0',net:'₹2,98,000 Cost'},
-  'HR Dept':     {total:'₹9,78,600', income:'₹0',net:'₹9,78,600 Cost'},
-  'Maintenance': {total:'₹48,000',   income:'₹0',net:'₹48,000 Cost'},
+const CC_COLORS = {
+  'Production':  { color:'#155724', bg:'#D4EDDA' },
+  'Admin':       { color:'#004085', bg:'#CCE5FF' },
+  'Sales':       { color:'#856404', bg:'#FFF3CD' },
+  'Maintenance': { color:'#721C24', bg:'#F8D7DA' },
 }
 
 export default function CostCenterLedger() {
-  const [cc, setCC] = useState('Production')
-  const rows = CC_DATA[cc] || []
-  const tot = CC_TOTALS[cc]
+  const now = new Date()
+  const [month,   setMonth]   = useState(now.getMonth()+1)
+  const [year,    setYear]    = useState(now.getFullYear())
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeCC,setActiveCC]= useState('all')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_URL}/fi/cost-center-ledger?month=${month}&year=${year}`, { headers: hdr2() })
+      const d = await r.json()
+      setData(d)
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [month, year])
+
+  useEffect(() => { load() }, [load])
+
+  const rows = (data?.data || []).filter(r =>
+    activeCC==='all' || r.cc===activeCC
+  )
+  const summary = data?.summary || []
+  const total   = summary.reduce((a,s)=>a+s.amount,0)
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Cost Center Ledger <small>Department-wise Expense View</small></div>
+        <div className="fi-lv-title">Cost Center Ledger
+          <small> Expense allocation by department · {MONTHS[month]} {year}</small>
+        </div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select" value={cc} onChange={e => setCC(e.target.value)}>
-            {Object.keys(CC_DATA).map(c => <option key={c}>{c}</option>)}
+          <select className="sd-search" value={month} onChange={e=>setMonth(parseInt(e.target.value))} style={{width:80}}>
+            {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
           </select>
+          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:80}}>
+            {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+          </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
 
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-        <div className="fi-kpi-card purple">
-          <div className="fi-kpi-label">Cost Center</div>
-          <div className="fi-kpi-value" style={{fontSize:'20px'}}>{cc}</div>
-        </div>
-        <div className="fi-kpi-card red">
-          <div className="fi-kpi-label">Total Expenses</div>
-          <div className="fi-kpi-value">{tot.total}</div>
-        </div>
-        <div className="fi-kpi-card green">
-          <div className="fi-kpi-label">Net (Profit / Cost)</div>
-          <div className="fi-kpi-value" style={{fontSize:'16px'}}>{tot.net}</div>
-        </div>
+      {/* CC Summary cards */}
+      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:14}}>
+        {summary.map(s=>{
+          const cc = CC_COLORS[s.name] || { color:'#714B67', bg:'#EDE0EA' }
+          const pct = total>0?Math.round(s.amount/total*100):0
+          return (
+            <div key={s.name} onClick={()=>setActiveCC(activeCC===s.name?'all':s.name)}
+              style={{ background:activeCC===s.name?cc.bg:'#fff',
+                border:`2px solid ${activeCC===s.name?cc.color:'#E0D5E0'}`,
+                borderRadius:10, padding:'12px 14px', cursor:'pointer', transition:'all .15s' }}>
+              <div style={{fontSize:11,fontWeight:700,color:cc.color,marginBottom:4}}>{s.name}</div>
+              <div style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:18,color:cc.color}}>{INR(s.amount)}</div>
+              <div style={{marginTop:6,background:'#F0EEEB',borderRadius:4,height:5,overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${pct}%`,background:cc.color,borderRadius:4}}/>
+              </div>
+              <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>{pct}% of total expenses</div>
+            </div>
+          )
+        })}
       </div>
 
-      <table className="fi-data-table">
-        <thead><tr><th>Account</th><th>Narration / Source</th><th>Debit (₹)</th><th>Credit (₹)</th><th>Running Balance</th></tr></thead>
-        <tbody>
-          {rows.map((r,i) => (
-            <tr key={i}>
-              <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{r.acct}</td>
-              <td>{r.narr}</td>
-              <td className="dr">{r.dr}</td>
-              <td className="cr">{r.cr}</td>
-              <td className="bal pos">{r.bal}</td>
-            </tr>
-          ))}
-          <tr style={{background:'#EDE0EA',fontWeight:'700'}}>
-            <td colSpan={2} style={{padding:'10px 14px',fontFamily:'Syne,sans-serif'}}>Cost Center Total — {cc}</td>
-            <td className="dr">{tot.total}</td>
-            <td className="cr">{tot.income}</td>
-            <td style={{fontFamily:'Syne,sans-serif',fontSize:'14px',color:'var(--odoo-purple)'}}>{tot.net}</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* Filter chips */}
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
+        <button onClick={()=>setActiveCC('all')} style={{
+          padding:'4px 14px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
+          border:'1px solid #E0D5E0',
+          background:activeCC==='all'?'#714B67':'#fff',
+          color:activeCC==='all'?'#fff':'#6C757D'
+        }}>All Departments</button>
+        {Object.keys(CC_COLORS).map(cc=>(
+          <button key={cc} onClick={()=>setActiveCC(activeCC===cc?'all':cc)} style={{
+            padding:'4px 14px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
+            border:`1px solid ${activeCC===cc?CC_COLORS[cc].color:'#E0D5E0'}`,
+            background:activeCC===cc?CC_COLORS[cc].color:'#fff',
+            color:activeCC===cc?'#fff':CC_COLORS[cc].color
+          }}>{cc}</button>
+        ))}
+      </div>
+
+      {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
+        <table className="fi-data-table">
+          <thead><tr>
+            <th>JV No.</th><th>Date</th><th>Description</th>
+            <th>Account</th><th>Cost Center</th>
+            <th style={{textAlign:'right'}}>Amount</th>
+          </tr></thead>
+          <tbody>
+            {rows.length===0 ? (
+              <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No expense entries for {MONTHS[month]} {year}.
+                Tag JV narrations with department names (Admin/Sales/Maintenance) for auto-allocation.
+              </td></tr>
+            ) : rows.map((r,i)=>{
+              const cc = CC_COLORS[r.cc]||{color:'#714B67',bg:'#EDE0EA'}
+              return (
+                <tr key={i}>
+                  <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>{r.jeNo||'—'}</td>
+                  <td style={{fontSize:11}}>{r.date?new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
+                  <td style={{fontSize:12,maxWidth:220}}>{r.narration}</td>
+                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{r.acct}</td>
+                  <td>
+                    <span style={{background:cc.bg,color:cc.color,
+                      padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:700}}>
+                      {r.cc}
+                    </span>
+                  </td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(r.amount)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+          {rows.length>0&&(
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #714B67'}}>
+                <td colSpan={5} style={{padding:'9px 12px',color:'#714B67'}}>TOTAL</td>
+                <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:14}}>
+                  {INR(rows.reduce((a,r)=>a+r.amount,0))}
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      )}
     </div>
   )
 }

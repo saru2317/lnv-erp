@@ -1,51 +1,98 @@
-import React from 'react'
-const BVA = [
-  {cat:'Sales Revenue',          budget:'₹50,00,000',actual:'₹48,60,000',var:'₹(1,40,000)',pct:'-2.8%',flag:'warn'},
-  {cat:'COGS — Direct Material', budget:'₹25,00,000',actual:'₹26,40,000',var:'₹(1,40,000)',pct:'-5.6%',flag:'danger'},
-  {cat:'COGM — Labour',          budget:'₹4,50,000', actual:'₹4,80,000', var:'₹(30,000)',  pct:'-6.7%',flag:'danger'},
-  {cat:'COGM — Overhead',        budget:'₹2,50,000', actual:'₹2,60,000', var:'₹(10,000)',  pct:'-4.0%',flag:'warn'},
-  {cat:'Salary & Wages',         budget:'₹8,00,000', actual:'₹8,40,000', var:'₹(40,000)',  pct:'-5.0%',flag:'danger'},
-  {cat:'Rent & Utilities',       budget:'₹1,20,000', actual:'₹1,20,000', var:'₹0',          pct:'0.0%', flag:'ok'},
-  {cat:'Maintenance (PM)',        budget:'₹60,000',   actual:'₹48,000',   var:'₹12,000',     pct:'+20.0%',flag:'ok'},
-  {cat:'Freight & Logistics',    budget:'₹90,000',   actual:'₹84,000',   var:'₹6,000',      pct:'+6.7%', flag:'ok'},
-  {cat:'Admin & Other Expenses', budget:'₹1,00,000', actual:'₹90,000',   var:'₹10,000',     pct:'+10.0%',flag:'ok'},
-  {cat:'NET PROFIT',             budget:'₹8,30,000', actual:'₹10,44,000',var:'₹2,14,000',   pct:'+25.8%',flag:'ok',bold:true},
-]
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+
 export default function BudgetVsActual() {
+  const [year,    setYear]    = useState(new Date().getFullYear())
+  const [data,    setData]    = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_URL}/fi/budget-vs-actual?year=${year}`, { headers: hdr2() })
+      const d = await r.json()
+      setData(d.data || [])
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [year])
+
+  useEffect(() => { load() }, [load])
+
+  const VAR_COLOR = (v, type) => {
+    if (type==='expense') return v<0?'#155724':'#DC3545'  // less expense = good
+    return v>=0?'#155724':'#DC3545'  // more revenue/profit = good
+  }
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Budget vs Actual <small>February 2025 · Monthly Comparison</small></div>
+        <div className="fi-lv-title">Budget vs Actual
+          <small> FY {year}–{year+1}</small>
+        </div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option></select>
+          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:100}}>
+            {[2023,2024,2025,2026].map(y=><option key={y} value={y}>FY {y}-{y+1}</option>)}
+          </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-        {[{cls:'green',l:'Revenue Actual vs Budget',v:'-2.8%',s:'Below budget by ₹1.4L'},
-          {cls:'red',  l:'Total Cost Overrun',v:'+₹2.2L',s:'Over budget'},
-          {cls:'green',l:'Net Profit vs Budget',v:'+25.8%',s:'Above target'},
-        ].map(k=>(
-          <div key={k.l} className={`fi-kpi-card ${k.cls}`}>
-            <div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div>
-          </div>
-        ))}
+
+      <div className="fi-alert info" style={{marginBottom:14}}>
+        Budget is set at 115% of revenue target and 90% expense target. Configure a Budget Master to set custom budgets.
       </div>
-      <table className="fi-data-table">
-        <thead><tr><th>Category</th><th>Budget (₹)</th><th>Actual (₹)</th><th>Variance (₹)</th><th>Variance %</th><th>Status</th></tr></thead>
-        <tbody>{BVA.map(r=>(
-          <tr key={r.cat} style={r.bold?{background:'#EDE0EA',fontFamily:'Syne,sans-serif',fontWeight:'700'}:{}}>
-            <td>{r.cat}</td>
-            <td>{r.budget}</td>
-            <td style={{fontWeight:'700'}}>{r.actual}</td>
-            <td style={{fontWeight:'700',color:r.var.startsWith('₹(')?'var(--odoo-red)':r.var==='₹0'?'var(--odoo-gray)':'var(--odoo-green)'}}>{r.var}</td>
-            <td style={{fontWeight:'700',color:r.flag==='ok'?'var(--odoo-green)':r.flag==='warn'?'var(--odoo-orange)':'var(--odoo-red)'}}>{r.pct}</td>
-            <td><span className={`badge ${r.flag==='ok'?'badge-posted':r.flag==='warn'?'badge-partial':'badge-overdue'}`}>
-              {r.flag==='ok'?'On Track':r.flag==='warn'?'Watch':'Over Budget'}
-            </span></td>
-          </tr>
-        ))}</tbody>
-      </table>
+
+      {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
+        <table className="fi-data-table">
+          <thead><tr>
+            <th>Category</th>
+            <th style={{textAlign:'right'}}>Budget</th>
+            <th style={{textAlign:'right'}}>Actual</th>
+            <th style={{textAlign:'right'}}>Variance</th>
+            <th style={{textAlign:'right'}}>Variance %</th>
+            <th style={{width:180}}>Achievement</th>
+          </tr></thead>
+          <tbody>
+            {data.map(r => {
+              const pct      = r.budget>0 ? Math.min(150,Math.round(r.actual/r.budget*100)) : 0
+              const varColor = VAR_COLOR(r.variance, r.type)
+              const barColor = r.type==='expense'
+                ? (pct<=100?'#28A745':'#DC3545')
+                : (pct>=100?'#28A745':pct>=80?'#FFC107':'#DC3545')
+              return (
+                <tr key={r.category} style={{
+                  fontWeight: r.category.includes('Profit')?700:400,
+                  background: r.category.includes('Net')?'#F8F4F8':'transparent'
+                }}>
+                  <td style={{fontWeight:600}}>{r.category}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(r.budget)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(r.actual)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:varColor}}>
+                    {r.variance>=0?'+':''}{INR(r.variance)}
+                  </td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:varColor}}>
+                    {r.variancePct>=0?'+':''}{r.variancePct}%
+                  </td>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{flex:1,background:'#F0EEEB',borderRadius:4,height:8,overflow:'hidden'}}>
+                        <div style={{height:'100%',width:`${Math.min(100,pct)}%`,
+                          background:barColor,borderRadius:4,transition:'width .4s'}}/>
+                      </div>
+                      <span style={{fontSize:11,fontFamily:'DM Mono,monospace',
+                        fontWeight:700,color:barColor,minWidth:36}}>{pct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }

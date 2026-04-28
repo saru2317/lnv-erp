@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import ImportModal from '@components/ImportModal'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken = () => localStorage.getItem('lnv_token')
@@ -850,4 +851,15 @@ export default function VendorMaster() {
       )}
     </div>
   )
+
+  {showImport && (
+    <ImportModal templateKey="vendor"
+      onImport={async rows => {
+        const res = await fetch(`${BASE_URL}/mdm/vendors/bulk`, { method:'POST', headers: hdr(), body: JSON.stringify({ items: rows }) })
+        const d = await res.json()
+        return { imported: d.count||rows.length, failed: 0 }
+      }}
+      onClose={()=>{ setShowImport(false); load() }}
+    />
+  )}
 }

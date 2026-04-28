@@ -28,6 +28,11 @@ const APAging            = lazy(() => import('./APAging'))
 const CustomerReceipts   = lazy(() => import('./CustomerReceipts'))
 const VendorPayments     = lazy(() => import('./VendorPayments'))
 const BankRecon          = lazy(() => import('./BankRecon'))
+const ProductCosting     = lazy(() => import('./ProductCosting'))
+const CostCenterAllocation = lazy(() => import('./CostCenterAllocation'))
+const MultiCurrency      = lazy(() => import('./MultiCurrency'))
+const DunningLetters     = lazy(() => import('./DunningLetters'))
+const TDSInvoice         = lazy(() => import('./TDSInvoice'))
 const ChartOfAccounts    = lazy(() => import('./ChartOfAccounts'))
 const COGMReport         = lazy(() => import('./COGMReport'))
 const CostCenterLedger   = lazy(() => import('./CostCenterLedger'))
@@ -35,6 +40,9 @@ const FixedAssetRegister = lazy(() => import('./FixedAssetRegister'))
 const TDSRegister        = lazy(() => import('./TDSRegister'))
 const Form26Q            = lazy(() => import('./Form26Q'))
 const Form26AS           = lazy(() => import('./Form26AS'))
+const PeriodLock         = lazy(() => import('./PeriodLock'))
+const RecurringEntries   = lazy(() => import('./RecurringEntries'))
+const AccrualsAndPrepayments = lazy(() => import('./AccrualsAndPrepayments'))
 const AdvanceRegister    = lazy(() => import('./AdvanceRegister'))
 const CreditNoteList     = lazy(() => import('./CreditNoteList'))
 const ProfitabilityReport= lazy(() => import('./ProfitabilityReport'))
@@ -118,9 +126,23 @@ const SIDEBAR_GROUPS = [
     ],
   },
   {
+    label: 'Controlling (CO)', icon: '',
+    items: [
+      { to: '/fi/product-costing', label: 'Product Costing'        },
+      { to: '/fi/cc-allocation',   label: 'Cost Center Allocation' },
+      { to: '/fi/multi-currency',  label: 'Multi-Currency / Forex' },
+    ],
+  },
+  {
     label: 'Compliance & Assets', icon: '',
     items: [
+      { to: '/fi/period-lock',  label: 'Period Lock / Year-End'  },
+      { to: '/fi/recurring',    label: 'Recurring Entries'       },
+      { to: '/fi/accruals',     label: 'Accruals & Prepayments'  },
+      { to: '/fi/bank-recon',   label: 'Bank Reconciliation'     },
       { to: '/fi/tds',          label: 'TDS Register'        },
+      { to: '/fi/tds-invoice',   label: 'TDS on Invoice'       },
+      { to: '/fi/dunning',       label: 'Dunning Letters'      },
       { to: '/fi/tds/26q',      label: 'Form 26Q (Quarterly)' },
       { to: '/fi/tds/26as',     label: 'Form 26AS Reconciliation' },
       { to: '/fi/fixed-assets', label: 'Fixed Asset Register'},
@@ -164,6 +186,11 @@ export default function FILayout() {
           <Route path="ap-aging"      element={<APAging />}             />
           <Route path="payments"      element={<VendorPayments />}      />
           <Route path="bank-recon"    element={<BankRecon />}           />
+          <Route path="product-costing" element={<ProductCosting />}      />
+          <Route path="cc-allocation"   element={<CostCenterAllocation />}/>
+          <Route path="multi-currency"  element={<MultiCurrency />}       />
+          <Route path="dunning"         element={<DunningLetters />}     />
+          <Route path="tds-invoice"     element={<TDSInvoice />}         />
           <Route path="advances"      element={<AdvanceRegister />}     />
           <Route path="credit-notes"  element={<CreditNoteList />}      />
 
@@ -181,6 +208,9 @@ export default function FILayout() {
           <Route path="hsn-summary"   element={<HSNSummary />}          />
 
           {/* Compliance */}
+          <Route path="period-lock"   element={<PeriodLock />}          />
+          <Route path="recurring"     element={<RecurringEntries />}    />
+          <Route path="accruals"     element={<AccrualsAndPrepayments />} />
           <Route path="tds"           element={<TDSRegister />}         />
           <Route path="tds/26q"       element={<Form26Q />}             />
           <Route path="tds/26as"      element={<Form26AS />}            />

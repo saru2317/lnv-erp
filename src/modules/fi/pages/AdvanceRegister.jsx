@@ -1,53 +1,114 @@
-import React, { useState } from 'react'
-const ADV = [
-  {no:'ADV-C-001',type:'Customer Advance',party:'ABC Textiles Pvt Ltd',date:'15 Feb',amt:'₹1,48,000',ref:'Sales Order SO-2025-018',adjusted:'₹0',pending:'₹1,48,000',sb:'badge-pending',sl:'Open'},
-  {no:'ADV-C-002',type:'Customer Advance',party:'MNO Fabrics Ltd',     date:'10 Jan',amt:'₹2,00,000',ref:'Sales Order SO-2025-012',adjusted:'₹2,00,000',pending:'₹0',       sb:'badge-posted',sl:'Adjusted'},
-  {no:'ADV-V-001',type:'Vendor Advance',  party:'Lakshmi Textile Mills',date:'01 Feb',amt:'₹1,20,000',ref:'PO-2025-008',           adjusted:'₹1,20,000',pending:'₹0',       sb:'badge-posted',sl:'Adjusted'},
-  {no:'ADV-V-002',type:'Vendor Advance',  party:'Coimbatore Spares Co.',date:'20 Feb',amt:'₹50,000', ref:'PO-2025-011',           adjusted:'₹0',        pending:'₹50,000', sb:'badge-pending',sl:'Open'},
-  {no:'ADV-E-001',type:'Employee Advance',party:'Ramesh K. (Operator)', date:'22 Feb',amt:'₹5,000',  ref:'Leave Travel Advance',  adjusted:'₹0',        pending:'₹5,000',  sb:'badge-pending',sl:'Open'},
-]
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+
 export default function AdvanceRegister() {
-  const [tab, setTab] = useState('All')
-  const filtered = tab==='All' ? ADV : ADV.filter(a => a.type.startsWith(tab))
+  const [tab,     setTab]     = useState('All')
+  const [rows,    setRows]    = useState([])
+  const [summary, setSummary] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_URL}/fi/advances`, { headers: hdr2() })
+      const d = await r.json()
+      setRows(d.data || [])
+      setSummary({ totalCustomer:d.totalCustomer||0, totalVendor:d.totalVendor||0, total:d.total||0 })
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const filtered = tab==='All' ? rows : rows.filter(r=>r.type.startsWith(tab))
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Advance Register <small>Customer / Vendor / Employee Advances</small></div>
+        <div className="fi-lv-title">Advance Register
+          <small> Customer · Vendor · Employee advances</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-p sd-bsm">New Advance</button>
+          <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
+          <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
-      <div className="fi-chips">
-        {['All','Customer','Vendor','Employee'].map(t=>(
-          <div key={t} className={`fi-chip${tab===t?' on':''}`} onClick={() => setTab(t)}>{t}</div>
-        ))}
-      </div>
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-        {[{cls:'orange',l:'Open Customer Advances',v:'₹1,48,000',s:'1 pending adjustment'},
-          {cls:'red',   l:'Open Vendor Advances',  v:'₹50,000',  s:'1 pending adjustment'},
-          {cls:'blue',  l:'Open Employee Advances', v:'₹5,000',  s:'1 employee'},
+
+      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(3,1fr)',marginBottom:14}}>
+        {[
+          { cls:'blue',   label:'Customer Advances', val:INR(summary.totalCustomer||0), sub:'Received from customers' },
+          { cls:'orange', label:'Vendor Advances',   val:INR(summary.totalVendor||0),   sub:'Paid to vendors' },
+          { cls:'purple', label:'Total Outstanding', val:INR(summary.total||0),         sub:'All advances' },
         ].map(k=>(
-          <div key={k.l} className={`fi-kpi-card ${k.cls}`}>
-            <div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div>
+          <div key={k.label} className={`fi-kpi-card ${k.cls}`}>
+            <div className="fi-kpi-label">{k.label}</div>
+            <div className="fi-kpi-value">{k.val}</div>
+            <div className="fi-kpi-sub">{k.sub}</div>
           </div>
         ))}
       </div>
-      <table className="fi-data-table">
-        <thead><tr><th>Adv. No.</th><th>Type</th><th>Party</th><th>Date</th><th>Amount</th><th>Reference</th><th>Adjusted</th><th>Pending</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>{filtered.map(r=>(
-          <tr key={r.no}>
-            <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{r.no}</td>
-            <td><span className="badge badge-auto" style={{fontSize:'10px'}}>{r.type}</span></td>
-            <td><strong>{r.party}</strong></td><td>{r.date}</td>
-            <td style={{fontWeight:'700'}}>{r.amt}</td>
-            <td style={{fontSize:'12px',color:'var(--odoo-gray)'}}>{r.ref}</td>
-            <td className="cr">{r.adjusted}</td>
-            <td className={r.pending!=='₹0'?'dr':''}>{r.pending}</td>
-            <td><span className={`badge ${r.sb}`}>{r.sl}</span></td>
-            <td>{r.sl==='Open'&&<button className="btn-xs">Adjust</button>}</td>
-          </tr>
-        ))}</tbody>
-      </table>
+
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        {['All','Customer','Vendor'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{
+            padding:'5px 16px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
+            border:'1px solid #E0D5E0',
+            background:tab===t?'#714B67':'#fff',
+            color:tab===t?'#fff':'#6C757D'
+          }}>{t}</button>
+        ))}
+      </div>
+
+      {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
+        <table className="fi-data-table">
+          <thead><tr>
+            <th>JV No.</th><th>Date</th><th>Party</th><th>Type</th>
+            <th style={{textAlign:'right'}}>Amount</th>
+            <th style={{textAlign:'center'}}>Status</th>
+          </tr></thead>
+          <tbody>
+            {filtered.length===0 ? (
+              <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No advances found. Post advance JVs to see them here.
+              </td></tr>
+            ) : filtered.map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>{r.jeNo||'—'}</td>
+                <td style={{fontSize:11}}>{r.date?new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}):'—'}</td>
+                <td style={{fontWeight:600,fontSize:12}}>{r.party}</td>
+                <td>
+                  <span style={{background:r.type.includes('Customer')?'#CCE5FF':'#FFF3CD',
+                    color:r.type.includes('Customer')?'#004085':'#856404',
+                    padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:700}}>
+                    {r.type}
+                  </span>
+                </td>
+                <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13}}>{INR(r.amount)}</td>
+                <td style={{textAlign:'center'}}>
+                  <span style={{background:'#FFF3CD',color:'#856404',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>
+                    Outstanding
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          {filtered.length>0&&(
+            <tfoot>
+              <tr style={{background:'#F8F4F8',fontWeight:700,borderTop:'2px solid #714B67'}}>
+                <td colSpan={4} style={{padding:'9px 12px',color:'#714B67'}}>TOTAL</td>
+                <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:14}}>
+                  {INR(filtered.reduce((a,r)=>a+r.amount,0))}
+                </td>
+                <td/>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      )}
     </div>
   )
 }

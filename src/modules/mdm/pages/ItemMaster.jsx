@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import ImportModal from '@components/ImportModal'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken = () => localStorage.getItem('lnv_token')
@@ -62,18 +63,18 @@ const BLANK = {
 }
 
 const TABS = [
-  { id:'basic',     label:'Item Info'       },
-  { id:'additional',label:'Additional (AD)' },
-  { id:'purchase',  label:'Purchase'        },
-  { id:'sales',     label:'Sales'           },
-  { id:'engineering',label:'Engineering'   },
-  { id:'inventory', label:'Inventory'       },
-  { id:'statutory', label:'Statutory / GST' },
-  { id:'uom',       label:'UOM Conversion'  },
-  { id:'alternative',label:'Alternatives'  },
-  { id:'custparts', label:'Customer Parts'  },
-  { id:'suppparts', label:'Supplier Parts'  },
-  { id:'extra',     label:'Extra / Division'},
+  { id:'basic',      label:'Item Info',       icon:'\uD83D\uDCCB', color:'#714B67' },
+  { id:'additional', label:'Additional (AD)', icon:'\u2795',        color:'#495057' },
+  { id:'purchase',   label:'Purchase',        icon:'\uD83D\uDED2', color:'#0C5460' },
+  { id:'sales',      label:'Sales',           icon:'\uD83D\uDCB0', color:'#155724' },
+  { id:'engineering',label:'Engineering',     icon:'\u2699\uFE0F', color:'#856404' },
+  { id:'inventory',  label:'Inventory',       icon:'\uD83D\uDCE6', color:'#004085' },
+  { id:'statutory',  label:'Statutory / GST', icon:'\uD83C\uDFDB\uFE0F', color:'#4B2E83' },
+  { id:'uom',        label:'UOM Conversion',  icon:'\u2194\uFE0F', color:'#383D41' },
+  { id:'alternative',label:'Alternatives',    icon:'\uD83D\uDD04', color:'#6C3483' },
+  { id:'custparts',  label:'Customer Parts',  icon:'\uD83E\uDD1D', color:'#1A5276' },
+  { id:'suppparts',  label:'Supplier Parts',  icon:'\uD83C\uDFED', color:'#7D6608' },
+  { id:'extra',      label:'Extra / Division',icon:'\uD83D\uDCCA', color:'#922B21' },
 ]
 
 const CAT_COLORS = {
@@ -325,18 +326,23 @@ export default function ItemMaster() {
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div style={{ display:'flex', gap:0, overflowX:'auto',
-        borderBottom:'2px solid var(--odoo-border)', marginBottom:16,
-        background:'#fff', borderRadius:'8px 8px 0 0',
-        border:'1px solid var(--odoo-border)', borderBottomWidth:0 }}>
+      {/* Tab bar — pill style with icons */}
+      <div style={{ display:'flex', gap:4, overflowX:'auto', marginBottom:16,
+        padding:'6px 8px', background:'#F0EEEB', borderRadius:10,
+        border:'1px solid #E0D5E0', scrollbarWidth:'none' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ padding:'8px 16px', fontSize:11, fontWeight:600, cursor:'pointer',
-              border:'none', background:'transparent', whiteSpace:'nowrap',
-              borderBottom: tab===t.id ? '2px solid var(--odoo-purple)' : '2px solid transparent',
-              color: tab===t.id ? 'var(--odoo-purple)' : 'var(--odoo-gray)',
-              marginBottom:-1 }}>
+            style={{
+              padding:'6px 13px', fontSize:11, fontWeight:700, cursor:'pointer',
+              borderRadius:7, whiteSpace:'nowrap', transition:'all .15s',
+              border:'none', flexShrink:0,
+              background: tab===t.id ? t.color : 'transparent',
+              color:      tab===t.id ? '#fff'  : '#6C757D',
+              boxShadow:  tab===t.id ? `0 2px 8px ${t.color}55` : 'none',
+              transform:  tab===t.id ? 'translateY(-1px)' : 'none',
+              display:'flex', alignItems:'center', gap:5,
+            }}>
+            <span style={{ fontSize:13 }}>{t.icon}</span>
             {t.label}
           </button>
         ))}
@@ -913,6 +919,7 @@ export default function ItemMaster() {
         <div className="fi-lv-title">Item Master <small>MM60 · {filtered.length} items</small></div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>setShowImport(true)}>⬆ Import</button>
           <button className="btn btn-p" onClick={openNew}>+ New Item</button>
         </div>
       </div>
@@ -932,26 +939,71 @@ export default function ItemMaster() {
         ))}
       </div>
 
-      <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap', alignItems:'center' }}>
+      {/* Search + Status */}
+      <div style={{ display:'flex', gap:8, marginBottom:10, alignItems:'center' }}>
         <input placeholder="Search code or name..." value={search} onChange={e=>setSearch(e.target.value)}
           style={{ ...inp, width:260 }}/>
-        <div style={{ display:'flex', gap:4 }}>
-          {cats.map(c => (
-            <button key={c} onClick={() => setCat(c)}
-              style={{ padding:'5px 12px', borderRadius:20, fontSize:11, fontWeight:600,
-                cursor:'pointer', border:'1px solid var(--odoo-border)',
-                background: catFilter===c ? 'var(--odoo-purple)' : '#fff',
-                color: catFilter===c ? '#fff' : 'var(--odoo-gray)' }}>
-              {c}
-            </button>
-          ))}
-        </div>
         <select value={statusF} onChange={e=>setStatusF(e.target.value)}
           style={{ ...sel, width:120 }}>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="all">All</option>
         </select>
+        <span style={{ fontSize:12, color:'var(--odoo-gray)', marginLeft:'auto' }}>
+          {filtered.length} item{filtered.length!==1?'s':''}
+        </span>
+      </div>
+
+      {/* Category filter chips — attractive with count badges */}
+      <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
+        {cats.map(c => {
+          const count   = c === 'All' ? items.length : items.filter(i=>i.cat===c).length
+          const isActive = catFilter === c
+          // Color per category
+          const COLOR = {
+            'All':              { bg:'#714B67', light:'#EDE0EA', border:'#714B67' },
+            'Raw Material':     { bg:'#0C5460', light:'#D1ECF1', border:'#17A2B8' },
+            'Finished Goods':   { bg:'#155724', light:'#D4EDDA', border:'#28A745' },
+            'Work In Progress': { bg:'#856404', light:'#FFF3CD', border:'#FFC107' },
+            'Service Item':     { bg:'#004085', light:'#CCE5FF', border:'#007BFF' },
+            'Service':          { bg:'#004085', light:'#CCE5FF', border:'#007BFF' },
+            'Consumable':       { bg:'#E06F39', light:'#FDECEA', border:'#E06F39' },
+            'Bought Out':       { bg:'#383D41', light:'#E2E3E5', border:'#6C757D' },
+            'Capital Goods':    { bg:'#4B2E83', light:'#EDE0EA', border:'#6F42C1' },
+            'Scrap':            { bg:'#721C24', light:'#F8D7DA', border:'#DC3545' },
+          }
+          const cc = COLOR[c] || { bg:'#495057', light:'#F8F9FA', border:'#6C757D' }
+          return (
+            <button key={c} onClick={() => setCat(c)} style={{
+              padding:'5px 12px 5px 10px',
+              borderRadius:20,
+              fontSize:11,
+              fontWeight:700,
+              cursor:'pointer',
+              display:'flex',
+              alignItems:'center',
+              gap:5,
+              transition:'all .15s',
+              border:`1.5px solid ${isActive ? cc.bg : cc.border}`,
+              background: isActive ? cc.bg : cc.light,
+              color: isActive ? '#fff' : cc.bg,
+              boxShadow: isActive ? `0 2px 8px ${cc.bg}44` : 'none',
+              transform: isActive ? 'translateY(-1px)' : 'none',
+            }}>
+              <span>{c}</span>
+              <span style={{
+                background: isActive ? 'rgba(255,255,255,0.25)' : cc.bg,
+                color: '#fff',
+                borderRadius:10,
+                padding:'1px 6px',
+                fontSize:10,
+                fontWeight:800,
+                minWidth:18,
+                textAlign:'center',
+              }}>{count}</span>
+            </button>
+          )
+        })}
       </div>
 
       <div style={{
@@ -1004,4 +1056,15 @@ export default function ItemMaster() {
       </div>
     </div>
   )
+
+  {showImport && (
+    <ImportModal templateKey="item"
+      onImport={async rows => {
+        const res = await fetch(`${BASE_URL}/mdm/items/bulk`, { method:'POST', headers: hdr(), body: JSON.stringify({ items: rows }) })
+        const d = await res.json()
+        return { imported: d.count||rows.length, failed: 0 }
+      }}
+      onClose={()=>{ setShowImport(false); load() }}
+    />
+  )}
 }

@@ -1,68 +1,132 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 export default function CashFlow() {
-  const [open, setOpen] = useState({op:true,inv:true,fin:true})
-  const tog = k => setOpen(p=>({...p,[k]:!p[k]}))
+  const now = new Date()
+  const [month,   setMonth]   = useState(now.getMonth()+1)
+  const [year,    setYear]    = useState(now.getFullYear())
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_URL}/fi/cash-flow?month=${month}&year=${year}`, { headers: hdr2() })
+      const d = await r.json()
+      setData(d)
+    } catch { toast.error('Failed to load') }
+    finally { setLoading(false) }
+  }, [month, year])
+
+  useEffect(() => { load() }, [load])
+
+  const Section = ({ title, color, bg, rows, total }) => (
+    <div style={{ background:'#fff', border:`1.5px solid ${color}33`, borderRadius:10,
+      overflow:'hidden', marginBottom:12 }}>
+      <div style={{ background:bg, padding:'10px 16px', display:'flex',
+        justifyContent:'space-between', alignItems:'center' }}>
+        <div style={{ fontWeight:800, fontSize:13, color }}>{title}</div>
+        <div style={{ fontFamily:'DM Mono,monospace', fontWeight:800, fontSize:15,
+          color: total>=0 ? '#155724' : '#DC3545' }}>
+          {total>=0?'+':''}{INR(total)}
+        </div>
+      </div>
+      {rows.map(([label, amt, isTotal]) => (
+        <div key={label} style={{ display:'flex', justifyContent:'space-between',
+          padding:'7px 16px', borderTop:'1px solid #F0EEEB',
+          background: isTotal ? '#F8F4F8' : 'transparent',
+          fontWeight: isTotal ? 700 : 400 }}>
+          <span style={{ fontSize:12, color: isTotal?color:'#495057' }}>{label}</span>
+          <span style={{ fontFamily:'DM Mono,monospace', fontSize:12,
+            color: amt<0?'#DC3545':isTotal?color:'#333' }}>
+            {amt<0?'('+INR(Math.abs(amt))+')':INR(amt)}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Cash Flow Statement <small>February 2025</small></div>
+        <div className="fi-lv-title">Cash Flow Statement
+          <small> {MONTHS[month]} {year}</small>
+        </div>
         <div className="fi-lv-actions">
-          <select className="fi-filter-select"><option>Feb 2025</option><option>Q3 FY25</option><option>FY 2024-25</option></select>
+          <select className="sd-search" value={month} onChange={e=>setMonth(parseInt(e.target.value))} style={{width:80}}>
+            {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+          </select>
+          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:80}}>
+            {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
+          </select>
+          <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
-      <div style={{maxWidth:'700px'}}>
-        <div className="fin-report">
-          <div className="fin-report-hdr"><h2> Cash Flow Statement (Indirect Method)</h2><span>Month ended 28 Feb 2025</span></div>
 
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('op')}>{open.op?'▾':'►'} A. CASH FROM OPERATING ACTIVITIES</div>
-            {open.op && <>
-              <div className="fin-row"><span className="fn">Net Profit (PAT)</span><span className="fv pos">₹10,44,000</span></div>
-              <div className="fin-row" style={{background:'#F8F9FA',fontWeight:'600',paddingLeft:'20px'}}><span className="fn">Adjustments for non-cash items:</span></div>
-              <div className="fin-row l2"><span className="fn">+ Depreciation</span><span className="fv">₹42,000</span></div>
-              <div className="fin-row l2"><span className="fn">+ COGM Provisions (PP)</span><span className="fv">₹28,000</span></div>
-              <div className="fin-row" style={{background:'#F8F9FA',fontWeight:'600',paddingLeft:'20px'}}><span className="fn">Changes in Working Capital:</span></div>
-              <div className="fin-row l2"><span className="fn">Decrease in Accounts Receivable (AR)</span><span className="fv pos">₹2,20,000</span></div>
-              <div className="fin-row l2"><span className="fn">Increase in Accounts Payable (AP)</span><span className="fv pos">₹1,40,000</span></div>
-              <div className="fin-row l2"><span className="fn">Increase in Inventory (WM)</span><span className="fv neg">₹2,00,000</span></div>
-              <div className="fin-row l2"><span className="fn">Increase in WIP (PP)</span><span className="fv neg">₹1,20,000</span></div>
-              <div className="fin-row l2"><span className="fn">Increase in GST Payable</span><span className="fv pos">₹62,000</span></div>
-              <div className="fin-row l2"><span className="fn">Increase in TDS / PF Payable</span><span className="fv pos">₹24,000</span></div>
-              <div className="fin-row sub"><span className="fn">Net Cash from Operations</span><span className="fv pos">₹12,40,000</span></div>
-            </>}
-          </div>
-
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('inv')}>{open.inv?'▾':'►'} B. CASH FROM INVESTING ACTIVITIES</div>
-            {open.inv && <>
-              <div className="fin-row"><span className="fn">Purchase of Fixed Assets (PM capex)</span><span className="fv neg">₹0</span></div>
-              <div className="fin-row"><span className="fn">Proceeds from Asset Sale</span><span className="fv">₹0</span></div>
-              <div className="fin-row sub"><span className="fn">Net Cash from Investing</span><span className="fv">₹0</span></div>
-            </>}
+      {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div>
+      : data ? (
+        <div>
+          {/* Net Cash Flow banner */}
+          <div style={{ padding:'16px 20px', borderRadius:10, marginBottom:16,
+            background: data.netCF>=0?'#D4EDDA':'#F8D7DA',
+            border:`1.5px solid ${data.netCF>=0?'#C3E6CB':'#F5C6CB'}`,
+            display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <div style={{ fontWeight:800, fontSize:18,
+                color:data.netCF>=0?'#155724':'#721C24' }}>
+                Net Cash Flow — {MONTHS[month]} {year}
+              </div>
+              <div style={{ fontSize:12, color:'#6C757D', marginTop:2 }}>
+                Operating + Investing + Financing
+              </div>
+            </div>
+            <div style={{ fontFamily:'DM Mono,monospace', fontWeight:800, fontSize:28,
+              color:data.netCF>=0?'#155724':'#721C24' }}>
+              {data.netCF>=0?'+':''}{INR(data.netCF)}
+            </div>
           </div>
 
-          <div className="fin-section">
-            <div className="fin-sec-title" onClick={() => tog('fin')}>{open.fin?'▾':'►'} C. CASH FROM FINANCING ACTIVITIES</div>
-            {open.fin && <>
-              <div className="fin-row"><span className="fn">Term Loan Repayment (HDFC)</span><span className="fv neg">₹1,20,000</span></div>
-              <div className="fin-row"><span className="fn">Dividend Paid</span><span className="fv">₹0</span></div>
-              <div className="fin-row sub"><span className="fn">Net Cash from Financing</span><span className="fv neg">₹1,20,000</span></div>
-            </>}
-          </div>
+          <Section
+            title="A. Operating Activities"
+            color="#155724" bg="#D4EDDA"
+            total={data.operating?.total||0}
+            rows={[
+              ['Receipts from Customers',     data.operating?.custReceipts||0,  false],
+              ['Payments to Vendors',          -(data.operating?.vendPayments||0), false],
+              ['Salaries & Wages',             -(data.operating?.salaryPay||0),  false],
+              ['Other Operating Expenses',     -(data.operating?.expensePay||0), false],
+              ['Net Cash from Operations',     data.operating?.total||0,         true ],
+            ]}
+          />
 
-          <div className="fin-row" style={{padding:'10px 20px',fontWeight:'700',background:'#F8F9FA'}}>
-            <span>Opening Cash Balance (01 Feb)</span>
-            <span style={{color:'var(--odoo-blue)',fontFamily:'Syne,sans-serif'}}>₹18,42,000</span>
-          </div>
-          <div className="fin-row" style={{padding:'10px 20px',fontWeight:'700'}}>
-            <span>Net Increase in Cash</span>
-            <span style={{color:'var(--odoo-green)',fontFamily:'Syne,sans-serif'}}>₹11,20,000</span>
-          </div>
-          <div className="fin-row gt"><span>CLOSING CASH BALANCE (28 Feb)</span><span className="fv">₹29,62,000</span></div>
+          <Section
+            title="B. Investing Activities"
+            color="#004085" bg="#CCE5FF"
+            total={data.investing?.total||0}
+            rows={[
+              ['Fixed Asset Acquisitions',     -(data.investing?.fasAcq||0),     false],
+              ['Net Cash from Investing',       data.investing?.total||0,        true ],
+            ]}
+          />
+
+          <Section
+            title="C. Financing Activities"
+            color="#856404" bg="#FFF3CD"
+            total={data.financing?.total||0}
+            rows={[
+              ['Loan Receipts',                data.financing?.loanIn||0,        false],
+              ['Loan Repayments',              -(data.financing?.loanOut||0),    false],
+              ['Net Cash from Financing',      data.financing?.total||0,         true ],
+            ]}
+          />
         </div>
-      </div>
+      ) : <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>No data</div>}
     </div>
   )
 }
