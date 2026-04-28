@@ -21,7 +21,7 @@ export default function AuditByModule() {
           const dels  = AUDIT_LOGS.filter(l => l.module === m && l.action === 'DELETE').length
           return (
             <div key={m} onClick={() => setActiveModule(m)}
-              style={{background:'#fff',borderRadius:'8px',padding:'12px',cursor:'pointer',textAlign:'center',
+              style={{borderRadius:'8px',padding:'12px',cursor:'pointer',textAlign:'center',
                 boxShadow:'0 1px 4px rgba(0,0,0,.08)',transition:'all .15s',
                 border:`2px solid ${activeModule===m?'var(--odoo-purple)':'transparent'}`,
                 background:activeModule===m?'#F7F0F5':'#fff'}}>

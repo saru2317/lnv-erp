@@ -176,7 +176,6 @@ export default function EmployeeList() {
               const extra = getExtra(e)
               return (
                 <tr key={e.empCode} style={{ cursor:'pointer' }}
-                  style={{ cursor:'pointer' }}
                 onClick={() => nav(`/hcm/profile/${e.empCode}`)}>
                   <td><span style={{ fontFamily:'DM Mono,monospace', fontSize:'12px',
                     color:'var(--odoo-purple)', fontWeight:'700' }}>{e.empCode}</span></td>

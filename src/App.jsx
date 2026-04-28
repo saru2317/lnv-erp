@@ -5,6 +5,8 @@ import { ThemeProvider } from '@context/ThemeContext'
 import ProtectedRoute from '@components/layout/ProtectedRoute'
 import AppShell from '@components/layout/AppShell'
 import PageLoader from '@components/ui/PageLoader'
+import DemoGate from '@components/DemoGate'
+
 
 // ── Eager loaded (always needed) ──
 import LoginPage from '@modules/auth/pages/LoginPage'
@@ -35,6 +37,7 @@ const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
 
 export default function App() {
   return (
+    <DemoGate> 
       <AuthProvider>
       <ThemeProvider>
         <Suspense fallback={<PageLoader />}>
@@ -74,6 +77,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </DemoGate>
   )
 }

@@ -302,7 +302,7 @@ function CustomerForm({ customer, onSave, onCancel, rows = [] }) {
                   <input {...F('pincode')} placeholder="641001" maxLength={6} />
                 </FG>
                 <FG label="Country">
-                  <input style={inp} value="India" readOnly
+                  <input value="India" readOnly
                     style={{ ...inp, background:'#F8F7FA', color:'#6C757D' }} />
                 </FG>
               </div>
