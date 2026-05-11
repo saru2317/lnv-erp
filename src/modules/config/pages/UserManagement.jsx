@@ -1,4 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 
 // ── DATA ──────────────────────────────────────────────
 const AVATAR_COLORS = ['#714B67','#E06F39','#00A09D','#017E84','#8E44AD','#1A5276','#196F3D','#B03A37','#B7860B','#4A235A']
@@ -132,6 +137,19 @@ function useToast() {
 // ── MAIN ──────────────────────────────────────────────
 export default function UserManagement() {
   const [users,      setUsers]      = useState(INIT_USERS)
+
+  // ── Backend API load ─────────────────────────────────────────────
+  const loadUsers = useCallback(async () => {
+    try {
+      const r = await fetch(`${BASE_URL}/users`, { headers: hdr2() })
+      if (!r.ok) return // keep static data if API not ready
+      const d = await r.json()
+      const arr = d.data || d
+      if (Array.isArray(arr) && arr.length > 0) setUsers(arr)
+    } catch {} // silent fallback to INIT_USERS
+  }, [])
+
+  useEffect(() => { loadUsers() }, [loadUsers])
   const [audit,      setAudit]      = useState(INIT_AUDIT)
   const [view,       setView]       = useState('table')
   const [fStatus,    setFStatus]    = useState('all')
@@ -186,13 +204,32 @@ export default function UserManagement() {
   const togglePerm = k => setForm(f => ({...f, perms:   f.perms.includes(k)   ? f.perms.filter(p=>p!==k)  : [...f.perms,k]}))
   const setAllMods = v => setForm(f => ({...f, modules: v ? MODULES_LIST.map(m=>m.k) : []}))
 
-  const saveUser = () => {
+  const saveUser = async () => {
     const e = {}
     if (!form.fname.trim()) e.fname = true
     if (!form.lname.trim()) e.lname = true
     if (!form.email.trim()) e.email = true
     if (!form.uname.trim()) e.uname = true
     if (Object.keys(e).length) { setErrors(e); toast('Please fill all required fields','w'); return }
+    // Try backend first
+    try {
+      const payload = {
+        name:`${form.fname} ${form.lname}`.trim(), email:form.email,
+        username:form.uname, mobile:form.mobile||null, role:form.role,
+        dept:form.dept||null, designation:form.desig||null,
+        moduleAccess:form.modules||[], isActive:form.status!=='inactive',
+        ...(form.pass?{password:form.pass}:{}),
+      }
+      const url    = editId ? `${BASE_URL}/users/${editId}` : `${BASE_URL}/users`
+      const method = editId ? 'PATCH' : 'POST'
+      const r = await fetch(url, { method, headers:hdr(), body:JSON.stringify(payload) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error||'Failed')
+      toast(`${form.fname} ${form.lname} ${editId?'updated':'created'}!`,'s')
+      addAudit(editId?'edit':'add',`${editId?'Updated':'New'}: ${form.fname} ${form.lname}`,`Role: ${ROLE_LABELS[form.role]}`)
+      loadUsers(); closeDrawer(); return
+    } catch(err) { console.warn('Backend:', err.message) }
+    // Fallback local state
     if (editId) {
       setUsers(us => us.map(u => u.id===editId ? {...u, ...form, id:editId} : u))
       toast(`${form.fname} ${form.lname} updated successfully!`, 's')
@@ -206,9 +243,16 @@ export default function UserManagement() {
   }
 
   // ── DELETE ──
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const u = users.find(x=>x.id===deleteId)
-    if (u) { setUsers(us=>us.filter(x=>x.id!==deleteId)); addAudit('del',`Deleted ${u.fname} ${u.lname}`,`@${u.uname}`); toast(`${u.fname} ${u.lname} deleted`,'w') }
+    try {
+      await fetch(`${BASE_URL}/users/${deleteId}`,{method:'DELETE',headers:hdr2()})
+      toast(`${u?.fname} ${u?.lname} deleted`,'w')
+      loadUsers()
+    } catch {
+      if(u) { setUsers(us=>us.filter(x=>x.id!==deleteId)); toast(`${u.fname} ${u.lname} deleted`,'w') }
+    }
+    addAudit('del',`Deleted ${u?.fname} ${u?.lname}`,`@${u?.uname}`)
     setDeleteId(null)
   }
 
@@ -634,7 +678,7 @@ export default function UserManagement() {
 function TableView({ users, total, onEdit, onDelete, onPerms }) {
   return (
     <div style={{background:'#fff', border:'1px solid var(--odoo-border)', borderRadius:12, overflow:'hidden', boxShadow:'0 2px 8px rgba(113,75,103,.08)'}}>
-      <div style={{display:'grid', gridTemplateColumns:'40px 2fr 1.5fr 1fr 1fr 1.2fr 1fr 100px',
+      <div style={{display:'grid', gridTemplateColumns:'40px 2fr 1.5fr 1fr 1fr 1.2fr 1fr 210px',
         padding:'10px 16px', background:'#FBF7FA', borderBottom:'2px solid var(--odoo-border)'}}>
         {['','User','Email','Role','Status','Last Login','Dept','Actions'].map((h,i)=>(
           <span key={i} style={{fontSize:10, fontWeight:700, color:'var(--odoo-muted)', textTransform:'uppercase', letterSpacing:.5}}>{h}</span>
@@ -642,7 +686,7 @@ function TableView({ users, total, onEdit, onDelete, onPerms }) {
       </div>
       {users.map((u,i)=>(
         <div key={u.id} onClick={()=>onEdit(u)}
-          style={{display:'grid', gridTemplateColumns:'40px 2fr 1.5fr 1fr 1fr 1.2fr 1fr 100px',
+          style={{display:'grid', gridTemplateColumns:'40px 2fr 1.5fr 1fr 1fr 1.2fr 1fr 210px',
             padding:'11px 16px', borderBottom:i<users.length-1?'1px solid var(--odoo-border)':'none',
             alignItems:'center', cursor:'pointer', transition:'background .12s'}}
           onMouseEnter={e=>e.currentTarget.style.background='#FBF7FA'}
@@ -665,16 +709,16 @@ function TableView({ users, total, onEdit, onDelete, onPerms }) {
           <div><span style={{fontSize:10, fontWeight:600, color:'var(--odoo-muted)', background:'var(--odoo-bg)', padding:'2px 7px', borderRadius:6, border:'1px solid var(--odoo-border)'}}>{u.dept||'—'}</span></div>
           <div style={{display:'flex', gap:5}} onClick={e=>e.stopPropagation()}>
             {[
-              {ico:'',hb:'#E6F4F5',hc:'#017E84',fn:()=>onEdit(u)},
-              {ico:'',hb:'#EDE0EA',hc:'var(--odoo-purple)',fn:()=>onEdit(u)},
-              {ico:'',hb:'#F4ECF7',hc:'#8E44AD',fn:()=>onPerms(u)},
-              {ico:'',hb:'#FDEDEC',hc:'var(--odoo-red)',fn:()=>onDelete(u.id)},
+              {ico:'View', hb:'#E6F4F5',hc:'#017E84',fn:()=>onEdit(u)},
+              {ico:'Edit', hb:'#EDE0EA',hc:'#714B67',fn:()=>onEdit(u)},
+              {ico:'Perms',hb:'#F4ECF7',hc:'#8E44AD',fn:()=>onPerms(u)},
+              {ico:'Del',  hb:'#FDEDEC',hc:'#DC3545',fn:()=>onDelete(u.id)},
             ].map((b,bi)=>(
               <div key={bi} onClick={b.fn}
-                style={{width:26, height:26, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
-                  cursor:'pointer', fontSize:12, border:'1px solid var(--odoo-border)', background:'#fff', transition:'all .15s'}}
-                onMouseEnter={e=>{e.currentTarget.style.background=b.hb;e.currentTarget.style.borderColor=b.hc}}
-                onMouseLeave={e=>{e.currentTarget.style.background='#fff';e.currentTarget.style.borderColor='var(--odoo-border)'}}>
+                style={{minWidth:46, height:24, borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center',
+                  cursor:'pointer', fontSize:12, border:'1px solid var(--odoo-border)', background:b.hb, color:b.hc, fontWeight:700, fontSize:10, padding:'0 6px', transition:'all .15s'}}
+                onMouseEnter={e=>{e.currentTarget.style.opacity='0.8'}}
+                onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
                 {b.ico}
               </div>
             ))}

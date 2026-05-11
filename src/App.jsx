@@ -35,6 +35,7 @@ const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
 
 
+
 export default function App() {
   return (
     <DemoGate> 
@@ -68,6 +69,8 @@ export default function App() {
               <Route path="/reports/*"  element={<ReportsModule />} />
               <Route path="/mdm/*"      element={<MDMModule />} />
               <Route path="/kpi/*"      element={<KPIModule />} />
+              <Route path="/crm/*"      element={<CRMModule />} />
+
             </Route>
 
             {/* Fallback */}

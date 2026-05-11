@@ -21,6 +21,9 @@ const ReturnList   = lazy(() => import('./ReturnList'))
 const ReturnNew          = lazy(() => import('./ReturnNew'))
 const PricingConditions  = lazy(() => import('./PricingConditions'))
 const PriceBook          = lazy(() => import('./PriceBook'))
+const FTADocuments       = lazy(() => import('./FTADocuments'))
+const DeliveryChallan    = lazy(() => import('./DeliveryChallan'))
+const LabourInvoice      = lazy(() => import('./LabourInvoice'))
 
 const NAV = [
   { to: '/sd',             label: ' Home' },
@@ -49,6 +52,11 @@ const SIDEBAR = [
     { to: '/sd/invoices/new',     label: 'New Invoice (VF01)' },
     { to: '/sd/payments',         label: 'Payment Receipts (F-28)' },
     { to: '/sd/returns',          label: 'Returns / Credit Note' },
+  ]},
+  { label: 'Export & Logistics', icon: '', items: [
+    { to: '/sd/fta-documents',      label: 'FTA / COO Documents' },
+    { to: '/sd/delivery-challan',   label: 'Delivery Challan' },
+    { to: '/sd/labour-invoice',     label: 'Labour Invoice (Job Work)' },
   ]},
   { label: 'Reports', icon: '', items: [
     { to: '/sd/reports/summary',  label: 'Sales Summary' },
@@ -82,7 +90,10 @@ export default function SDLayout() {
           <Route path="returns/new"     element={<ReturnNew />} />
           <Route path="item-ledger"     element={<ItemLedger />} />
           <Route path="pricing"         element={<PricingConditions />} />
-          <Route path="pricebook"       element={<PriceBook />} />
+          <Route path="pricebook"          element={<PriceBook />} />
+          <Route path="fta-documents"      element={<FTADocuments />} />
+          <Route path="delivery-challan"   element={<DeliveryChallan />} />
+          <Route path="labour-invoice"     element={<LabourInvoice />} />
           <Route path="*"               element={<Navigate to="/sd" replace />} />
         </Routes>
       </Suspense>

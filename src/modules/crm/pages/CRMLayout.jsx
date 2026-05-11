@@ -21,6 +21,8 @@ const ComplaintTicket   = lazy(() => import('./ComplaintTicket'))
 const SalesTarget       = lazy(() => import('./SalesTarget'))
 const LostAnalysis      = lazy(() => import('./LostAnalysis'))
 const CRMReports        = lazy(() => import('./CRMReports'))
+const CompetitorMaster   = lazy(() => import('./CompetitorMaster'))
+const CompetitorAnalysis = lazy(() => import('./CompetitorAnalysis'))
 
 const SIDEBAR_GROUPS = [
   { label:'Overview', icon:'▸', items:[
@@ -51,7 +53,11 @@ const SIDEBAR_GROUPS = [
     { to:'/crm/lost-analysis',     label:'Lost Analysis' },
   ]},
   { label:'Reports', icon:'📦', items:[
-    { to:'/crm/reports',           label:'CRM Reports' },
+    { to:'/crm/reports',             label:'CRM Reports'         },
+    { to:'/crm/competitor-analysis', label:'Competitor Analysis' },
+  ]},
+  { label:'Competitors', icon:'🎯', items:[
+    { to:'/crm/competitors',         label:'Competitor Master'   },
   ]},
 ]
 
@@ -78,6 +84,8 @@ export default function CRMLayout() {
           <Route path="targets"              element={<SalesTarget />} />
           <Route path="lost-analysis"        element={<LostAnalysis />} />
           <Route path="reports"              element={<CRMReports />} />
+          <Route path="competitors"         element={<CompetitorMaster />}    />
+          <Route path="competitor-analysis" element={<CompetitorAnalysis />}  />
           <Route path="*"                    element={<Navigate to="/crm" replace />} />
         </Routes>
       </Suspense>

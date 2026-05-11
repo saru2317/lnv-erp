@@ -1,188 +1,178 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LEAD_SOURCES, LEAD_STATUSES, INDUSTRIES, SALESREPS } from './_crmData'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+
+const inp = { width:'100%', padding:'7px 10px', fontSize:12, border:'1px solid #E0D5E0',
+  borderRadius:5, outline:'none', boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
+const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
+
+const SOURCES   = ['Website','Cold Call','Referral','Trade Show','Social Media','Email Campaign','Walk-in','Existing Customer','Other']
+const INDUSTRIES= ['Surface Treatment','Textile','Automotive','Engineering','Food & Beverage','Pharma','Construction','General Manufacturing','Other']
+const STAGES    = ['NEW','CONTACTED','QUALIFIED','PROPOSAL','NEGOTIATION']
 
 export default function LeadNew() {
-  const nav = useNavigate()
-  const [saved, setSaved] = useState(false)
+  const navigate = useNavigate()
+  const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
-    company:'',contact:'',phone:'',email:'',industry:'',
-    source:'Website',owner:SALESREPS[0].name,status:'New Lead',
-    requirement:'',value:'',nextFollowup:'',notes:'',
-    website:'',city:'',state:'',gst:'',
+    company:'', contactName:'', designation:'', email:'', phone:'', mobile:'',
+    source:'Website', industry:'', stage:'NEW', assignedTo:'',
+    dealValue:'', expectedCloseDate:'', requirements:'', notes:'',
+    address:'', city:'', state:'', country:'India',
   })
-  const set = (k,v) => setForm(f=>({...f,[k]:v}))
 
-  const handleSave = () => {
-    if(!form.company||!form.contact||!form.phone) { alert('Fill required fields'); return }
-    setSaved(true)
+  const F = k => ({
+    value: form[k]??'',
+    onChange: e => setForm(p=>({...p,[k]:e.target.value})),
+    onFocus: e => e.target.style.borderColor='#714B67',
+    onBlur:  e => e.target.style.borderColor='#E0D5E0',
+  })
+
+  const save = async () => {
+    if (!form.company) return toast.error('Company name is required')
+    setSaving(true)
+    try {
+      const res = await fetch(`${BASE_URL}/crm/leads`, {
+        method:'POST', headers: hdr(), body: JSON.stringify(form)
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error||'Failed to save')
+      toast.success(`Lead created: ${d.data?.leadNo||d.leadNo||''}`)
+      navigate('/crm/leads/'+( d.data?.id||d.id ))
+    } catch (e) { toast.error(e.message) }
+    finally { setSaving(false) }
   }
-
-  if(saved) return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 20px',textAlign:'center'}}>
-      <div style={{fontSize:'48px',marginBottom:'16px'}}></div>
-      <h2 style={{fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)',marginBottom:'8px'}}>Lead Created!</h2>
-      <div style={{color:'var(--odoo-gray)',marginBottom:'24px'}}>LEAD-{String(Math.floor(Math.random()*90)+10).padStart(4,'0')} — {form.company} has been added to your pipeline.</div>
-      <div style={{display:'flex',gap:'12px'}}>
-        <button className="btn btn-p btn-s" onClick={()=>nav('/crm/leads')}>← Lead List</button>
-        <button className="btn btn-s sd-bsm" onClick={()=>{setSaved(false);setForm({company:'',contact:'',phone:'',email:'',industry:'',source:'Website',owner:SALESREPS[0].name,status:'New Lead',requirement:'',value:'',nextFollowup:'',notes:'',website:'',city:'',state:'',gst:''})}}>+ Add Another</button>
-        <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/opportunities/new')}>Convert to Opportunity →</button>
-      </div>
-    </div>
-  )
 
   return (
     <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">New Lead <small>Capture lead information</small></div>
-        <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/leads')}>Cancel</button>
-          <button className="btn btn-p btn-s" onClick={handleSave}>Save Lead</button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:18,color:'#714B67'}}>New Lead</div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={()=>navigate('/crm/leads')}
+            style={{padding:'7px 16px',background:'#fff',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>Cancel</button>
+          <button onClick={save} disabled={saving}
+            style={{padding:'7px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+            {saving?'Saving...':'Save Lead'}
+          </button>
         </div>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
-        {/* Left — Company & Contact */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:14}}>
+        {/* Main form */}
         <div>
-          <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3> Company Information</h3></div>
-            <div className="fi-panel-body">
-              <div className="sd-form-grid">
-                <div className="sd-field">
-                  <label>Company Name <span style={{color:'red'}}>*</span></label>
-                  <input value={form.company} onChange={e=>set('company',e.target.value)} placeholder="Enter company name" />
-                </div>
-                <div className="sd-field">
-                  <label>Industry</label>
-                  <select value={form.industry} onChange={e=>set('industry',e.target.value)}>
-                    <option value="">Select Industry</option>
-                    {INDUSTRIES.map(i=><option key={i}>{i}</option>)}
-                  </select>
-                </div>
-                <div className="sd-field">
-                  <label>Website</label>
-                  <input value={form.website} onChange={e=>set('website',e.target.value)} placeholder="www.example.com" />
-                </div>
-                <div className="sd-field">
-                  <label>GST Number</label>
-                  <input value={form.gst} onChange={e=>set('gst',e.target.value)} placeholder="29AAAAA0000A1Z5" />
-                </div>
-                <div className="sd-field">
-                  <label>City</label>
-                  <input value={form.city} onChange={e=>set('city',e.target.value)} placeholder="City" />
-                </div>
-                <div className="sd-field">
-                  <label>State</label>
-                  <input value={form.state} onChange={e=>set('state',e.target.value)} placeholder="State" />
-                </div>
+          {/* Company info */}
+          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
+            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Company Information</div>
+            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12,marginBottom:10}}>
+              <div>
+                <label style={lbl}>Company Name *</label>
+                <input style={inp} {...F('company')} placeholder="ABC Industries Pvt. Ltd."/>
+              </div>
+              <div>
+                <label style={lbl}>Industry</label>
+                <select style={{...inp,cursor:'pointer'}} value={form.industry} onChange={e=>setForm(p=>({...p,industry:e.target.value}))}>
+                  <option value="">Select...</option>
+                  {INDUSTRIES.map(i=><option key={i}>{i}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={lbl}>Source *</label>
+                <select style={{...inp,cursor:'pointer'}} value={form.source} onChange={e=>setForm(p=>({...p,source:e.target.value}))}>
+                  {SOURCES.map(s=><option key={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+              <div>
+                <label style={lbl}>City</label>
+                <input style={inp} {...F('city')} placeholder="Coimbatore"/>
+              </div>
+              <div>
+                <label style={lbl}>State</label>
+                <input style={inp} {...F('state')} placeholder="Tamil Nadu"/>
+              </div>
+              <div>
+                <label style={lbl}>Country</label>
+                <input style={inp} {...F('country')} placeholder="India"/>
               </div>
             </div>
           </div>
 
-          <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3> Contact Person</h3></div>
-            <div className="fi-panel-body">
-              <div className="sd-form-grid">
-                <div className="sd-field">
-                  <label>Contact Person <span style={{color:'red'}}>*</span></label>
-                  <input value={form.contact} onChange={e=>set('contact',e.target.value)} placeholder="Full name" />
-                </div>
-                <div className="sd-field">
-                  <label>Designation</label>
-                  <input placeholder="e.g. Purchase Manager" />
-                </div>
-                <div className="sd-field">
-                  <label>Phone <span style={{color:'red'}}>*</span></label>
-                  <input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="10-digit mobile" />
-                </div>
-                <div className="sd-field">
-                  <label>Email</label>
-                  <input type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@company.com" />
-                </div>
+          {/* Contact info */}
+          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
+            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Contact Person</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:10}}>
+              <div>
+                <label style={lbl}>Contact Name</label>
+                <input style={inp} {...F('contactName')} placeholder="Mr. Ramesh Kumar"/>
+              </div>
+              <div>
+                <label style={lbl}>Designation</label>
+                <input style={inp} {...F('designation')} placeholder="Purchase Manager"/>
+              </div>
+              <div>
+                <label style={lbl}>Email</label>
+                <input type="email" style={inp} {...F('email')} placeholder="contact@company.com"/>
+              </div>
+              <div>
+                <label style={lbl}>Phone</label>
+                <input style={inp} {...F('phone')} placeholder="044-12345678"/>
+              </div>
+              <div>
+                <label style={lbl}>Mobile</label>
+                <input style={inp} {...F('mobile')} placeholder="9876543210"/>
               </div>
             </div>
           </div>
 
-          <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3>Requirement</h3></div>
-            <div className="fi-panel-body">
-              <div className="sd-field">
-                <label>Requirement / Inquiry Description</label>
-                <textarea rows={3} value={form.requirement} onChange={e=>set('requirement',e.target.value)}
-                  placeholder="Describe what the customer is looking for..." style={{width:'100%',resize:'vertical'}} />
-              </div>
-              <div className="sd-form-grid" style={{marginTop:'10px'}}>
-                <div className="sd-field">
-                  <label>Estimated Value (₹)</label>
-                  <input type="number" value={form.value} onChange={e=>set('value',e.target.value)} placeholder="0" />
-                </div>
-                <div className="sd-field">
-                  <label>Next Follow-up Date</label>
-                  <input type="date" value={form.nextFollowup} onChange={e=>set('nextFollowup',e.target.value)} />
-                </div>
-              </div>
-              <div className="sd-field" style={{marginTop:'10px'}}>
-                <label>Internal Notes</label>
-                <textarea rows={2} value={form.notes} onChange={e=>set('notes',e.target.value)}
-                  placeholder="Internal notes visible only to your team..." style={{width:'100%',resize:'vertical'}} />
-              </div>
+          {/* Requirements */}
+          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16}}>
+            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Requirements & Notes</div>
+            <div style={{marginBottom:10}}>
+              <label style={lbl}>Requirements / Product Interest</label>
+              <textarea style={{...inp,height:80,resize:'vertical'}}
+                value={form.requirements} onChange={e=>setForm(p=>({...p,requirements:e.target.value}))}
+                placeholder="Powder coating on steel brackets, approx 5000 pcs/month, RAL 9005..."/>
+            </div>
+            <div>
+              <label style={lbl}>Internal Notes</label>
+              <textarea style={{...inp,height:60,resize:'vertical'}}
+                value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}
+                placeholder="Referred by existing customer XYZ. Decision maker is MD..."/>
             </div>
           </div>
         </div>
 
-        {/* Right — Lead Details */}
+        {/* Right panel */}
         <div>
-          <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3> Lead Details</h3></div>
-            <div className="fi-panel-body">
-              <div className="sd-field">
-                <label>Lead Source</label>
-                <select value={form.source} onChange={e=>set('source',e.target.value)}>
-                  {LEAD_SOURCES.map(s=><option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="sd-field" style={{marginTop:'10px'}}>
-                <label>Lead Status</label>
-                <select value={form.status} onChange={e=>set('status',e.target.value)}>
-                  {LEAD_STATUSES.map(s=><option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="sd-field" style={{marginTop:'10px'}}>
-                <label>Assign To</label>
-                <select value={form.owner} onChange={e=>set('owner',e.target.value)}>
-                  {SALESREPS.map(r=><option key={r.id}>{r.name}</option>)}
-                </select>
-              </div>
+          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
+            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Lead Details</div>
+            <div style={{marginBottom:10}}>
+              <label style={lbl}>Stage</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.stage} onChange={e=>setForm(p=>({...p,stage:e.target.value}))}>
+                {STAGES.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div style={{marginBottom:10}}>
+              <label style={lbl}>Deal Value (₹)</label>
+              <input type="number" style={inp} {...F('dealValue')} placeholder="500000"/>
+            </div>
+            <div style={{marginBottom:10}}>
+              <label style={lbl}>Expected Close Date</label>
+              <input type="date" style={inp} {...F('expectedCloseDate')}/>
+            </div>
+            <div>
+              <label style={lbl}>Assigned To</label>
+              <input style={inp} {...F('assignedTo')} placeholder="Sales rep name"/>
             </div>
           </div>
 
-          <div className="fi-panel" style={{marginBottom:'14px'}}>
-            <div className="fi-panel-hdr"><h3>Source Conversion Stats</h3></div>
-            <div className="fi-panel-body">
-              {[{s:'Referral',r:'50%'},{s:'Exhibition',r:'30%'},{s:'Website',r:'25%'},{s:'Cold Calling',r:'8%'}].map(x=>(
-                <div key={x.s} style={{display:'flex',justifyContent:'space-between',fontSize:'12px',padding:'4px 0',borderBottom:'1px solid var(--odoo-border)'}}>
-                  <span>{x.s}</span>
-                  <strong style={{color:'var(--odoo-green)'}}>{x.r} conv. rate</strong>
-                </div>
-              ))}
-              <div style={{marginTop:'8px',fontSize:'11px',color:'var(--odoo-gray)'}}> Referral leads have highest conversion</div>
-            </div>
-          </div>
-
-          <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3> AI Suggestion</h3></div>
-            <div className="fi-panel-body">
-              <div style={{background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px'}}>
-                <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}> Win Tips</div>
-                {form.industry==='Automotive'
-                  ? <div>Auto industry leads close <strong>40% faster</strong> with a plant demo. Schedule within 5 days.</div>
-                  : form.source==='Referral'
-                  ? <div>Referral leads convert <strong>2x better</strong>. Contact within 24 hrs for best results.</div>
-                  : <div>Fill requirement details for better AI recommendations.</div>
-                }
-              </div>
-            </div>
-          </div>
+          <button onClick={save} disabled={saving}
+            style={{width:'100%',padding:12,background:'#714B67',color:'#fff',border:'none',borderRadius:8,fontSize:14,fontWeight:700,cursor:'pointer'}}>
+            {saving?'Saving...':'\uD83D\uDCCC Save Lead'}
+          </button>
         </div>
       </div>
     </div>

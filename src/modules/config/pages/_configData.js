@@ -54,23 +54,23 @@ export const ALL_MODULES = [
 ]
 
 export const ROLES = [
-  { id:'ROLE-001', name:'admin',      label:'Administrator',   color:'#714B67', desc:'Full access to all modules and settings',
+  { id:'ROLE-001', name:'admin',      label:'Administrator',   color:'#714B67', bg:'#F8D7DA', desc:'Full access to all modules and settings',
     modules:['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','vm','cn','admin','config','reports','kpi'] },
-  { id:'ROLE-002', name:'manager',    label:'Plant Manager',   color:'#1A5276', desc:'Operations, production and support modules',
+  { id:'ROLE-002', name:'manager',    label:'Plant Manager',   color:'#1A5276', bg:'#EDE0EA', desc:'Operations, production and support modules',
     modules:['home','pp','qm','pm','wm','mm','tm','am','vm','reports'] },
-  { id:'ROLE-003', name:'accounts',   label:'Accounts',        color:'#196F3D', desc:'Finance, sales and purchase access',
+  { id:'ROLE-003', name:'accounts',   label:'Accounts',        color:'#196F3D', bg:'#CCE5FF', desc:'Finance, sales and purchase access',
     modules:['home','fi','sd','mm','am','reports'] },
-  { id:'ROLE-004', name:'operations', label:'Operations',      color:'#784212', desc:'Production floor, warehouse and transport access',
+  { id:'ROLE-004', name:'operations', label:'Operations',      color:'#784212', bg:'#D1ECF1', desc:'Production floor, warehouse and transport access',
     modules:['home','pp','qm','pm','wm','mm','tm','reports'] },
-  { id:'ROLE-005', name:'hr',         label:'HR Executive',    color:'#6C3483', desc:'HR, payroll and canteen/visitor management',
+  { id:'ROLE-005', name:'hr',         label:'HR Executive',    color:'#6C3483', bg:'#FFF3CD', desc:'HR, payroll and canteen/visitor management',
     modules:['home','hcm','cn','vm','reports'] },
-  { id:'ROLE-006', name:'sales',      label:'Sales Executive', color:'#117A65', desc:'Sales and CRM access only',
+  { id:'ROLE-006', name:'sales',      label:'Sales Executive', color:'#117A65', bg:'#D4EDDA', desc:'Sales and CRM access only',
     modules:['home','sd','crm','reports'] },
-  { id:'ROLE-007', name:'transport',  label:'Transport Head',  color:'#E06F39', desc:'Full transport module + vehicle & trip management',
+  { id:'ROLE-007', name:'transport',  label:'Transport Head',  color:'#E06F39', bg:'#E2E3E5', desc:'Full transport module + vehicle & trip management',
     modules:['home','tm','mm'] },
-  { id:'ROLE-008', name:'civil',      label:'Civil Engineer',  color:'#1B4F72', desc:'Civil projects, BOQ, contractor billing',
+  { id:'ROLE-008', name:'civil',      label:'Civil Engineer',  color:'#1B4F72', bg:'#EDE0EF', desc:'Civil projects, BOQ, contractor billing',
     modules:['home','civil','am','mm'] },
-  { id:'ROLE-009', name:'viewer',     label:'Viewer (Read-only)',color:'#6C757D', desc:'Read-only access to assigned modules — no create/edit/delete',
+  { id:'ROLE-009', name:'viewer',     label:'Viewer (Read-only)',color:'#6C757D', bg:'#F8F9FA', desc:'Read-only access to assigned modules — no create/edit/delete',
     modules:['home','sd','mm','pp','fi'] },
 ]
 
