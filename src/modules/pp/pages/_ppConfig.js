@@ -1,4 +1,5 @@
 // ── LNV ERP — PP Master Config ───────────────────────────────────────────────
+// Industry is driven by _configData.js → COMPANY.industry (single source of truth)
 // 100% dynamic — no company hardcoding
 // Routing is ITEM-WISE (not customer-wise)
 // Production types: job_work | batch | mould | continuous | discrete
@@ -387,23 +388,6 @@ export const STEP_STATUS_TEXT = {
   Skipped: 'Skipped',
 }
 
-// DEMO_COMPANY_CONFIG — used by ProcessMaster, WorkCenterMaster, RateCardMaster, RoutingTemplate
-export const DEMO_COMPANY_CONFIG = {
-  subType:  'surface_treatment',
-  chargeBy: 'Per Piece',
-  processes: [
-    'Inward Inspection',
-    'Pre-Treatment / Degreasing',
-    'Rinsing',
-    'Phosphating',
-    'Powder Coating',
-    'Curing / Oven',
-    'DFT / QC Check',
-    'Outward / Dispatch',
-  ],
-  workCenters: WORK_CENTERS,
-}
-
 // INDUSTRY_SUBTYPES — used by PPConfigurator
 export const INDUSTRY_SUBTYPES = [
   { key:'surface_treatment', emoji:'', name:'Surface Treatment',      icon:'🎨', label:'Surface Treatment / Coating',    color:'var(--odoo-purple)',
@@ -447,3 +431,36 @@ export const INDUSTRY_SUBTYPES = [
     processes:['Drawing Issue','Material Issue','Cutting / Laser','Forming / Bending','Welding','Grinding / Finishing','Dimensional / NDT','Dispatch'],
     defaultSequence:['Drawing Issue','Material Issue','Cutting','Welding','Inspection','Dispatch'] },
 ]
+
+// ── INDUSTRY NAME → KEY MAP ───────────────────────────────────────────────────
+// Maps COMPANY.industry (from _configData.js) → INDUSTRY_SUBTYPES key
+// To switch: change COMPANY.industry in _configData.js → update _COMPANY_INDUSTRY below to match
+const INDUSTRY_NAME_MAP = {
+  'Surface Treatment / Coating':     'surface_treatment',
+  'Injection Moulding':              'injection_moulding',
+  'Heat Treatment':                  'heat_treatment',
+  'CNC Job Work / Machining':        'cnc_jobwork',
+  'Fabrication / Sheet Metal':       'fabrication',
+  'Blow Moulding':                   'blow_moulding',
+  'Rubber Moulding':                 'rubber_moulding',
+  'Electroplating / Metal Finishing':'electroplating',
+  'Assembly Job Work':               'assembly_jobwork',
+  'Textile Processing':              'textile_proc',
+  'Forging / Casting Finishing':     'forging_finish',
+  'Printing Industries':             'printing',
+}
+
+// ── DEMO_COMPANY_CONFIG — single source of truth for active industry ──────────
+// MUST be after INDUSTRY_SUBTYPES (references it)
+// When onboarding a new client: change _COMPANY_INDUSTRY here + COMPANY.industry in _configData.js
+const _COMPANY_INDUSTRY = 'Injection Moulding'  // ← sync with _configData.js COMPANY.industry
+const _activeKey  = INDUSTRY_NAME_MAP[_COMPANY_INDUSTRY] || 'injection_moulding'
+const _activeInd  = INDUSTRY_SUBTYPES.find(i => i.key === _activeKey)
+
+export const DEMO_COMPANY_CONFIG = {
+  subType:     _activeKey,                                  // 'injection_moulding'
+  industryName:_COMPANY_INDUSTRY,                           // 'Injection Moulding'
+  chargeBy:    _activeInd?.chargeBy?.[0] || 'Per Piece',   // 'Per Piece'
+  processes:   _activeInd?.processes     || [],             // 7 injection moulding stages
+  workCenters: WORK_CENTERS,
+}

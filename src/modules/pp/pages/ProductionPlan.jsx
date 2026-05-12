@@ -30,10 +30,10 @@ const INIT = {
 }
 
 const SEED = [
-  { id:1, planNo:'PLAN-2026-0001', itemName:'Brake Bracket — Powder Coat',   itemCode:'BRK-001', plannedQty:500, uom:'Nos', startDate:'2026-04-15', endDate:'2026-04-18', priority:'High',   status:'WO Created', soNo:'SO-2026-042', workCenter:'BOOTH-01' },
-  { id:2, planNo:'PLAN-2026-0002', itemName:'Engine Mount — Surface Treat.',  itemCode:'ENG-006', plannedQty:300, uom:'Nos', startDate:'2026-04-15', endDate:'2026-04-20', priority:'Normal', status:'Planned',    soNo:'SO-2026-043', workCenter:'TANK-01'  },
-  { id:3, planNo:'PLAN-2026-0003', itemName:'Gear Housing — Heat Treatment',  itemCode:'GER-A2',  plannedQty:150, uom:'Nos', startDate:'2026-04-18', endDate:'2026-04-21', priority:'High',   status:'Draft',      soNo:'SO-2026-044', workCenter:'FURNACE-01'},
-  { id:4, planNo:'PLAN-2026-0004', itemName:'PP Cap 20ml — Inj. Moulding',   itemCode:'CAP-20ML',plannedQty:10000,uom:'Nos',startDate:'2026-04-22', endDate:'2026-04-25', priority:'Normal', status:'Draft',      soNo:'SO-2026-045', workCenter:'IMM-01'   },
+  { id:1, planNo:'PLAN-2026-0001', itemName:'PP Cap 20ml',           itemCode:'CAP-20ML',  plannedQty:10000, uom:'Nos', startDate:'2026-05-01', endDate:'2026-05-03', priority:'High',     status:'Draft',      soNo:'SO-2026-001', workCenter:'IMM-150T' },
+  { id:2, planNo:'PLAN-2026-0002', itemName:'HDPE Container 500ml',  itemCode:'CTN-500ML', plannedQty:5000,  uom:'Nos', startDate:'2026-05-04', endDate:'2026-05-06', priority:'Normal',   status:'Planned',    soNo:'SO-2026-002', workCenter:'IMM-200T' },
+  { id:3, planNo:'PLAN-2026-0003', itemName:'ABS Housing Cover',     itemCode:'HSG-ABS01', plannedQty:2000,  uom:'Nos', startDate:'2026-05-07', endDate:'2026-05-09', priority:'High',     status:'WO Created', soNo:'SO-2026-003', workCenter:'IMM-150T' },
+  { id:4, planNo:'PLAN-2026-0004', itemName:'Nylon Gear — 24T',      itemCode:'NGR-24T',   plannedQty:3000,  uom:'Nos', startDate:'2026-05-10', endDate:'2026-05-12', priority:'Normal',   status:'Draft',      soNo:'',            workCenter:'IMM-80T'  },
 ]
 
 export default function ProductionPlan() {
@@ -344,7 +344,7 @@ export default function ProductionPlan() {
                   {hasWO && (
                     <div style={{background:'#D4EDDA',borderTop:'1px solid #C3E6CB',padding:'5px 16px',display:'flex',gap:8,alignItems:'center',fontSize:11}}>
                       <span style={{color:'#155724',fontWeight:700}}>✓ Work Order created and released to production floor</span>
-                      <button className="btn-xs" style={{marginLeft:'auto'}} onClick={()=>nav(`/pp/entry`)}>
+                      <button className="btn-xs" style={{marginLeft:'auto'}} onClick={()=>nav(`/pp/entry-list`)}>
                         Go to Production Entry →
                       </button>
                     </div>

@@ -8,24 +8,35 @@ const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
 
 const SEED = [
-  { id:1, routingNo:'RTE-2026-001', itemName:'Brake Bracket — Powder Coat',  itemCode:'BRK-001', operations:[
-    {opNo:'10',processName:'Inward Inspection',wcId:'INWARD',   setupTime:15,machineTime:0  },
-    {opNo:'20',processName:'Pre-Treatment',    wcId:'TANK-01',  setupTime:20,machineTime:30 },
-    {opNo:'30',processName:'Phosphating',      wcId:'TANK-02',  setupTime:20,machineTime:45 },
-    {opNo:'40',processName:'Powder Coating',   wcId:'BOOTH-01', setupTime:30,machineTime:60 },
-    {opNo:'50',processName:'Curing / Oven',    wcId:'OVEN-01',  setupTime:10,machineTime:30 },
-    {opNo:'60',processName:'DFT / QC Check',   wcId:'QC',       setupTime:10,machineTime:20 },
-    {opNo:'70',processName:'Dispatch',         wcId:'DISPATCH', setupTime:10,machineTime:15 },
-  ], isActive:true },
-  { id:2, routingNo:'RTE-2026-002', itemName:'PP Cap 20ml — Inj. Moulding', itemCode:'CAP-20ML', operations:[
-    {opNo:'10',processName:'Material Drying',    wcId:'DRYER-01',setupTime:30,machineTime:120},
-    {opNo:'20',processName:'Mould Setup',        wcId:'IMM-01',  setupTime:45,machineTime:30 },
-    {opNo:'30',processName:'Trial Shot',         wcId:'IMM-01',  setupTime:0, machineTime:30 },
-    {opNo:'40',processName:'Production Run',     wcId:'IMM-01',  setupTime:0, machineTime:480},
-    {opNo:'50',processName:'Inline QC',          wcId:'QC',      setupTime:0, machineTime:60 },
-    {opNo:'60',processName:'Final Inspection',   wcId:'QC',      setupTime:0, machineTime:30 },
-    {opNo:'70',processName:'Packing',            wcId:'PACK',    setupTime:0, machineTime:60 },
-  ], isActive:true },
+  { id:1, routingNo:'RT-2026-0001', itemName:'PP Cap 20ml',         itemCode:'CAP-20ML', isActive:true, operations:[
+    {opNo:'10',processName:'Material Drying',   wcId:'WC-001',setupTime:30,machineTime:120},
+    {opNo:'20',processName:'Mould Setup',       wcId:'WC-002',setupTime:45,machineTime:30 },
+    {opNo:'30',processName:'Trial Shot',        wcId:'WC-003',setupTime:0, machineTime:30 },
+    {opNo:'40',processName:'Production Run',    wcId:'WC-004',setupTime:0, machineTime:480},
+    {opNo:'50',processName:'Inline QC',         wcId:'WC-007',setupTime:0, machineTime:60 },
+    {opNo:'60',processName:'Degating / Trimming',wcId:'WC-008',setupTime:0,machineTime:45 },
+    {opNo:'70',processName:'Final Inspection',  wcId:'WC-009',setupTime:0, machineTime:30 },
+    {opNo:'80',processName:'Packing',           wcId:'WC-010',setupTime:0, machineTime:60 },
+  ]},
+  { id:2, routingNo:'RT-2026-0002', itemName:'HDPE Container 500ml',itemCode:'CTN-500ML', isActive:true, operations:[
+    {opNo:'10',processName:'Material Drying',   wcId:'WC-001',setupTime:45,machineTime:150},
+    {opNo:'20',processName:'Mould Setup',       wcId:'WC-005',setupTime:60,machineTime:45 },
+    {opNo:'30',processName:'Trial Shot',        wcId:'WC-005',setupTime:0, machineTime:30 },
+    {opNo:'40',processName:'Production Run',    wcId:'WC-005',setupTime:0, machineTime:480},
+    {opNo:'50',processName:'Inline QC',         wcId:'WC-007',setupTime:0, machineTime:60 },
+    {opNo:'60',processName:'Degating / Trimming',wcId:'WC-008',setupTime:0,machineTime:60 },
+    {opNo:'70',processName:'Final Inspection',  wcId:'WC-009',setupTime:0, machineTime:30 },
+    {opNo:'80',processName:'Packing',           wcId:'WC-010',setupTime:0, machineTime:60 },
+  ]},
+  { id:3, routingNo:'RT-2026-0003', itemName:'ABS Housing Cover',   itemCode:'HSG-ABS01', isActive:true, operations:[
+    {opNo:'10',processName:'Material Drying',   wcId:'WC-001',setupTime:30,machineTime:90 },
+    {opNo:'20',processName:'Mould Setup',       wcId:'WC-002',setupTime:60,machineTime:30 },
+    {opNo:'30',processName:'Production Run',    wcId:'WC-002',setupTime:0, machineTime:360},
+    {opNo:'40',processName:'Insert Loading',    wcId:'WC-002',setupTime:0, machineTime:120},
+    {opNo:'50',processName:'Inline QC',         wcId:'WC-007',setupTime:0, machineTime:45 },
+    {opNo:'60',processName:'Final Inspection',  wcId:'WC-009',setupTime:0, machineTime:30 },
+    {opNo:'70',processName:'Packing',           wcId:'WC-010',setupTime:0, machineTime:45 },
+  ]},
 ]
 
 export default function RoutingList() {
@@ -38,7 +49,7 @@ export default function RoutingList() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res  = await fetch(`${BASE_URL}/mdm/routing`, { headers: hdr2() })
+      const res  = await fetch(`${BASE_URL}/pp/routing-master`, { headers: hdr2() })
       const data = await res.json()
       setRoutings(data.data?.length ? data.data : SEED)
     } catch { setRoutings(SEED) }
@@ -46,12 +57,13 @@ export default function RoutingList() {
   }, [])
   useEffect(() => { load() }, [load])
 
-  const toggleActive = async (id, current) => {
+  const deleteRouting = async (id, routingNo) => {
+    if (!confirm(`Delete Routing ${routingNo}? This cannot be undone.`)) return
     try {
-      await fetch(`${BASE_URL}/mdm/routing/${id}`, { method:'PUT', headers: hdr(), body: JSON.stringify({ isActive: !current }) })
-      toast.success(current ? 'Routing deactivated' : 'Routing activated')
+      await fetch(`${BASE_URL}/pp/routing-master/${id}`, { method:'DELETE', headers: hdr2() })
+      toast.success(`Routing ${routingNo} deleted`)
       load()
-    } catch { toast.error('Failed to update') }
+    } catch { toast.error('Delete failed') }
   }
 
   const shown = routings.filter(r =>
@@ -119,9 +131,10 @@ export default function RoutingList() {
                 </td>
                 <td onClick={e=>e.stopPropagation()}>
                   <div style={{display:'flex',gap:4}}>
-                    <button className="btn-xs" onClick={()=>nav(`/pp/routing/${r.id}`)}>Edit</button>
-                    <button className="btn-xs" onClick={()=>toggleActive(r.id, r.isActive)}>
-                      {r.isActive ? 'Deactivate' : 'Activate'}
+                    <button className="btn-xs" onClick={()=>nav(`/pp/routing-master`)}>Edit</button>
+                    <button className="btn-xs" onClick={()=>deleteRouting(r.id, r.routingNo)}
+                      style={{background:'#F8D7DA',color:'#721C24',border:'1px solid #F5C6CB'}}>
+                      Del
                     </button>
                     <span style={{color:'#999',fontSize:12,alignSelf:'center'}}>{expanded===r.id?'▲':'▼'}</span>
                   </div>

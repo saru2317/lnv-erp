@@ -9,13 +9,15 @@ const ProductionPlan   = lazy(() => import('./ProductionPlan'))
 const WOList           = lazy(() => import('./WOList'))
 const WONew            = lazy(() => import('./WONew'))
 const WOComplete       = lazy(() => import('./WOComplete'))
-const ProductionEntry  = lazy(() => import('./ProductionEntry'))
+const ProductionEntry     = lazy(() => import('./ProductionEntry'))
+const ProductionEntryList = lazy(() => import('./ProductionEntryList'))
 const MRPRun           = lazy(() => import('./MRPRun'))
 const MRPList          = lazy(() => import('./MRPList'))
 const CapacityPlan     = lazy(() => import('./CapacityPlan'))
 const GanttView        = lazy(() => import('./GanttView'))
 const ProcessMaster    = lazy(() => import('./ProcessMaster'))
 const WorkCenterMaster = lazy(() => import('./WorkCenterMaster'))
+const RoutingMaster    = lazy(() => import('./RoutingMaster'))
 const MouldMaster      = lazy(() => import('./MouldMaster'))
 const BatchManager     = lazy(() => import('./BatchManager'))
 const JobCardList      = lazy(() => import('./JobCardList'))
@@ -25,8 +27,6 @@ const ProcessExecution = lazy(() => import('./ProcessExecution'))
 const JobWorkInvoice   = lazy(() => import('./JobWorkInvoice'))
 const BOMList          = lazy(() => import('./BOMList'))
 const BOMNew           = lazy(() => import('./BOMNew'))
-const RoutingList      = lazy(() => import('./RoutingList'))
-const RoutingNew       = lazy(() => import('./RoutingNew'))
 const WorkCenterBoard  = lazy(() => import('./WorkCenterDashboard'))
 const MOList           = lazy(() => import('./MOList'))
 const PPReport         = lazy(() => import('./PPReport'))
@@ -63,6 +63,12 @@ const PLANNER_SIDEBAR = [
     { to:'/pp/mrp',          label:'MRP Run (MD01)'    },
     { to:'/pp/mrp/results',  label:'MRP Results (MD04)'},
   ]},
+  { label:'Production', icon:'🏭', items:[
+    { to:'/pp/entry-list',   label:'Production Entry (CO11N)' },
+    { to:'/pp/complete',     label:'Close Work Order'         },
+    { to:'/pp/wc-board',     label:'Work Center Board'        },
+    { to:'/pp/batch-manager',label:'Batch Manager'            },
+  ]},
   { label:'Job Work', icon:'🔧', items:[
     { to:'/pp/job-cards',    label:'Job Card Register' },
     { to:'/pp/job-card/new', label:'New Job Card'      },
@@ -71,18 +77,17 @@ const PLANNER_SIDEBAR = [
   { label:'BOM & Routing', icon:'📐', items:[
     { to:'/pp/bom',          label:'Bill of Materials (CS03)' },
     { to:'/pp/bom/new',      label:'Create BOM (CS01)'        },
-    { to:'/pp/routing',      label:'Routing List (CA03)'      },
-    { to:'/pp/routing/new',  label:'Create Routing (CA01)'    },
+    { to:'/pp/routing-master',label:'Routing Master (CA01/CA03)'},
   ]},
   { label:'Reports', icon:'📈', items:[
     { to:'/pp/report',       label:'Production Report'  },
     { to:'/pp/efficiency',   label:'Machine Efficiency' },
   ]},
   { label:'PP Setup', icon:'⚙️', items:[
-    { to:'/pp/process-master',label:'Process Master'          },
-    { to:'/pp/work-centers',  label:'Work Center Master'      },
-    { to:'/pp/mould-master',  label:'Mould / Cavity Master'   },
-    { to:'/pp/configurator',  label:'PP Configurator'         },
+    { to:'/pp/process-master',  label:'Process Master (CA80)'   },
+    { to:'/pp/work-centers',    label:'Work Center Master (CR01)'},
+    { to:'/pp/mould-master',    label:'Mould / Cavity Master'   },
+    { to:'/pp/configurator',    label:'PP Configurator'         },
   ]},
 ]
 
@@ -92,7 +97,7 @@ const OPERATOR_SIDEBAR = [
     { to:'/pp',               label:'PP Dashboard' },
   ]},
   { label:'My Production', icon:'⚙️', items:[
-    { to:'/pp/entry',         label:'Production Entry'  },   // ← main screen
+    { to:'/pp/entry-list',    label:'Production Entry'  },   // ← main screen
     { to:'/pp/wo',            label:'Work Order Queue'  },   // read-only list
     { to:'/pp/complete',      label:'Close Work Order'  },
     { to:'/pp/wc-board',      label:'Work Center Board' },
@@ -153,6 +158,7 @@ export default function PPLayout() {
           <Route path="wo/:id"          element={<WONew />}            />
 
           {/* Production — operator primary */}
+          <Route path="entry-list"       element={<ProductionEntryList />} />
           <Route path="entry"           element={<ProductionEntry />}  />
           <Route path="complete"        element={<WOComplete />}       />
           <Route path="wc-board"        element={<WorkCenterBoard />}  />
@@ -170,13 +176,15 @@ export default function PPLayout() {
           <Route path="bom"             element={<BOMList />}          />
           <Route path="bom/new"         element={<PlannerGuard><BOMNew /></PlannerGuard>}              />
           <Route path="bom/:id"         element={<BOMNew />}           />
-          <Route path="routing"         element={<RoutingList />}      />
-          <Route path="routing/new"     element={<PlannerGuard><RoutingNew /></PlannerGuard>}          />
-          <Route path="routing/:id"     element={<RoutingNew />}       />
+          {/* Old routing routes → redirect to routing-master */}
+          <Route path="routing"         element={<Navigate to="/pp/routing-master" replace />} />
+          <Route path="routing/new"     element={<Navigate to="/pp/routing-master" replace />} />
+          <Route path="routing/:id"     element={<Navigate to="/pp/routing-master" replace />} />
 
           {/* Masters */}
           <Route path="process-master"  element={<PlannerGuard><ProcessMaster /></PlannerGuard>}       />
           <Route path="work-centers"    element={<PlannerGuard><WorkCenterMaster /></PlannerGuard>}    />
+          <Route path="routing-master"  element={<PlannerGuard><RoutingMaster /></PlannerGuard>}       />
           <Route path="mould-master"    element={<MouldMaster />}      />
           <Route path="configurator"    element={<PlannerGuard><PPConfigurator /></PlannerGuard>}      />
 

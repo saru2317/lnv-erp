@@ -7,7 +7,7 @@ export const COMPANY = {
   cin:         'U28910TN2018PTC123456',
   gstin:       '33AABCL1234F1Z5',
   pan:         'AABCL1234F',
-  industry:    'Surface Treatment / Coating',
+  industry:    'Injection Moulding',
   type:        'Private Limited',
   founded:     '2018',
   email:       'info@lnvmfg.com',

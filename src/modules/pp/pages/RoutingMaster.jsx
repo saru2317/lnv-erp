@@ -1,51 +1,63 @@
 import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
-// ── Embedded from _ppConfig.js ───────────────────────────
-const WORK_CENTERS = [
-  { id:'WC-001', name:'Pre-Treatment Tank',  process:'Pre-Treatment / Degreasing', capacity:500, status:'Active',             operator:'Rajan K.' },
-  { id:'WC-002', name:'Phosphating Tank',    process:'Phosphating',                capacity:500, status:'Active',             operator:'Murugan S.' },
-  { id:'WC-003', name:'Powder Coat Booth 1', process:'Powder Coating',             capacity:400, status:'Active',             operator:'Arun M.' },
-  { id:'WC-004', name:'Powder Coat Booth 2', process:'Powder Coating',             capacity:400, status:'Active',             operator:'Karthik P.' },
-  { id:'WC-005', name:'Curing Oven 1',       process:'Curing / Oven',              capacity:800, status:'Active',             operator:'Suresh V.' },
-  { id:'WC-006', name:'Curing Oven 2',       process:'Curing / Oven',              capacity:800, status:'Under Maintenance',  operator:'—' },
-  { id:'WC-007', name:'Furnace F-001',       process:'Hardening / Heating',        capacity:500, status:'Active',             operator:'Selvam R.' },
-  { id:'WC-008', name:'IMM-150T',            process:'Production Run',             capacity:1,   status:'Active',             operator:'Priya D.' },
-  { id:'WC-009', name:'QC Lab',             process:'DFT / QC Check',             capacity:0,   status:'Active',             operator:'Inspector' },
-  { id:'WC-010', name:'Dispatch Bay',        process:'Outward / Dispatch',         capacity:0,   status:'Active',             operator:'Store' },
-]
+
+// ── Industry Subtypes — self-contained, no cross-module import ────────────────
+// To change default industry: update ACTIVE_INDUSTRY_KEY below
+const ACTIVE_INDUSTRY_KEY = 'injection_moulding'  // ← change this for each client
 
 const INDUSTRY_SUBTYPES = [
-  { key:'surface_treatment', name:'Surface Treatment',      label:'Surface Treatment / Coating',     color:'#714B67',
+  { key:'surface_treatment', name:'Surface Treatment',   color:'#714B67',
     processes:['Inward Inspection','Pre-Treatment / Degreasing','Rinsing','Phosphating','Powder Coating','Curing / Oven','DFT / QC Check','Outward / Dispatch'],
     defaultSequence:['Inward Inspection','Pre-Treatment / Degreasing','Phosphating','Powder Coating','Curing / Oven','DFT / QC Check','Outward / Dispatch'] },
-  { key:'heat_treatment',    name:'Heat Treatment',          label:'Heat Treatment',                  color:'#C0392B',
+  { key:'heat_treatment',    name:'Heat Treatment',       color:'#C0392B',
     processes:['Job Receipt & Check','Furnace Loading','Hardening / Heating','Quenching','Tempering','Hardness Testing','Shot Blasting / Cleaning','Final Dispatch'],
     defaultSequence:['Job Receipt & Check','Furnace Loading','Hardening / Heating','Quenching','Tempering','Hardness Testing','Final Dispatch'] },
-  { key:'cnc_jobwork',       name:'CNC Job Work',            label:'CNC Job Work / Machining',        color:'#1A5276',
+  { key:'cnc_jobwork',       name:'CNC Job Work',         color:'#1A5276',
     processes:['Drawing Receipt','Material Issue','Machine Setting','Turning','Milling','Drilling','Deburring','Inspection','Dispatch'],
     defaultSequence:['Drawing Receipt','Material Issue','Machine Setting','Turning','Inspection','Dispatch'] },
-  { key:'textile_proc',      name:'Textile Processing',      label:'Textile Processing',              color:'#76448A',
+  { key:'textile_proc',      name:'Textile Processing',   color:'#76448A',
     processes:['Grey Fabric Receipt','Scouring','Bleaching','Dyeing','Washing','Drying','Finishing','Quality Check','Dispatch'],
     defaultSequence:['Grey Fabric Receipt','Scouring','Dyeing','Drying','Finishing','Quality Check','Dispatch'] },
-  { key:'forging_finish',    name:'Forging / Casting',       label:'Forging / Casting Finishing',     color:'#784212',
+  { key:'forging_finish',    name:'Forging / Casting',    color:'#784212',
     processes:['Incoming Inspection','Shot Blasting','Trimming','Machining','Heat Treatment','Dimensional Check','Dispatch'],
     defaultSequence:['Incoming Inspection','Shot Blasting','Trimming','Dimensional Check','Dispatch'] },
-  { key:'electroplating',    name:'Electroplating',          label:'Electroplating / Metal Finishing', color:'#1F618D',
+  { key:'electroplating',    name:'Electroplating',       color:'#1F618D',
     processes:['Job Receipt','Pre-Treatment','Acid Cleaning / Activation','Plating','Post Rinse','Drying','Thickness / QC Check','Dispatch'],
     defaultSequence:['Job Receipt','Pre-Treatment','Activation','Plating','Rinse','Drying','QC','Dispatch'] },
-  { key:'assembly_jobwork',  name:'Assembly Job Work',       label:'Assembly Job Work',               color:'#117A65',
+  { key:'assembly_jobwork',  name:'Assembly Job Work',    color:'#117A65',
     processes:['Parts Incoming Check','Sub-Assembly','Main Assembly','Electrical / Functional Test','Final Inspection','Packing & Labelling'],
     defaultSequence:['Parts Incoming Check','Sub-Assembly','Main Assembly','Final Inspection','Packing & Labelling'] },
-  { key:'printing',          name:'Printing',                label:'Printing Industries',             color:'#1B4F72',
+  { key:'printing',          name:'Printing',             color:'#1B4F72',
     processes:['Pre-Press / Artwork','Plate / Cylinder Making','Substrate Setup','Printing Run','Lamination / Coating','Die Cutting / Slitting','Inspection & Packing'],
     defaultSequence:['Pre-Press / Artwork','Plate Making','Printing Run','Die Cutting','Inspection & Packing'] },
-  { key:'injection_moulding',name:'Injection Moulding',      label:'Injection Moulding',             color:'#1A5276',
+  { key:'injection_moulding',name:'Injection Moulding',   color:'#1A5276',
     processes:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Degating / Trimming','Final Inspection','Packing'],
     defaultSequence:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Final Inspection','Packing'] },
-  { key:'fabrication',       name:'Fabrication',             label:'Fabrication / Sheet Metal',       color:'#4D5656',
+  { key:'fabrication',       name:'Fabrication',          color:'#4D5656',
     processes:['Drawing Issue','Material Issue','Cutting / Laser','Forming / Bending','Welding','Grinding / Finishing','Dimensional / NDT','Dispatch'],
     defaultSequence:['Drawing Issue','Material Issue','Cutting','Welding','Inspection','Dispatch'] },
+  { key:'blow_moulding',     name:'Blow Moulding',        color:'#117A65',
+    processes:['Material Preparation','Mould Setup','Extrusion / Preform','Blow / Stretch','Trimming / Deflashing','Leak / Quality Test','Packing'],
+    defaultSequence:['Material Preparation','Mould Setup','Extrusion / Preform','Blow / Stretch','Trimming / Deflashing','QC Test','Packing'] },
+  { key:'rubber_moulding',   name:'Rubber Moulding',      color:'#4A235A',
+    processes:['Compound Preparation','Preform / Slug Prep','Moulding / Curing','Deflashing','Post Cure (if req)','Inspection','Packing'],
+    defaultSequence:['Compound Preparation','Preform / Slug Prep','Moulding / Curing','Deflashing','Inspection','Packing'] },
 ]
+
+// ── Work Centers — Injection Moulding ────────────────────────────────────────
+const WORK_CENTERS = [
+  { id:'WC-001', name:'Material Dryer',       process:'Material Drying',       capacity:200, status:'Active',            operator:'Rajan K.'   },
+  { id:'WC-002', name:'IMM-150T',             process:'Mould Setup',           capacity:1,   status:'Active',            operator:'Murugan S.' },
+  { id:'WC-003', name:'IMM-150T',             process:'Trial Shot',            capacity:1,   status:'Active',            operator:'Murugan S.' },
+  { id:'WC-004', name:'IMM-150T',             process:'Production Run',        capacity:1,   status:'Active',            operator:'Arun M.'    },
+  { id:'WC-005', name:'IMM-200T',             process:'Production Run',        capacity:1,   status:'Active',            operator:'Karthik P.' },
+  { id:'WC-006', name:'IMM-80T',              process:'Production Run',        capacity:1,   status:'Under Maintenance', operator:'—'          },
+  { id:'WC-007', name:'QC Station',           process:'Inline QC',             capacity:0,   status:'Active',            operator:'Inspector'  },
+  { id:'WC-008', name:'Trimming Station',     process:'Degating / Trimming',   capacity:500, status:'Active',            operator:'Priya D.'   },
+  { id:'WC-009', name:'Final Inspection Bay', process:'Final Inspection',      capacity:0,   status:'Active',            operator:'QC Head'    },
+  { id:'WC-010', name:'Packing Station',      process:'Packing',               capacity:500, status:'Active',            operator:'Store'      },
+]
+
 
 const BASE_URL  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken  = () => localStorage.getItem('lnv_token')
@@ -61,13 +73,15 @@ const CONTROL_KEYS = [
 const BLANK_OP = {
   opNo:'', ctrlKey:'PP01', wcId:'', opName:'',
   setupTime:'0', machineTime:'0', laborTime:'0',
-  unit:'MIN', stdValue:'1', remarks:''
+  stdValue:'1', remarks:''
+  // unit is now GLOBAL — set in header, applies to all ops
 }
 
 const BLANK_HDR = {
   routingNo:'', itemCode:'', itemName:'', plant:'MAIN',
   usage:'1', status:'active', baseQty:'1', uom:'Nos',
-  industryKey:'surface_treatment'  // LNV default — Surface Treatment
+  timeUnit:'MIN',  // ← GLOBAL unit for all operations (MIN/SEC/HR)
+  industryKey: ACTIVE_INDUSTRY_KEY
 }
 
 // ── Auto generate op numbers ──────────────────────────────
@@ -109,36 +123,58 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
       <td style={{ padding:'4px 6px', width:160 }}>
         <select style={selStyle} value={op.wcId}
           onChange={e => {
-            const wc = wcList.find(w => w.id === e.target.value)
-            onUpdate(idx,'wcId',e.target.value)
-            if (wc && !op.opName) onUpdate(idx,'opName',wc.process)
+            const wc = wcList.find(w => w.id === e.target.value || w.wcId === e.target.value)
+            onUpdate(idx, 'wcId', e.target.value)
+            if (wc?.process) {
+              // Auto-fill process from WC mapping — always override
+              onUpdate(idx, 'opName', wc.process)
+              // Auto-fill MHR if available
+              if (parseFloat(wc.mhr) > 0) onUpdate(idx, 'mhr', String(wc.mhr))
+            }
           }}>
           <option value=''>-- Work Center --</option>
           {wcList.map(w => (
-            <option key={w.id} value={w.id}>{w.id} — {w.name}</option>
+            <option key={w.id||w.wcId} value={w.id||w.wcId}>
+              {w.id||w.wcId} — {w.name}
+            </option>
           ))}
         </select>
       </td>
-      {/* Operation Name */}
+      {/* Operation / Process — filtered by selected WC */}
       <td style={{ padding:'4px 6px', minWidth:200 }}>
-        <select style={selStyle} value={op.opName}
-          onChange={e => {
-            const name = e.target.value
-            const proc = procList?.find(p => p.name === name)
-            onUpdate(idx, 'opName', name)
-            if (proc) {
-              onUpdate(idx, 'processId',   proc.id)
-              onUpdate(idx, 'processCode', proc.code)
-              onUpdate(idx, 'wcId',        proc.wcId || '')
-              onUpdate(idx, 'ctrlKey',     proc.controlKey || 'PP01')
-              onUpdate(idx, 'setupTime',   String(+proc.stdSetup))
-              onUpdate(idx, 'machineTime', String(+proc.stdMachine))
-              onUpdate(idx, 'laborTime',   String(+proc.stdLabor))
-            }
-          }}>
-          <option value=''>-- Select Process --</option>
-          {processList.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
+        {(() => {
+          // Filter processes: if WC selected → show only that WC's process + blank
+          const selWC = wcList.find(w => w.id===op.wcId || w.wcId===op.wcId)
+          const filteredProcs = selWC?.process
+            ? [selWC.process]              // WC has ONE mapped process — show only that
+            : processList                  // No WC selected — show all
+          return (
+            <select style={{
+              ...selStyle,
+              background: op.opName ? '#F0F8F0' : '#fff',
+              color: op.opName ? '#155724' : '#6C757D',
+              fontWeight: op.opName ? 700 : 400,
+            }}
+              value={op.opName}
+              onChange={e => {
+                const name = e.target.value
+                const proc = procList?.find(p => p.name === name)
+                onUpdate(idx, 'opName', name)
+                if (proc) {
+                  onUpdate(idx, 'processId',   proc.id)
+                  onUpdate(idx, 'processCode', proc.code)
+                  if (!op.wcId) onUpdate(idx, 'wcId', proc.wcId || '')
+                  onUpdate(idx, 'ctrlKey',     proc.controlKey || 'PP01')
+                  onUpdate(idx, 'setupTime',   String(+proc.stdSetup   || 0))
+                  onUpdate(idx, 'machineTime', String(+proc.stdMachine || 0))
+                  onUpdate(idx, 'laborTime',   String(+proc.stdLabor   || 0))
+                }
+              }}>
+              <option value=''>-- {selWC ? selWC.process||'Process' : 'Select Process'} --</option>
+              {filteredProcs.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )
+        })()}
       </td>
       {/* Setup Time */}
       <td style={{ padding:'4px 6px', width:75 }}>
@@ -158,12 +194,12 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
           onChange={e => onUpdate(idx,'laborTime',e.target.value)}
           placeholder="0" min="0" />
       </td>
-      {/* Unit */}
-      <td style={{ padding:'4px 6px', width:65 }}>
-        <select style={selStyle} value={op.unit}
-          onChange={e => onUpdate(idx,'unit',e.target.value)}>
-          <option>MIN</option><option>HR</option><option>SEC</option>
-        </select>
+      {/* Unit — now global from header, shown as read-only label */}
+      <td style={{ padding:'4px 6px', width:55, textAlign:'center' }}>
+        <span style={{ fontSize:11, fontWeight:700, color:'#714B67',
+          background:'#F8F4F8', padding:'4px 8px', borderRadius:4, display:'inline-block' }}>
+          {op.unit||'MIN'}
+        </span>
       </td>
       {/* Std Value */}
       <td style={{ padding:'4px 6px', width:70 }}>
@@ -195,7 +231,7 @@ const selStyle = { ...inpStyle, cursor:'pointer' }
 const lbl = { fontSize:11, fontWeight:600, color:'#6C757D', display:'block', marginBottom:3 }
 
 // ── Routing Form Modal ────────────────────────────────────
-function RoutingForm({ routing, items, procList, onSave, onCancel }) {
+function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel }) {
   const isEdit = !!routing?.id
   const [hdr,  setHdr]  = useState(() => {
     if (routing) return routing
@@ -204,21 +240,20 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
   const [ops,  setOps]  = useState(routing?.operations || [])
   const [saving,setSaving] = useState(false)
 
-  // Get ALL processes from Process Master DB
-  const industryData  = INDUSTRY_SUBTYPES.find(i => i.key === hdr.industryKey)
+  // Use DB work centers if available, fall back to local
+  const wcList = (wcListFromDB && wcListFromDB.length > 0) ? wcListFromDB : WORK_CENTERS
   const processList   = procList && procList.length > 0
     ? procList.map(p => p.name)  // ALL 12 from DB
     : (industryData?.processes || [])  // fallback if DB empty
 
   // Get process details for auto-fill times
   const getProcessDetails = (name) => procList.find(p => p.name === name)
-  const wcList       = WORK_CENTERS || []
 
   // Auto populate operations from industry stages
   const autoFillFromIndustry = () => {
     const stages = industryData?.defaultSequence || industryData?.processes || []
     const newOps = stages.map((stage, i) => {
-      const wc = WORK_CENTERS.find(w => w.process === stage)
+      const wc = wcList.find(w => w.process === stage || w.process?.toLowerCase() === stage.toLowerCase())
       const proc = procList?.find(p => p.name === stage)
       return {
         ...BLANK_OP,
@@ -238,7 +273,7 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
     toast.success(`${stages.length} operations auto-filled from ${industryData?.name}!`)
   }
 
-  const addOp    = () => setOps(o => [...o, { ...BLANK_OP, _id: Date.now() }])
+  const addOp = () => setOps(o => [...o, { ...BLANK_OP, unit: hdr.timeUnit||'MIN', _id: Date.now() }])
   const delOp    = (idx) => setOps(o => o.filter((_, i) => i !== idx))
   const updateOp = (idx, key, val) => setOps(o => o.map((r, i) => i===idx ? {...r,[key]:val} : r))
 
@@ -265,11 +300,12 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
           ctrlKey:     o.ctrlKey,
           wcId:        o.wcId,
           opName:      o.opName,
-          setupTime:   parseFloat(o.setupTime) || 0,
+          setupTime:   parseFloat(o.setupTime)   || 0,
           machineTime: parseFloat(o.machineTime) || 0,
-          laborTime:   parseFloat(o.laborTime) || 0,
-          unit:        o.unit,
-          stdValue:    parseFloat(o.stdValue) || 1,
+          laborTime:   parseFloat(o.laborTime)   || 0,
+          mhr:         parseFloat(o.mhr)         || 0,
+          unit:        o.unit    || hdr.timeUnit || 'MIN',
+          stdValue:    parseFloat(o.stdValue)    || 1,
           remarks:     o.remarks || '',
         }))
       }
@@ -328,20 +364,27 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                   </button>
                 </div>
               </div>
-              {/* Industry - fixed for LNV (hidden from user) */}
-              <div style={{ display:'none' }}>
-                <input value="surface_treatment" readOnly />
+              {/* Industry Type — driven by _configData.js COMPANY.industry */}
+              <div>
+                <label style={lbl}>Industry Type</label>
+                <select style={{ ...selStyle, fontWeight:600, color: INDUSTRY_SUBTYPES.find(i=>i.key===hdr.industryKey)?.color || '#714B67' }}
+                  value={hdr.industryKey}
+                  onChange={e => setHdr(h => ({...h, industryKey: e.target.value}))}>
+                  {INDUSTRY_SUBTYPES.map(i => (
+                    <option key={i.key} value={i.key}>{i.name}</option>
+                  ))}
+                </select>
               </div>
               {/* Item Code */}
               <div>
-                <label style={lbl}>Item Code</label>
+                <label style={lbl}>Item Code (FG / SFG)</label>
                 <select style={selStyle} value={hdr.itemCode}
                   onChange={e => {
                     const found = items.find(i => i.code === e.target.value)
                     setHdr(h => ({...h, itemCode: e.target.value, itemName: found?.name || ''}))
                   }}>
-                  <option value=''>-- Select Item (optional) --</option>
-                  {items.map(i => <option key={i.id} value={i.code}>{i.code}</option>)}
+                  <option value=''>-- Select Item ({items.length} loaded) --</option>
+                  {items.map(i => <option key={i.id} value={i.code}>{i.code} — {i.name}</option>)}
                 </select>
               </div>
               {/* Item Name */}
@@ -350,7 +393,7 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                 <input style={{ ...inpStyle, background: hdr.itemCode ? '#F8F7FA' : '#fff' }}
                   value={hdr.itemName}
                   onChange={e => setHdr(h => ({...h, itemName: e.target.value}))}
-                  placeholder="e.g. Powder Coating Standard Process"
+                  placeholder="e.g. PP Cap 20ml — Moulding Process"
                   readOnly={!!hdr.itemCode} />
               </div>
               {/* Plant */}
@@ -387,6 +430,23 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                   {['Nos','Kg','Ltr','Mtr','Set','Roll','Box'].map(u => <option key={u}>{u}</option>)}
                 </select>
               </div>
+              {/* Global Time Unit — applies to ALL operations */}
+              <div>
+                <label style={lbl}>
+                  ⏱️ Time Unit <span style={{fontWeight:400,color:'#6C757D'}}>(all ops)</span>
+                </label>
+                <select style={{...selStyle, fontWeight:700, color:'#714B67', background:'#F8F4F8'}}
+                  value={hdr.timeUnit||'MIN'}
+                  onChange={e => {
+                    setHdr(h => ({...h, timeUnit: e.target.value}))
+                    // Apply to all existing ops too
+                    setOps(o => o.map(op => ({...op, unit: e.target.value})))
+                  }}>
+                  <option value='MIN'>MIN — Minutes</option>
+                  <option value='SEC'>SEC — Seconds</option>
+                  <option value='HR'>HR — Hours</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -401,8 +461,8 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                 </span>
                 {totalMachineTime > 0 && (
                   <span style={{ fontSize:11, color:'#6C757D' }}>
-                    Total Std Time: <strong style={{ color:'#714B67' }}>{totalMachineTime} MIN</strong>
-                    &nbsp;({(totalMachineTime/60).toFixed(1)} hrs)
+                    Total Std Time: <strong style={{ color:'#714B67' }}>{totalMachineTime} {hdr.timeUnit||'MIN'}</strong>
+                    &nbsp;({hdr.timeUnit==='SEC'?(totalMachineTime/60).toFixed(0)+' min':hdr.timeUnit==='HR'?(totalMachineTime*60).toFixed(0)+' min':(totalMachineTime/60).toFixed(1)+' hrs'})
                   </span>
                 )}
                 {/* Legend */}
@@ -452,9 +512,11 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                   <tr>
                     {[
                       {l:'Op No', w:60}, {l:'Ctrl Key', w:80}, {l:'Work Center', w:160},
-                      {l:'Operation / Process', w:200}, {l:'Setup (MIN)', w:75},
-                      {l:'Machine (MIN)', w:90}, {l:'Labor (MIN)', w:75},
-                      {l:'Unit', w:65}, {l:'Std Val', w:70},
+                      {l:'Operation / Process', w:200},
+                      {l:`Setup (${hdr.timeUnit||'MIN'})`, w:80},
+                      {l:`Machine (${hdr.timeUnit||'MIN'})`, w:95},
+                      {l:`Labor (${hdr.timeUnit||'MIN'})`, w:80},
+                      {l:'Unit', w:55}, {l:'Std Val', w:70},
                       {l:'Remarks', w:120}, {l:'', w:28}
                     ].map(h => (
                       <th key={h.l} style={{ padding:'8px 8px', fontSize:10, fontWeight:700,
@@ -496,9 +558,9 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
                 <span>Internal (PP01): <strong>{ops.filter(o=>o.ctrlKey==='PP01').length}</strong></span>
                 <span>External (PP02): <strong>{ops.filter(o=>o.ctrlKey==='PP02').length}</strong></span>
                 <span>Inspection (PP03): <strong>{ops.filter(o=>o.ctrlKey==='PP03').length}</strong></span>
-                <span>Total Setup: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.setupTime)||0),0)} MIN</strong></span>
-                <span>Total Machine: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.machineTime)||0),0)} MIN</strong></span>
-                <span>Total Labor: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.laborTime)||0),0)} MIN</strong></span>
+                <span>Total Setup: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.setupTime)||0),0)} {hdr.timeUnit||'MIN'}</strong></span>
+                <span>Total Machine: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.machineTime)||0),0)} {hdr.timeUnit||'MIN'}</strong></span>
+                <span>Total Labor: <strong>{ops.reduce((s,o)=>s+(parseFloat(o.laborTime)||0),0)} {hdr.timeUnit||'MIN'}</strong></span>
               </div>
             )}
           </div>
@@ -509,7 +571,7 @@ function RoutingForm({ routing, items, procList, onSave, onCancel }) {
           display:'flex', justifyContent:'space-between', alignItems:'center',
           background:'#F8F7FA' }}>
           <span style={{ fontSize:11, color:'#6C757D' }}>
-            {ops.length > 0 && `⏱️ Total Std Time: ${totalMachineTime} MIN (${(totalMachineTime/60).toFixed(1)} hrs)`}
+            {ops.length > 0 && `⏱️ Total Std Time: ${totalMachineTime} ${hdr.timeUnit||'MIN'} (${hdr.timeUnit==='SEC'?(totalMachineTime/60).toFixed(1)+' min':hdr.timeUnit==='HR'?(totalMachineTime*60).toFixed(0)+' min':(totalMachineTime/60).toFixed(1)+' hrs'})`}
           </span>
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={onCancel}
@@ -551,7 +613,7 @@ function RoutingDetail({ routing, onClose, onEdit }) {
               {routing.itemName || '—'} &nbsp;|&nbsp;
               Plant: {routing.plant} &nbsp;|&nbsp;
               {ops.length} Operations &nbsp;|&nbsp;
-              Std Time: {ops.reduce((s,o)=>s+(parseFloat(o.machineTime)||0)+(parseFloat(o.setupTime)||0),0)} MIN
+              Std Time: {ops.reduce((s,o)=>s+(parseFloat(o.machineTime)||0)+(parseFloat(o.setupTime)||0),0)} {routing.timeUnit||'MIN'}
             </p>
           </div>
           <div style={{ display:'flex', gap:8 }}>
@@ -585,7 +647,10 @@ function RoutingDetail({ routing, onClose, onEdit }) {
               <thead style={{ background:'#F8F4F8' }}>
                 <tr>
                   {['Op No','Ctrl Key','Work Center','Operation / Process',
-                    'Setup','Machine','Labor','Unit','Remarks'].map(h => (
+                    `Setup (${routing.timeUnit||'MIN'})`,
+                    `Machine (${routing.timeUnit||'MIN'})`,
+                    `Labor (${routing.timeUnit||'MIN'})`,
+                    'Unit','Remarks'].map(h => (
                     <th key={h} style={{ padding:'8px 12px', fontSize:10, fontWeight:700,
                       color:'#6C757D', textAlign:'left', textTransform:'uppercase',
                       letterSpacing:.4, borderBottom:'2px solid #E0D5E0' }}>{h}</th>
@@ -594,7 +659,7 @@ function RoutingDetail({ routing, onClose, onEdit }) {
               </thead>
               <tbody>
                 {ops.map((op, i) => {
-                  const wc = WORK_CENTERS.find(w => w.id === op.wcId)
+                  const wc = (wcListFromDB||WORK_CENTERS).find(w => w.id===op.wcId || w.wcId===op.wcId)
                   const ck = CONTROL_KEYS.find(c => c.key === op.ctrlKey)
                   return (
                     <tr key={i} style={{ borderBottom:'1px solid #F0EEF0',
@@ -635,6 +700,7 @@ function RoutingDetail({ routing, onClose, onEdit }) {
 export default function RoutingMaster() {
   const [routings,  setRoutings]  = useState([])
   const [items,     setItems]     = useState([])
+  const [wcList,    setWcList]    = useState(WORK_CENTERS) // start with local, replace from API
   const [loading,   setLoading]   = useState(false)
   const [search,    setSearch]    = useState('')
   const [indFilter, setIndFilter] = useState('All')
@@ -652,26 +718,56 @@ export default function RoutingMaster() {
     } catch(err) { console.log('Process fetch error') }
   }
 
-  // Load items from backend
+  // Load items — try multiple endpoints, filter FG+SFG
   const fetchItems = async () => {
-    try {
-      const res  = await fetch(`${BASE_URL}/items`, { headers: authHdrs() })
-      const data = await res.json()
-      setItems(data.data || [])
-    } catch(err) { console.log('Items fetch error') }
+    const endpoints = [
+      `${BASE_URL}/mdm/items`, `${BASE_URL}/mdm/item`,
+      `${BASE_URL}/items`,     `${BASE_URL}/item`,
+    ]
+    const RM_PREFIXES = ['RM','SP','PKG','PK','CHM','OIL','CON','RAW','MAT']
+    const RM_CATS     = ['raw','consumable','packing','spare','chemical','paint','oil']
+    for (const url of endpoints) {
+      try {
+        const res  = await fetch(url, { headers: authHdrs() })
+        if (!res.ok) continue
+        const data = await res.json()
+        const all  = Array.isArray(data) ? data : (data.data || data.items || [])
+        if (all.length > 0) {
+          const isNotRM = it => {
+            const code = (it.code||'').toUpperCase()
+            const cat  = (it.category||'').toLowerCase()
+            return !RM_PREFIXES.some(p=>code.startsWith(p+'-')||code.startsWith(p+'_'))
+                && !RM_CATS.some(c=>cat.includes(c))
+          }
+          const fg = all.filter(isNotRM)
+          setItems(fg.length > 0 ? fg : all)
+          return
+        }
+      } catch { continue }
+    }
   }
 
   useEffect(() => {
     fetchItems()
     fetchProcesses()
-    // Load routings from backend
+    fetchWCs()
     fetchRoutings()
   }, [])
+
+  // Fetch Work Centers from DB — replaces local WORK_CENTERS constant
+  const fetchWCs = async () => {
+    try {
+      const res  = await fetch(`${BASE_URL}/pp/work-centers`, { headers: authHdrs() })
+      const data = await res.json()
+      const list = data.data || []
+      if (list.length > 0) setWcList(list)  // use DB data; keep local WORK_CENTERS as fallback
+    } catch {}
+  }
 
   const fetchRoutings = async () => {
     try {
       setLoading(true)
-      const res  = await fetch(`${BASE_URL}/routing`, { headers: authHdrs() })
+      const res  = await fetch(`${BASE_URL}/pp/routing-master`, { headers: authHdrs() })
       const data = await res.json()
       if (res.ok) setRoutings(data.data || [])
     } catch(err) { console.log('Routing fetch error') }
@@ -680,7 +776,7 @@ export default function RoutingMaster() {
 
   const saveRouting = async (payload) => {
     try {
-      const url    = editRt?.id ? `${BASE_URL}/routing/${editRt.id}` : `${BASE_URL}/routing`
+      const url    = editRt?.id ? `${BASE_URL}/pp/routing-master/${editRt.id}` : `${BASE_URL}/pp/routing-master`
       const method = editRt?.id ? 'PATCH' : 'POST'
       const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify(payload) })
       const data   = await res.json()
@@ -698,7 +794,7 @@ export default function RoutingMaster() {
 
   const deactivate = async (id) => {
     if (!confirm('Deactivate this Routing?')) return
-    await fetch(`${BASE_URL}/routing/${id}`, { method:'DELETE', headers: authHdrs() })
+    await fetch(`${BASE_URL}/pp/routing-master/${id}`, { method:'DELETE', headers: authHdrs() })
     toast.success('Routing deactivated!')
     fetchRoutings()
   }
@@ -802,7 +898,7 @@ export default function RoutingMaster() {
                     </span>
                   </td>
                   <td style={{ fontSize:11, color:'#714B67', fontWeight:600 }}>
-                    {totalTime > 0 ? `${totalTime} MIN` : '—'}
+                    {totalTime > 0 ? `${totalTime} ${rt.timeUnit||'MIN'}` : '—'}
                   </td>
                   <td>
                     <span style={{ padding:'2px 8px', borderRadius:8, fontSize:10,
@@ -844,6 +940,8 @@ export default function RoutingMaster() {
         <RoutingForm
           routing={editRt}
           items={items}
+          wcListFromDB={wcList}
+          procList={procList}
           onSave={saveRouting}
           onCancel={() => { setShowForm(false); setEditRt(null) }}
         />

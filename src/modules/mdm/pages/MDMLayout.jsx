@@ -5,8 +5,6 @@ import PageLoader from '@components/ui/PageLoader'
 
 const MDMDashboard       = lazy(() => import('./MDMDashboard'))
 const ItemMaster         = lazy(() => import('./ItemMaster'))
-const BOMList            = lazy(() => import('./BOMList'))
-const RoutingMaster      = lazy(() => import('./RoutingMaster'))
 const CustomerMaster     = lazy(() => import('./CustomerMaster'))
 const VendorMaster       = lazy(() => import('./VendorMaster'))
 const ChartOfAccounts    = lazy(() => import('./ChartOfAccounts'))
@@ -21,7 +19,6 @@ const ItemGroupMaster    = lazy(() => import('./ItemGroupMaster'))
 const ItemTypeMaster     = lazy(() => import('./ItemTypeMaster'))
 const MaterialTypeMaster = lazy(() => import('./MaterialTypeMaster'))
 const SupplierTypeMaster = lazy(() => import('./SupplierTypeMaster'))
-const ProcessMaster      = lazy(() => import('./ProcessMaster'))
 const PaymentTermsMaster = lazy(() => import('./PaymentTermsMaster'))
 
 const NAV = [
@@ -43,9 +40,6 @@ const SIDEBAR = [
     { to:'/mdm/material-type', label:'Material Type'       },
     { to:'/mdm/uom',           label:'Unit of Measure'     },
     { to:'/mdm/hsn',           label:'HSN / SAC Codes'     },
-    { to:'/mdm/bom',           label:'Bill of Materials'   },
-    { to:'/mdm/routing',       label:'Routing / Process'   },
-    { to:'/mdm/process',       label:'Process Master'      },
   ]},
   { label:'Business Partners', icon:'🤝', items:[
     { to:'/mdm/customers',     label:'Customer Master'     },
@@ -78,9 +72,6 @@ export default function MDMLayout() {
           <Route path="supplier-type"         element={<SupplierTypeMaster />} />
           <Route path="uom"                   element={<UOMMaster />}          />
           <Route path="hsn"                   element={<HSNMaster />}          />
-          <Route path="bom"                   element={<BOMList />}            />
-          <Route path="routing"               element={<RoutingMaster />}      />
-          <Route path="process"               element={<ProcessMaster />}      />
           <Route path="customers"             element={<CustomerMaster />}     />
           <Route path="vendors"               element={<VendorMaster />}       />
           <Route path="payment-terms"         element={<PaymentTermsMaster />} />
