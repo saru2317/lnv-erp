@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { SEG_TYPE, assembleCode, resolveSegment } from '@utils/itemCodeGenerator'
+// itemCodeGenerator util — logic is inline in this component
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken = () => localStorage.getItem('lnv_token')
@@ -450,7 +450,35 @@ export default function ItemCodeConfigMaster() {
             <div style={{fontFamily:'DM Mono,monospace',fontSize:16,fontWeight:800,color:'#A3D977',letterSpacing:2}}>
               {previewCode || <span style={{color:'#555'}}>Add segments to preview</span>}
             </div>
+            {form.segments.length > 0 && (
+              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:10}}>
+                {form.segments.map(s => {
+                  const isRun = s.type === 'AUTO_INC'
+                  return (
+                    <div key={s.pos} style={{background:isRun?'#0C5460':'#333',border:isRun?'1px solid #D1ECF1':'1px solid #555',borderRadius:4,padding:'3px 8px',textAlign:'center'}}>
+                      <div style={{fontSize:9,color:isRun?'#D1ECF1':'#999',fontWeight:700}}>{s.label||`C${s.pos}`}</div>
+                      <div style={{fontSize:10,color:isRun?'#A3D977':'#ccc',fontFamily:'DM Mono,monospace',fontWeight:700}}>{s.length||'?'}{isRun?' digits':' chars'}</div>
+                    </div>
+                  )
+                })}
+                <div style={{background:'#222',borderRadius:4,padding:'3px 8px',display:'flex',alignItems:'center'}}>
+                  <span style={{fontSize:10,color:'#888'}}>Total: {form.segments.reduce((sum,s)=>sum+(s.length||0),0)} chars</span>
+                </div>
+              </div>
+            )}
           </div>
+          {form.segments.some(s=>s.type==='AUTO_INC') && (
+            <div style={{marginTop:10,padding:'8px 12px',background:'#EAF8FB',border:'1px solid #D1ECF1',borderRadius:6,fontSize:11,color:'#0C5460'}}>
+              <strong>Running Number:</strong>{' '}
+              {form.segments.filter(s=>s.type==='AUTO_INC').map(s=>(
+                <span key={s.pos}>
+                  <span style={{fontFamily:'DM Mono,monospace',fontWeight:700}}>{'0'.repeat(s.length||3)}</span>
+                  {' '}({s.length||3} digits, pad: "{s.padChar||'0'}")
+                </span>
+              ))}
+              {' '}<span style={{color:'#6C757D'}}>— Change the Length field to configure digits</span>
+            </div>
+          )}
         </div>
 
         {/* ── Right: Segments ── */}
@@ -470,9 +498,15 @@ export default function ItemCodeConfigMaster() {
           {form.segments.length===0
             ? <div style={{padding:'30px 0',textAlign:'center',color:'#999',fontSize:13}}>No segments — click + Add to define code structure</div>
             : form.segments.map((s,idx)=>{
-              const st = SEG_TYPES.find(t=>t.value===s.type)
+              const st        = SEG_TYPES.find(t=>t.value===s.type)
+              const isRunning = s.type === 'AUTO_INC'
               return (
-                <div key={s.pos} className="seg-row" style={{borderLeft:`3px solid ${st?.color||'#E0D5E0'}`}}>
+                <div key={s.pos} className="seg-row"
+                  style={{
+                    borderLeft: `3px solid ${isRunning ? '#0C5460' : (st?.color||'#E0D5E0')}`,
+                    background: isRunning ? '#EAF8FB' : '#fff',
+                    outline:    isRunning ? '1.5px solid #D1ECF1' : 'none',
+                  }}>
                   {/* Position */}
                   <div style={{display:'flex',flexDirection:'column',gap:2}}>
                     <span style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:800,color:'#714B67',textAlign:'center'}}>C{s.pos}</span>
@@ -483,15 +517,36 @@ export default function ItemCodeConfigMaster() {
                   </div>
 
                   {/* Label */}
-                  <input className="seg-inp" value={s.label} onChange={e=>updateSeg(s.pos,'label',e.target.value)} placeholder="Label"/>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <input className="seg-inp" value={s.label} onChange={e=>updateSeg(s.pos,'label',e.target.value)} placeholder="Label"/>
+                    {isRunning && (
+                      <span style={{fontSize:9,fontWeight:700,color:'#0C5460',background:'#D1ECF1',padding:'1px 5px',borderRadius:3,display:'inline-block',width:'fit-content'}}>
+                        RUNNING NUMBER
+                      </span>
+                    )}
+                  </div>
 
                   {/* Type */}
                   <select className="seg-inp" value={s.type} onChange={e=>updateSeg(s.pos,'type',e.target.value)}>
                     {SEG_TYPES.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
 
-                  {/* Length */}
-                  <input className="seg-inp" type="number" min={1} max={10} value={s.length||''} onChange={e=>updateSeg(s.pos,'length',parseInt(e.target.value)||0)} style={{textAlign:'center'}} placeholder="Len"/>
+                  {/* Length — highlighted for AUTO_INC */}
+                  <div style={{display:'flex',flexDirection:'column',gap:1}}>
+                    <input className="seg-inp" type="number" min={1} max={20}
+                      value={s.length||''}
+                      onChange={e=>updateSeg(s.pos,'length',parseInt(e.target.value)||0)}
+                      style={{
+                        textAlign:'center',
+                        border: isRunning ? '1.5px solid #0C5460' : undefined,
+                        fontWeight: isRunning ? 700 : 400,
+                        color: isRunning ? '#0C5460' : undefined,
+                      }}
+                      placeholder="Len"/>
+                    {isRunning && (
+                      <span style={{fontSize:9,color:'#0C5460',textAlign:'center'}}>digits</span>
+                    )}
+                  </div>
 
                   {/* Pad char */}
                   <input className="seg-inp" value={s.padChar||''} onChange={e=>updateSeg(s.pos,'padChar',e.target.value.slice(0,1))} style={{textAlign:'center'}} placeholder="Pad" maxLength={1}/>

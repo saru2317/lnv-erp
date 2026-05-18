@@ -234,15 +234,45 @@ const lbl = { fontSize:11, fontWeight:600, color:'#6C757D', display:'block', mar
 function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel }) {
   const isEdit = !!routing?.id
   const [hdr,  setHdr]  = useState(() => {
-    if (routing) return routing
+    if (routing) return {
+      ...BLANK_HDR,            // fill ALL defaults first
+      ...routing,              // override with DB data
+      timeUnit:    routing.timeUnit    || 'MIN',
+      industryKey: routing.industryKey || ACTIVE_INDUSTRY_KEY,
+      status:      routing.status      || 'active',
+      plant:       routing.plant       || 'MAIN',
+      usage:       routing.usage       || '1',
+      baseQty:     routing.baseQty     || '1',
+      uom:         routing.uom         || 'Nos',
+    }
     return { ...BLANK_HDR, routingNo: `RT-${Date.now().toString().slice(-5)}` }
   })
-  const [ops,  setOps]  = useState(routing?.operations || [])
+  const [ops,  setOps]  = useState(() => {
+    // Map DB field names → form field names
+    return (routing?.operations || []).map(op => ({
+      ...BLANK_OP,
+      opNo:        op.opNo        || '',
+      ctrlKey:     op.processCode || op.ctrlKey     || 'PP01',  // DB: processCode
+      wcId:        op.wcId        || op.workCenter  || '',
+      opName:      op.processName || op.opName      || '',       // DB: processName
+      setupTime:   String(op.setupTime   || 0),
+      machineTime: String(op.machineTime || 0),
+      laborTime:   String(op.laborTime   || 0),
+      mhr:         String(op.mhr         || 0),
+      unit:        op.unit   || 'MIN',
+      stdValue:    String(op.stdValue    || 1),
+      remarks:     op.remarks || '',
+    }))
+  })
   const [saving,setSaving] = useState(false)
 
   // Use DB work centers if available, fall back to local
   const wcList = (wcListFromDB && wcListFromDB.length > 0) ? wcListFromDB : WORK_CENTERS
-  const processList   = procList && procList.length > 0
+
+  // Industry data — needed for auto-fill processes
+  const industryData = INDUSTRY_SUBTYPES.find(i => i.key === (hdr.industryKey || ACTIVE_INDUSTRY_KEY))
+
+  const processList = procList && procList.length > 0
     ? procList.map(p => p.name)  // ALL 12 from DB
     : (industryData?.processes || [])  // fallback if DB empty
 
