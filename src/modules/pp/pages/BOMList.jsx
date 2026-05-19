@@ -5,7 +5,11 @@ import toast from 'react-hot-toast'
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 const INR = v => '₹' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2})
-const calcCost = (lines=[]) => lines.reduce((s,l) => s+(parseFloat(l.stdCost||0)*parseFloat(l.qty||0)*(1+parseFloat(l.scrapPct||0)/100)),0)
+const calcCost = (lines=[]) => {
+  const compCost = lines.filter(l=>!l.isByProduct).reduce((s,l)=>s+(parseFloat(l.stdCost||0)*parseFloat(l.qty||0)*(1+parseFloat(l.scrapPct||0)/100)),0)
+  const recovery = lines.filter(l=> l.isByProduct).reduce((s,l)=>s+(parseFloat(l.byProductValue||0)*parseFloat(l.qty||0)),0)
+  return compCost - recovery
+}
 
 const SEED = [
   { id:1, bomNo:'BOM-2026-0001', itemCode:'CAP-20ML',  itemName:'PP Cap 20ml',         revision:'A', baseQty:1000, uom:'Nos', status:'Active',
@@ -54,22 +58,23 @@ export default function BOMList() {
     try {
       const res  = await fetch(`${BASE_URL}/pp/bom`, { headers: authHdrs() })
       const data = await res.json()
-      setBoms(data.data?.length ? data.data : SEED)
-    } catch { setBoms(SEED) }
+      setBoms(data.data || [])  // use real API data, never fall back to SEED
+    } catch (e) { console.error('BOM fetch error:', e); setBoms([]) }
     finally { setLoading(false) }
   }
 
   useEffect(() => { fetchBOMs() }, [])
 
   const deleteBOM = async (bom) => {
-    if (!confirm(`Delete BOM ${bom.bomNo} — ${bom.itemName}?`)) return
+    if (!confirm(`Delete BOM ${bom.bomNo} — ${bom.itemName}?\nThis cannot be undone.`)) return
     setDeleting(bom.id)
     try {
-      await fetch(`${BASE_URL}/pp/bom/${bom.id}`, { method:'DELETE', headers: authHdrs() })
-      toast.success(`BOM ${bom.bomNo} deleted`)
-      fetchBOMs()
-    } catch { toast.error('Delete failed') }
-    finally { setDeleting(null) }
+      const res  = await fetch(`${BASE_URL}/pp/bom/${bom.id}`, { method:'DELETE', headers: authHdrs() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Delete failed')
+      toast.success(`BOM ${bom.bomNo} deleted!`)
+    } catch (err) { toast.error('Delete failed: ' + err.message) }
+    finally { setDeleting(null); fetchBOMs() }  // always refresh list
   }
 
   const filtered = boms.filter(b =>
@@ -199,7 +204,8 @@ export default function BOMList() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {(b.lines||[]).map((l,li)=>{
+                                {/* ── Components ── */}
+                                {(b.lines||[]).filter(l=>!l.isByProduct).map((l,li)=>{
                                   const lc = parseFloat(l.stdCost||0)*parseFloat(l.qty||0)*(1+parseFloat(l.scrapPct||0)/100)
                                   return (
                                     <tr key={l.id||li} style={{background:li%2===0?'#fff':'#F0F8FF',borderBottom:'1px solid #E0EDF8'}}>
@@ -214,6 +220,30 @@ export default function BOMList() {
                                     </tr>
                                   )
                                 })}
+                                {/* ── Byproducts — recovery reduces cost ── */}
+                                {(b.lines||[]).filter(l=>l.isByProduct).length > 0 && (<>
+                                  <tr><td colSpan={8} style={{padding:'4px 12px',background:'#FFF3CD',fontWeight:700,fontSize:11,color:'#856404',letterSpacing:.5}}>
+                                    ♻ BY-PRODUCTS / SCRAP RECOVERY — reduces net BOM cost
+                                  </td></tr>
+                                  {(b.lines||[]).filter(l=>l.isByProduct).map((l,li)=>{
+                                    const recovery = parseFloat(l.byProductValue||0)*parseFloat(l.qty||0)
+                                    return (
+                                      <tr key={'bp'+li} style={{background:'#FFFDE7',borderBottom:'1px solid #F0E68C'}}>
+                                        <td style={{padding:'6px 12px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#856404',fontSize:11}}>{l.seqNo||(li+1)*10}</td>
+                                        <td style={{padding:'6px 12px',fontFamily:'DM Mono,monospace',fontSize:11,color:'#856404'}}>{l.itemCode||'—'}</td>
+                                        <td style={{padding:'6px 12px',fontWeight:600,color:'#856404'}}>
+                                          {l.itemName}
+                                          <span style={{marginLeft:6,fontSize:10,background:'#856404',color:'#fff',padding:'1px 6px',borderRadius:3}}>BY-PRODUCT</span>
+                                        </td>
+                                        <td style={{padding:'6px 12px',textAlign:'center',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#856404'}}>{parseFloat(l.qty||0)}</td>
+                                        <td style={{padding:'6px 12px',textAlign:'center',fontSize:11,color:'#856404'}}>{l.uom}</td>
+                                        <td style={{padding:'6px 12px',textAlign:'center',color:'#856404'}}>Recovery</td>
+                                        <td style={{padding:'6px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#856404'}}>{INR(l.byProductValue||0)}/unit</td>
+                                        <td style={{padding:'6px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#C0392B'}}>- {INR(recovery)}</td>
+                                      </tr>
+                                    )
+                                  })}
+                                </>)}
                               </tbody>
                               <tfoot style={{background:'#1A5276',color:'#fff'}}>
                                 <tr>

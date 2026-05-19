@@ -24,16 +24,22 @@ export default function RoutingNew() {
   const [ppConfig,  setPPConfig]  = useState(null)
   const [saving,    setSaving]    = useState(false)
   const [loading,   setLoading]   = useState(true)
+  const [procMasterList, setProcMasterList] = useState([]) // Process Master from DB
+  const [wcList,         setWcList]         = useState([]) // Work Centers from DB
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const [rN, rI, rC] = await Promise.all([
-        fetch(`${BASE_URL}/mdm/routing/next-no`, { headers: hdr2() }),
-        fetch(`${BASE_URL}/mdm/item`,            { headers: hdr2() }),
-        fetch(`${BASE_URL}/pp/config`,           { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/routing/next-no`,  { headers: hdr2() }),
+        fetch(`${BASE_URL}/mdm/item`,             { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/config`,            { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/process-master`,    { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/work-centers`,      { headers: hdr2() }),
       ])
-      const [dN, dI, dC] = await Promise.all([rN.json(), rI.json(), rC.json()])
+      const [dN, dI, dC, dP, dW] = await Promise.all([rN.json(), rI.json(), rC.json(), rP.json(), rW.json()])
+      setProcMasterList((dP.data || []).filter(p => p.isActive !== false))
+      setWcList(dW.data || [])
       setRoutingNo(dN.routingNo || dN.nextNo || 'RTE-AUTO')
       setItems(dI.data || [])
 
@@ -263,23 +269,34 @@ export default function RoutingNew() {
                 <input style={{...inp,fontFamily:'DM Mono,monospace',fontWeight:800,color:'#714B67',textAlign:'center'}}
                   value={op.opNo} onChange={e=>updOp(i,'opNo',e.target.value)}/>
 
-                {/* Process name — dropdown from PP config or manual */}
-                {processes.length > 0 ? (
+                {/* Process name — from Process Master ONLY (not PP Config stages) */}
+                {procMasterList.length > 0 ? (
                   <select style={{...inp,cursor:'pointer'}} value={op.processName} onChange={e=>{
-                    const p = processes.find(x=>x.name===e.target.value)
                     updOp(i,'processName',e.target.value)
-                    if(p) updOp(i,'wcId',p.machine||op.wcId)
                   }}>
                     <option value="">-- Select Process --</option>
-                    {processes.map(p=><option key={p.id||p.name} value={p.name}>{p.name}</option>)}
-                    <option value="__custom">Custom...</option>
+                    {procMasterList.map(p=><option key={p.id||p.name} value={p.name||p.processName}>{p.name||p.processName}</option>)}
                   </select>
                 ) : (
-                  <input style={inp} value={op.processName} onChange={e=>updOp(i,'processName',e.target.value)} placeholder="e.g. Phosphating"/>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <input style={inp} value={op.processName} onChange={e=>updOp(i,'processName',e.target.value)} placeholder="Type operation name..."/>
+                    <span style={{fontSize:9,color:'#856404'}}>⚠ Add processes in Process Master first</span>
+                  </div>
                 )}
 
-                {/* Work Center */}
-                <input style={inp} value={op.wcId} onChange={e=>updOp(i,'wcId',e.target.value)} placeholder="e.g. TANK-01"/>
+                {/* Work Center — select from master, auto-fills Default Operation */}
+                <select style={{...inp,cursor:'pointer'}} value={op.wcId} onChange={e=>{
+                  const wcId = e.target.value
+                  updOp(i,'wcId',wcId)
+                  // Auto-fill processName from WC's defaultOperation if process is empty
+                  if(wcId && !op.processName){
+                    const wc = wcList.find(w=>w.wcId===wcId || String(w.id)===wcId)
+                    if(wc?.defaultOperation) updOp(i,'processName',wc.defaultOperation)
+                  }
+                }}>
+                  <option value=''>-- Select WC --</option>
+                  {wcList.map(w=><option key={w.wcId} value={w.wcId}>{w.wcId} — {w.name}</option>)}
+                </select>
 
                 {/* Times */}
                 {['setupTime','machineTime','laborTime'].map(k=>(

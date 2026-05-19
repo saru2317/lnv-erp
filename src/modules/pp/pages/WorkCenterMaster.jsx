@@ -6,17 +6,17 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const authHdrs = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('lnv_token')}` })
 
 // ── Seed data — shown when DB is empty (Injection Moulding default) ──────────
+// ── Seed: One Work Center = One Machine/Asset (not per-process)
+// Default Operation = hint for routing auto-fill only (NOT a fixed process)
 const SEED_WCS = [
-  { id:1,  _isSeed:true, wcId:'WC-001', name:'Material Dryer',       machineId:'DRYER-01', machineType:'Dryer',      category:'Production', process:'Material Drying',      capacity:200, capacityUnit:'Kg/batch',   shift:'General (8 hrs)', status:'Active',             location:'Bay A', operator:'Rajan K.',   mhr:85.50  },
-  { id:2,  _isSeed:true, wcId:'WC-002', name:'IMM-150T',              machineId:'IMM-150T', machineType:'IMM',         category:'Production', process:'Mould Setup',          capacity:1,   capacityUnit:'Shots/shift', shift:'General (8 hrs)', status:'Active',             location:'Bay B', operator:'Murugan S.', mhr:320.00 },
-  { id:3,  _isSeed:true, wcId:'WC-003', name:'IMM-150T',              machineId:'IMM-150T', machineType:'IMM',         category:'Production', process:'Trial Shot',           capacity:1,   capacityUnit:'Shots/shift', shift:'General (8 hrs)', status:'Active',             location:'Bay B', operator:'Murugan S.', mhr:320.00 },
-  { id:4,  _isSeed:true, wcId:'WC-004', name:'IMM-150T',              machineId:'IMM-150T', machineType:'IMM',         category:'Production', process:'Production Run',        capacity:1,   capacityUnit:'Shots/shift', shift:'General (8 hrs)', status:'Active',             location:'Bay B', operator:'Arun M.',    mhr:320.00 },
-  { id:5,  _isSeed:true, wcId:'WC-005', name:'IMM-200T',              machineId:'IMM-200T', machineType:'IMM',         category:'Production', process:'Production Run',        capacity:1,   capacityUnit:'Shots/shift', shift:'General (8 hrs)', status:'Active',             location:'Bay C', operator:'Karthik P.', mhr:420.00 },
-  { id:6,  _isSeed:true, wcId:'WC-006', name:'IMM-80T',               machineId:'IMM-80T',  machineType:'IMM',         category:'Production', process:'Production Run',        capacity:1,   capacityUnit:'Shots/shift', shift:'General (8 hrs)', status:'Under Maintenance',  location:'Bay D', operator:'—',          mhr:220.00 },
-  { id:7,  _isSeed:true, wcId:'WC-007', name:'QC Station',            machineId:'QC-01',    machineType:'QC Station',  category:'Quality',    process:'Inline QC',            capacity:0,   capacityUnit:'Nos/hr',      shift:'General (8 hrs)', status:'Active',             location:'QC Lab', operator:'Inspector', mhr:120.00 },
-  { id:8,  _isSeed:true, wcId:'WC-008', name:'Trimming Station',      machineId:'TRIM-01',  machineType:'Trimming',    category:'Production', process:'Degating / Trimming',  capacity:500, capacityUnit:'Nos/shift',   shift:'General (8 hrs)', status:'Active',             location:'Bay E', operator:'Priya D.',   mhr:95.00  },
-  { id:9,  _isSeed:true, wcId:'WC-009', name:'Final Inspection Bay',  machineId:'FI-01',    machineType:'QC Station',  category:'Quality',    process:'Final Inspection',     capacity:0,   capacityUnit:'Nos/hr',      shift:'General (8 hrs)', status:'Active',             location:'QC Lab', operator:'QC Head',  mhr:110.00 },
-  { id:10, _isSeed:true, wcId:'WC-010', name:'Packing Station',       machineId:'PACK-01',  machineType:'Packing',     category:'Logistics',  process:'Packing',              capacity:500, capacityUnit:'Nos/shift',   shift:'General (8 hrs)', status:'Active',             location:'Bay F', operator:'Store',      mhr:75.00  },
+  { id:1,  _isSeed:true, wcId:'WC-001', name:'Material Dryer',        machineId:'DRYER-01', machineType:'Dryer',      category:'Utilities',  defaultOperation:'Material Drying',        capacity:200,  capacityUnit:'Kg/batch',    shift:'General (8 hrs)', status:'Active',             location:'Bay A',   operator:'Rajan K.',   mhr:85.50  },
+  { id:2,  _isSeed:true, wcId:'WC-002', name:'IMM-150T',               machineId:'IMM-150T', machineType:'IMM',        category:'Production', defaultOperation:'Injection Moulding',      capacity:4500, capacityUnit:'Shots/shift',  shift:'General (8 hrs)', status:'Active',             location:'Bay B',   operator:'Murugan S.', mhr:320.00 },
+  { id:3,  _isSeed:true, wcId:'WC-003', name:'IMM-200T',               machineId:'IMM-200T', machineType:'IMM',        category:'Production', defaultOperation:'Injection Moulding',      capacity:5500, capacityUnit:'Shots/shift',  shift:'General (8 hrs)', status:'Active',             location:'Bay C',   operator:'Karthik P.', mhr:420.00 },
+  { id:4,  _isSeed:true, wcId:'WC-004', name:'IMM-80T',                machineId:'IMM-80T',  machineType:'IMM',        category:'Production', defaultOperation:'Injection Moulding',      capacity:3000, capacityUnit:'Shots/shift',  shift:'General (8 hrs)', status:'Under Maintenance',  location:'Bay D',   operator:'—',          mhr:220.00 },
+  { id:5,  _isSeed:true, wcId:'WC-005', name:'Trimming Station',       machineId:'TRIM-01',  machineType:'Trimming',   category:'Production', defaultOperation:'Degating / Trimming',     capacity:500,  capacityUnit:'Nos/shift',    shift:'General (8 hrs)', status:'Active',             location:'Bay E',   operator:'Priya D.',   mhr:95.00  },
+  { id:6,  _isSeed:true, wcId:'WC-006', name:'Inline QC Station',      machineId:'QC-01',    machineType:'QC Station', category:'Quality',    defaultOperation:'Inline QC',               capacity:1000, capacityUnit:'Nos/hr',       shift:'General (8 hrs)', status:'Active',             location:'QC Lab',  operator:'Inspector',  mhr:120.00 },
+  { id:7,  _isSeed:true, wcId:'WC-007', name:'Final Inspection Bay',   machineId:'FI-01',    machineType:'QC Station', category:'Quality',    defaultOperation:'Final Inspection',        capacity:1000, capacityUnit:'Nos/hr',       shift:'General (8 hrs)', status:'Active',             location:'QC Lab',  operator:'QC Head',    mhr:110.00 },
+  { id:8,  _isSeed:true, wcId:'WC-008', name:'Packing Station',        machineId:'PACK-01',  machineType:'Packing',    category:'Logistics',  defaultOperation:'Packing & Labelling',     capacity:500,  capacityUnit:'Nos/shift',    shift:'General (8 hrs)', status:'Active',             location:'Bay F',   operator:'Store',      mhr:75.00  },
 ]
 
 const PROCESS_TYPES = [
@@ -106,7 +106,7 @@ const STATUS_CFG = {
 // ── Blank form ────────────────────────────────────────────────────────────────
 const BLANK = {
   wcId: '', name: '', machineId: '', machineType: 'IMM',
-  process: 'Production Run', category: 'Production',
+  defaultOperation: '',      category: 'Production', // hint for routing auto-fill
   capacity: '', capacityUnit: 'Shots/shift', shift: 'General (8 hrs)',
   customShiftHrs: '', status: 'Active', location: '', operator: '', remarks: '',
   // MHR fields
@@ -165,7 +165,7 @@ function WCForm({ wc, allWCs, onSave, onCancel }) {
   const save = async () => {
     if (!form.wcId)  return toast.error('WC ID is required')
     if (!form.name)  return toast.error('Work Center Name is required')
-    if (!form.process) return toast.error('Process is required')
+    // defaultOperation is optional — just a routing hint
     setSaving(true)
     try {
       onSave({ ...form, mhr: mhrCalc.mhr })
@@ -297,13 +297,16 @@ function WCForm({ wc, allWCs, onSave, onCancel }) {
               {/* Right Column */}
               <div>
                 <div style={{ background: '#EBF5FB', border: '1px solid #AED6F1', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1A5276', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 12 }}>⚙️ Process & Capacity</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1A5276', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 12 }}>⚙️ Capacity & Default Operation</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
                     <div style={{ gridColumn: 'span 2' }}>
-                      <label style={lbl}>Process Type *</label>
-                      <select style={sel} value={form.process} onChange={e => set('process', e.target.value)}>
-                        {PROCESS_TYPES.map(p => <option key={p}>{p}</option>)}
-                      </select>
+                      <label style={lbl}>Default Operation <span style={{fontWeight:400,color:'#6C757D'}}>(auto-fills in Routing when this WC is selected — optional)</span></label>
+                      <input style={inp} value={form.defaultOperation||''} onChange={e => set('defaultOperation', e.target.value)}
+                        placeholder="e.g. Injection Moulding, Material Drying, Final Inspection" />
+                      <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>
+                        💡 This is a hint only. In Routing, the operation name can be changed per product.
+                        One Work Center can perform multiple operations across different routings.
+                      </div>
                     </div>
                     <div>
                       <label style={lbl}>Capacity</label>
@@ -544,21 +547,17 @@ export default function WorkCenterMaster() {
 
   const saveWC = async (payload) => {
     try {
-      // SEED records have numeric ids 1-10 but don't exist in DB
-      // Detect: if editing and id <= 20, try PATCH first, fallback to POST (create)
-      const isSeedRecord = editWC && (!editWC._dbId) && parseInt(editWC.id) <= 20
+      // _isSeed = true ONLY on SEED_WCS demo data, not on real DB records
+      const isSeedRecord = editWC?._isSeed === true
 
       let url, method
-      if (editWC && editWC._dbId) {
-        // Real DB record — PATCH
-        url    = `${BASE_URL}/pp/work-centers/${editWC._dbId}`
-        method = 'PATCH'
-      } else if (editWC && !isSeedRecord) {
-        // Real DB record by id
-        url    = `${BASE_URL}/pp/work-centers/${editWC.id}`
+      if (editWC && !isSeedRecord) {
+        // Real DB record — always PATCH using actual DB id
+        const dbId = editWC._dbId || editWC.id
+        url    = `${BASE_URL}/pp/work-centers/${dbId}`
         method = 'PATCH'
       } else {
-        // New record OR seed record → POST (create)
+        // New record or seed (not in DB) → POST (create)
         url    = `${BASE_URL}/pp/work-centers`
         method = 'POST'
       }
@@ -568,13 +567,11 @@ export default function WorkCenterMaster() {
       const data = await res.json()
 
       if (!res.ok) {
-        // If PATCH failed (record not in DB), try POST
-        if (method === 'PATCH') {
-          const res2  = await fetch(`${BASE_URL}/pp/work-centers`, {
-            method: 'POST', headers: authHdrs(), body: JSON.stringify(payload)
-          })
-          const data2 = await res2.json()
-          if (!res2.ok) throw new Error(data2.error || 'Save failed')
+        if (data.existing) {
+          throw new Error(`Work Center ${payload.wcId} already exists — use Edit to update`)
+        }
+        throw new Error(data.error || 'Save failed')
+        if (false) { // removed fallback POST
           toast.success(`✅ Work Center ${payload.wcId} created in database!`)
         } else {
           throw new Error(data.error || 'Save failed')
@@ -594,15 +591,18 @@ export default function WorkCenterMaster() {
   const deleteWC = async (wc) => {
     if (!confirm(`Delete ${wc.wcId} — ${wc.name}? This cannot be undone.`)) return
     try {
-      if (wc.id && parseInt(wc.id) > 20) {
-        // Real DB record
-        const res = await fetch(`${BASE_URL}/pp/work-centers/${wc.id}`, { method: 'DELETE', headers: authHdrs() })
-        if (!res.ok) throw new Error('Delete failed')
-        toast.success(`Work Center ${wc.wcId} deleted from database`)
-      } else {
-        toast('This is demo data — not in database yet', { icon: 'ℹ️' })
+      if (wc._isSeed) {
+        // Demo data — just remove from local list, not in DB
+        setWcs(w => w.filter(x => x.wcId !== wc.wcId))
+        toast('Demo record removed from list', { icon: 'ℹ️' })
+        return
       }
-      setWcs(w => w.filter(x => x.id !== wc.id))
+      // Real DB record — use _dbId or id
+      const dbId = wc._dbId || wc.id
+      const res = await fetch(`${BASE_URL}/pp/work-centers/${dbId}`, { method: 'DELETE', headers: authHdrs() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Delete failed')
+      toast.success(`Work Center ${wc.wcId} deleted!`)
       fetchWCs()
     } catch (e) {
       toast.error(e.message)
@@ -614,7 +614,7 @@ export default function WorkCenterMaster() {
     (statFilt === 'All' || w.status === statFilt) &&
     (w.wcId?.toLowerCase().includes(search.toLowerCase()) ||
      w.name?.toLowerCase().includes(search.toLowerCase()) ||
-     w.process?.toLowerCase().includes(search.toLowerCase()) ||
+     w.defaultOperation?.toLowerCase().includes(search.toLowerCase()) ||
      w.machineId?.toLowerCase().includes(search.toLowerCase()))
   )
 
@@ -658,18 +658,28 @@ export default function WorkCenterMaster() {
       {/* Seed data warning — shown when DB is empty */}
       {wcs.some(w=>w._isSeed) && (
         <div style={{ padding:'10px 14px', background:'#FFF3CD', border:'1px solid #FFC107', borderRadius:6, marginBottom:14, fontSize:12, color:'#856404', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span>⚠️ <strong>Demo data showing</strong> — Not saved to DB yet. Click <strong>"💾 Save All to DB"</strong> to create all 10 work centers at once.</span>
+          <span>⚠️ <strong>Demo data showing</strong> — Not saved to DB yet. Click <strong>"💾 Save All to DB"</strong> to create all 8 work centers at once.</span>
           <button onClick={async () => {
-            let created = 0
+            let created = 0, skipped = 0, failed = 0
+            // Get existing WC IDs from DB to avoid duplicate constraint
+            const existingRes = await fetch(`${BASE_URL}/pp/work-centers`, { headers:authHdrs() })
+            const existingData = await existingRes.json()
+            const existingIds  = new Set((existingData.data||[]).map(w=>w.wcId))
             for (const wc of SEED_WCS) {
+              if (existingIds.has(wc.wcId)) { skipped++; continue }  // already in DB — skip
               try {
-                const { _isSeed, id, ...payload } = wc
-                const res = await fetch(`${BASE_URL}/pp/work-centers`, { method:'POST', headers:authHdrs(), body:JSON.stringify(payload) })
+                const { _isSeed, id, _dbId, customShiftHrs, ...payload } = wc
+                const res  = await fetch(`${BASE_URL}/pp/work-centers`, { method:'POST', headers:authHdrs(), body:JSON.stringify(payload) })
+                const data = await res.json()
                 if (res.ok) created++
-              } catch {}
+                else { failed++; console.log('WC save error:', data.error) }
+              } catch (e) { failed++ }
             }
-            if (created > 0) { toast.success(`✅ ${created} Work Centers saved to database!`); fetchWCs() }
-            else toast.error('Failed to save — check backend')
+            if (created > 0 || skipped > 0) { 
+              toast.success(`✅ ${created} saved${skipped>0?' · '+skipped+' already in DB':''}`)
+              fetchWCs()
+            }
+            if (failed > 0) toast.error(`${failed} failed — check console`)
           }} style={{ padding:'6px 16px', background:'#856404', color:'#fff', border:'none', borderRadius:5, fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', marginLeft:16 }}>
             💾 Save All to DB
           </button>
@@ -713,7 +723,7 @@ export default function WorkCenterMaster() {
               <th>WC ID</th>
               <th>Machine ID</th>
               <th>Work Center Name</th>
-              <th>Process</th>
+              <th>Default Operation</th>
               <th>Capacity</th>
               <th>Shift</th>
               <th>MHR (₹/hr)</th>
@@ -734,7 +744,7 @@ export default function WorkCenterMaster() {
                   <td style={{ fontFamily: 'DM Mono,monospace', fontSize: 11, color: '#6C757D' }}>{w.machineId || '—'}</td>
                   <td style={{ fontWeight: 600, fontSize: 12 }}>{w.name}</td>
                   <td style={{ fontSize: 11 }}>
-                    <span style={{ padding: '2px 8px', borderRadius: 10, background: '#EBF5FB', color: '#1A5276', fontSize: 10, fontWeight: 600 }}>{w.process}</span>
+                    <span style={{ padding: '2px 8px', borderRadius: 10, background: '#EBF5FB', color: '#1A5276', fontSize: 10, fontWeight: 600 }}>{w.defaultOperation||'—'}</span>
                   </td>
                   <td style={{ fontSize: 11, color: '#495057' }}>{w.capacity ? `${w.capacity} ${w.capacityUnit || ''}` : '—'}</td>
                   <td style={{ fontSize: 11, color: '#6C757D' }}>{w.shift || '—'}</td>

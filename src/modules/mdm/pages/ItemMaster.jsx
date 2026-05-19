@@ -132,11 +132,23 @@ export default function ItemMaster() {
       // Map backend fields to frontend format
       const mapped = (data.data || []).map(i => ({
         ...i,
-        cat:     i.category,
-        group:   i.category,
-        stdRate: i.stdCost || 0,
-        gst:     18,
-        status:  i.isActive ? 'active' : 'inactive',
+        // Display + form field name mapping
+        cat:          i.itemCatCode   || i.category   || '',
+        group:        i.itemGroup     || i.category   || '',
+        groupCode:    i.itemGroupCode || '',
+        catCode:      i.itemCatCode   || '',
+        desc:         i.description   || '',
+        hsnNo:        i.hsnCode       || '',
+        stdRate:      i.stdCost       != null ? String(i.stdCost)    : '',
+        mrpRate:      i.mrp           != null ? String(i.mrp)        : '',
+        minimumStock: i.minStock      != null ? String(i.minStock)   : '',
+        minimumOrderQty: i.reorderQty != null ? String(i.reorderQty): '',
+        gst:          18,
+        status:       i.isActive ? 'active' : 'inactive',
+        // Booleans safe defaults for old items
+        stockMaintain: i.stockMaintain !== false,
+        bomMaintain:   i.bomMaintain   === true,
+        billingItem:   i.billingItem   !== false,
       }))
       setItems(mapped)
     } catch(err) {
@@ -255,7 +267,39 @@ export default function ItemMaster() {
   }
 
   const openNew  = () => { setForm(BLANK); setEditCode(null); setShowForm(true); setTab('basic') }
-  const openEdit = item => { setForm({ ...BLANK, ...item }); setEditCode(item.code); setShowForm(true); setTab('basic') }
+  const openEdit = item => {
+    // Auto-detect itemType from item code if not saved (e.g. FG-ML-0001 → FG)
+    const detectedType = item.itemType || (() => {
+      const code = (item.code || '').toUpperCase()
+      const knownTypes = ['FG','SFG','RM','CN','MI','WIP','PKG','SP']
+      return knownTypes.find(t => code.startsWith(t + '-') || code.startsWith(t + ' ')) || ''
+    })()
+
+    setForm({
+      ...BLANK,
+      ...item,
+      // explicit mapping — DB field → form field
+      itemType:      detectedType      || '',
+      group:         item.itemGroup     || item.group    || '',
+      groupCode:     item.itemGroupCode || item.groupCode|| '',
+      catCode:       item.itemCatCode   || item.catCode  || '',
+      printName:     item.printName     || '',
+      location:      item.location      || '',
+      binBox:        item.binBox        || '',
+      desc:          item.description   || item.desc     || '',
+      hsnNo:         item.hsnCode       || item.hsnNo    || '',
+      stdRate:       item.stdCost       != null ? String(item.stdCost)  : '',
+      mrpRate:       item.mrp           != null ? String(item.mrp)      : '',
+      minimumStock:  item.minStock      != null ? String(item.minStock)  : '',
+      minimumOrderQty: item.reorderQty  != null ? String(item.reorderQty): '',
+      stockMaintain: item.stockMaintain !== false,
+      bomMaintain:   item.bomMaintain   === true,
+      billingItem:   item.billingItem   !== false,
+    })
+    setEditCode(item.code)
+    setShowForm(true)
+    setTab('basic')
+  }
 
   // ── Auto-generate Item Code from Item Type prefix ───
   // ── Build item code from hierarchy: Type → Group → Category → Running ──
@@ -292,16 +336,26 @@ export default function ItemMaster() {
     setSaving(true)
     try {
       const payload = {
-        code:        form.code,
-        name:        form.name,
-        category:    form.cat || form.group || 'Service',
-        uom:         form.uom || 'Nos',
-        hsnCode:     form.hsnNo || null,
-        description: form.desc || null,
-        stdCost:     form.stdRate  ? +form.stdRate  : null,
-        mrp:         form.mrpRate  ? +form.mrpRate  : null,
-        minStock:    form.minimumStock  ? +form.minimumStock  : null,
-        reorderQty:  form.minimumOrderQty ? +form.minimumOrderQty : null,
+        code:          form.code,
+        name:          form.name,
+        printName:     form.printName     || null,
+        itemType:      form.itemType      || null,
+        itemGroup:     form.group         || null,
+        itemGroupCode: form.groupCode     || null,
+        itemCatCode:   form.catCode       || null,
+        category:      form.cat || form.group || 'Service',
+        uom:           form.uom           || 'Nos',
+        location:      form.location      || null,
+        binBox:        form.binBox        || null,
+        stockMaintain: form.stockMaintain !== false,
+        bomMaintain:   form.bomMaintain   === true,
+        billingItem:   form.billingItem   !== false,
+        hsnCode:       form.hsnNo         || null,
+        description:   form.desc          || null,
+        stdCost:       form.stdRate       ? +form.stdRate       : null,
+        mrp:           form.mrpRate       ? +form.mrpRate       : null,
+        minStock:      form.minimumStock  ? +form.minimumStock  : null,
+        reorderQty:    form.minimumOrderQty ? +form.minimumOrderQty : null,
       }
       let res, data
       if (editCode) {
@@ -340,6 +394,29 @@ export default function ItemMaster() {
       await fetchItems()
     } catch(err) {
       toast.error('Error: ' + err.message)
+    }
+  }
+
+  // ── Delete Item ───────────────────────────────────────────────
+  const handleDelete = async () => {
+    if (!editCode) return
+    const item = items.find(i => i.code === editCode)
+    if (!item) return toast.error('Item not found')
+    const confirmed = window.confirm(
+      `Delete item "${item.code} — ${item.name}"?\n\nThis cannot be undone.`
+    )
+    if (!confirmed) return
+    try {
+      const res = await fetch(`${BASE_URL}/items/${item.id}`, {
+        method: 'DELETE', headers: authHeaders()
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Delete failed')
+      toast.success(`Item ${item.code} deleted!`)
+      setShowForm(false)
+      await fetchItems()
+    } catch(err) {
+      toast.error('Delete failed: ' + err.message)
     }
   }
 
@@ -1092,9 +1169,18 @@ export default function ItemMaster() {
           borderTop:'1px solid var(--odoo-border)' }}>
           <button className="btn btn-p" onClick={save}>{editCode ? 'Update Item' : 'Create Item'}</button>
           <button className="btn btn-s" onClick={() => setShowForm(false)}>Cancel</button>
-          <span style={{ fontSize:11, color:'var(--odoo-gray)', marginLeft:'auto', alignSelf:'center' }}>
-            Tab: {TABS.find(t=>t.id===tab)?.label}
-          </span>
+          {editCode && (
+            <button onClick={handleDelete}
+              style={{ marginLeft:'auto', padding:'7px 16px', background:'#DC3545', color:'#fff',
+                border:'none', borderRadius:5, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+              Delete Item
+            </button>
+          )}
+          {!editCode && (
+            <span style={{ fontSize:11, color:'var(--odoo-gray)', marginLeft:'auto', alignSelf:'center' }}>
+              Tab: {TABS.find(t=>t.id===tab)?.label}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -1234,6 +1320,20 @@ export default function ItemMaster() {
                       border:'none', cursor:'pointer',
                       background:item.status==='active'?'#6C757D':'#00A09D', color:'#fff' }}>
                     {item.status==='active'?'Deactivate':'Activate'}
+                  </button>
+                  <button onClick={async () => {
+                      if (!window.confirm(`Delete "${item.code} — ${item.name}"?\nThis cannot be undone.`)) return
+                      try {
+                        const res = await fetch(`${BASE_URL}/items/${item.id}`, { method:'DELETE', headers: authHeaders() })
+                        const d   = await res.json()
+                        if (!res.ok) throw new Error(d.error || 'Delete failed')
+                        toast.success(`${item.code} deleted!`)
+                        fetchItems()
+                      } catch(e) { toast.error(e.message) }
+                    }}
+                    style={{ padding:'3px 8px', fontSize:10, fontWeight:600, borderRadius:4,
+                      border:'none', cursor:'pointer', background:'#DC3545', color:'#fff' }}>
+                    Delete
                   </button>
                 </td>
               </tr>

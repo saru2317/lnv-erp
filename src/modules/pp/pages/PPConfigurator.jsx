@@ -165,6 +165,7 @@ export default function PPConfigurator() {
   const nav = useNavigate()
   const [step,       setStep]      = useState(1)   // wizard step 1-4
   const [configId,   setConfigId]  = useState(null)
+  const [isEditMode, setIsEditMode]= useState(false) // false=summary view, true=edit wizard
   const [saving,     setSaving]    = useState(false)
   const [loading,    setLoading]   = useState(true)
 
@@ -200,6 +201,7 @@ export default function PPConfigurator() {
       if (data.data) {
         const cfg = data.data
         setConfigId(cfg.id)
+        setIsEditMode(false)  // show summary — config already active
         setBizType(cfg.bizType      || 'mfg')
         setIndKey(cfg.industryKey   || 'manufacturing')
         setRmMethod(cfg.rmMethod    || 'push')
@@ -279,8 +281,7 @@ export default function PPConfigurator() {
       if (!res.ok) throw new Error(data.error || 'Save failed')
       if (!configId) setConfigId(data.data?.id)
       toast.success('PP Configuration saved! Production module is now configured.')
-      // Navigate to Production Plan after config saved
-      setTimeout(() => nav('/pp/plan'), 1200)
+      setIsEditMode(false)  // back to summary view after save
     } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
@@ -312,18 +313,61 @@ export default function PPConfigurator() {
             {configId ? `Config #${configId} — Active` : 'New Configuration'}
           </span>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/pp')}>Cancel</button>
-          <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
-            {saving ? 'Saving...' : 'Save & Activate Config'}
-          </button>
+          {(!configId || isEditMode) && (
+            <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
+              {saving ? 'Saving...' : 'Save & Activate Config'}
+            </button>
+          )}
+          {configId && !isEditMode && (
+            <button className="btn btn-p sd-bsm" onClick={() => { setIsEditMode(true); setStep(1) }}>
+              ✏️ Edit Config
+            </button>
+          )}
         </div>
       </div>
+
+      {/* ── ACTIVE CONFIG SUMMARY — shown when config exists and not editing ── */}
+      {configId && !isEditMode && (
+        <div style={{background:'#EAF8FB',border:'1.5px solid #D1ECF1',borderRadius:8,padding:20,marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:15,color:'#0C5460'}}>✅ PP Config Active — Config #{configId}</div>
+              <div style={{fontSize:12,color:'#0C5460',marginTop:3}}>Production module is configured and ready. Click "Edit Config" to modify.</div>
+            </div>
+            <button onClick={() => { setIsEditMode(true); setStep(1) }}
+              style={{padding:'8px 18px',background:'#0C5460',color:'#fff',border:'none',borderRadius:6,fontWeight:700,cursor:'pointer',fontSize:13}}>
+              ✏️ Edit Config
+            </button>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
+            {[
+              ['Industry',   INDUSTRIES[indKey]?.name || indKey],
+              ['Prod Type',  ind?.prodType || '—'],
+              ['RM Method',  rmMethod === 'push' ? 'Push (auto-issue)' : 'Pull (manual)'],
+              ['Charge By',  chargeBy],
+              ['Processes',  `${processes.length} stages configured`],
+              ['Work Centers',`${workCenters.length} WCs`],
+              ['MO Enabled', moEnabled ? 'Yes' : 'No'],
+            ].map(([label, value]) => (
+              <div key={label} style={{background:'#fff',borderRadius:6,padding:'10px 14px',border:'1px solid #D1ECF1'}}>
+                <div style={{fontSize:10,fontWeight:700,color:'#0C5460',textTransform:'uppercase',letterSpacing:.5}}>{label}</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#1C1C1C',marginTop:4}}>{value}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:14,fontSize:12,color:'#0C5460'}}>
+            <strong>Stages:</strong> {processes.map(p => p.name).join(' → ')}
+          </div>
+        </div>
+      )}
 
       {/* Super admin notice */}
       <div style={{background:'#FFF3CD',border:'1px solid #FFEEBA',borderRadius:6,padding:'8px 14px',marginBottom:14,fontSize:12,color:'#856404',display:'flex',gap:8,alignItems:'center'}}>
         <strong>LNV ERP Super Admin Tool</strong> — This configuration drives the entire production module for this client installation. Changes affect all operators immediately.
       </div>
 
-      {/* Step wizard */}
+      {/* Step wizard — only shown in edit mode */}
+      {(!configId || isEditMode) && <>
       <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
         <StepBtn n={1} label="Business Type" />
         <span style={{color:'#CCC',alignSelf:'center'}}>›</span>
@@ -719,6 +763,7 @@ export default function PPConfigurator() {
           </div>
         </div>
       )}
+      </>}  {/* end wizard gate */}
     </div>
   )
 }

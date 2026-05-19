@@ -145,9 +145,8 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
         {(() => {
           // Filter processes: if WC selected → show only that WC's process + blank
           const selWC = wcList.find(w => w.id===op.wcId || w.wcId===op.wcId)
-          const filteredProcs = selWC?.process
-            ? [selWC.process]              // WC has ONE mapped process — show only that
-            : processList                  // No WC selected — show all
+          // WC default operation is a HINT — show all processes, pre-select default
+          const filteredProcs = processList  // always show all from Process Master
           return (
             <select style={{
               ...selStyle,
@@ -155,7 +154,7 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
               color: op.opName ? '#155724' : '#6C757D',
               fontWeight: op.opName ? 700 : 400,
             }}
-              value={op.opName}
+              value={op.opName || op.processName || '—'}
               onChange={e => {
                 const name = e.target.value
                 const proc = procList?.find(p => p.name === name)
@@ -272,9 +271,8 @@ function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel 
   // Industry data — needed for auto-fill processes
   const industryData = INDUSTRY_SUBTYPES.find(i => i.key === (hdr.industryKey || ACTIVE_INDUSTRY_KEY))
 
-  const processList = procList && procList.length > 0
-    ? procList.map(p => p.name)  // ALL 12 from DB
-    : (industryData?.processes || [])  // fallback if DB empty
+  // Process list ONLY from Process Master DB — no hardcoded fallback
+  const processList = (procList || []).map(p => p.name || p.processName).filter(Boolean)
 
   // Get process details for auto-fill times
   const getProcessDetails = (name) => procList.find(p => p.name === name)
@@ -623,7 +621,7 @@ function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel 
 }
 
 // ── View Routing Detail ───────────────────────────────────
-function RoutingDetail({ routing, onClose, onEdit }) {
+function RoutingDetail({ routing, wcListFromDB, onClose, onEdit }) {
   const ops = routing.operations || []
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)',
@@ -689,7 +687,8 @@ function RoutingDetail({ routing, onClose, onEdit }) {
               </thead>
               <tbody>
                 {ops.map((op, i) => {
-                  const wc = (wcListFromDB||WORK_CENTERS).find(w => w.id===op.wcId || w.wcId===op.wcId)
+                  // loose equality — op.wcId may be '2' (string) while w.id is 2 (int)
+                  const wc = (wcListFromDB||WORK_CENTERS).find(w => String(w.id)===String(op.wcId) || w.wcId===op.wcId || w.wcId===String(op.wcId))
                   const ck = CONTROL_KEYS.find(c => c.key === op.ctrlKey)
                   return (
                     <tr key={i} style={{ borderBottom:'1px solid #F0EEF0',
@@ -704,7 +703,7 @@ function RoutingDetail({ routing, onClose, onEdit }) {
                         }}>{op.ctrlKey}</span>
                       </td>
                       <td style={{ padding:'10px 12px', fontSize:11, color:'#495057' }}>
-                        {wc ? `${wc.id} — ${wc.name}` : op.wcId || '—'}
+                        {wc ? `${wc.wcId} — ${wc.name}` : op.wcId || '—'}
                       </td>
                       <td style={{ padding:'10px 12px', fontWeight:600, fontSize:12 }}>{op.opName}</td>
                       <td style={{ padding:'10px 12px', fontSize:11, textAlign:'center' }}>{op.setupTime || 0}</td>
@@ -739,13 +738,23 @@ export default function RoutingMaster() {
   const [viewRt,     setViewRt]    = useState(null)
   const [procList,   setProcList]  = useState([])
 
-  // Load process master from backend
+  // Load process master — auto-sync from PP Config if empty
   const fetchProcesses = async () => {
     try {
-      const res  = await fetch(`${BASE_URL}/process`, { headers: authHdrs() })
+      const res  = await fetch(`${BASE_URL}/pp/process-master`, { headers: authHdrs() })
       const data = await res.json()
-      setProcList(data.data || [])
-    } catch(err) { console.log('Process fetch error') }
+      if (data.data && data.data.length > 0) {
+        setProcList(data.data)
+      } else {
+        // Process Master empty — auto-sync from PP Config
+        const res2  = await fetch(`${BASE_URL}/pp/process-master/sync`, { method:'POST', headers: authHdrs() })
+        const data2 = await res2.json()
+        if (data2.data && data2.data.length > 0) {
+          setProcList(data2.data)
+          toast.success(`${data2.data.length} processes loaded from PP Config`, { duration: 2000 })
+        }
+      }
+    } catch(err) { console.log('Process fetch error:', err.message) }
   }
 
   // Load items — try multiple endpoints, filter FG+SFG
@@ -981,6 +990,7 @@ export default function RoutingMaster() {
       {viewRt && (
         <RoutingDetail
           routing={viewRt}
+          wcListFromDB={wcList}
           onClose={() => setViewRt(null)}
           onEdit={() => { setEditRt(viewRt); setViewRt(null); setShowForm(true) }}
         />
