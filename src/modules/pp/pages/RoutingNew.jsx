@@ -30,24 +30,24 @@ export default function RoutingNew() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [rN, rI, rC] = await Promise.all([
-        fetch(`${BASE_URL}/mdm/routing/next-no`,  { headers: hdr2() }),
-        fetch(`${BASE_URL}/mdm/item`,             { headers: hdr2() }),
-        fetch(`${BASE_URL}/pp/config`,            { headers: hdr2() }),
-        fetch(`${BASE_URL}/pp/process-master`,    { headers: hdr2() }),
-        fetch(`${BASE_URL}/pp/work-centers`,      { headers: hdr2() }),
+      // FIX: capture all 5 promises correctly
+      const [rI, rC, rP, rW] = await Promise.all([
+        fetch(`${BASE_URL}/mdm/item`,          { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/config`,         { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/process-master`, { headers: hdr2() }),
+        fetch(`${BASE_URL}/pp/work-centers`,   { headers: hdr2() }),
       ])
-      const [dN, dI, dC, dP, dW] = await Promise.all([rN.json(), rI.json(), rC.json(), rP.json(), rW.json()])
+      const [dI, dC, dP, dW] = await Promise.all([rI.json(), rC.json(), rP.json(), rW.json()])
+
       setProcMasterList((dP.data || []).filter(p => p.isActive !== false))
       setWcList(dW.data || [])
-      setRoutingNo(dN.routingNo || dN.nextNo || 'RTE-AUTO')
       setItems(dI.data || [])
 
       if (dC.data) {
         setPPConfig(dC.data)
         const procs = Array.isArray(dC.data.processes) ? dC.data.processes : JSON.parse(dC.data.processes || '[]')
         setProcesses(procs)
-        // Auto-load ops from PP Config if new routing
+        // Auto-load ops from PP Config if creating new routing
         if (!id) {
           setOps(procs.map((p, i) => ({
             opNo:        String((i+1)*10),
@@ -63,8 +63,9 @@ export default function RoutingNew() {
       }
 
       // If editing — load existing routing
+      // FIX: use /pp/routing-master/:id (correct endpoint)
       if (id) {
-        const rE  = await fetch(`${BASE_URL}/mdm/routing/${id}`, { headers: hdr2() })
+        const rE  = await fetch(`${BASE_URL}/pp/routing-master/${id}`, { headers: hdr2() })
         const dE  = await rE.json()
         if (dE.data) {
           const r = dE.data
@@ -82,7 +83,7 @@ export default function RoutingNew() {
           })))
         }
       }
-    } catch (e) { toast.error('Failed to load') }
+    } catch (e) { toast.error('Failed to load: ' + e.message) }
     finally { setLoading(false) }
   }, [id])
   useEffect(() => { load() }, [load])
@@ -102,7 +103,6 @@ export default function RoutingNew() {
   const delOp  = i => setOps(o => o.filter((_,j)=>j!==i))
   const updOp  = (i,k,v) => setOps(o => o.map((x,j) => j!==i ? x : {...x,[k]:v}))
 
-  // Load all ops from PP Config
   const loadFromConfig = () => {
     if (!processes.length) return toast.error('No PP Config found. Set up PP Configurator first.')
     setOps(processes.map((p,i) => ({
@@ -127,7 +127,6 @@ export default function RoutingNew() {
     setSaving(true)
     try {
       const payload = {
-        routingNo,
         itemCode:  header.itemCode,
         itemName:  header.itemName,
         plant:     header.plant,
@@ -145,18 +144,18 @@ export default function RoutingNew() {
           remarks:     o.remarks,
         }))
       }
-      const url    = id ? `${BASE_URL}/mdm/routing/${id}` : `${BASE_URL}/mdm/routing`
-      const method = id ? 'PUT' : 'POST'
+      // FIX: correct endpoints + correct HTTP methods
+      const url    = id ? `${BASE_URL}/pp/routing-master/${id}` : `${BASE_URL}/pp/routing-master`
+      const method = id ? 'PATCH' : 'POST'
       const res    = await fetch(url, { method, headers: hdr(), body: JSON.stringify(payload) })
       const data   = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      toast.success(id ? 'Routing updated' : `${data.data?.routingNo || routingNo} created!`)
+      toast.success(id ? `Routing ${routingNo} updated!` : `${data.data?.routingNo || 'Routing'} created!`)
       nav('/pp/routing')
     } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 
-  // Total std time
   const totalMins = ops.reduce((a,o) => a + parseFloat(o.setupTime||0) + parseFloat(o.machineTime||0), 0)
 
   if (loading) return <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading...</div>
@@ -252,7 +251,6 @@ export default function RoutingNew() {
           </div>
         ) : (
           <div style={{background:'#fff'}}>
-            {/* Table header */}
             <div style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',background:'#F8F4F8',borderBottom:'2px solid #E0D5E0',fontSize:10,fontWeight:700,color:'#6C757D',textTransform:'uppercase'}}>
               <span>Op#</span><span>Process / Operation</span><span>Work Center</span>
               <span style={{textAlign:'center'}}>Setup<br/>(min)</span>
@@ -265,17 +263,13 @@ export default function RoutingNew() {
 
             {ops.map((op, i) => (
               <div key={i} style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',borderBottom:'1px solid #F0EEF0',alignItems:'center'}}>
-                {/* Op No */}
                 <input style={{...inp,fontFamily:'DM Mono,monospace',fontWeight:800,color:'#714B67',textAlign:'center'}}
                   value={op.opNo} onChange={e=>updOp(i,'opNo',e.target.value)}/>
 
-                {/* Process name — from Process Master ONLY (not PP Config stages) */}
                 {procMasterList.length > 0 ? (
-                  <select style={{...inp,cursor:'pointer'}} value={op.processName} onChange={e=>{
-                    updOp(i,'processName',e.target.value)
-                  }}>
+                  <select style={{...inp,cursor:'pointer'}} value={op.processName} onChange={e=>updOp(i,'processName',e.target.value)}>
                     <option value="">-- Select Process --</option>
-                    {procMasterList.map(p=><option key={p.id||p.name} value={p.name||p.processName}>{p.name||p.processName}</option>)}
+                    {procMasterList.map(p=><option key={p.id||p.name} value={p.processName||p.name}>{p.processName||p.name}</option>)}
                   </select>
                 ) : (
                   <div style={{display:'flex',flexDirection:'column',gap:2}}>
@@ -284,41 +278,34 @@ export default function RoutingNew() {
                   </div>
                 )}
 
-                {/* Work Center — select from master, auto-fills Default Operation */}
                 <select style={{...inp,cursor:'pointer'}} value={op.wcId} onChange={e=>{
                   const wcId = e.target.value
                   updOp(i,'wcId',wcId)
-                  // Auto-fill processName from WC's defaultOperation if process is empty
                   if(wcId && !op.processName){
                     const wc = wcList.find(w=>w.wcId===wcId || String(w.id)===wcId)
                     if(wc?.defaultOperation) updOp(i,'processName',wc.defaultOperation)
                   }
                 }}>
                   <option value=''>-- Select WC --</option>
-                  {wcList.map(w=><option key={w.wcId} value={w.wcId}>{w.wcId} — {w.name}</option>)}
+                  {wcList.map(w=><option key={w.wcId||w.id} value={w.wcId||w.id}>{w.wcId||w.id} — {w.name}</option>)}
                 </select>
 
-                {/* Times */}
                 {['setupTime','machineTime','laborTime'].map(k=>(
                   <input key={k} type="number" step="0.5" min="0"
                     style={{...inp,textAlign:'center',fontFamily:'DM Mono,monospace'}}
                     value={op[k]} onChange={e=>updOp(i,k,e.target.value)}/>
                 ))}
 
-                {/* Unit */}
                 <select style={{...inp,cursor:'pointer'}} value={op.unit} onChange={e=>updOp(i,'unit',e.target.value)}>
                   {TIME_UNITS.map(u=><option key={u}>{u}</option>)}
                 </select>
 
-                {/* Remarks */}
                 <input style={{...inp,fontSize:11}} value={op.remarks} onChange={e=>updOp(i,'remarks',e.target.value)} placeholder="Notes..."/>
 
-                {/* Delete */}
                 <button onClick={()=>delOp(i)} style={{background:'none',border:'none',color:'#DC3545',cursor:'pointer',fontSize:16,padding:'0 4px'}}>✕</button>
               </div>
             ))}
 
-            {/* Total row */}
             <div style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr 90px 90px 90px 80px 1fr 40px',gap:8,padding:'8px 14px',background:'#F8F4F8',fontSize:11,fontWeight:700,color:'#714B67'}}>
               <span/>
               <span>{ops.length} ops total</span>
@@ -334,7 +321,6 @@ export default function RoutingNew() {
         )}
       </div>
 
-      {/* Footer */}
       <div style={{display:'flex',justifyContent:'flex-end',gap:10,padding:'8px 0 20px'}}>
         <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing')}>Cancel</button>
         <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
