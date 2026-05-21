@@ -7,7 +7,7 @@ const getToken = () => localStorage.getItem('lnv_token')
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
 const hdr2 = () => ({ Authorization:`Bearer ${getToken()}` })
 
-const PLANNER_ROLES = ['admin','manager','operations','planner','production_manager']
+const PLANNER_ROLES = ['admin','manager','operations','planner','production_manager','super_admin','ADMIN']
 const getRole   = () => { try { return JSON.parse(localStorage.getItem('lnv_user')||'{}').role||'operator' } catch { return 'operator' } }
 const isPlanner = () => PLANNER_ROLES.includes(getRole())
 
@@ -40,11 +40,11 @@ export default function WOList() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const query = planId ? `?planId=${planId}` : planner ? '' : '?status=RELEASED,IN_PROGRESS'
+      const query = planId ? `?planId=${planId}` : planner ? '?status=DRAFT,RELEASED,IN_PROGRESS,COMPLETED,CANCELLED,ON_HOLD' : '?status=RELEASED,IN_PROGRESS'
       const res   = await fetch(`${BASE_URL}/pp/wo${query}`, { headers: hdr2() })
       const data  = await res.json()
-      setWos(data.data?.length ? data.data : SEED)
-    } catch { setWos(SEED) }
+      setWos(data.data || [])
+    } catch (e) { toast.error('Failed to load work orders'); setWos([]) }
     finally { setLoading(false) }
   }, [planId, planner])
   useEffect(() => { load() }, [load])

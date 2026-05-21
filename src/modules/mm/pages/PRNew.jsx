@@ -47,9 +47,9 @@ export default function PRNew() {
   const delLine = i  => setLines(p=>p.filter((_,idx)=>idx!==i))
 
   const onItemSelect = (i, code) => {
-    const item = items.find(it=>it.itemCode===code)
+    const item = items.find(it=>(it.code||it.itemCode)===code)
     updateLine(i,'itemCode',code)
-    if (item) updateLine(i,'itemName',item.itemName)
+    if (item) updateLine(i,'itemName',item.name||item.itemName||'')
   }
 
   const save = async (submit=false) => {
@@ -214,8 +214,8 @@ export default function PRNew() {
                       onChange={e=>onItemSelect(i,e.target.value)}>
                       <option value="">-- Select Item --</option>
                       {items.map(it=>(
-                        <option key={it.itemCode} value={it.itemCode}>
-                          {it.itemName}
+                        <option key={it.code||it.id} value={it.code||it.itemCode}>
+                          {it.name||it.itemName}
                         </option>
                       ))}
                     </select>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { mmApi } from '../services/mmApi'
 
@@ -289,7 +289,69 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight, vendors=[
 }
 
 export default function CSNew() {
-  const nav = useNavigate()
+  const nav      = useNavigate()
+  const { id }   = useParams()   // present when editing existing CS
+  const isEdit   = !!id
+
+  // Load existing CS when editing (id present in URL)
+  useEffect(() => {
+    if (!id) return
+    const token = localStorage.getItem('lnv_token')
+    const BASE  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    fetch(`${BASE}/mm/cs/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.data) return
+        const cs = d.data
+        setCsNo(cs.csNo   || '')
+        setPrNo(cs.prNo   || '')
+        setSelectedSup(cs.selectedSupplier || '')
+        setApproved(cs.status === 'APPROVED')
+        setSaved(true)
+        // Map quotes back into supplier blocks
+        if (cs.quotes?.length) {
+          setActiveBlocks(cs.quotes.length)
+          setSuppliers(prev => {
+            const updated = [...prev]
+            cs.quotes.forEach((q, i) => {
+              if (!updated[i]) return
+              // Parse stored JSON items from remarks
+              let parsedRemarks = null
+              try { parsedRemarks = JSON.parse(q.remarks || '') } catch { parsedRemarks = null }
+              const storedItems = parsedRemarks?.items?.length
+                ? parsedRemarks.items.map(it => ({
+                    desc:    it.desc    || '',
+                    spec:    it.spec    || '',
+                    uom:     it.uom     || 'Nos',
+                    qty:     String(it.qty  || 0),
+                    rate:    String(it.rate || 0),
+                    discPct: String(it.discPct || 0),
+                    gstPct:  String(it.gstPct  || 18),
+                  }))
+                : [{
+                    desc:    cs.itemDesc || '',
+                    spec:    '',
+                    uom:     'Nos',
+                    qty:     String(parseFloat(q.qty || 1)),
+                    rate:    String(parseFloat(q.unitRate || 0)),
+                    discPct: '0',
+                    gstPct:  '18',
+                  }]
+              updated[i] = {
+                ...updated[i],
+                name:          q.supplierName || '',
+                paymentTerms:  parsedRemarks?.paymentTerms  || updated[i].paymentTerms,
+                deliveryTerms: parsedRemarks?.deliveryTerms || updated[i].deliveryTerms,
+                items: storedItems
+              }
+            })
+            return updated
+          })
+        }
+      })
+      .catch(() => {})
+  }, [id])
+
   const [csNo,    setCsNo]  = useState('CS-AUTO')
   const [prNo,    setPrNo]  = useState('')
   const [prs,     setPrs]   = useState([])
@@ -499,13 +561,24 @@ export default function CSNew() {
           .slice(0, activeBlocks)
           .filter(s=>s.name)
           .map((s,idx)=>({
-            supplierNo: idx+1,
+            supplierNo:   idx+1,
             supplierName: s.name,
-            unitRate: parseFloat(s.items[0]?.rate||0),
-            qty: parseFloat(s.items[0]?.qty||1),
-            amount: s.items.reduce((sum,item)=>sum+calcItem(item).totalVal,0),
+            unitRate:     parseFloat(s.items[0]?.rate||0),
+            qty:          parseFloat(s.items[0]?.qty||1),
+            amount:       s.items.reduce((sum,item)=>sum+calcItem(item).totalVal,0),
             deliveryDays: null,
-            remarks: `Payment: ${s.paymentTerms} | Delivery: ${s.deliveryTerms}`
+            remarks: JSON.stringify({
+              paymentTerms:  s.paymentTerms,
+              deliveryTerms: s.deliveryTerms,
+              items: s.items.filter(i=>i.desc||i.rate).map(i=>({
+                desc:    i.desc||'', spec: i.spec||'',
+                uom:     i.uom||'Nos',
+                qty:     parseFloat(i.qty||0),
+                rate:    parseFloat(i.rate||0),
+                discPct: parseFloat(i.discPct||0),
+                gstPct:  parseFloat(i.gstPct||18),
+              }))
+            })
           })),
       }
       if (!payload.quotes.length)
@@ -517,43 +590,50 @@ export default function CSNew() {
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
   const handleApprove = async () => {
-    if (!selectedSup) return toast.error('Select a supplier first!')
-    // Allow CS→PO without prior save (save happens via handleSave separately)
-    const selIdx = ['Supplier I','Supplier II','Supplier III'].indexOf(selectedSup)
-    const selSupplier = suppliers[selIdx>=0?selIdx:0]
+    if (!selectedSup) return toast.error('Select a preferred supplier first!')
+    const selIdx = {'Supplier I':0,'Supplier II':1,'Supplier III':2}[selectedSup] ?? 0
+    const selSupplier = suppliers[selIdx]
+    if (!selSupplier?.name) return toast.error('Selected supplier has no name!')
+
     setSaving(true)
     try {
-      toast.success('CS sent for HOD Approval!')
-      setApproved(true)
-      // Store for PO creation after HOD approves
-      // Map CS supplier items → PONew format
-      const csItems = (selSupplier?.items||[])
-        .filter(i=>i.desc||i.itemName||i.rate)
-        .map(i=>({
-          itemName:      i.desc||i.itemName||'',
-          specification: i.spec||i.specification||'',
-          unit:          i.uom||i.unit||'Nos',
-          qty:           parseFloat(i.qty||1),
-          rate:          parseFloat(i.rate||0),
-          discount:      parseFloat(i.discPct||i.discount||0),
-          gstRate:       parseFloat(i.gstPct||i.gstRate||18),
-          hsnCode:       i.hsnCode||'',
-        }))
+      // STEP 1: Save CS to DB first (if not already saved)
+      let currentCsId = null
+      const itemDesc = suppliers[0].items
+        .filter(i=>i.desc).map(i=>i.desc).join(', ')
+      const payload = {
+        prNo, itemDesc: itemDesc||'Items as per CS',
+        remarks,
+        quotes: suppliers
+          .slice(0, activeBlocks)
+          .filter(s=>s.name)
+          .map((s,idx)=>({
+            supplierNo:   idx+1,
+            supplierName: s.name,
+            unitRate:     parseFloat(s.items[0]?.rate||0),
+            qty:          parseFloat(s.items[0]?.qty||1),
+            amount:       s.items.reduce((sum,item)=>sum+calcItem(item).totalVal,0),
+            deliveryDays: null,
+            remarks: `Payment: ${s.paymentTerms} | Delivery: ${s.deliveryTerms}`
+          })),
+      }
+      if (!payload.quotes.length) return toast.error('Add at least one supplier!')
 
-      sessionStorage.setItem('cs_to_po', JSON.stringify({
-        csNo,
-        prNo,
-        selectedSup,
-        reason,
-        vendorName:    selSupplier?.name||'',
-        vendorCode:    selSupplier?.vendorCode||'',
-        paymentTerms:  selSupplier?.paymentTerms||'Net 30 Days',
-        deliveryTerms: selSupplier?.deliveryTerms||'',
-        quoteRef:      selSupplier?.quoteRef||'',
-        supplyType:    selSupplier?.supplyType||'Intrastate',
-        items:         csItems,
-      }))
-      setTimeout(()=>nav('/mm/po/new?from=cs'), 1200)
+      const saveRes = await mmApi.createCS(payload)
+      currentCsId = saveRes.data?.id
+      setCsNo(saveRes.data?.csNo || csNo)
+      setSaved(true)
+
+      // STEP 2: Approve CS with selected supplier → backend auto-creates PO DRAFT
+      const approveRes = await mmApi.approveCS(currentCsId, { selectedSupplier: selSupplier.name })
+      const po = approveRes.data?.po
+
+      toast.success(`✅ CS Approved! PO ${po?.poNo || ''} created as Draft for ${selSupplier.name}`)
+      setApproved(true)
+
+      // STEP 3: Navigate to PO list (purchase person will edit and submit for approval)
+      setTimeout(()=>nav('/mm/po'), 1500)
+
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
 
@@ -623,6 +703,18 @@ export default function CSNew() {
                       {prs.map(p=>(
                         <option key={p.prNo} value={p.prNo}>
                           {p.prNo} · {p.department}
+                        </option>
+                      ))}
+                    </select>
+                  : type==='sup_select'
+                  ? <select value={val} onChange={e=>setter(e.target.value)}
+                      style={{width:'100%',padding:'7px 10px',border:'1.5px solid #714B67',
+                        borderRadius:5,fontSize:12,outline:'none',background:'#FFFDE7',
+                        boxSizing:'border-box',cursor:'pointer',fontWeight:600}}>
+                      <option value="">-- Select Preferred Supplier --</option>
+                      {suppliers.slice(0,activeBlocks).filter(s=>s.name).map((s,i)=>(
+                        <option key={i} value={`Supplier ${'I'.repeat(i+1).replace(/^I{2}$/,'II').replace(/^I{3}$/,'III')}`}>
+                          {['I','II','III'][i]} — {s.name}
                         </option>
                       ))}
                     </select>

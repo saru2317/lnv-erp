@@ -36,7 +36,7 @@ export default function WONew() {
   const [params]     = useSearchParams()
 
   // ── Pre-filled from Production Plan ──────────────────────────────────────
-  const planId   = params.get('planId')   || ''
+  const planId   = params.get('planId') ? parseInt(params.get('planId')) : null
   const soNo     = params.get('soNo')     || ''
   const itemCode = params.get('itemCode') || ''
   const itemName = decodeURIComponent(params.get('itemName') || '')
@@ -52,7 +52,7 @@ export default function WONew() {
   // Header
   const [form, setForm] = useState({
     itemCode, itemName, plannedQty: qty, uom,
-    soNo, planId, priority:'Normal', rmMethod:'push',
+    soNo, planId: planId ? parseInt(planId) : null, priority:'Normal', rmMethod:'push',
     scheduledStart: today(), scheduledEnd: addDays(today(), 3),
     plant:'MAIN', warehouse:'FG-STORE',
     customerName:'', dcNo:'', mouldId:'', remarks:'',
@@ -61,9 +61,13 @@ export default function WONew() {
 
   // Operations (from routing or manual)
   const [operations, setOperations] = useState([])
+  const [editOps,    setEditOps]    = useState(false) // false = read-only from routing
 
   // Materials (from BOM)
   const [materials, setMaterials] = useState([])
+
+  // Stock availability map { itemCode: balance }
+  const [stockMap,  setStockMap]  = useState({})
 
   // Master data
   const [routings,  setRoutings]  = useState([])
@@ -94,12 +98,12 @@ export default function WONew() {
             setForm(f => ({ ...f, routingNo: match.routingNo, routingId: match.id }))
             setOperations(match.operations.map((op, i) => ({
               opNo:       op.opNo || (i+1)*10,
-              opName:     op.opName || '',
-              workCenter: op.workCenter || '',
+              opName:     op.opName || op.processName || '',
+              workCenter: op.workCenter || op.wcId || '',
               machine:    op.machine || '',
-              setupTime:  op.setupTime || 0,
-              runTime:    op.runTime || 0,
-              mhr:        op.mhr || 0,
+              setupTime:  parseFloat(op.setupTime || 0),
+              runTime:    parseFloat(op.machineTime || op.runTime || op.laborTime || 0),
+              mhr:        parseFloat(op.mhr || 0),
               status:     'PENDING',
               controlKey: op.controlKey || 'PP01',
             })))
@@ -113,24 +117,34 @@ export default function WONew() {
       .then(r=>r.json()).then(d=>setWCs(d.data||[])).catch(()=>{})
 
     // Items
-    fetch(`${BASE_URL}/mdm/item`, { headers: authHdrs() })
+    fetch(`${BASE_URL}/items`, { headers: authHdrs() })
       .then(r=>r.json()).then(d=>setItems(d.data||[])).catch(()=>{})
+
+    // Stock summary — build itemCode→balance map
+    fetch(`${BASE_URL}/stock/summary`, { headers: authHdrs() })
+      .then(r=>r.json()).then(d => {
+        if (Array.isArray(d)) {
+          const map = {}
+          d.forEach(i => { map[i.code] = parseFloat(i.balance || 0) })
+          setStockMap(map)
+        }
+      }).catch(()=>{})
   }, [])
 
   // ── Load BOM when itemCode changes ────────────────────────────────────────
   useEffect(() => {
     if (!form.itemCode) return
-    fetch(`${BASE_URL}/mdm/bom?itemCode=${form.itemCode}`, { headers: authHdrs() })
+    fetch(`${BASE_URL}/pp/bom?itemCode=${form.itemCode}`, { headers: authHdrs() })
       .then(r=>r.json())
       .then(d => {
         const bom = d.data?.[0]
-        if (bom?.components?.length) {
-          setMaterials(bom.components.map(c => ({
-            itemCode:  c.itemCode || '',
-            itemName:  c.itemName || '',
-            reqQty:    parseFloat(c.qty || 0) * parseFloat(form.plannedQty || 1),
+        if (bom?.lines?.length) {
+          setMaterials(bom.lines.map(c => ({
+            itemCode:  c.itemCode || c.code || '',
+            itemName:  c.itemName || c.name || '',
+            reqQty:    parseFloat(c.qty || c.quantity || 0) * parseFloat(form.plannedQty || 1),
             uom:       c.uom || 'Nos',
-            stdCost:   c.stdCost || 0,
+            stdCost:   parseFloat(c.stdCost || c.unitCost || c.cost || 0),
             issuedQty: 0,
             status:    'RESERVED',
           })))
@@ -146,12 +160,12 @@ export default function WONew() {
     if (rt?.operations?.length) {
       setOperations(rt.operations.map((op, i) => ({
         opNo:       op.opNo || (i+1)*10,
-        opName:     op.opName || '',
-        workCenter: op.workCenter || '',
+        opName:     op.opName || op.processName || '',
+        workCenter: op.workCenter || op.wcId || '',
         machine:    op.machine || '',
-        setupTime:  op.setupTime || 0,
-        runTime:    op.runTime || 0,
-        mhr:        op.mhr || 0,
+        setupTime:  parseFloat(op.setupTime || 0),
+        runTime:    parseFloat(op.machineTime || op.runTime || op.laborTime || 0),
+        mhr:        parseFloat(op.mhr || 0),
         status:     'PENDING',
         controlKey: op.controlKey || 'PP01',
       })))
@@ -184,7 +198,7 @@ export default function WONew() {
   const delMat = i => setMaterials(m => m.filter((_,idx) => idx !== i))
 
   // ── Calculated values ─────────────────────────────────────────────────────
-  const totalMachineTime = operations.reduce((s,o) => s + parseFloat(o.setupTime||0) + parseFloat(o.runTime||0) * parseFloat(form.plannedQty||1), 0)
+  const totalMachineTime = operations.reduce((s,o) => s + parseFloat(o.setupTime||0) + parseFloat(o.runTime||0), 0)
   const totalMHRCost     = operations.reduce((s,o) => s + (parseFloat(o.mhr||0) * (parseFloat(o.runTime||0)/60) * parseFloat(form.plannedQty||1)), 0)
   const totalMatCost     = materials.reduce((s,m) => s + parseFloat(m.stdCost||0) * parseFloat(m.reqQty||0), 0)
 
@@ -206,11 +220,18 @@ export default function WONew() {
         ...form,
         woNo,
         woType,
+        planId:        form.planId ? parseInt(form.planId) : null,
         plannedQty:    parseFloat(form.plannedQty||0),
         scheduledStart: form.scheduledStart ? new Date(form.scheduledStart).toISOString() : null,
         scheduledEnd:   form.scheduledEnd   ? new Date(form.scheduledEnd).toISOString()   : null,
         status:        releaseNow ? 'RELEASED' : 'DRAFT',
-        operations,
+        operations: operations.map(op => ({
+          ...op,
+          opNo:      parseInt(op.opNo) || 10,
+          setupTime: parseFloat(op.setupTime || 0),
+          runTime:   parseFloat(op.runTime || 0),
+          mhr:       parseFloat(op.mhr || 0),
+        })),
         bomComponents: materials,
       }
 
@@ -447,15 +468,6 @@ export default function WONew() {
         {/* ══ TAB 2 — OPERATIONS ══ */}
         {tab === 'operations' && (
           <div>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-              <div style={{ fontSize:12, color:'#6C757D' }}>
-                Define the production sequence. Each operation maps to a Work Center / Machine.
-              </div>
-              <button onClick={addOp}
-                style={{ padding:'7px 16px', background:'#1A5276', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                + Add Operation
-              </button>
-            </div>
 
             {operations.length === 0 ? (
               <div style={{ textAlign:'center', padding:40, border:'2px dashed #E0D5E0', borderRadius:8, color:'#6C757D' }}>
@@ -470,6 +482,40 @@ export default function WONew() {
                 </button>
               </div>
             ) : (
+              <>
+                {/* Auto-loaded banner */}
+                {form.routingNo && !editOps && (
+                  <div style={{ background:'#D4EDDA', border:'1px solid #C3E6CB', borderRadius:6, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div style={{ fontSize:12, color:'#155724' }}>
+                      <strong>✅ Auto-loaded from Routing Master:</strong> {form.routingNo} &nbsp;·&nbsp; {operations.length} operations &nbsp;·&nbsp; {operations.reduce((a,o)=>a+parseFloat(o.setupTime||0)+parseFloat(o.runTime||0),0)} min total
+                    </div>
+                    <button onClick={()=>setEditOps(true)}
+                      style={{ padding:'5px 14px', background:'#fff', border:'1.5px solid #28A745', color:'#155724', borderRadius:5, fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                      ✏️ Override Operations
+                    </button>
+                  </div>
+                )}
+                {editOps && (
+                  <div style={{ background:'#FFF3CD', border:'1px solid #FFEEBA', borderRadius:6, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div style={{ fontSize:12, color:'#856404' }}>
+                      <strong>⚠️ Edit Mode:</strong> You are overriding the routing. Changes apply to this WO only.
+                    </div>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button onClick={addOp}
+                        style={{ padding:'5px 14px', background:'#1A5276', color:'#fff', border:'none', borderRadius:5, fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                        + Add Operation
+                      </button>
+                      <button onClick={()=>setEditOps(false)}
+                        style={{ padding:'5px 14px', background:'#fff', border:'1.5px solid #856404', color:'#856404', borderRadius:5, fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                        Cancel Override
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {operations.length > 0 && (
               <div style={{ border:'1.5px solid #E0D5E0', borderRadius:8, overflow:'hidden' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead style={{ background:'#1A5276', color:'#fff' }}>
@@ -487,35 +533,50 @@ export default function WONew() {
                   <tbody>
                     {operations.map((op,i) => (
                       <tr key={i} style={{ borderBottom:'1px solid #F0F0F0', background: i%2===0?'#fff':'#FAFAFA' }}>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700 }}
-                            value={op.opNo} onChange={e=>setOp(i,'opNo',e.target.value)} />
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={inp} value={op.opName} onChange={e=>setOp(i,'opName',e.target.value)} placeholder="e.g. Material Drying" />
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <select style={sel} value={op.workCenter} onChange={e=>setOp(i,'workCenter',e.target.value)}>
-                            <option value="">— Select —</option>
-                            {workCenters.map(w=><option key={w.id} value={w.wcId}>{w.wcId}</option>)}
-                          </select>
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, fontSize:11 }} value={op.machine} onChange={e=>setOp(i,'machine',e.target.value)} placeholder="Machine ID" />
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center' }} type="number" value={op.setupTime} onChange={e=>setOp(i,'setupTime',e.target.value)} placeholder="0" min="0" />
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center' }} type="number" value={op.runTime} onChange={e=>setOp(i,'runTime',e.target.value)} placeholder="0" min="0" step="0.1" />
-                        </td>
-                        <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center', color:'#155724', fontWeight:700 }} type="number" value={op.mhr} onChange={e=>setOp(i,'mhr',e.target.value)} placeholder="0" min="0" />
-                        </td>
-                        <td style={{ padding:'6px 12px', textAlign:'center' }}>
-                          <button onClick={()=>delOp(i)}
-                            style={{ padding:'4px 8px', background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:4, cursor:'pointer', fontWeight:700 }}>✕</button>
-                        </td>
+                        {/* Read-only mode */}
+                        {!editOps ? (<>
+                          <td style={{ padding:'8px 12px', fontFamily:'DM Mono,monospace', fontWeight:800, color:'#1A5276', textAlign:'center' }}>{op.opNo}</td>
+                          <td style={{ padding:'8px 12px', fontWeight:600 }}>{op.opName}</td>
+                          <td style={{ padding:'8px 12px', color:'#495057' }}>{op.workCenter || '—'}</td>
+                          <td style={{ padding:'8px 12px', color:'#6C757D', fontSize:11 }}>{op.machine || '—'}</td>
+                          <td style={{ padding:'8px 12px', textAlign:'center', fontFamily:'DM Mono,monospace' }}>{op.setupTime}</td>
+                          <td style={{ padding:'8px 12px', textAlign:'center', fontFamily:'DM Mono,monospace' }}>{op.runTime}</td>
+                          <td style={{ padding:'8px 12px', textAlign:'center', fontFamily:'DM Mono,monospace', color:'#155724', fontWeight:700 }}>{op.mhr > 0 ? `₹${op.mhr}` : '—'}</td>
+                          <td style={{ padding:'8px 12px', textAlign:'center' }}>
+                            <span style={{ background:'#D1ECF1', color:'#0C5460', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700 }}>PENDING</span>
+                          </td>
+                        </>) : (<>
+                          {/* Edit mode */}
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={{ ...inp, textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700, width:60 }}
+                              value={op.opNo} onChange={e=>setOp(i,'opNo',e.target.value)} />
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={inp} value={op.opName} onChange={e=>setOp(i,'opName',e.target.value)} placeholder="Operation name" />
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <select style={sel} value={op.workCenter} onChange={e=>setOp(i,'workCenter',e.target.value)}>
+                              <option value="">— Select —</option>
+                              {workCenters.map(w=><option key={w.id} value={w.wcId}>{w.wcId}</option>)}
+                            </select>
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={{ ...inp, fontSize:11 }} value={op.machine} onChange={e=>setOp(i,'machine',e.target.value)} placeholder="Machine ID" />
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={{ ...inp, textAlign:'center' }} type="number" value={op.setupTime} onChange={e=>setOp(i,'setupTime',e.target.value)} min="0" />
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={{ ...inp, textAlign:'center' }} type="number" value={op.runTime} onChange={e=>setOp(i,'runTime',e.target.value)} min="0" step="0.1" />
+                          </td>
+                          <td style={{ padding:'6px 12px' }}>
+                            <input style={{ ...inp, textAlign:'center', color:'#155724', fontWeight:700 }} type="number" value={op.mhr} onChange={e=>setOp(i,'mhr',e.target.value)} min="0" />
+                          </td>
+                          <td style={{ padding:'6px 12px', textAlign:'center' }}>
+                            <button onClick={()=>delOp(i)}
+                              style={{ padding:'4px 8px', background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:4, cursor:'pointer', fontWeight:700 }}>✕</button>
+                          </td>
+                        </>)}
                       </tr>
                     ))}
                   </tbody>
@@ -563,6 +624,21 @@ export default function WONew() {
               </button>
             </div>
 
+            {/* Stock shortage warning */}
+            {materials.length > 0 && Object.keys(stockMap).length > 0 && (() => {
+              const shortItems = materials.filter(m => m.itemCode && (stockMap[m.itemCode] ?? 0) < parseFloat(m.reqQty||0))
+              return shortItems.length > 0 ? (
+                <div style={{background:'#F8D7DA',border:'1px solid #F5C6CB',borderRadius:6,padding:'8px 14px',marginBottom:10,fontSize:12,color:'#721C24',display:'flex',gap:8,alignItems:'center'}}>
+                  <strong>⚠ Stock Shortage:</strong> {shortItems.length} material(s) below required quantity —
+                  {shortItems.map(m=>`${m.itemCode} (need ${m.reqQty} ${m.uom}, have ${stockMap[m.itemCode]??0})`).join(', ')}
+                </div>
+              ) : (
+                <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,padding:'8px 14px',marginBottom:10,fontSize:12,color:'#155724',display:'flex',gap:8,alignItems:'center'}}>
+                  <strong>✓ Stock OK</strong> — All materials available for this Work Order
+                </div>
+              )
+            })()}
+
             {materials.length === 0 ? (
               <div style={{ textAlign:'center', padding:40, border:'2px dashed #E0D5E0', borderRadius:8, color:'#6C757D' }}>
                 <div style={{ fontSize:32, marginBottom:8 }}>📦</div>
@@ -579,10 +655,12 @@ export default function WONew() {
                     <tr>
                       <th style={{ padding:'8px 12px', textAlign:'left' }}>Item Code</th>
                       <th style={{ padding:'8px 12px', textAlign:'left' }}>Item Name</th>
-                      <th style={{ padding:'8px 12px', textAlign:'center', width:100 }}>Req. Qty</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', width:90 }}>Req. Qty</th>
                       <th style={{ padding:'8px 12px', textAlign:'center', width:80 }}>UOM</th>
-                      <th style={{ padding:'8px 12px', textAlign:'center', width:100 }}>Std Cost (₹)</th>
-                      <th style={{ padding:'8px 12px', textAlign:'center', width:110 }}>Total Cost (₹)</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', width:90 }}>Avail Stock</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', width:90 }}>Shortage</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', width:75 }}>Status</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', width:90 }}>Std Cost (₹)</th>
                       <th style={{ padding:'8px 12px', textAlign:'center', width:40 }}></th>
                     </tr>
                   </thead>
@@ -606,6 +684,32 @@ export default function WONew() {
                         <td style={{ padding:'6px 12px' }}>
                           <input style={{ ...inp, textAlign:'center' }} type="number" value={m.stdCost} onChange={e=>setMat(i,'stdCost',e.target.value)} placeholder="0" min="0" step="0.01" />
                         </td>
+                        <td style={{ padding:'6px 12px', textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700,
+                            color: (stockMap[m.itemCode] ?? 0) >= parseFloat(m.reqQty||0) ? '#155724' : '#856404' }}>
+                          {m.itemCode ? (stockMap[m.itemCode] ?? 0).toLocaleString('en-IN',{maximumFractionDigits:2}) : '—'}
+                        </td>
+                        <td style={{ padding:'6px 12px', textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700 }}>
+                          {m.itemCode ? (() => {
+                            const avail = stockMap[m.itemCode] ?? 0
+                            const short = parseFloat(m.reqQty||0) - avail
+                            return short > 0
+                              ? <span style={{color:'#DC3545'}}>-{short.toLocaleString('en-IN',{maximumFractionDigits:2})}</span>
+                              : <span style={{color:'#155724'}}>—</span>
+                          })() : '—'}
+                        </td>
+                        <td style={{ padding:'6px 12px', textAlign:'center' }}>
+                          {m.itemCode ? (() => {
+                            const avail = stockMap[m.itemCode] ?? 0
+                            const ok    = avail >= parseFloat(m.reqQty||0)
+                            return (
+                              <span style={{
+                                background: ok ? '#D4EDDA' : '#F8D7DA',
+                                color:      ok ? '#155724' : '#721C24',
+                                padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700
+                              }}>{ok ? 'OK' : 'SHORT'}</span>
+                            )
+                          })() : '—'}
+                        </td>
                         <td style={{ padding:'6px 12px', textAlign:'center', fontWeight:700, color:'#155724', fontFamily:'DM Mono,monospace' }}>
                           ₹{(parseFloat(m.stdCost||0)*parseFloat(m.reqQty||0)).toLocaleString('en-IN',{minimumFractionDigits:2})}
                         </td>
@@ -618,7 +722,7 @@ export default function WONew() {
                   </tbody>
                   <tfoot style={{ background:'#F8F9FA', borderTop:'2px solid #E0D5E0' }}>
                     <tr>
-                      <td colSpan={5} style={{ padding:'8px 12px', fontWeight:700, fontSize:11, color:'#1A5276' }}>Total Material Cost</td>
+                      <td colSpan={7} style={{ padding:'8px 12px', fontWeight:700, fontSize:11, color:'#1A5276' }}>Total Material Cost</td>
                       <td style={{ padding:'8px 12px', textAlign:'center', fontWeight:800, color:'#155724', fontFamily:'DM Mono,monospace', fontSize:13 }}>
                         ₹{totalMatCost.toLocaleString('en-IN',{minimumFractionDigits:2})}
                       </td>

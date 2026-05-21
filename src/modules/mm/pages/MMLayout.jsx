@@ -107,6 +107,7 @@ export default function MMLayout() {
           <Route path="pr/new"      element={<PRNew />} />
           <Route path="cs"          element={<CSList />} />
           <Route path="cs/new"      element={<CSNew />} />
+          <Route path="cs/:id"      element={<CSNew />} />
           <Route path="*"         element={<Navigate to="/mm" replace />} />
         </Routes>
       </Suspense>

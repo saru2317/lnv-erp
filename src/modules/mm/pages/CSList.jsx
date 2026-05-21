@@ -31,6 +31,19 @@ export default function CSList() {
 
   useEffect(()=>{ fetchCS() }, [])
 
+  const deleteCS = async (e, cs) => {
+    e.stopPropagation()
+    if (!window.confirm(`Delete ${cs.csNo}? This will also delete the PO Draft and reset PR status.`)) return
+    try {
+      const res  = await fetch(`${import.meta.env.VITE_API_URL||'http://localhost:3000/api'}/mm/cs/${cs.id}`,
+        { method:'DELETE', headers:{ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` } })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      fetchCS()
+    } catch(e) { toast.error(e.message) }
+  }
+
   const filtered = csList.filter(cs =>
     !search ||
     cs.csNo?.toLowerCase().includes(search.toLowerCase()) ||
@@ -146,7 +159,7 @@ export default function CSList() {
                       <strong style={{ color:'#714B67',
                         fontFamily:'DM Mono,monospace',
                         fontSize:12, cursor:'pointer' }}
-                        onClick={()=>nav('/mm/cs/new')}>
+                        onClick={()=>nav(`/mm/cs/${cs.id}`)}>
                         {cs.csNo}
                       </strong>
                     </td>
@@ -202,7 +215,7 @@ export default function CSList() {
                       onClick={e=>e.stopPropagation()}>
                       <div style={{ display:'flex', gap:4 }}>
                         <button className="btn-xs"
-                          onClick={()=>nav('/mm/cs/new')}>
+                          onClick={()=>nav(`/mm/cs/${cs.id}`)}>
                           ✏️ Edit
                         </button>
                         {cs.status?.toUpperCase()==='APPROVED'&&!cs.poNo&&(

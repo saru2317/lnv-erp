@@ -493,17 +493,19 @@ export default function PONew() {
               </select>
             </div>
             <div>
-              <label style={lbl}>Reference / PR No.</label>
-              <input style={inp} value={hdr.prNo}
-                onChange={e=>setHdr(p=>({...p,
-                  prNo:e.target.value}))}
+              <label style={lbl}>Reference / PR No. *</label>
+              <input style={{...inp, background: hdr.prNo?'#D4EDDA':'#fff',
+                fontWeight:700, color:'#155724', fontFamily:'DM Mono,monospace'}}
+                value={hdr.prNo}
+                onChange={e=>setHdr(p=>({...p, prNo:e.target.value}))}
                 placeholder="PR-2026-0001" />
             </div>
             <div>
               <label style={lbl}>CS No.</label>
-              <input style={inp} value={hdr.csNo}
-                onChange={e=>setHdr(p=>({...p,
-                  csNo:e.target.value}))}
+              <input style={{...inp, background: hdr.csNo?'#FFF3CD':'#fff',
+                fontWeight:700, color:'#856404', fontFamily:'DM Mono,monospace'}}
+                value={hdr.csNo}
+                onChange={e=>setHdr(p=>({...p, csNo:e.target.value}))}
                 placeholder="CS-2026-0001" />
             </div>
           </div>

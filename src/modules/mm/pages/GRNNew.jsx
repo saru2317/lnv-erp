@@ -16,7 +16,8 @@ export default function GRNNew() {
   const [lines,   setLines]  = useState([])
   const [hdr,     setHdr]    = useState({
     poId:'', poNo:'', vendorName:'', grnDate: new Date().toISOString().split('T')[0],
-    dcNo:'', vehicleNo:'', receivedAt:'Ranipet Main Store', remarks:''
+    dcNo:'', vehicleNo:'', receivedAt:'Ranipet Main Store', remarks:'',
+    csNo:'', prNo:''   // reference chain
   })
 
   useEffect(()=>{
@@ -33,7 +34,8 @@ export default function GRNNew() {
       const data = await mmApi.getPO(id)
       const po   = data.data
       setSelPO(po)
-      setHdr(p=>({ ...p, poId:po.id, poNo:po.poNo, vendorName:po.vendorName }))
+      setHdr(p=>({ ...p, poId:po.id, poNo:po.poNo, vendorName:po.vendorName,
+        csNo:po.csNo||'', prNo:po.prNo||'' }))
       setLines(po.lines.map((l,i)=>({
         lineNo:i+1, poLineId:l.id,
         itemCode:l.itemCode||'', itemName:l.itemName,
@@ -61,6 +63,8 @@ export default function GRNNew() {
     try {
       const data = await mmApi.createGRN({
         ...hdr,
+        prNo: hdr.prNo || selPO?.prNo || '',
+        csNo: hdr.csNo || selPO?.csNo || '',
         status,
         lines: lines.map(l=>({
           lineNo:l.lineNo, poLineId:l.poLineId||null,
@@ -96,6 +100,38 @@ export default function GRNNew() {
       {/* GRN Header */}
       <div className="mm-fs">
         <div className="mm-fsh">GRN Header — Link to Purchase Order</div>
+        {/* Reference Chain Banner */}
+        {(hdr.prNo || hdr.csNo || hdr.poNo) && (
+          <div style={{background:'#EBF5FB',borderBottom:'1px solid #AED6F1',
+            padding:'8px 16px',display:'flex',gap:20,alignItems:'center',fontSize:12}}>
+            <span style={{fontWeight:700,color:'#1A5276'}}>Reference Chain:</span>
+            {hdr.prNo && (
+              <span style={{background:'#D1ECF1',color:'#0C5460',padding:'2px 10px',
+                borderRadius:10,fontWeight:700,fontFamily:'DM Mono,monospace'}}>
+                📋 {hdr.prNo}
+              </span>
+            )}
+            {hdr.prNo && hdr.csNo && <span style={{color:'#ADB5BD'}}>→</span>}
+            {hdr.csNo && (
+              <span style={{background:'#FFF3CD',color:'#856404',padding:'2px 10px',
+                borderRadius:10,fontWeight:700,fontFamily:'DM Mono,monospace'}}>
+                📊 {hdr.csNo}
+              </span>
+            )}
+            {hdr.csNo && hdr.poNo && <span style={{color:'#ADB5BD'}}>→</span>}
+            {hdr.poNo && (
+              <span style={{background:'#EDE0EA',color:'#714B67',padding:'2px 10px',
+                borderRadius:10,fontWeight:700,fontFamily:'DM Mono,monospace'}}>
+                🛒 {hdr.poNo}
+              </span>
+            )}
+            <span style={{color:'#ADB5BD'}}>→</span>
+            <span style={{background:'#D4EDDA',color:'#155724',padding:'2px 10px',
+              borderRadius:10,fontWeight:700}}>
+              📦 GRN (Current)
+            </span>
+          </div>
+        )}
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>GRN Number</label>

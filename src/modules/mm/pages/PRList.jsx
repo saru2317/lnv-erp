@@ -272,6 +272,24 @@ export default function PRList() {
 
   useEffect(()=>{ fetchPRs() }, [])
 
+  const deletePR = async (e, pr) => {
+    e.stopPropagation()
+    if (pr.status !== 'DRAFT') {
+      return toast.error(`Cannot delete — PR is ${pr.status}. Only DRAFT indents can be deleted.`)
+    }
+    if (!window.confirm(`Delete ${pr.prNo}? This action cannot be undone.`)) return
+    try {
+      const res  = await fetch(
+        `${import.meta.env.VITE_API_URL||'http://localhost:3000/api'}/mm/pr/${pr.id}`,
+        { method:'DELETE', headers:{ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` } }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      fetchPRs()
+    } catch(e) { toast.error(e.message) }
+  }
+
   const preclose = async () => {
     if (!precloseReason) return toast.error('Reason required!')
     try {
@@ -497,6 +515,11 @@ export default function PRList() {
                                 onClick={()=>submit(p)}>
                                 📤 Submit
                               </button>
+                              <button className="btn-xs"
+                                style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
+                                onClick={e=>deletePR(e,p)}>
+                                🗑 Delete
+                              </button>
                             </>
                           )}
                           {p.status==='SUBMITTED' && (
@@ -532,6 +555,20 @@ export default function PRList() {
                                 🔒
                               </button>
                             </>
+                          )}
+                          {p.status==='CS_CREATED' && p.csNo && (
+                            <button className="btn-xs"
+                              style={{background:'#FFF3CD',color:'#856404',border:'1px solid #FFEEBA'}}
+                              onClick={()=>nav(`/mm/cs`)}>
+                              📊 {p.csNo}
+                            </button>
+                          )}
+                          {p.status==='PO_CREATED' && p.poNo && (
+                            <button className="btn-xs"
+                              style={{background:'#D1ECF1',color:'#0C5460',border:'1px solid #B8DAFF'}}
+                              onClick={()=>nav(`/mm/po`)}>
+                              🛒 {p.poNo}
+                            </button>
                           )}
                           <button className="btn-xs"
                             onClick={()=>openDetail(p)}>View</button>
