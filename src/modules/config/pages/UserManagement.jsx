@@ -716,7 +716,7 @@ function TableView({ users, total, onEdit, onDelete, onPerms }) {
             ].map((b,bi)=>(
               <div key={bi} onClick={b.fn}
                 style={{minWidth:46, height:24, borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center',
-                  cursor:'pointer', fontSize:12, border:'1px solid var(--odoo-border)', background:b.hb, color:b.hc, fontWeight:700, fontSize:10, padding:'0 6px', transition:'all .15s'}}
+                  cursor:'pointer', fontSize:10, border:'1px solid var(--odoo-border)', background:b.hb, color:b.hc, fontWeight:700, padding:'0 6px', transition:'all .15s'}}
                 onMouseEnter={e=>{e.currentTarget.style.opacity='0.8'}}
                 onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
                 {b.ico}
