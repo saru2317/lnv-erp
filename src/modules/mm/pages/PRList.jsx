@@ -17,6 +17,7 @@ const STATUS = {
   HOD_REJECTED: { bg:'#F8D7DA', color:'#721C24', label:'Rejected',     icon:'❌' },
   CS_CREATED:   { bg:'#EDE0EA', color:'#714B67', label:'CS Created',   icon:'📊' },
   PO_RAISED:    { bg:'#D1ECF1', color:'#0C5460', label:'PO Raised',    icon:'📋' },
+  PO_CREATED:   { bg:'#D1ECF1', color:'#0C5460', label:'PO Created',   icon:'🛒' },
   PRECLOSED:    { bg:'#E9ECEF', color:'#6C757D', label:'Pre-closed',   icon:'🔒' },
   CLOSED:       { bg:'#E9ECEF', color:'#6C757D', label:'Closed',       icon:'🔒' },
 }
@@ -353,7 +354,8 @@ export default function PRList() {
     draft:    prs.filter(p=>p.status==='DRAFT').length,
     pending:  prs.filter(p=>p.status==='SUBMITTED').length,
     approved: prs.filter(p=>p.status==='HOD_APPROVED').length,
-    rejected: prs.filter(p=>p.status==='HOD_REJECTED').length,
+    rejected:   prs.filter(p=>p.status==='HOD_REJECTED').length,
+    poCreated:  prs.filter(p=>p.status==='PO_CREATED').length,
   }
 
   return (
@@ -399,7 +401,8 @@ export default function PRList() {
       <div style={{ display:'flex', gap:6, marginBottom:12, flexWrap:'wrap' }}>
         {[['all','All'],['DRAFT','Draft'],['SUBMITTED','Pending HOD'],
           ['HOD_APPROVED','Approved'],['CS_CREATED','CS Done'],
-          ['PO_RAISED','PO Raised']].map(([k,l])=>{
+          ['PO_RAISED','PO Raised'],
+          ['PO_CREATED','PO Created']].map(([k,l])=>{
           const sc = STATUS[k]||{ bg:'#E9ECEF', color:'#6C757D' }
           return (
             <div key={k} onClick={()=>setFilter(k)}
@@ -515,12 +518,15 @@ export default function PRList() {
                                 onClick={()=>submit(p)}>
                                 📤 Submit
                               </button>
-                              <button className="btn-xs"
-                                style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
-                                onClick={e=>deletePR(e,p)}>
-                                🗑 Delete
-                              </button>
                             </>
+                          )}
+                          {/* Delete available for DRAFT, HOD_APPROVED, HOD_REJECTED, PO_CREATED */}
+                          {['DRAFT','HOD_APPROVED','HOD_REJECTED','PO_CREATED'].includes(p.status) && (
+                            <button className="btn-xs"
+                              style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
+                              onClick={e=>deletePR(e,p)}>
+                              🗑 Delete
+                            </button>
                           )}
                           {p.status==='SUBMITTED' && (
                             <>

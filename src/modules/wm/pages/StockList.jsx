@@ -127,8 +127,7 @@ export default function StockList() {
           borderRadius:8, overflow:'hidden' }}>
           <table style={{ width:'100%',
             borderCollapse:'collapse', fontSize:12 }}>
-            <thead style={{ background:'#F8F4F8',
-              position:'sticky', top:60 }}>
+            <thead style={{ background:'#F8F4F8' }}>
               <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
                 {['','Code','Material','Category',
                   'UOM','Received','Issued',

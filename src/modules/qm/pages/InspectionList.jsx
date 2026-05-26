@@ -21,6 +21,23 @@ const SOURCE = ['All Sources','PP — Production','MM — Incoming','SD — Pre-
 
 export default function InspectionList() {
   const nav = useNavigate()
+
+  const deleteInspection = async (e, lot) => {
+    e.stopPropagation()
+    if (!window.confirm(
+      `Delete ${lot.lotNo}?\nThis will reset the linked GRN back to POSTED so it can be re-inspected.`
+    )) return
+    try {
+      const res  = await fetch(
+        `${import.meta.env.VITE_API_URL||'http://localhost:3000/api'}/qm/inspection/${lot.id}`,
+        { method:'DELETE', headers:{ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` } }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      setLots(prev => prev.filter(l => l.id !== lot.id))
+    } catch(e) { toast.error(e.message) }
+  }
   const [chip, setChip] = useState('All')
   const [src,  setSrc]  = useState('All Sources')
   const [lots, setLots] = useState([])
@@ -132,6 +149,11 @@ export default function InspectionList() {
                   <button className="btn-xs" onClick={()=>nav(`/qm/inspection/${l.id}`)}>View</button>
                   {l.result==='REVIEW'&&<button className="btn-xs pri" onClick={()=>nav('/qm/ncr/new')}>NCR</button>}
                   {l.result==='PASS'&&<button className="btn-xs" onClick={()=>nav('/qm/certificates')}>Cert</button>}
+                  <button className="btn-xs"
+                    style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
+                    onClick={e=>deleteInspection(e,l)}>
+                    🗑 Delete
+                  </button>
                 </div>
               </td>
             </tr>

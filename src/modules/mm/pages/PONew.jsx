@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { mmApi } from '../services/mmApi'
 
@@ -159,6 +159,7 @@ function SupplierAddressPopup({ vendor, onSelect, onClose }) {
 // ── MAIN COMPONENT ─────────────────────────────────────────
 export default function PONew() {
   const nav = useNavigate()
+  const { id: editId } = useParams()  // present when editing existing PO
   const [searchParams] = useSearchParams()
   const [vendors,  setVendors]  = useState([])
   const [items,    setItems]    = useState([])
@@ -193,6 +194,93 @@ export default function PONew() {
     includeTarget:   false,
   })
 
+  // Load existing PO for editing
+  useEffect(() => {
+    if (!editId) return
+    const token = localStorage.getItem('lnv_token')
+    const BASE  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    fetch(`${BASE}/mm/po/${editId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.data) return
+        const po = d.data
+        // Store vendor info for matching after vendors list loads
+        window._editPOVendorCode = po.vendorCode || ''
+        window._editPOVendorName = po.vendorName || ''
+        window._editPO = po
+        setHdr(h => ({
+          ...h,
+          vendorCode:    po.vendorCode    || '',
+          vendorName:    po.vendorName    || '',
+          vendorGstin:   po.vendorGstin   || '',
+          poDate:        po.poDate ? po.poDate.split('T')[0] : h.poDate,
+          deliveryDate:  po.deliveryDate  ? po.deliveryDate.split('T')[0] : '',
+          paymentTerms:  po.paymentTerms  || '',
+          deliveryTerms: po.deliveryTerms || '',
+          prNo:          po.prNo          || '',
+          csNo:          po.csNo          || '',
+          referenceNo:   po.referenceNo   || '',
+          purchaseCategory: po.purchaseCategory || '',
+          remarks:       po.remarks       || '',
+          validTo:       po.validTo ? po.validTo.split('T')[0] : '',
+          termsConditions: po.termsConditions || '',
+          deliveryLocation: po.deliveryLocation || '',
+        }))
+        // Load additions/deductions
+        if (po.addDeductions) {
+          try {
+            const parsed = typeof po.addDeductions === 'string'
+              ? JSON.parse(po.addDeductions)
+              : po.addDeductions
+            if (Array.isArray(parsed)) setAddDeds(parsed)
+          } catch(e) {}
+        }
+
+        // Map PO lines to form lines
+        if (po.lines?.length) {
+          setLines(po.lines.map(l => ({
+            itemCode:    l.itemCode      || '',
+            itemName:    l.itemName      || '',
+            spec:        l.specification || '',
+            hsnCode:     l.hsnCode       || '',
+            qty:         parseFloat(l.qty || 1),
+            unit:        l.unit          || 'Nos',
+            rate:        parseFloat(l.rate || 0),
+            discPct:     parseFloat(l.discount || 0),
+            gstRate:     parseFloat(l.gstRate || 18),
+            supplyType:  'Intrastate',
+            freight:     parseFloat(l.freight      || 0),
+            packing:     parseFloat(l.packing      || 0),
+            insurance:   parseFloat(l.insurance    || 0),
+            otherCharges:parseFloat(l.otherCharges || 0),
+            showCharges: false,
+          })))
+        }
+      })
+      .catch(() => {})
+  }, [editId])
+
+  // Re-run vendor match when hdr.vendorName changes (edit loaded after vendors)
+  useEffect(() => {
+    if (!editId || !hdr.vendorName || selVendor) return
+    setVendors(prev => {
+      const matched = prev.find(v =>
+        (hdr.vendorCode && v.vendorCode === hdr.vendorCode) ||
+        (hdr.vendorName && v.vendorName?.toLowerCase() === hdr.vendorName?.toLowerCase())
+      )
+      if (matched) {
+        setSelVendor(matched)
+        setHdr(h => ({ ...h,
+          vendorCode:  matched.vendorCode,
+          vendorGstin: matched.gstin || h.vendorGstin || ''
+        }))
+      }
+      return prev
+    })
+  }, [hdr.vendorName, editId])
+
   useEffect(()=>{
     // Read CS data from sessionStorage IMMEDIATELY (before any async)
     let csData = null
@@ -210,6 +298,22 @@ export default function PONew() {
         const allVendors = vd.data || []
         const allItems   = id.data || []
         setVendors(allVendors)
+        // If in edit mode, auto-select vendor
+        // Auto-select vendor for edit mode - checked after vendors load
+        if (editId) {
+          const storedCode = window._editPOVendorCode
+          const storedName = window._editPOVendorName
+          if (storedCode || storedName) {
+            const matchedVendor = allVendors.find(v =>
+              v.vendorCode === storedCode ||
+              v.vendorName?.toLowerCase() === storedName?.toLowerCase()
+            )
+            if (matchedVendor) {
+              setSelVendor(matchedVendor)
+              setHdr(h => ({ ...h, vendorCode: matchedVendor.vendorCode }))
+            }
+          }
+        }
         setItems(allItems)
 
         // ── CS Data Auto-fill ─────────────────────────────
@@ -306,16 +410,37 @@ export default function PONew() {
     setLines(prev=>prev.map((l,idx)=>idx===i?{...l,[f]:v}:l))
 
   const onItemSelect = (i, code) => {
-    const item = items.find(it=>it.itemCode===code)
+    const item = items.find(it=>(it.itemCode||it.code||it.id)===code || (it.itemCode||it.code)===code)
     setLines(prev=>prev.map((l,idx)=>idx!==i?l:{
       ...l,
       itemCode:  code,
-      itemName:  item?.itemName||l.itemName,
-      hsnCode:   item?.hsnCode||'',   // ← HSN auto-load from master
-      unit:      item?.uom||l.unit,
-      rate:      parseFloat(item?.stdCost||l.rate)||0,
+      itemName:  item?.itemName || item?.name || l.itemName,
+      hsnCode:   item?.hsnCode  || '',
+      unit:      item?.uom      || l.unit,
+      rate:      parseFloat(item?.stdCost || l.rate) || 0,
+      showCharges: false,
     }))
+
+    // If HSN not in local list, fetch from /api/items by code
+    if (!item?.hsnCode && code) {
+      const token = localStorage.getItem('lnv_token')
+      const BASE  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+      fetch(`${BASE}/items?search=${code}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r=>r.json())
+        .then(d => {
+          const found = (d.data||[]).find(it => it.code === code)
+          if (found?.hsnCode) {
+            setLines(prev=>prev.map((l,idx)=>idx!==i?l:{...l, hsnCode: found.hsnCode}))
+          }
+        })
+        .catch(()=>{})
+    }
   }
+
+  const toggleCharges = i =>
+    setLines(p => p.map((l,j) => j===i ? {...l, showCharges: l.showCharges!==true} : l))
 
   const addLine = () => setLines(p=>[...p,{...EMPTY_LINE}])
   const delLine = i  => setLines(p=>p.filter((_,idx)=>idx!==i))
@@ -334,14 +459,14 @@ export default function PONew() {
       total: taxable+cgst+sgst+igst }
   }
 
-  const subTotal   = lines.reduce((s,l)=>s+calcLine(l).taxable,0)
-  const totalGST   = lines.reduce((s,l)=>{
-    const c=calcLine(l); return s+c.cgst+c.sgst+c.igst },0)
-  const addTotal   = addDeds.filter(a=>a.type==='Addition')
-    .reduce((s,a)=>s+parseFloat(a.amount||0),0)
-  const dedTotal   = addDeds.filter(a=>a.type==='Deduction')
-    .reduce((s,a)=>s+parseFloat(a.amount||0),0)
-  const grandTotal = subTotal+totalGST+addTotal-dedTotal
+  const subTotal      = lines.reduce((s,l)=>s+calcLine(l).taxable, 0)
+  const totalGST      = lines.reduce((s,l)=>{ const c=calcLine(l); return s+c.cgst+c.sgst+c.igst }, 0)
+  const totalCharges  = lines.reduce((s,l)=>s+(
+    parseFloat(l.freight||0)+parseFloat(l.packing||0)+
+    parseFloat(l.insurance||0)+parseFloat(l.otherCharges||0)), 0)
+  const addTotal      = addDeds.filter(a=>a.type==='Addition').reduce((s,a)=>s+parseFloat(a.amount||0),0)
+  const dedTotal      = addDeds.filter(a=>a.type==='Deduction').reduce((s,a)=>s+parseFloat(a.amount||0),0)
+  const grandTotal    = subTotal + totalGST + totalCharges + addTotal - dedTotal
 
   const save = async (status='DRAFT') => {
     if (!hdr.vendorCode) return toast.error('Select a vendor!')
@@ -350,21 +475,24 @@ export default function PONew() {
     try {
       const payload = {
         ...hdr,
-        vendorName:    selVendor?.vendorName||hdr.vendorCode,
-        vendorGstin:   selVendor?.gstin||'',
+        validTo:       hdr.validTo || null,
+        vendorName:    selVendor?.vendorName || hdr.vendorName || hdr.vendorCode,
+        vendorGstin:   selVendor?.gstin      || hdr.vendorGstin || '',
         lines,
         addDeductions: addDeds,
+        subTotal:      subTotal,
+        totalGST:      totalGST,
+        totalAmount:   grandTotal,
       }
-      const res  = await fetch(`${BASE_URL}/mm/po`,
-        { method:'POST', headers:authHdrs(),
-          body:JSON.stringify(payload) })
+      const url    = editId ? `${BASE_URL}/mm/po/${editId}` : `${BASE_URL}/mm/po`
+      const method = editId ? 'PATCH' : 'POST'
+      const res  = await fetch(url, { method, headers:authHdrs(), body:JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      if (status==='APPROVED') {
+      if (status==='APPROVED' && !editId) {
         await fetch(`${BASE_URL}/mm/po/${data.data.id}`,
           { method:'PATCH', headers:authHdrs(),
-            body:JSON.stringify({ status:'APPROVED',
-              approvedBy:'Admin' }) })
+            body:JSON.stringify({ status:'APPROVED', approvedBy:'Admin' }) })
       }
       toast.success(data.message)
       nav('/mm/po')
@@ -649,7 +777,7 @@ export default function PONew() {
                 borderBottom:'2px solid #E0D5E0' }}>
                 {['#','Item','HSN','Spec','Qty','Unit',
                   'Rate','Disc%','Taxable','GST%',
-                  'CGST','SGST','IGST','Total',''].map(h=>(
+                  'CGST','SGST','IGST','Charges','Total',''].map(h=>(
                   <th key={h} style={{ padding:'7px 8px',
                     fontSize:9, fontWeight:700, color:'#6C757D',
                     textAlign:'center', textTransform:'uppercase',
@@ -663,7 +791,8 @@ export default function PONew() {
               {lines.map((l,i)=>{
                 const c = calcLine(l)
                 return (
-                  <tr key={i} style={{
+                <React.Fragment key={i}>
+                  <tr style={{
                     borderBottom:'1px solid #F0EEF0',
                     background:i%2===0?'#fff':'#FDFBFD' }}>
                     <td style={{ padding:'4px 6px',
@@ -699,7 +828,7 @@ export default function PONew() {
                       )}
                     </td>
 
-                    {/* HSN — auto from master */}
+                    {/* HSN — auto from master, type manually if missing */}
                     <td style={{ padding:'3px 4px', width:80 }}>
                       <input style={{ width:'100%',
                         padding:'4px 5px',
@@ -744,19 +873,31 @@ export default function PONew() {
 
                     {/* Unit */}
                     <td style={{ padding:'3px 4px', width:65 }}>
-                      <select style={{ width:'100%',
-                        padding:'4px 3px',
-                        border:'1px solid #E0D5E0',
-                        borderRadius:4, fontSize:11 }}
-                        value={l.unit}
-                        onChange={e=>updateLine(i,
-                          'unit',e.target.value)}>
-                        {['Nos','Kg','Ltr','Mtr','Box','Set',
-                          'Pcs','MT','Roll','Pack','Sqft',
-                          'Rmt'].map(u=>(
-                          <option key={u}>{u}</option>
-                        ))}
-                      </select>
+                      {l.itemCode ? (
+                        // Read-only when item selected from master
+                        <div style={{ width:'100%', padding:'4px 5px',
+                          border:'1px solid #C8E6C9',
+                          borderRadius:4, fontSize:11,
+                          background:'#F1F8E9', color:'#2E7D32',
+                          fontWeight:600, textAlign:'center',
+                          boxSizing:'border-box' }}>
+                          {l.unit || 'Nos'}
+                        </div>
+                      ) : (
+                        // Editable for free-text items (no item code)
+                        <select style={{ width:'100%',
+                          padding:'4px 3px',
+                          border:'1px solid #E0D5E0',
+                          borderRadius:4, fontSize:11 }}
+                          value={l.unit}
+                          onChange={e=>updateLine(i,'unit',e.target.value)}>
+                          {['Nos','Kg','Ltr','Mtr','Box','Set',
+                            'Pcs','MT','Roll','Pack','Sqft',
+                            'Rmt'].map(u=>(
+                            <option key={u}>{u}</option>
+                          ))}
+                        </select>
+                      )}
                     </td>
 
                     {/* Rate */}
@@ -823,7 +964,20 @@ export default function PONew() {
                       </td>
                     ))}
 
-                    {/* Total */}
+                    {/* Per-line Charges */}
+                    <td style={{ padding:'3px 4px', width:90, textAlign:'center' }}>
+                      <button onClick={()=>toggleCharges(i)}
+                        style={{ fontSize:10, padding:'2px 8px',
+                          background: (l.freight||l.packing||l.insurance||l.otherCharges) ? '#FFF3CD' : '#F8F9FA',
+                          color: (l.freight||l.packing||l.insurance||l.otherCharges) ? '#856404' : '#6C757D',
+                          border:'1px solid #DEE2E6', borderRadius:4, cursor:'pointer', whiteSpace:'nowrap' }}>
+                        {(l.freight||l.packing||l.insurance||l.otherCharges)
+                          ? `₹${(parseFloat(l.freight||0)+parseFloat(l.packing||0)+parseFloat(l.insurance||0)+parseFloat(l.otherCharges||0)).toLocaleString('en-IN')}`
+                          : '+ Charges'}
+                      </button>
+                    </td>
+
+                    {/* Total (taxable + GST + charges) */}
                     <td style={{ padding:'4px 8px',
                       textAlign:'right',
                       fontFamily:'DM Mono,monospace',
@@ -836,17 +990,42 @@ export default function PONew() {
                     {/* Delete */}
                     <td style={{ padding:'3px 6px',
                       textAlign:'center', width:32 }}>
-                      {lines.length>1 && (
-                        <button onClick={()=>delLine(i)}
-                          style={{ background:'#DC3545',
-                            color:'#fff', border:'none',
-                            borderRadius:4, padding:'2px 6px',
-                            cursor:'pointer', fontSize:11 }}>
+                      <button onClick={()=>delLine(i)}
+                          style={{ background: lines.length===1 ? '#E9ECEF' : '#DC3545',
+                            color: lines.length===1 ? '#6C757D' : '#fff',
+                            border:'none', borderRadius:4, padding:'2px 6px',
+                            cursor: lines.length===1 ? 'not-allowed' : 'pointer',
+                            fontSize:11 }}
+                          disabled={lines.length===1}
+                          title={lines.length===1 ? 'Add another row first' : 'Remove row'}>
                           ✕
                         </button>
-                      )}
                     </td>
                   </tr>
+                  {l.showCharges && (
+                    <tr style={{ background:'#FFFEF0', borderBottom:'2px solid #FFEEBA' }}>
+                      <td colSpan={2} style={{ padding:'8px 12px', fontSize:11, fontWeight:700, color:'#856404' }}>
+                        Item {i+1} — Charges
+                      </td>
+                      {[['Freight','freight'],['Packing','packing'],['Insurance','insurance'],['Other','otherCharges']].map(([lb,key])=>(
+                        <td key={key} style={{ padding:'6px 8px' }}>
+                          <div style={{ fontSize:9, fontWeight:700, color:'#856404', marginBottom:2 }}>{lb}</div>
+                          <input type="number" min={0}
+                            style={{ width:'100%', padding:'3px 6px', border:'1px solid #FFEEBA',
+                              borderRadius:4, fontSize:11, textAlign:'right', fontFamily:'DM Mono,monospace',
+                              background:'#FFFDE7', boxSizing:'border-box' }}
+                            value={l[key]||0}
+                            onChange={e=>updateLine(i,key,e.target.value)} />
+                        </td>
+                      ))}
+                      <td colSpan={6} style={{ padding:'6px 12px', fontSize:11, color:'#856404' }}>
+                        <strong>Charges: {fmtC(parseFloat(l.freight||0)+parseFloat(l.packing||0)+parseFloat(l.insurance||0)+parseFloat(l.otherCharges||0))}</strong>
+                        &nbsp;·&nbsp;Landing: <strong style={{color:'#155724'}}>{fmtC(c.landingCost)}</strong>
+                        &nbsp;<button onClick={()=>toggleCharges(i)} style={{fontSize:10,color:'#856404',background:'none',border:'none',cursor:'pointer'}}>✕ Close</button>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
                 )
               })}
             </tbody>
@@ -998,14 +1177,13 @@ export default function PONew() {
           {sectionHdr('Amount Summary', '💰')}
           <div style={{ padding:16, background:'#fff' }}>
             {[
-              ['Sub Total (Taxable)', fmtC(subTotal), '#1C1C1C'],
-              ['Total GST',          fmtC(totalGST),  '#E06F39'],
+              ['Sub Total (Taxable)', fmtC(subTotal),     '#1C1C1C'],
+              ['Total GST',           fmtC(totalGST),     '#E06F39'],
+              ...(totalCharges>0 ? [['Total Charges (Freight/Pack/Ins)', fmtC(totalCharges), '#0C5460']] : []),
               ...(addDeds.filter(a=>a.type==='Addition')
-                .map(a=>[`+ ${a.description||'Addition'}`,
-                  fmtC(a.amount), '#0C5460'])),
+                .map(a=>[`+ ${a.description||'Addition'}`, fmtC(a.amount), '#0C5460'])),
               ...(addDeds.filter(a=>a.type==='Deduction')
-                .map(a=>[`− ${a.description||'Deduction'}`,
-                  fmtC(a.amount), '#DC3545'])),
+                .map(a=>[`− ${a.description||'Deduction'}`, fmtC(a.amount), '#DC3545'])),
             ].map(([l,v,c])=>(
               <div key={l} style={{ display:'flex',
                 justifyContent:'space-between',

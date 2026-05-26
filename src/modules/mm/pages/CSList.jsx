@@ -226,6 +226,12 @@ export default function CSList() {
                             🛒 PO
                           </button>
                         )}
+                        <button className="btn-xs"
+                          style={{ background:'#DC3545', color:'#fff',
+                            border:'none' }}
+                          onClick={e=>deleteCS(e, cs)}>
+                          🗑 Delete
+                        </button>
                       </div>
                     </td>
                   </tr>

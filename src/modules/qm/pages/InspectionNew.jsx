@@ -2,322 +2,836 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-const getToken = () => localStorage.getItem('lnv_token')
-const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
-const authHdrs2= () => ({ Authorization:`Bearer ${getToken()}` })
+const BASE   = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok    = () => localStorage.getItem('lnv_token')
+const hdr2   = () => ({ Authorization: `Bearer ${tok()}` })
+const hdrJ   = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${tok()}` })
+const api    = (path) => fetch(`${BASE}${path}`, { headers: hdr2() }).then(r => r.json())
 
-// Test parameters per product
-const TEST_PARAMS = {
-  'Ring Yarn (30s Count)': [
-    {param:'Count (Ne)',spec:'30s ± 0.3',unit:'Ne',result:'',limit_lo:29.7,limit_hi:30.3},
-    {param:'Tensile Strength (CSP)',spec:'≥ 2200',unit:'gf·tex',result:'',limit_lo:2200,limit_hi:9999},
-    {param:'Twist per Inch (TPI)',spec:'20.5 ± 0.5',unit:'TPI',result:'',limit_lo:20,limit_hi:21},
-    {param:'Unevenness (U%)',spec:'≤ 9.5',unit:'%',result:'',limit_lo:0,limit_hi:9.5},
-    {param:'Imperfections (IPI)',spec:'≤ 80',unit:'per 1km',result:'',limit_lo:0,limit_hi:80},
-    {param:'Elongation at Break',spec:'≥ 4.5',unit:'%',result:'',limit_lo:4.5,limit_hi:99},
-  ],
-  'Open End Yarn (12s)': [
-    {param:'Count (Ne)',spec:'12s ± 0.3',unit:'Ne',result:'',limit_lo:11.7,limit_hi:12.3},
-    {param:'Tensile Strength',spec:'≥ 1800 gf·tex',unit:'gf·tex',result:'',limit_lo:1800,limit_hi:9999},
-    {param:'Nep Count',spec:'≤ 200/km',unit:'nep/km',result:'',limit_lo:0,limit_hi:200},
-    {param:'Unevenness (U%)',spec:'≤ 12',unit:'%',result:'',limit_lo:0,limit_hi:12},
-    {param:'Moisture Content',spec:'8% ± 1',unit:'%',result:'',limit_lo:7,limit_hi:9},
-  ],
-  'Compact Cotton Sliver': [
-    {param:'Weight (Hank)',spec:'0.12 ± 0.003',unit:'g/m',result:'',limit_lo:0.117,limit_hi:0.123},
-    {param:'Nep Count',spec:'≤ 50/g',unit:'nep/g',result:'',limit_lo:0,limit_hi:50},
-    {param:'Trash Content',spec:'≤ 0.5%',unit:'%',result:'',limit_lo:0,limit_hi:0.5},
-    {param:'Moisture Content',spec:'8% ± 1',unit:'%',result:'',limit_lo:7,limit_hi:9},
-  ],
-}
+// Generic inspection params — used when no quality checksheet found for item
+const GENERIC_PARAMS = [
+  { param: 'Visual Inspection',       spec: 'No cracks, scratches, deformity', unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Quantity Verification',   spec: 'As per PO/DC',                    unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Dimensional Check',       spec: 'Within ± tolerance',              unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Surface Finish',          spec: 'No flash, sink marks',            unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Color / Appearance',      spec: 'As per approved sample',          unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Labelling / Marking',     spec: 'Correct label, legible',          unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+  { param: 'Packaging Condition',     spec: 'Sealed, no damage',               unit: 'Pass/Fail', limit_lo: 1, limit_hi: 1, isText: true },
+]
 
-const SOURCES = ['PP — Production WO','MM — Incoming GRN','SD — Pre-shipment']
+const SOURCES = ['MM — Incoming GRN', 'PP — Production WO', 'SD — Pre-shipment']
 
 export default function InspectionNew() {
-  const nav    = useNavigate()
-  const {id}   = useParams()
-  const [product, setProduct] = useState('Ring Yarn (30s Count)')
-  const [source,  setSource]  = useState('PP — Production WO')
-  const [tests,   setTests]   = useState(TEST_PARAMS['Ring Yarn (30s Count)'].map((t,i)=>({...t,id:i})))
-  const [qty,     setQty]     = useState('400')
-  const [saved,   setSaved]   = useState(false)
-  const [saving,  setSaving]  = useState(false)
-  const [lotNo,   setLotNo]   = useState('Auto-generated')
-  const [grns,    setGRNs]    = useState([])
-  const [selGRN,  setSelGRN]  = useState(null)
+  const nav       = useNavigate()
+  const { id }    = useParams()
+
+  // ── State ─────────────────────────────────────────
+  const [lotNo,       setLotNo]       = useState('Auto-generated')
+  const [source,      setSource]      = useState('MM — Incoming GRN')
+  const [grns,        setGRNs]        = useState([])
+  const [selGRN,      setSelGRN]      = useState(null)
+  const [selLineIdx,  setSelLineIdx]  = useState(0)   // which GRN line being inspected
+  const [inspectors,  setInspectors]  = useState([])
+  const [checksheets, setChecksheets] = useState([])
+  const [tests,       setTests]       = useState([])
+  const [remarks,     setRemarks]     = useState('')
+  const [saving,      setSaving]      = useState(false)
+  const [saved,        setSaved]       = useState(false)
+  const [savedLotNo,   setSavedLotNo]  = useState('')
+  const [inspectedLines, setInspectedLines] = useState({}) // { lineIdx: lotNo }
+  const [showNext,     setShowNext]    = useState(-1)  // index of next uninspected line
+
   const [hdr, setHdr] = useState({
-    refType:'', refNo:'', refId:'',
-    vendorName:'', batchNo:'',
-    inspector:'', qualityPlan:'',
-    inspDate: new Date().toISOString().split('T')[0],
+    inspDate:    new Date().toISOString().split('T')[0],
+    inspector:   '',
+    refType:     '',
+    refNo:       '',
+    refId:       '',
+    vendorName:  '',
+    vendorCode:  '',
+    itemCode:    '',
+    itemName:    '',
+    lotQty:      '',
+    unit:        'Nos',
+    batchNo:     '',
+    qualityPlan: '',
+    acceptedQty: '',
+    rejectedQty: '',
   })
 
-  useEffect(()=>{
-    fetch(`${BASE_URL}/qm/inspection/next-no`,
-      { headers:authHdrs2() })
-      .then(r=>r.json()).then(d=>setLotNo(d.lotNo||'QIL-AUTO'))
-      .catch(()=>{})
-    fetch(`${BASE_URL}/qm/pending-grns`,
-      { headers:authHdrs2() })
-      .then(r=>r.json()).then(d=>setGRNs(d.data||[]))
-      .catch(()=>{})
-    if (id) {
-      fetch(`${BASE_URL}/qm/inspection/${id}`,
-        { headers:authHdrs2() })
-        .then(r=>r.json())
-        .then(d=>{
-          if (d.data) {
-            setProduct(d.data.itemName)
-            setQty(d.data.lotQty)
-            setHdr(p=>({...p,...d.data}))
-            if (d.data.tests?.length>0) {
-              setTests(d.data.tests.map((t,i)=>({...t,id:i,
-                param:t.paramName, result:t.result||''})))
-            }
-          }
-        }).catch(()=>{})
-    }
-  },[id])
+  // ── On mount ───────────────────────────────────────
+  useEffect(() => {
+    // Lot number
+    api('/qm/inspection/next-no')
+      .then(d => setLotNo(d.lotNo || 'QIL-AUTO'))
+      .catch(() => {})
 
+    // Pending GRNs
+    api('/qm/pending-grns')
+      .then(d => setGRNs(d.data || []))
+      .catch(() => {})
+
+    // Inspectors
+    api('/qm/inspectors')
+      .then(d => setInspectors(d.data || []))
+      .catch(() => {})
+
+    // Quality checksheets
+    api('/qm/checksheets')
+      .then(d => setChecksheets(d.data || []))
+      .catch(() => {})
+
+    // If editing existing inspection
+    if (id) {
+      api(`/qm/inspection/${id}`)
+        .then(d => {
+          if (!d.data) return
+          const ins = d.data
+          setHdr(p => ({
+            ...p,
+            inspDate:    ins.inspDate?.split('T')[0] || p.inspDate,
+            inspector:   ins.inspector   || '',
+            refType:     ins.refType     || '',
+            refNo:       ins.refNo       || '',
+            refId:       String(ins.refId || ''),
+            vendorName:  ins.vendorName  || '',
+            vendorCode:  ins.vendorCode  || '',
+            itemCode:    ins.itemCode    || '',
+            itemName:    ins.itemName    || '',
+            lotQty:      String(ins.lotQty || ''),
+            unit:        ins.unit        || 'Nos',
+            batchNo:     ins.batchNo     || '',
+            qualityPlan: ins.qualityPlan || '',
+            acceptedQty: String(ins.passQty || ''),
+            rejectedQty: String(ins.failQty || ''),
+          }))
+          setLotNo(ins.lotNo || lotNo)
+          setRemarks(ins.remarks || '')
+          if (ins.tests?.length) {
+            setTests(ins.tests.map((t, i) => ({
+              id: i, param: t.paramName, spec: t.spec || '',
+              unit: t.unit || '', result: t.result || '',
+              limit_lo: parseFloat(t.limit_lo || 0),
+              limit_hi: parseFloat(t.limit_hi || 9999),
+              isText: t.isText || false,
+              status: t.status || 'PENDING',
+            })))
+          }
+          setSource('MM — Incoming GRN')
+        })
+        .catch(() => {})
+    } else {
+      // Start with empty — user must select GRN to load checksheet
+      setTests([])
+    }
+  }, [id])
+
+  // ── Load GRN ──────────────────────────────────────
   const loadGRN = (grnId) => {
-    const g = grns.find(g=>g.id===parseInt(grnId))
+    const g = grns.find(g => g.id === parseInt(grnId))
     if (!g) return
     setSelGRN(g)
-    const line = g.lines?.[0]
-    setProduct(line?.itemName||product)
-    setQty(String(parseFloat(line?.receivedQty||0)))
-    setHdr(p=>({...p,
-      refType:'GRN', refNo:g.grnNo, refId:g.id,
-      vendorName:g.vendorName||'',
-      batchNo:line?.batchNo||'',
-    }))
-    if (line?.itemName && TEST_PARAMS[line.itemName]) {
-      setTests(TEST_PARAMS[line.itemName].map((t,i)=>({...t,id:i,result:''})))
-    }
-    toast.success(`GRN ${g.grnNo} loaded`)
+    setSelLineIdx(0)
+    loadGRNLine(g, 0)
+    toast.success(`GRN ${g.grnNo} loaded — ${g.lines?.length || 0} item(s)`)
   }
 
-  const switchProduct = (p) => {
-    setProduct(p)
-    setTests((TEST_PARAMS[p] || TEST_PARAMS['Ring Yarn (30s Count)']).map((t,i)=>({...t,id:i})))
+  const loadGRNLine = (g, lineIdx) => {
+    const line = g?.lines?.[lineIdx]
+    if (!line) return
+    setHdr(p => ({
+      ...p,
+      refType:    'GRN',
+      refNo:      g.grnNo,
+      refId:      String(g.id),
+      vendorName: g.vendorName || '',
+      vendorCode: g.vendorCode || '',
+      itemCode:   line.itemCode || '',
+      itemName:   line.itemName || '',
+      lotQty:     String(parseFloat(line.receivedQty || 0)),
+      unit:       line.uom || line.unit || 'Nos',
+      batchNo:    line.batchNo || '',
+      // Default: all accepted, none rejected
+      acceptedQty: String(parseFloat(line.receivedQty || 0)),
+      rejectedQty: '0',
+    }))
+
+    // Load checksheet for this item
+    loadChecksheet(line.itemCode, line.itemName)
   }
-  const updateResult = (id, val) => setTests(tests.map(t => t.id===id ? {...t, result:val} : t))
+
+  const loadChecksheet = (itemCode, itemName) => {
+    if (!itemCode && !itemName) {
+      setTests(GENERIC_PARAMS.map((t, i) => ({ ...t, id: i, result: '' })))
+      return
+    }
+
+    api(`/qm/checksheets?itemCode=${encodeURIComponent(itemCode||'')}&itemName=${encodeURIComponent(itemName||'')}`)
+      .then(d => {
+        const matched = d.matched
+        if (matched?.parameters?.length) {
+          // Use checksheet parameters
+          const params = Array.isArray(matched.parameters)
+            ? matched.parameters
+            : JSON.parse(matched.parameters || '[]')
+          setTests(params.map((p, i) => ({
+            id: i,
+            param:    p.param    || p.paramName || p.name || '',
+            spec:     p.spec     || p.specification || '',
+            unit:     p.unit     || '',
+            result:   '',
+            limit_lo: parseFloat(p.limit_lo || p.limitLo || 0),
+            limit_hi: parseFloat(p.limit_hi || p.limitHi || 9999),
+            isText:   p.isText   || false,
+          })))
+          setHdr(p => ({ ...p, qualityPlan: matched.code + ' · ' + matched.name }))
+          toast(`Quality checksheet loaded: ${matched.name}`, { icon: '📋' })
+        } else {
+          // No checksheet found — leave empty, user creates Q plan first
+          setTests([])
+          setHdr(p => ({ ...p, qualityPlan: '' }))
+          toast('No quality plan found for this item. Add one in Quality Plans.', { icon: '⚠️' })
+        }
+      })
+      .catch(() => {
+        setTests([])
+      })
+  }
+
+  // ── Test result logic ──────────────────────────────
+  const updTest  = (id, val) =>
+    setTests(prev => prev.map(t => t.id === id ? { ...t, result: val } : t))
 
   const getStatus = (t) => {
+    if (!t.result) return null
+    if (t.isText) return ['pass','ok','yes','good','acceptable','✓'].includes(
+      t.result.toLowerCase().trim()) ? 'pass' : 'fail'
     const v = parseFloat(t.result)
-    if (!t.result || isNaN(v)) return null
+    if (isNaN(v)) return null
     return v >= t.limit_lo && v <= t.limit_hi ? 'pass' : 'fail'
   }
 
-  const allTested = tests.every(t => t.result !== '')
-  const failCount = tests.filter(t => getStatus(t) === 'fail').length
-  const overallResult = allTested ? (failCount === 0 ? 'Pass' : failCount <= 1 ? 'Review' : 'Fail') : null
+  const allTested   = tests.length > 0 && tests.every(t => t.result !== '')
+  const failCount   = tests.filter(t => getStatus(t) === 'fail').length
+  const passCount   = tests.filter(t => getStatus(t) === 'pass').length
+  const overallResult = allTested
+    ? failCount === 0 ? 'PASS' : failCount <= 1 ? 'REVIEW' : 'FAIL'
+    : 'PENDING'
 
-  if (saved) return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'16px'}}>
-      <div style={{fontSize:'48px'}}>{overallResult==='Pass'?'':overallResult==='Review'?'':''}</div>
-      <div style={{fontFamily:'Syne,sans-serif',fontSize:'20px',fontWeight:'800',
-        color:overallResult==='Pass'?'var(--odoo-green)':overallResult==='Review'?'var(--odoo-orange)':'var(--odoo-red)'}}>
-        QIL-049 — {overallResult || 'Saved'}!
+  // ── Save ──────────────────────────────────────────
+  const save = async () => {
+    if (!hdr.itemName)  return toast.error('Select a GRN line to inspect!')
+    if (!hdr.inspDate)  return toast.error('Inspection date required!')
+    // Validate accepted + rejected <= lot qty
+    const lotQtyN   = parseFloat(hdr.lotQty   || 0)
+    const acceptedN = parseFloat(hdr.acceptedQty || lotQtyN)
+    const rejectedN = parseFloat(hdr.rejectedQty || 0)
+    if (lotQtyN > 0 && (acceptedN + rejectedN) > lotQtyN) {
+      return toast.error(`Accepted (${acceptedN}) + Rejected (${rejectedN}) exceeds Lot Qty (${lotQtyN} ${hdr.unit})`)
+    }
+    setSaving(true)
+    try {
+      const lotQty = parseFloat(hdr.lotQty || 0)
+      const sampleQty = Math.ceil(lotQty * 0.05)
+      const passQty = hdr.acceptedQty ? parseFloat(hdr.acceptedQty) : lotQty * passCount / Math.max(tests.length, 1)
+      const failQty = hdr.rejectedQty ? parseFloat(hdr.rejectedQty) : lotQty * failCount / Math.max(tests.length, 1)
+
+      const payload = {
+        ...hdr,
+        source:     source.split(' ')[0],
+        refId:      hdr.refId ? parseInt(hdr.refId) : null,
+        lotQty,
+        sampleQty,
+        passQty,
+        failQty,
+        yieldPct:   lotQty > 0 ? Math.round((passQty / lotQty) * 100) : 0,
+        result:     overallResult,
+        status:     'CLOSED',
+        remarks,
+        inspector:  hdr.inspector,
+        tests: tests.map(t => ({
+          paramName: t.param,
+          spec:      t.spec,
+          unit:      t.unit,
+          limit_lo:  t.limit_lo,
+          limit_hi:  t.limit_hi,
+          isText:    t.isText || false,
+          result:    t.result,
+          status:    getStatus(t) === 'pass' ? 'PASS'
+                   : getStatus(t) === 'fail' ? 'FAIL' : 'PENDING',
+        }))
+      }
+
+      const url    = id ? `${BASE}/qm/inspection/${id}` : `${BASE}/qm/inspection`
+      const method = id ? 'PUT' : 'POST'
+      const res    = await fetch(url, { method, headers: hdrJ(), body: JSON.stringify(payload) })
+      const data   = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      const savedLot = data.data?.lotNo || lotNo
+
+      // Track this line as inspected
+      const updatedInspected = { ...inspectedLines, [selLineIdx]: savedLot }
+      setInspectedLines(updatedInspected)
+
+      const totalLines = selGRN?.lines?.length || 1
+      const doneCount  = Object.keys(updatedInspected).length
+      const allDone    = doneCount >= totalLines
+
+      // Update GRN status
+      if (hdr.refId && hdr.refType === 'GRN') {
+        const grnStatus = allDone
+          ? (overallResult === 'PASS' ? 'ACCEPTED' : overallResult === 'FAIL' ? 'REJECTED' : 'PARTIAL_ACCEPT')
+          : 'QC_PENDING'
+        await fetch(`${BASE}/mm/grn/${hdr.refId}/status`,
+          { method: 'PATCH', headers: hdrJ(),
+            body: JSON.stringify({ status: grnStatus }) })
+          .catch(() => {})
+      }
+
+      if (!allDone && selGRN) {
+        // Find next uninspected line
+        const nextIdx = selGRN.lines.findIndex((_, i) => updatedInspected[i] === undefined)
+        toast.success(`✅ ${savedLot} saved! Switching to next item...`)
+        // Stay on form — auto-switch to next item
+        setTimeout(() => {
+          setTests([])
+          setSelLineIdx(nextIdx)
+          loadGRNLine(selGRN, nextIdx)
+          setHdr(p => ({ ...p, acceptedQty: '', rejectedQty: '' }))
+          setRemarks('')
+        }, 800)
+        return
+      }
+
+      // All items done
+      setSavedLotNo(savedLot)
+      toast.success(data.message || `All ${totalLines} item(s) inspected!`)
+      setSaved(true)
+    } catch(e) { toast.error(e.message) }
+    finally { setSaving(false) }
+  }
+
+  // ── Saved screen ──────────────────────────────────
+  if (saved) {
+    const icon  = overallResult === 'PASS' ? '✅' : overallResult === 'REVIEW' ? '⚠️' : '❌'
+    const color = overallResult === 'PASS' ? '#155724' : overallResult === 'REVIEW' ? '#856404' : '#721C24'
+    const bg    = overallResult === 'PASS' ? '#D4EDDA' : overallResult === 'REVIEW' ? '#FFF3CD' : '#F8D7DA'
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
+        padding:'60px 20px', gap:16 }}>
+        <div style={{ fontSize:56 }}>{icon}</div>
+        <div style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:800, color }}>
+          {savedLotNo} — {overallResult}
+        </div>
+        <div style={{ fontSize:13, color:'#6C757D', textAlign:'center' }}>
+          <strong>{hdr.itemName}</strong> · {hdr.lotQty} {hdr.unit} inspected<br/>
+          {passCount} parameters passed · {failCount} failed
+          {hdr.vendorName && <> · Vendor: {hdr.vendorName}</>}
+        </div>
+        <div style={{ display:'flex', gap:12, padding:'12px 20px',
+          background: bg, borderRadius:8, marginTop:8, fontSize:13, color }}>
+          Accepted: <strong>{hdr.acceptedQty || hdr.lotQty} {hdr.unit}</strong>
+          &nbsp;|&nbsp;
+          Rejected: <strong>{hdr.rejectedQty || 0} {hdr.unit}</strong>
+        </div>
+        {/* Show inspected items summary */}
+        {Object.keys(inspectedLines).length > 0 && selGRN && (
+          <div style={{ background:'#F8F9FA', borderRadius:8, padding:'10px 16px',
+            fontSize:12, color:'#495057', marginTop:4 }}>
+            <strong>Inspected so far:</strong>
+            {selGRN.lines?.map((line, idx) => (
+              <div key={idx} style={{ display:'flex', gap:8, alignItems:'center', marginTop:4 }}>
+                <span>{inspectedLines[idx] ? '✅' : '⏳'}</span>
+                <span>{line.itemName}</span>
+                {inspectedLines[idx] && (
+                  <span style={{ color:'#6C757D', fontFamily:'DM Mono,monospace' }}>
+                    → {inspectedLines[idx]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Inspect next item button */}
+        {showNext >= 0 && selGRN?.lines?.[showNext] && (
+          <button className="btn btn-p sd-bsm"
+            style={{ background:'#714B67' }}
+            onClick={() => {
+              setSaved(false)
+              setSelLineIdx(showNext)
+              loadGRNLine(selGRN, showNext)
+              setTests([])
+            }}>
+            ▶ Inspect Next: {selGRN.lines[showNext]?.itemName}
+          </button>
+        )}
+
+        {(overallResult === 'FAIL' || overallResult === 'REVIEW') && (
+          <button className="btn btn-p sd-bsm"
+            onClick={() => nav('/qm/ncr/new')}>
+            🚨 Raise NCR
+          </button>
+        )}
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn btn-s sd-bsm"
+            onClick={() => nav('/qm/inspection')}>
+            ← Inspection List
+          </button>
+          <button className="btn btn-s sd-bsm"
+            onClick={() => {
+              setSaved(false)
+              setTests([])
+              setSelGRN(null)
+              setInspectedLines({})
+              setShowNext(false)
+              setHdr(p => ({ ...p, refId:'', refNo:'', itemName:'', itemCode:'',
+                lotQty:'', vendorName:'', acceptedQty:'', rejectedQty:'' }))
+            }}>
+            + New Inspection
+          </button>
+        </div>
       </div>
-      <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>
-        {qty} Kg inspected · {failCount} tests failed · Result: <strong>{overallResult}</strong>
-      </div>
-      {(overallResult==='Fail'||overallResult==='Review') && (
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/ncr/new')}> Raise NCR</button>
-      )}
-      {overallResult==='Pass' && (
-        <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/certificates')}> Issue Certificate</button>
-      )}
-      <div style={{display:'flex',gap:'10px'}}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>← Inspection List</button>
-        <button className="btn btn-s sd-bsm" onClick={() => { setSaved(false); setTests(TEST_PARAMS[product].map((t,i)=>({...t,id:i,result:''}))) }}>New Inspection</button>
-      </div>
-    </div>
-  )
+    )
+  }
+
+  const curLine = selGRN?.lines?.[selLineIdx]
 
   return (
     <div>
+      {/* Header bar */}
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">New Inspection Lot <small>QA01 · Inspection Recording</small></div>
+        <div className="fi-lv-title">
+          New Inspection Lot <small>QA01 · Inspection Recording</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}> Cancel</button>
-          <button className="btn btn-p sd-bsm" disabled={saving} onClick={async()=>{
-          setSaving(true)
-          try {
-            const passT = tests.filter(t=>getStatus(t)==='pass').length
-            const failT = tests.filter(t=>getStatus(t)==='fail').length
-            const yldPct= tests.length>0?Math.round(passT/tests.length*100):0
-            const res = await fetch(id?`${BASE_URL}/qm/inspection/${id}`:`${BASE_URL}/qm/inspection`,
-              { method:id?'PATCH':'POST', headers:authHdrs(),
-                body:JSON.stringify({
-                  ...hdr,
-                  source: source.split(' ')[0]||'PP',
-                  itemName:product,
-                  lotQty:parseFloat(qty||0),
-                  sampleQty:Math.ceil(parseFloat(qty||0)*0.05),
-                  passQty:parseFloat(qty||0)*passT/Math.max(tests.length,1),
-                  failQty:parseFloat(qty||0)*failT/Math.max(tests.length,1),
-                  yieldPct:yldPct,
-                  result:overallResult?.toUpperCase()||'PENDING',
-                  status:'OPEN',
-                  tests:tests.map(t=>({
-                    paramName:t.param, spec:t.spec, unit:t.unit,
-                    limit_lo:t.limit_lo, limit_hi:t.limit_hi,
-                    result:t.result,
-                    status:getStatus(t)==='pass'?'PASS':getStatus(t)==='fail'?'FAIL':'PENDING'
-                  }))
-                })})
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
-            toast.success(data.message)
-            setSaved(true)
-          } catch(e){ toast.error(e.message) } finally { setSaving(false) }
-        }}>
-        {saving?'⏳ Saving...':'Save & Result'}
-      </button>
+          <button className="btn btn-s sd-bsm"
+            onClick={() => nav('/qm/inspection')}>Cancel</button>
+          <button className="btn btn-p sd-bsm"
+            disabled={saving} onClick={save}>
+            {saving ? '⏳ Saving...' : '💾 Save & Result'}
+          </button>
         </div>
       </div>
 
-      {/* Header */}
+      {/* ── Inspection Header ── */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Inspection Header</div>
+        <div className="fi-form-sec-hdr">📋 Inspection Header</div>
         <div className="fi-form-sec-body">
+          {/* Row 1 */}
           <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Lot No.</label><input className="fi-form-ctrl" defaultValue="QIL-049" readOnly/></div>
-            <div className="fi-form-grp"><label>Inspection Date <span>*</span></label><input type="date" className="fi-form-ctrl" defaultValue="2025-03-01"/></div>
-            <div className="fi-form-grp"><label>Inspector</label>
-              <select className="fi-form-ctrl"><option>Rajesh Q. — QC Inspector</option><option>Kavitha M. — QC Lead</option><option>Suresh P. — Lab Tech</option></select>
+            <div className="fi-form-grp">
+              <label>Lot No.</label>
+              <input className="fi-form-ctrl" value={lotNo} readOnly
+                style={{ background:'#F8F9FA', fontFamily:'DM Mono,monospace',
+                  fontWeight:700 }} />
+            </div>
+            <div className="fi-form-grp">
+              <label>Inspection Date <span>*</span></label>
+              <input type="date" className="fi-form-ctrl"
+                value={hdr.inspDate}
+                onChange={e => setHdr(p => ({ ...p, inspDate: e.target.value }))} />
+            </div>
+            <div className="fi-form-grp">
+              <label>Inspector</label>
+              {inspectors.length > 0 ? (
+                <select className="fi-form-ctrl"
+                  value={hdr.inspector}
+                  onChange={e => setHdr(p => ({ ...p, inspector: e.target.value }))}>
+                  <option value="">-- Select Inspector --</option>
+                  {inspectors.map(ins => (
+                    <option key={ins.id} value={ins.name}>{ins.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input className="fi-form-ctrl"
+                  value={hdr.inspector}
+                  onChange={e => setHdr(p => ({ ...p, inspector: e.target.value }))}
+                  placeholder="Inspector name" />
+              )}
             </div>
           </div>
+
+          {/* Row 2 */}
           <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Source <span>*</span></label>
-              <select className="fi-form-ctrl" value={source} onChange={e=>setSource(e.target.value)}>
-                {SOURCES.map(s=><option key={s}>{s}</option>)}
+            <div className="fi-form-grp">
+              <label>Source <span>*</span></label>
+              <select className="fi-form-ctrl"
+                value={source}
+                onChange={e => setSource(e.target.value)}>
+                {SOURCES.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
-            <div className="fi-form-grp"><label>Reference (WO / GRN)</label>
+
+            <div className="fi-form-grp">
+              <label>Reference GRN <span>*</span></label>
               {source.startsWith('MM') ? (
                 <select className="fi-form-ctrl"
                   value={hdr.refId}
-                  onChange={e=>{ if(e.target.value) loadGRN(e.target.value) }}>
+                  onChange={e => { if (e.target.value) loadGRN(e.target.value) }}>
                   <option value="">-- Select GRN --</option>
-                  {grns.map(g=>(
+                  {grns.map(g => (
                     <option key={g.id} value={g.id}>
-                      {g.grnNo} · {g.vendorName}
+                      {g.grnNo} · {g.vendorName} · {g.lines?.length || 0} item(s)
                     </option>
                   ))}
                 </select>
               ) : (
                 <input className="fi-form-ctrl"
                   value={hdr.refNo}
-                  onChange={e=>setHdr(p=>({...p,refNo:e.target.value}))}
-                  placeholder="WO-2026-001" />
+                  onChange={e => setHdr(p => ({ ...p, refNo: e.target.value }))}
+                  placeholder="WO / DO number" />
               )}
             </div>
-            <div className="fi-form-grp"><label>Product / Material <span>*</span></label>
-              <select className="fi-form-ctrl" value={product} onChange={e=>switchProduct(e.target.value)}>
-                {Object.keys(TEST_PARAMS).map(p=><option key={p}>{p}</option>)}
-              </select>
+
+            <div className="fi-form-grp">
+              <label>Quality Plan</label>
+              <input className="fi-form-ctrl"
+                value={hdr.qualityPlan}
+                onChange={e => setHdr(p => ({ ...p, qualityPlan: e.target.value }))}
+                placeholder="Auto-loaded from checksheet"
+                style={{ background:'#F8F9FA', fontSize:11 }} />
             </div>
           </div>
-          <div className="fi-form-row">
-            <div className="fi-form-grp"><label>Lot Qty <span>*</span></label>
-              <div style={{display:'flex',gap:'8px'}}>
-                <input type="number" className="fi-form-ctrl" value={qty} onChange={e=>setQty(e.target.value)} style={{flex:1}}/>
-                <span style={{padding:'8px 12px',background:'#F8F9FA',border:'1px solid var(--odoo-border)',borderRadius:'5px',fontSize:'13px'}}>Kg</span>
+
+          {/* GRN line selector (when GRN has multiple items) */}
+          {selGRN?.lines?.length > 1 && (
+            <div className="fi-form-row">
+              <div className="fi-form-grp" style={{ gridColumn:'1 / -1' }}>
+                <label>Select Item to Inspect</label>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {selGRN.lines.map((line, idx) => {
+                    const isDone    = !!inspectedLines[idx]
+                    const isCurrent = selLineIdx === idx
+                    return (
+                      <button key={idx}
+                        onClick={() => {
+                          if (isDone) return // can't re-inspect
+                          setSelLineIdx(idx)
+                          loadGRNLine(selGRN, idx)
+                        }}
+                        style={{
+                          padding:'6px 14px', borderRadius:6, fontSize:12,
+                          cursor: isDone ? 'not-allowed' : 'pointer',
+                          fontWeight: isCurrent ? 700 : 400,
+                          background: isDone    ? '#D4EDDA'
+                                    : isCurrent ? '#714B67' : '#F8F4F8',
+                          color:      isDone    ? '#155724'
+                                    : isCurrent ? '#fff'    : '#714B67',
+                          border: `1.5px solid ${
+                            isDone    ? '#C3E6CB'
+                          : isCurrent ? '#714B67' : '#E0D5E0'}`,
+                          opacity: isDone ? 0.85 : 1,
+                        }}>
+                        {isDone ? '✅' : isCurrent ? '🔬' : '⏳'} {idx + 1}. {line.itemName}
+                        <span style={{ marginLeft:6, opacity:.7, fontSize:10 }}>
+                          {isDone
+                            ? inspectedLines[idx]
+                            : `${parseFloat(line.receivedQty||0)} ${line.uom||'Nos'}`}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
-            <div className="fi-form-grp"><label>Sample Size (AQL)</label>
-              <input className="fi-form-ctrl" value={Math.ceil(parseFloat(qty||0)*0.05)+' Kg (5%)'} readOnly style={{background:'#F8F9FA'}}/>
+          )}
+
+          {/* Row 3 — Item details (auto-filled from GRN) */}
+          <div className="fi-form-row" style={{
+            background:'#F8F4F8', border:'1px solid #E0D5E0',
+            borderRadius:8, padding:'10px 14px', margin:'4px 0' }}>
+            <div className="fi-form-grp">
+              <label>Item / Material</label>
+              <input className="fi-form-ctrl"
+                value={hdr.itemName}
+                onChange={e => setHdr(p => ({ ...p, itemName: e.target.value }))}
+                placeholder="Item name (auto-filled from GRN)"
+                style={{ fontWeight:600 }} />
             </div>
-            <div className="fi-form-grp"><label>Quality Plan</label>
-              <select className="fi-form-ctrl"><option>QP-001 · Ring Yarn Standard</option><option>QP-002 · OE Yarn Standard</option></select>
+            <div className="fi-form-grp">
+              <label>Vendor</label>
+              <input className="fi-form-ctrl"
+                value={hdr.vendorName} readOnly
+                style={{ background:'#F8F9FA', color:'#6C757D' }} />
+            </div>
+            <div className="fi-form-grp">
+              <label>Lot Qty & UOM</label>
+              <div style={{ display:'flex', gap:8 }}>
+                <input type="number" className="fi-form-ctrl" style={{ flex:2 }}
+                  value={hdr.lotQty}
+                  onChange={e => setHdr(p => ({ ...p, lotQty: e.target.value }))} />
+                <input className="fi-form-ctrl" style={{ flex:1,
+                  background:'#F1F8E9', color:'#2E7D32', fontWeight:700,
+                  textAlign:'center' }}
+                  value={hdr.unit} readOnly />
+              </div>
             </div>
           </div>
+
+          {/* Row 4 — Accepted/Rejected Qty with validation */}
+          {(() => {
+            const lotQtyN   = parseFloat(hdr.lotQty || 0)
+            const acceptedN = parseFloat(hdr.acceptedQty || 0)
+            const rejectedN = parseFloat(hdr.rejectedQty || 0)
+            const totalN    = acceptedN + rejectedN
+            const overLimit = totalN > lotQtyN && lotQtyN > 0
+            const notFull   = totalN < lotQtyN && lotQtyN > 0 && hdr.acceptedQty !== '' && hdr.rejectedQty !== ''
+            return (
+              <div>
+                <div className="fi-form-row">
+                  <div className="fi-form-grp">
+                    <label>Sample Size (5% AQL)</label>
+                    <input className="fi-form-ctrl" readOnly
+                      style={{ background:'#F8F9FA', color:'#6C757D' }}
+                      value={hdr.lotQty
+                        ? `${Math.ceil(parseFloat(hdr.lotQty) * 0.05)} ${hdr.unit} (5%)`
+                        : '—'} />
+                  </div>
+
+                  <div className="fi-form-grp">
+                    <label>
+                      Accepted Qty
+                      <span style={{ fontSize:10, color:'#6C757D', marginLeft:6 }}>
+                        max: {hdr.lotQty || 0} {hdr.unit}
+                      </span>
+                    </label>
+                    <input type="number" className="fi-form-ctrl"
+                      min={0} max={lotQtyN}
+                      value={hdr.acceptedQty}
+                      placeholder={hdr.lotQty || '0'}
+                      style={{ borderColor: parseFloat(hdr.acceptedQty) > lotQtyN ? '#DC3545' : '#28A745',
+                               background:  parseFloat(hdr.acceptedQty) > lotQtyN ? '#FFF5F5' : '#fff' }}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value || 0)
+                        // Auto-calc rejected = lotQty - accepted (can't go negative)
+                        const autoReject = Math.max(0, lotQtyN - val)
+                        setHdr(p => ({
+                          ...p,
+                          acceptedQty: e.target.value,
+                          rejectedQty: String(autoReject),
+                        }))
+                      }} />
+                  </div>
+
+                  <div className="fi-form-grp">
+                    <label>
+                      Rejected Qty
+                      <span style={{ fontSize:10, color:'#6C757D', marginLeft:6 }}>
+                        max: {hdr.lotQty || 0} {hdr.unit}
+                      </span>
+                    </label>
+                    <input type="number" className="fi-form-ctrl"
+                      min={0} max={lotQtyN}
+                      value={hdr.rejectedQty}
+                      placeholder="0"
+                      style={{ borderColor: rejectedN > lotQtyN ? '#DC3545' : '#856404',
+                               background:  rejectedN > lotQtyN ? '#FFF5F5' : '#fff' }}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value || 0)
+                        // Auto-calc accepted = lotQty - rejected
+                        const autoAccept = Math.max(0, lotQtyN - val)
+                        setHdr(p => ({
+                          ...p,
+                          rejectedQty: e.target.value,
+                          acceptedQty: String(autoAccept),
+                        }))
+                      }} />
+                  </div>
+                </div>
+
+                {/* Validation messages */}
+                {overLimit && (
+                  <div style={{ margin:'4px 0 8px', padding:'6px 12px',
+                    background:'#F8D7DA', border:'1px solid #F5C6CB',
+                    borderRadius:5, fontSize:12, color:'#721C24',
+                    display:'flex', alignItems:'center', gap:8 }}>
+                    ❌ <strong>Over limit!</strong> Accepted ({acceptedN}) + Rejected ({rejectedN}) = {totalN}
+                    &nbsp;exceeds Lot Qty ({lotQtyN} {hdr.unit})
+                  </div>
+                )}
+                {notFull && !overLimit && (
+                  <div style={{ margin:'4px 0 8px', padding:'6px 12px',
+                    background:'#FFF3CD', border:'1px solid #FFE69C',
+                    borderRadius:5, fontSize:12, color:'#856404',
+                    display:'flex', alignItems:'center', gap:8 }}>
+                    ⚠️ Accepted ({acceptedN}) + Rejected ({rejectedN}) = {totalN}
+                    &nbsp;— {lotQtyN - totalN} {hdr.unit} unaccounted
+                  </div>
+                )}
+                {!overLimit && !notFull && hdr.acceptedQty && (
+                  <div style={{ margin:'4px 0 8px', padding:'6px 12px',
+                    background:'#D4EDDA', border:'1px solid #C3E6CB',
+                    borderRadius:5, fontSize:12, color:'#155724' }}>
+                    ✅ {acceptedN} {hdr.unit} accepted + {rejectedN} {hdr.unit} rejected = {totalN} {hdr.unit} (matches lot qty)
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
 
-      {/* Test Parameters */}
+      {/* ── Test Parameters ── */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Test Parameters — {product}</div>
-        <div style={{padding:'0'}}>
+        <div className="fi-form-sec-hdr" style={{ display:'flex',
+          justifyContent:'space-between', alignItems:'center' }}>
+          <span>🔬 Test Parameters — {hdr.itemName || 'Select item'}</span>
+          <button onClick={() => setTests(p => [...p, {
+            id: Date.now(), param:'', spec:'', unit:'Pass/Fail',
+            result:'', limit_lo:0, limit_hi:9999, isText:true
+          }])} style={{ padding:'3px 12px', fontSize:11,
+            background:'#fff', border:'1px solid #C3E6CB',
+            borderRadius:4, cursor:'pointer', color:'#155724' }}>
+            + Add Row
+          </button>
+        </div>
+
+        {tests.length === 0 ? (
+          <div style={{ padding:30, textAlign:'center', color:'#6C757D',
+            background:'#FFFBF0', border:'1px solid #FFE69C',
+            borderRadius:6, margin:12 }}>
+            <div style={{ fontSize:28, marginBottom:8 }}>📋</div>
+            <div style={{ fontWeight:700, fontSize:13, color:'#856404',
+              marginBottom:4 }}>
+              No Quality Plan found for this item
+            </div>
+            <div style={{ fontSize:12, color:'#6C757D' }}>
+              Go to <strong>Quality → Planning → Quality Plans</strong> to create a checksheet for this part,
+              then re-open this inspection.
+            </div>
+            <div style={{ marginTop:10 }}>
+              <button onClick={() => setTests([{
+                id: Date.now(), param:'', spec:'', unit:'Pass/Fail',
+                result:'', limit_lo:0, limit_hi:9999, isText:true
+              }])}
+                style={{ padding:'5px 14px', fontSize:11, cursor:'pointer',
+                  background:'#fff', border:'1px solid #dee2e6',
+                  borderRadius:4, color:'#495057' }}>
+                + Add manual test row
+              </button>
+            </div>
+          </div>
+        ) : (
           <table className="fi-data-table">
-            <thead><tr>
-              <th>#</th><th>Test Parameter</th><th>Specification</th><th>Unit</th>
-              <th>Test Result</th><th>Status</th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Test Parameter</th>
+                <th>Specification</th>
+                <th>Unit</th>
+                <th>Result</th>
+                <th>Status</th>
+              </tr>
+            </thead>
             <tbody>
-              {tests.map((t,i)=>{
-                const status = getStatus(t)
+              {tests.map((t, i) => {
+                const st = getStatus(t)
                 return (
-                  <tr key={t.id} className={status==='pass'?'test-row-pass':status==='fail'?'test-row-fail':''}>
-                    <td style={{fontSize:'11px',fontWeight:'700',color:'var(--odoo-gray)'}}>{i+1}</td>
-                    <td><strong>{t.param}</strong></td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-blue)'}}>{t.spec}</td>
-                    <td style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{t.unit}</td>
+                  <tr key={t.id}
+                    className={st === 'pass' ? 'test-row-pass' : st === 'fail' ? 'test-row-fail' : ''}>
+                    <td style={{ fontSize:11, fontWeight:700, color:'#6C757D' }}>{i + 1}</td>
                     <td>
-                      <input type="number" placeholder="Enter result..."
-                        value={t.result}
-                        onChange={e => updateResult(t.id, e.target.value)}
-                        style={{
-                          width:'120px',
-                          border:`2px solid ${status==='pass'?'var(--odoo-green)':status==='fail'?'var(--odoo-red)':'var(--odoo-border)'}`,
-                          borderRadius:'5px',padding:'5px 8px',fontSize:'13px',fontWeight:'600',
-                          background: status==='pass'?'#F0FFF8':status==='fail'?'#FFF5F5':'#fff',
-                          fontFamily:'DM Mono,monospace'
-                        }}
-                      />
+                      <input value={t.param}
+                        onChange={e => updTest(t.id, undefined) || setTests(prev =>
+                          prev.map(tt => tt.id === t.id ? { ...tt, param: e.target.value } : tt))}
+                        style={{ border:'none', background:'transparent',
+                          fontWeight:600, width:'100%', outline:'none' }} />
+                    </td>
+                    <td style={{ fontFamily:'DM Mono,monospace', fontSize:12,
+                      color:'var(--odoo-blue)' }}>
+                      {t.spec}
+                    </td>
+                    <td style={{ fontSize:11, color:'#6C757D' }}>{t.unit}</td>
+                    <td>
+                      {t.isText ? (
+                        <select
+                          value={t.result}
+                          onChange={e => updTest(t.id, e.target.value)}
+                          style={{
+                            width: 110, padding:'4px 6px',
+                            border: `2px solid ${st === 'pass' ? '#28A745' : st === 'fail' ? '#DC3545' : '#dee2e6'}`,
+                            borderRadius: 5, fontSize: 12, fontWeight: 600,
+                            background: st === 'pass' ? '#F0FFF8' : st === 'fail' ? '#FFF5F5' : '#fff',
+                          }}>
+                          <option value="">-- Select --</option>
+                          <option value="pass">✅ Pass</option>
+                          <option value="fail">❌ Fail</option>
+                        </select>
+                      ) : (
+                        <input type="number"
+                          value={t.result}
+                          placeholder="Enter result"
+                          onChange={e => updTest(t.id, e.target.value)}
+                          style={{
+                            width: 110, padding:'5px 8px',
+                            border: `2px solid ${st === 'pass' ? '#28A745' : st === 'fail' ? '#DC3545' : '#dee2e6'}`,
+                            borderRadius: 5, fontSize: 13, fontWeight: 600,
+                            background: st === 'pass' ? '#F0FFF8' : st === 'fail' ? '#FFF5F5' : '#fff',
+                            fontFamily: 'DM Mono,monospace',
+                          }} />
+                      )}
                     </td>
                     <td>
-                      {status==='pass' && <span className="badge badge-pass">Pass</span>}
-                      {status==='fail' && <span className="badge badge-fail"> Fail</span>}
-                      {!status && <span style={{fontSize:'11px',color:'var(--odoo-gray)'}}>— Pending</span>}
+                      {st === 'pass' && <span className="badge badge-pass">Pass</span>}
+                      {st === 'fail' && <span className="badge badge-fail">Fail</span>}
+                      {!st && <span style={{ fontSize:11, color:'#6C757D' }}>— Pending</span>}
                     </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
+        )}
 
-          {/* Live result banner */}
-          {allTested && (
-            <div style={{
-              margin:'14px',padding:'12px 16px',borderRadius:'6px',display:'flex',alignItems:'center',gap:'12px',
-              background:overallResult==='Pass'?'#EAF9F6':overallResult==='Review'?'#FEF5E7':'#FDEDEC',
-              border:`1px solid ${overallResult==='Pass'?'#A2DED0':overallResult==='Review'?'#FAD7A0':'#F5B7B1'}`
-            }}>
-              <span style={{fontSize:'24px'}}>{overallResult==='Pass'?'':overallResult==='Review'?'':''}</span>
-              <div>
-                <div style={{fontWeight:'700',fontSize:'14px',color:overallResult==='Pass'?'var(--odoo-green)':overallResult==='Review'?'var(--odoo-orange)':'var(--odoo-red)'}}>
-                  Overall Result: {overallResult}
-                </div>
-                <div style={{fontSize:'12px',color:'var(--odoo-gray)',marginTop:'2px'}}>
-                  {tests.length - failCount} tests passed · {failCount} failed
-                  {failCount > 0 && ' — NCR recommended'}
-                </div>
+        {/* Live result banner */}
+        {allTested && (
+          <div style={{
+            margin:'14px', padding:'12px 16px', borderRadius:6,
+            display:'flex', alignItems:'center', gap:12,
+            background: overallResult === 'PASS' ? '#EAF9F6'
+              : overallResult === 'REVIEW' ? '#FEF5E7' : '#FDEDEC',
+            border: `1px solid ${overallResult === 'PASS' ? '#A2DED0'
+              : overallResult === 'REVIEW' ? '#FAD7A0' : '#F5B7B1'}`
+          }}>
+            <span style={{ fontSize:28 }}>
+              {overallResult === 'PASS' ? '✅' : overallResult === 'REVIEW' ? '⚠️' : '❌'}
+            </span>
+            <div>
+              <div style={{ fontWeight:700, fontSize:14,
+                color: overallResult === 'PASS' ? '#155724'
+                  : overallResult === 'REVIEW' ? '#856404' : '#721C24' }}>
+                Overall Result: {overallResult}
+              </div>
+              <div style={{ fontSize:12, color:'#6C757D', marginTop:2 }}>
+                {passCount} tests passed · {failCount} failed
+                {failCount > 0 && ' — NCR recommended'}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
+      {/* Remarks */}
       <div className="fi-form-sec">
-        <div className="fi-form-sec-hdr"> Remarks</div>
+        <div className="fi-form-sec-hdr">📝 Remarks</div>
         <div className="fi-form-sec-body">
-          <textarea className="fi-form-ctrl" rows={3} placeholder="Inspection remarks, visual observations, deviation notes..."></textarea>
+          <textarea className="fi-form-ctrl" rows={3}
+            value={remarks}
+            onChange={e => setRemarks(e.target.value)}
+            placeholder="Inspection remarks, visual observations, deviation notes..." />
         </div>
       </div>
 
+      {/* Footer */}
       <div className="fi-form-acts">
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}> Cancel</button>
-        <button className="btn btn-p sd-bsm" onClick={() => setSaved(true)}>Save & Result</button>
-        <div className="fi-status-flow">
-          <span className="fi-sf-step act"> Inspect</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step">Result</span><span className="fi-sf-arr">›</span>
-          <span className="fi-sf-step"> Certificate</span>
-        </div>
+        <button className="btn btn-s sd-bsm"
+          onClick={() => nav('/qm/inspection')}>Cancel</button>
+        <button className="btn btn-p sd-bsm"
+          disabled={saving} onClick={save}>
+          {saving ? '⏳ Saving...' : '💾 Save & Result'}
+        </button>
       </div>
     </div>
   )

@@ -384,7 +384,7 @@ export default function POView() {
             )}
           </button>
           <button className="btn btn-s sd-bsm"
-            onClick={()=>window.print()}>
+            onClick={()=>nav(`/print/po/${po.id}`)}>
             🖨️ Print PO
           </button>
           {!['CANCELLED','CLOSED','GRN_DONE'].includes(po.status) && (

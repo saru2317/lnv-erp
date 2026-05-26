@@ -34,6 +34,27 @@ export default function POList() {
 
   useEffect(()=>{ fetchPOs() }, [])
 
+  const cancelPO = async (e, po) => {
+    e.stopPropagation()
+    const nonCancellable = ['GRN_DONE', 'PARTIAL_GRN', 'CLOSED', 'CANCELLED']
+    if (nonCancellable.includes(po.status)) {
+      return toast.error(`Cannot cancel — goods already received against ${po.poNo}`)
+    }
+    if (!window.confirm(`Cancel ${po.poNo}? This will reset linked PR and CS status.`)) return
+    try {
+      const res  = await fetch(
+        `${import.meta.env.VITE_API_URL||'http://localhost:3000/api'}/mm/po/${po.id}/cancel`,
+        { method:'PATCH', headers:{
+            'Content-Type':'application/json',
+            Authorization:`Bearer ${localStorage.getItem('lnv_token')}` } }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      fetchPOs()
+    } catch(e) { toast.error(e.message) }
+  }
+
   const filtered = pos.filter(p => {
     const matchChip = chip==='all' ||
       (chip==='draft'    && p.status==='DRAFT') ||
@@ -139,12 +160,23 @@ export default function POList() {
                       <button className="btn-xs"
                         onClick={()=>nav(`/mm/po/${p.id}`)}>View</button>
                       {p.status==='DRAFT' && (
-                        <button className="btn-xs suc"
-                          onClick={e=>approve(e,p.id)}>Approve</button>
+                        <>
+                          <button className="btn-xs"
+                            onClick={()=>nav(`/mm/po/edit/${p.id}`)}>Edit</button>
+                          <button className="btn-xs suc"
+                            onClick={e=>approve(e,p.id)}>Approve</button>
+                        </>
                       )}
                       {p.status==='APPROVED' && (
                         <button className="btn-xs pri"
                           onClick={()=>nav(`/mm/grn/new?po=${p.id}`)}>GRN</button>
+                      )}
+                      {['DRAFT','APPROVED'].includes(p.status) && (
+                        <button className="btn-xs"
+                          style={{background:'#856404',color:'#fff',border:'none'}}
+                          onClick={e=>cancelPO(e,p)}>
+                          ✕ Cancel
+                        </button>
                       )}
                     </div>
                   </td>

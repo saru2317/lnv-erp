@@ -1,3 +1,9 @@
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2     = () => ({ Authorization: `Bearer ${localStorage.getItem('lnv_token')}` })
+
 // ════════════════════════════════════════════════════════════
 export function StockReport() {
   const [stock,   setStock]   = useState([])

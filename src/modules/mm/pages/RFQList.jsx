@@ -52,7 +52,9 @@ function RFQDetailModal({ rfq, onClose }) {
     const basic=q*r*(1-d/100)
     const gstAmt=basic*g/100
     const total=basic+gstAmt+pk+fr
-    return { basic, gstAmt, total, perUnit:q>0?total/q:0 }
+    // Landing Cost/Unit = Rate after Discount only (Freight & Packing excluded)
+    // Landing Cost/Unit = Net Rate + Packing/unit + Freight/unit (GST excluded)
+    return { basic, gstAmt, total, perUnit: r*(1-d/100) + pk + fr }
   }
 
   const vendorColors = ['#714B67','#0C5460','#856404','#155724']
@@ -829,6 +831,19 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
     validityDays:30, remarks:''
   })
 
+  // FIX: Only show vendors that were selected when this RFQ was created
+  const rfqVendorNames = (() => {
+    try { return JSON.parse(rfq.vendors || '[]') } catch { return [] }
+  })()
+  // Match by vendor name (case-insensitive) against master list
+  const rfqVendors = rfqVendorNames.length > 0
+    ? vendors.filter(v =>
+        rfqVendorNames.some(name =>
+          name.toLowerCase().trim() === (v.vendorName || '').toLowerCase().trim()
+        )
+      )
+    : vendors  // fallback: show all if rfq.vendors is empty
+
   const initLines = () => {
     const src = rfq.lines||[]
     if (src.length > 0) {
@@ -841,22 +856,66 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
     return [{itemName:'',spec:'',qty:1,unit:'Nos',rate:'',disc:'',packing:'',freight:'',gst:18}]
   }
 
-  const [rows, setRows]   = useState(initLines)
-  const [saving,setSaving]= useState(false)
+  const [rows, setRows]     = useState(initLines)
+  const [saving, setSaving] = useState(false)
+
+  // ── Consignment-level charges (lump sum for whole shipment) ──
+  const [consign, setConsign] = useState({
+    freight:  '',   // total freight for whole consignment e.g. ₹8,000
+    packing:  '',   // total packing/forwarding for whole consignment
+    distBy:   'qty' // 'qty' = split by quantity | 'value' = split by basic value
+  })
 
   const upd = (i,f,v) => setRows(p=>p.map((r,idx)=>idx===i?{...r,[f]:v}:r))
 
-  const calc = r => {
-    const q=parseFloat(r.qty||0), rt=parseFloat(r.rate||0)
-    const d=parseFloat(r.disc||0), g=parseFloat(r.gst||18)
-    const pk=parseFloat(r.packing||0), fr=parseFloat(r.freight||0)
-    const basic = q*rt*(1-d/100)
-    const gstAmt= basic*g/100
-    const total = basic+gstAmt+pk+fr
-    return { basic, gstAmt, total, perUnit:q>0?total/q:0 }
+  // ── Consignment charge allocation per row ─────────────────────
+  // Returns allocated freight+packing per unit for a given row
+  const allocConsign = (row) => {
+    const totalConsignFrt = parseFloat(consign.freight || 0)
+    const totalConsignPkg = parseFloat(consign.packing || 0)
+    const totalCharge     = totalConsignFrt + totalConsignPkg
+    if (totalCharge === 0) return 0
+
+    if (consign.distBy === 'qty') {
+      // Split by quantity: total charges ÷ total qty → per unit
+      const totalQty = rows.reduce((s,r) => s + parseFloat(r.qty||0), 0)
+      return totalQty > 0 ? totalCharge / totalQty : 0
+    } else {
+      // Split by value: allocate proportionally by each row's basic value
+      const totalBasic = rows.reduce((s,r) => {
+        const q=parseFloat(r.qty||0), rt=parseFloat(r.rate||0), d=parseFloat(r.disc||0)
+        return s + q*rt*(1-d/100)
+      }, 0)
+      const rowQty   = parseFloat(row.qty || 0)
+      const rowRt    = parseFloat(row.rate || 0)
+      const rowD     = parseFloat(row.disc || 0)
+      const rowBasic = rowQty * rowRt * (1 - rowD/100)
+      const share    = totalBasic > 0 ? rowBasic / totalBasic : 0
+      return rowQty > 0 ? (totalCharge * share) / rowQty : 0
+    }
+  }
+
+  const calc = (r) => {
+    const q  = parseFloat(r.qty||0)
+    const rt = parseFloat(r.rate||0)
+    const d  = parseFloat(r.disc||0)
+    const g  = parseFloat(r.gst||18)
+    // Per-line packing + freight (entered per unit in the row)
+    const pk = parseFloat(r.packing||0)
+    const fr = parseFloat(r.freight||0)
+    const basic   = q * rt * (1 - d/100)
+    const gstAmt  = basic * g / 100
+    // Consignment charge allocated to this row (per unit)
+    const consignPerUnit = allocConsign(r)
+    // Total invoice value for this line
+    const total   = basic + gstAmt + (pk + fr) * q
+    // Landing Cost/Unit = Net Rate + per-unit Pkg/Frt + allocated consignment per unit
+    const perUnit = rt*(1-d/100) + pk + fr + consignPerUnit
+    return { basic, gstAmt, total, perUnit, consignPerUnit }
   }
 
   const fmtC = n => !n||isNaN(n)?'—':'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+  const fmtN = n => isNaN(parseFloat(n))||parseFloat(n)===0 ? '—' : '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
 
   const save = async () => {
     if (!form.vendorName) return toast.error('Select vendor!')
@@ -864,7 +923,10 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
     try {
       const res = await fetch(`${BASE_URL}/mm/rfq/${rfq.id}/quote`,
         { method:'POST', headers:authHdrs(),
-          body:JSON.stringify({ ...form, lines:rows }) })
+          body:JSON.stringify({ ...form, lines:rows,
+            consignFreight: consign.freight,
+            consignPacking: consign.packing,
+            consignDistBy:  consign.distBy }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast.success(data.message)
@@ -872,65 +934,79 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
 
-  const inp2 = { width:'100%', padding:'4px 5px', border:'1px solid #C3E6CB',
-    borderRadius:4, fontSize:11, textAlign:'right',
-    fontFamily:'DM Mono,monospace', background:'#FFFDE7', outline:'none' }
+  const grandTotal   = rows.reduce((s,r) => s + calc(r).total, 0)
+  const grandLanding = rows.reduce((s,r) => s + calc(r).perUnit * parseFloat(r.qty||0), 0)
+  const totalConsignCharge = parseFloat(consign.freight||0) + parseFloat(consign.packing||0)
 
-  const grandTotal = rows.reduce((s,r)=>s+calc(r).total, 0)
+  const inp2 = { width:'100%', padding:'3px 5px', border:'1px solid #C3E6CB',
+    borderRadius:4, fontSize:11, textAlign:'right',
+    fontFamily:'DM Mono,monospace', background:'#FFFDE7', outline:'none',
+    boxSizing:'border-box' }
+  const inpL = { ...inp2, textAlign:'left' }
+  const lbl  = { fontSize:9, color:'#6C757D', fontWeight:700,
+    textTransform:'uppercase', letterSpacing:.3, display:'block', marginBottom:1 }
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)',
       display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
-      <div style={{ background:'#fff', borderRadius:10, width:'95%',
-        maxWidth:960, maxHeight:'90vh', display:'flex',
-        flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,.3)' }}>
+      <div style={{ background:'#fff', borderRadius:10,
+        width:'98vw', maxWidth:1280, maxHeight:'93vh',
+        display:'flex', flexDirection:'column',
+        boxShadow:'0 20px 60px rgba(0,0,0,.3)' }}>
 
         {/* Header */}
-        <div style={{ background:'#155724', padding:'12px 20px', flexShrink:0,
+        <div style={{ background:'#155724', padding:'10px 20px', flexShrink:0,
           display:'flex', justifyContent:'space-between', alignItems:'center',
           borderRadius:'10px 10px 0 0' }}>
-          <h3 style={{ color:'#fff', margin:0, fontSize:15,
-            fontFamily:'Syne,sans-serif', fontWeight:700 }}>
-            📥 Record Quotation — {rfq.rfqNo}
-          </h3>
+          <div>
+            <h3 style={{ color:'#fff', margin:0, fontSize:14,
+              fontFamily:'Syne,sans-serif', fontWeight:700 }}>
+              📥 Record Quotation — {rfq.rfqNo}
+            </h3>
+            <p style={{ color:'rgba(255,255,255,.65)', margin:'2px 0 0', fontSize:11 }}>
+              {rfq.subject||''} · {rfq.lines?.length||0} item(s)
+            </p>
+          </div>
           <span onClick={onCancel}
             style={{ color:'#fff', cursor:'pointer', fontSize:20 }}>✕</span>
         </div>
 
-        {/* Body - scrollable */}
-        <div style={{ overflowY:'auto', flex:1, padding:16 }}>
+        {/* Body */}
+        <div style={{ overflowY:'auto', flex:1, padding:'12px 16px' }}>
 
-          {/* Vendor + meta fields */}
-          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr',
-            gap:12, marginBottom:14 }}>
+          {/* Vendor + Meta — compact single row */}
+          <div style={{ display:'grid',
+            gridTemplateColumns:'2fr 1fr 1fr 1fr',
+            gap:10, marginBottom:12,
+            background:'#F8FFF8', borderRadius:8,
+            border:'1px solid #C3E6CB', padding:'10px 12px' }}>
             <div>
-              <label style={{ fontSize:10, fontWeight:700, color:'#495057',
-                display:'block', marginBottom:3, textTransform:'uppercase' }}>
-                Vendor / Supplier *
-              </label>
-              <select style={{ padding:'7px 10px', border:'1.5px solid #E0D5E0',
+              <label style={lbl}>Vendor / Supplier *</label>
+              <select style={{ padding:'5px 8px', border:'1.5px solid #E0D5E0',
                 borderRadius:5, fontSize:12, outline:'none', width:'100%',
                 cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}
                 value={form.vendorCode}
                 onChange={e=>{
-                  const v=vendors.find(vd=>vd.vendorCode===e.target.value)
+                  const v=rfqVendors.find(vd=>vd.vendorCode===e.target.value)
                   setForm(p=>({...p,vendorCode:e.target.value,vendorName:v?.vendorName||''}))
                 }}>
                 <option value="">-- Select Vendor --</option>
-                {vendors.map(v=>(
+                {rfqVendors.map(v=>(
                   <option key={v.vendorCode} value={v.vendorCode}>
                     {v.vendorCode} — {v.vendorName}
                   </option>
                 ))}
+                {rfqVendors.length===0 && (
+                  <option disabled>No vendors for this RFQ</option>
+                )}
               </select>
             </div>
             {[['Quote Ref','quoteRef','text','Ref No.'],
               ['Quote Date','quoteDate','date',''],
               ['Validity Days','validityDays','number','30']].map(([l,f,t,ph])=>(
               <div key={f}>
-                <label style={{ fontSize:10, fontWeight:700, color:'#495057',
-                  display:'block', marginBottom:3, textTransform:'uppercase' }}>{l}</label>
-                <input type={t} style={{ padding:'7px 10px',
+                <label style={lbl}>{l}</label>
+                <input type={t} style={{ padding:'5px 8px',
                   border:'1.5px solid #E0D5E0', borderRadius:5,
                   fontSize:12, outline:'none', width:'100%',
                   boxSizing:'border-box' }}
@@ -940,87 +1016,144 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
             ))}
           </div>
 
-          {/* Items table */}
-          <div style={{ border:'2px solid #155724', borderRadius:6,
-            marginBottom:14 }}>
-            <div style={{ background:'#155724', padding:'7px 12px',
-              display:'flex', justifyContent:'space-between',
-              alignItems:'center' }}>
-              <span style={{ color:'#fff', fontSize:12,
-                fontWeight:700 }}>📋 Item-wise Rates</span>
+          {/* Items Table — redesigned: 9 columns instead of 14 */}
+          <div style={{ border:'2px solid #155724', borderRadius:6, marginBottom:12 }}>
+            {/* Table header */}
+            <div style={{ background:'#155724', padding:'6px 12px',
+              display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>
+                📋 Item-wise Rates
+              </span>
               <button onClick={()=>setRows(p=>[...p,{
                 itemName:'',spec:'',qty:1,unit:'Nos',
                 rate:'',disc:'',packing:'',freight:'',gst:18
               }])} style={{ padding:'2px 10px', background:'rgba(255,255,255,.2)',
-                color:'#fff', border:'1px solid rgba(255,255,255,.5)',
+                color:'#fff', border:'1px solid rgba(255,255,255,.4)',
                 borderRadius:4, fontSize:11, cursor:'pointer' }}>
                 + Row
               </button>
             </div>
+
             <div style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse',
-                fontSize:11, minWidth:800 }}>
+                fontSize:11, tableLayout:'fixed' }}>
+                <colgroup>
+                  <col style={{ width:32 }} />      {/* # */}
+                  <col style={{ width:'22%' }} />    {/* Item + Spec stacked */}
+                  <col style={{ width:80 }} />       {/* Qty stacked with Unit */}
+                  <col style={{ width:90 }} />       {/* Rate stacked with Disc% */}
+                  <col style={{ width:90 }} />       {/* Packing stacked with Freight */}
+                  <col style={{ width:60 }} />       {/* GST% */}
+                  <col style={{ width:'13%' }} />    {/* Basic Amt */}
+                  <col style={{ width:'10%' }} />    {/* GST Amt */}
+                  <col style={{ width:'13%' }} />    {/* Total (incl. GST) */}
+                  <col style={{ width:'13%' }} />    {/* Landing/Unit ★ */}
+                  <col style={{ width:28 }} />       {/* Del */}
+                </colgroup>
                 <thead>
-                  <tr style={{ background:'#D4EDDA' }}>
-                    {['#','Item','Spec','Qty','Unit',
-                      'Rate','Disc%','Packing','Freight','GST%',
-                      'Basic','GST Amt','Total','Cost/Unit'].map(h=>(
-                      <th key={h} style={{ padding:'6px 8px', fontSize:10,
+                  <tr style={{ background:'#D4EDDA', borderBottom:'2px solid #C3E6CB' }}>
+                    {[
+                      ['#',            'center'],
+                      ['Item / Spec',  'left'  ],
+                      ['Qty / Unit',   'center'],
+                      ['Rate / Disc%', 'center'],
+                      ['Pkg / Frt ₹',  'center'],
+                      ['GST%',         'center'],
+                      ['Basic Amt',    'right' ],
+                      ['GST Amt',      'right' ],
+                      ['Total (GST)',  'right' ],
+                      ['★ Landing/Unit','right'],
+                      ['',             'center'],
+                    ].map(([h,a])=>(
+                      <th key={h} style={{ padding:'5px 6px', fontSize:9,
                         fontWeight:700, color:'#155724',
                         border:'1px solid #C3E6CB',
-                        textAlign:'center', whiteSpace:'nowrap' }}>{h}</th>
+                        textAlign:a, whiteSpace:'nowrap' }}>
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r,i)=>{
-                    const c = calc(r)
+                    const c   = calc(r)
+                    const has = parseFloat(r.rate||0) > 0
+                    const bg  = i%2===0 ? '#fff' : '#F8FFF8'
                     return (
-                      <tr key={i} style={{
-                        background:i%2===0?'#fff':'#F8FFF8' }}>
-                        <td style={{ padding:'4px 6px', textAlign:'center',
-                          border:'1px solid #E8F5E9',
-                          color:'#6C757D', fontWeight:700 }}>{i+1}</td>
-                        <td style={{ border:'1px solid #E8F5E9',
-                          padding:'3px 4px', minWidth:140 }}>
-                          <input style={{ ...inp2, textAlign:'left' }}
-                            value={r.itemName}
-                            placeholder="Item name"
+                      <tr key={i} style={{ background:bg,
+                        borderBottom:'1px solid #E8F5E9' }}>
+
+                        {/* # */}
+                        <td style={{ padding:'4px 4px', textAlign:'center',
+                          border:'1px solid #E8F5E9', color:'#6C757D',
+                          fontWeight:700, fontSize:11 }}>{i+1}</td>
+
+                        {/* Item Name + Spec (stacked) */}
+                        <td style={{ border:'1px solid #E8F5E9', padding:'3px 4px' }}>
+                          <input style={{ ...inpL, marginBottom:2 }}
+                            value={r.itemName} placeholder="Item name"
                             onChange={e=>upd(i,'itemName',e.target.value)} />
-                        </td>
-                        <td style={{ border:'1px solid #E8F5E9',
-                          padding:'3px 4px', minWidth:80 }}>
-                          <input style={{ ...inp2, textAlign:'left' }}
-                            value={r.spec}
+                          <input style={{ ...inpL, fontSize:10,
+                            background:'#F8F9FA', color:'#6C757D' }}
+                            value={r.spec} placeholder="Spec / brand (optional)"
                             onChange={e=>upd(i,'spec',e.target.value)} />
                         </td>
-                        <td style={{ border:'1px solid #E8F5E9',
-                          padding:'3px 4px', width:55 }}>
-                          <input type="number" style={inp2}
+
+                        {/* Qty + Unit (stacked) */}
+                        <td style={{ border:'1px solid #E8F5E9', padding:'3px 4px' }}>
+                          <input type="number" style={{ ...inp2, marginBottom:2 }}
                             value={r.qty} min={0}
                             onChange={e=>upd(i,'qty',e.target.value)} />
-                        </td>
-                        <td style={{ border:'1px solid #E8F5E9',
-                          padding:'3px 4px', width:60 }}>
-                          <select style={{ ...inp2, textAlign:'left' }}
+                          <select style={{ ...inpL, fontSize:10 }}
                             value={r.unit}
                             onChange={e=>upd(i,'unit',e.target.value)}>
-                            {['Nos','Kg','Ltr','Mtr','Box','Set','Pcs'].map(u=>(
+                            {['Nos','Kg','Ltr','Mtr','Box','Set','Pcs','MT','Roll'].map(u=>(
                               <option key={u}>{u}</option>
                             ))}
                           </select>
                         </td>
-                        {[['rate',70],['disc',45],['packing',60],['freight',60]].map(([f,w])=>(
-                          <td key={f} style={{ border:'1px solid #E8F5E9',
-                            padding:'3px 4px', width:w }}>
+
+                        {/* Rate + Disc% (stacked) */}
+                        <td style={{ border:'1px solid #E8F5E9', padding:'3px 4px' }}>
+                          <div style={{ display:'flex', alignItems:'center',
+                            gap:2, marginBottom:2 }}>
+                            <span style={{ ...lbl, marginBottom:0,
+                              whiteSpace:'nowrap' }}>₹</span>
                             <input type="number" style={inp2}
-                              value={r[f]} min={0}
-                              onChange={e=>upd(i,f,e.target.value)} />
-                          </td>
-                        ))}
-                        <td style={{ border:'1px solid #E8F5E9',
-                          padding:'3px 4px', width:55 }}>
-                          <select style={{ ...inp2, textAlign:'left' }}
+                              value={r.rate} placeholder="Rate" min={0}
+                              onChange={e=>upd(i,'rate',e.target.value)} />
+                          </div>
+                          <div style={{ display:'flex', alignItems:'center', gap:2 }}>
+                            <span style={{ ...lbl, marginBottom:0,
+                              whiteSpace:'nowrap' }}>D%</span>
+                            <input type="number" style={{ ...inp2, fontSize:10 }}
+                              value={r.disc} placeholder="0" min={0} max={100}
+                              onChange={e=>upd(i,'disc',e.target.value)} />
+                          </div>
+                        </td>
+
+                        {/* Packing + Freight (stacked) */}
+                        <td style={{ border:'1px solid #E8F5E9', padding:'3px 4px' }}>
+                          <div style={{ display:'flex', alignItems:'center',
+                            gap:2, marginBottom:2 }}>
+                            <span style={{ ...lbl, marginBottom:0,
+                              whiteSpace:'nowrap' }}>Pkg</span>
+                            <input type="number" style={{ ...inp2, fontSize:10 }}
+                              value={r.packing} placeholder="0" min={0}
+                              onChange={e=>upd(i,'packing',e.target.value)} />
+                          </div>
+                          <div style={{ display:'flex', alignItems:'center', gap:2 }}>
+                            <span style={{ ...lbl, marginBottom:0,
+                              whiteSpace:'nowrap' }}>Frt</span>
+                            <input type="number" style={{ ...inp2, fontSize:10 }}
+                              value={r.freight} placeholder="0" min={0}
+                              onChange={e=>upd(i,'freight',e.target.value)} />
+                          </div>
+                        </td>
+
+                        {/* GST% */}
+                        <td style={{ border:'1px solid #E8F5E9', padding:'3px 4px' }}>
+                          <select style={{ ...inpL, textAlign:'center' }}
                             value={r.gst}
                             onChange={e=>upd(i,'gst',e.target.value)}>
                             {[0,5,12,18,28].map(g=>(
@@ -1028,31 +1161,48 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
                             ))}
                           </select>
                         </td>
-                        <td style={{ padding:'4px 6px',
-                          border:'1px solid #E8F5E9',
+
+                        {/* Basic Amt */}
+                        <td style={{ padding:'4px 6px', border:'1px solid #E8F5E9',
                           textAlign:'right', fontFamily:'DM Mono,monospace',
-                          background:'#F8F9FA' }}>
-                          {parseFloat(r.rate||0)>0?fmtC(c.basic):'—'}
+                          background:'#F8F9FA', fontSize:12 }}>
+                          {has ? fmtC(c.basic) : '—'}
                         </td>
-                        <td style={{ padding:'4px 6px',
-                          border:'1px solid #E8F5E9',
+
+                        {/* GST Amt */}
+                        <td style={{ padding:'4px 6px', border:'1px solid #E8F5E9',
                           textAlign:'right', fontFamily:'DM Mono,monospace',
-                          color:'#E06F39', background:'#FFF8F0' }}>
-                          {parseFloat(r.rate||0)>0?fmtC(c.gstAmt):'—'}
+                          color:'#E06F39', background:'#FFF8F0', fontSize:11 }}>
+                          {has ? fmtC(c.gstAmt) : '—'}
                         </td>
-                        <td style={{ padding:'4px 6px',
-                          border:'1px solid #E8F5E9',
+
+                        {/* Total incl. GST */}
+                        <td style={{ padding:'4px 6px', border:'1px solid #E8F5E9',
                           textAlign:'right', fontFamily:'DM Mono,monospace',
                           fontWeight:700, color:'#714B67',
-                          background:'#EDE0EA' }}>
-                          {parseFloat(r.rate||0)>0?fmtC(c.total):'—'}
+                          background:'#EDE0EA', fontSize:12 }}>
+                          {has ? fmtC(c.total) : '—'}
                         </td>
-                        <td style={{ padding:'4px 6px',
-                          border:'1px solid #E8F5E9',
+
+                        {/* ★ Landing Cost/Unit (excl. GST) */}
+                        <td style={{ padding:'4px 6px', border:'1px solid #E8F5E9',
                           textAlign:'right', fontFamily:'DM Mono,monospace',
-                          fontWeight:700, color:'#155724',
-                          background:'#D4EDDA' }}>
-                          {parseFloat(r.rate||0)>0?fmtC(c.perUnit):'—'}
+                          fontWeight:800, color:'#155724',
+                          background:'#D4EDDA', fontSize:12 }}>
+                          {has ? fmtC(c.perUnit) : '—'}
+                        </td>
+
+                        {/* Delete row */}
+                        <td style={{ padding:'2px 3px', border:'1px solid #E8F5E9',
+                          textAlign:'center' }}>
+                          {rows.length > 1 && (
+                            <button onClick={()=>setRows(p=>p.filter((_,idx)=>idx!==i))}
+                              style={{ background:'#DC3545', color:'#fff',
+                                border:'none', borderRadius:3,
+                                padding:'2px 5px', cursor:'pointer', fontSize:11 }}>
+                              ✕
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -1061,20 +1211,164 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
                 <tfoot>
                   <tr style={{ background:'#D4EDDA',
                     borderTop:'2px solid #155724' }}>
-                    <td colSpan={11} style={{ padding:'7px 10px',
+                    <td colSpan={6} style={{ padding:'6px 10px',
                       fontWeight:700, fontSize:12, color:'#155724',
                       border:'1px solid #C3E6CB' }}>
-                      Grand Total
+                      Grand Total (incl. GST) &nbsp;·&nbsp;
+                      <span style={{ fontWeight:400, fontSize:10, color:'#495057' }}>
+                        ★ Landing cost excludes GST (ITC recoverable)
+                      </span>
                     </td>
-                    <td colSpan={3} style={{ padding:'7px 10px',
-                      textAlign:'right', fontFamily:'DM Mono,monospace',
-                      fontWeight:800, fontSize:14, color:'#155724',
-                      border:'1px solid #C3E6CB' }}>
+                    <td style={{ padding:'6px 8px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:12,
+                      color:'#6C757D', border:'1px solid #C3E6CB',
+                      background:'#F8F9FA' }}>
+                      {fmtC(rows.reduce((s,r)=>s+calc(r).basic, 0))}
+                    </td>
+                    <td style={{ padding:'6px 8px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontSize:12,
+                      color:'#E06F39', border:'1px solid #C3E6CB',
+                      background:'#FFF8F0' }}>
+                      {fmtC(rows.reduce((s,r)=>s+calc(r).gstAmt, 0))}
+                    </td>
+                    <td style={{ padding:'6px 8px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontWeight:800,
+                      fontSize:14, color:'#714B67',
+                      border:'1px solid #C3E6CB', background:'#EDE0EA' }}>
                       {fmtC(grandTotal)}
+                    </td>
+                    <td colSpan={2} style={{ padding:'6px 8px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontWeight:800,
+                      fontSize:13, color:'#155724',
+                      border:'1px solid #C3E6CB', background:'#D4EDDA' }}>
+                      ★ {fmtC(grandLanding / Math.max(1, rows.length))} avg
                     </td>
                   </tr>
                 </tfoot>
               </table>
+            </div>
+          </div>
+
+          {/* ── Consignment-level Charges Section ─────────────────── */}
+          <div style={{ border:'2px solid #856404', borderRadius:8,
+            marginBottom:12, overflow:'hidden' }}>
+            {/* Header */}
+            <div style={{ background:'#856404', padding:'7px 14px',
+              display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div>
+                <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>
+                  🚚 Consignment-level Charges
+                </span>
+                <span style={{ color:'rgba(255,255,255,.7)', fontSize:10,
+                  marginLeft:8 }}>
+                  (Lump-sum for whole shipment — auto-splits to per-unit landing cost)
+                </span>
+              </div>
+              {totalConsignCharge > 0 && (
+                <span style={{ background:'rgba(255,255,255,.2)',
+                  color:'#fff', fontSize:11, fontWeight:700,
+                  padding:'2px 10px', borderRadius:12 }}>
+                  Total: {fmtC(totalConsignCharge)}
+                </span>
+              )}
+            </div>
+
+            <div style={{ padding:'12px 14px', background:'#FFFBF0' }}>
+              <div style={{ display:'grid',
+                gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:12,
+                alignItems:'flex-end' }}>
+
+                {/* Total Freight */}
+                <div>
+                  <label style={{ fontSize:10, fontWeight:700,
+                    color:'#856404', display:'block', marginBottom:3,
+                    textTransform:'uppercase' }}>
+                    Total Freight / Forwarding (₹)
+                  </label>
+                  <input type="number" min={0}
+                    style={{ padding:'6px 8px', border:'1.5px solid #FFE69C',
+                      borderRadius:5, fontSize:12, outline:'none',
+                      width:'100%', boxSizing:'border-box',
+                      background:'#fff', fontFamily:'DM Mono,monospace',
+                      textAlign:'right' }}
+                    placeholder="e.g. 8000"
+                    value={consign.freight}
+                    onChange={e=>setConsign(p=>({...p,freight:e.target.value}))} />
+                </div>
+
+                {/* Total Packing */}
+                <div>
+                  <label style={{ fontSize:10, fontWeight:700,
+                    color:'#856404', display:'block', marginBottom:3,
+                    textTransform:'uppercase' }}>
+                    Total Packing / Handling (₹)
+                  </label>
+                  <input type="number" min={0}
+                    style={{ padding:'6px 8px', border:'1.5px solid #FFE69C',
+                      borderRadius:5, fontSize:12, outline:'none',
+                      width:'100%', boxSizing:'border-box',
+                      background:'#fff', fontFamily:'DM Mono,monospace',
+                      textAlign:'right' }}
+                    placeholder="e.g. 2000"
+                    value={consign.packing}
+                    onChange={e=>setConsign(p=>({...p,packing:e.target.value}))} />
+                </div>
+
+                {/* Distribution Method */}
+                <div>
+                  <label style={{ fontSize:10, fontWeight:700,
+                    color:'#856404', display:'block', marginBottom:3,
+                    textTransform:'uppercase' }}>
+                    Split Method
+                  </label>
+                  <select
+                    style={{ padding:'6px 8px', border:'1.5px solid #FFE69C',
+                      borderRadius:5, fontSize:12, outline:'none',
+                      width:'100%', cursor:'pointer', background:'#fff' }}
+                    value={consign.distBy}
+                    onChange={e=>setConsign(p=>({...p,distBy:e.target.value}))}>
+                    <option value="qty">By Quantity (÷ total qty)</option>
+                    <option value="value">By Value (proportional to basic amt)</option>
+                  </select>
+                  <div style={{ fontSize:9, color:'#856404', marginTop:3 }}>
+                    {consign.distBy==='qty'
+                      ? `₹${totalConsignCharge} ÷ ${rows.reduce((s,r)=>s+parseFloat(r.qty||0),0)} units`
+                      : 'Proportional to each item basic value'}
+                  </div>
+                </div>
+
+                {/* Allocation Preview */}
+                <div style={{ background:'#FFF3CD', borderRadius:6,
+                  padding:'8px 10px', border:'1px solid #FFE69C' }}>
+                  <div style={{ fontSize:9, fontWeight:700, color:'#856404',
+                    textTransform:'uppercase', marginBottom:4 }}>
+                    Allocated per unit
+                  </div>
+                  {rows.map((r,i)=>(
+                    <div key={i} style={{ display:'flex',
+                      justifyContent:'space-between', fontSize:10,
+                      color:'#495057', marginBottom:2 }}>
+                      <span style={{ color:'#6C757D',
+                        overflow:'hidden', textOverflow:'ellipsis',
+                        whiteSpace:'nowrap', maxWidth:120 }}>
+                        {r.itemName||`Item ${i+1}`}
+                      </span>
+                      <strong style={{ fontFamily:'DM Mono,monospace',
+                        color:'#856404', marginLeft:6 }}>
+                        {totalConsignCharge > 0
+                          ? fmtC(calc(r).consignPerUnit)
+                          : '—'}
+                      </strong>
+                    </div>
+                  ))}
+                  {totalConsignCharge === 0 && (
+                    <div style={{ fontSize:10, color:'#999',
+                      fontStyle:'italic' }}>
+                      Enter amounts above to see allocation
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1094,20 +1388,20 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding:'12px 20px', borderTop:'1px solid #E0D5E0',
+        <div style={{ padding:'10px 20px', borderTop:'1px solid #E0D5E0',
           flexShrink:0, display:'flex', justifyContent:'space-between',
-          alignItems:'center', background:'#F8F7FA',
+          alignItems:'center', background:'#F8FFF8',
           borderRadius:'0 0 10px 10px' }}>
           <div style={{ fontSize:11, color:'#6C757D' }}>
-            💡 Record all vendor quotes → Create CS to compare
+            ★ Landing Cost/Unit = (Rate after Disc%) + Packing + Freight — GST excluded (ITC)
           </div>
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={onCancel}
-              style={{ padding:'8px 20px', background:'#fff', color:'#6C757D',
+              style={{ padding:'7px 18px', background:'#fff', color:'#6C757D',
                 border:'1.5px solid #E0D5E0', borderRadius:6,
                 fontSize:13, cursor:'pointer' }}>Cancel</button>
             <button onClick={save} disabled={saving}
-              style={{ padding:'8px 24px',
+              style={{ padding:'7px 22px',
                 background:saving?'#999':'#155724', color:'#fff',
                 border:'none', borderRadius:6, fontSize:13,
                 fontWeight:700, cursor:'pointer' }}>
@@ -1119,7 +1413,6 @@ function QuoteModal({ rfq, vendors, onSave, onCancel }) {
     </div>
   )
 }
-
 
 // ── MAIN RFQ LIST ─────────────────────────────────────────
 export default function RFQList() {

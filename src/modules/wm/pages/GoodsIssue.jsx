@@ -14,6 +14,7 @@ const lbl = { fontSize:10, fontWeight:700, color:'#495057',
 export default function GoodsIssue() {
   const nav = useNavigate()
   const [items,   setItems]   = useState([])
+  const [wos,     setWOs]     = useState([])   // Work Orders
   const [saving,  setSaving]  = useState(false)
   const [giNo,    setGiNo]    = useState('Auto-generated')
   const [lines,   setLines]   = useState([
@@ -32,7 +33,47 @@ export default function GoodsIssue() {
       .then(r=>r.json()).then(d=>setItems(d.data||[])).catch(()=>{})
     fetch(`${BASE_URL}/wm/gi/next-no`, { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setGiNo(d.giNo||'GI-AUTO')).catch(()=>{})
+    // Load open Work Orders
+    fetch(`${BASE_URL}/production/work-orders?status=RELEASED,IN_PROGRESS,PLANNED`,
+      { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setWOs(d.data||d||[])).catch(()=>{})
   },[])
+
+  // When WO selected — auto-fill reference and load BOM materials as issue lines
+  const onWOChange = async (woNo) => {
+    setForm(f => ({ ...f, reference: woNo }))
+    if (!woNo) return
+    try {
+      const wo = wos.find(w => w.woNo === woNo)
+      if (!wo) return
+      // Load BOM for this WO's product
+      const bomRes = await fetch(
+        `${BASE_URL}/production/bom-items?bomId=${wo.bomId||''}`,
+        { headers: authHdrs2() })
+      const bomData = await bomRes.json()
+      const bomItems = bomData.data || bomData || []
+      if (bomItems.length > 0) {
+        // Map BOM items to issue lines — check stock availability
+        const newLines = bomItems.map(bItem => {
+          const stockItem = items.find(it =>
+            it.itemCode === bItem.itemCode ||
+            it.itemName?.toLowerCase() === bItem.itemName?.toLowerCase()
+          )
+          const needed = parseFloat(bItem.qty || 0) * parseFloat(wo.planQty || 1) / parseFloat(bItem.bomQty || 1)
+          return {
+            itemCode: bItem.itemCode || stockItem?.itemCode || '',
+            itemName: bItem.itemName || bItem.description || '',
+            availQty: parseFloat(stockItem?.balanceQty || 0),
+            qty:      parseFloat(needed.toFixed(3)),
+            uom:      bItem.uom || stockItem?.uom || 'Nos',
+            remarks:  `For WO: ${woNo}`
+          }
+        })
+        setLines(newLines)
+        toast.success(`${bomItems.length} BOM material(s) loaded from WO`)
+      }
+    } catch { /* BOM not available — manual entry */ }
+  }
 
   const onItemChange = (i, code) => {
     const item = items.find(it=>it.itemCode===code)
@@ -167,10 +208,29 @@ export default function GoodsIssue() {
                 </select>
               </div>
               <div>
-                <label style={lbl}>Reference (WO / SO)</label>
-                <input style={inp} value={form.reference}
-                  placeholder="WO-2026-001 / SO-2026-001"
-                  onChange={e=>setForm(f=>({...f,reference:e.target.value}))} />
+                <label style={lbl}>Work Order Reference *</label>
+                {wos.length > 0 ? (
+                  <select style={{ ...inp, cursor:'pointer' }}
+                    value={form.reference}
+                    onChange={e => onWOChange(e.target.value)}>
+                    <option value="">-- Select Work Order --</option>
+                    {wos.map(wo => (
+                      <option key={wo.id} value={wo.woNo}>
+                        {wo.woNo} · {wo.productName || wo.itemName} · Qty: {wo.planQty} {wo.uom}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input style={inp} value={form.reference}
+                    placeholder="WO-2026-001 (no open WOs found)"
+                    onChange={e=>setForm(f=>({...f,reference:e.target.value}))} />
+                )}
+                {form.reference && (
+                  <div style={{ fontSize:10, color:'#155724', marginTop:3,
+                    fontFamily:'DM Mono,monospace' }}>
+                    ✅ {form.reference} selected — BOM materials auto-loaded
+                  </div>
+                )}
               </div>
               <div>
                 <label style={lbl}>Issued By</label>

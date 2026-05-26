@@ -11,40 +11,83 @@ export default function GRNNew() {
   const nav = useNavigate()
   const [params] = useSearchParams()
   const [pos,     setPOs]    = useState([])
+  const [items,   setItems]  = useState([])   // item master for UOM lookup
   const [selPO,   setSelPO]  = useState(null)
   const [saving,  setSaving] = useState(false)
   const [lines,   setLines]  = useState([])
   const [hdr,     setHdr]    = useState({
     poId:'', poNo:'', vendorName:'', grnDate: new Date().toISOString().split('T')[0],
     dcNo:'', vehicleNo:'', receivedAt:'Ranipet Main Store', remarks:'',
-    csNo:'', prNo:''   // reference chain
+    csNo:'', prNo:''
   })
 
   useEffect(()=>{
-    mmApi.getPOList()  // load all POs, filter relevant ones
-      .then(d=>setPOs(d.data||[]))
+    // Load approved POs and item master in parallel
+    Promise.all([
+      mmApi.getPOList('?status=APPROVED,PARTIAL_GRN'),
+      mmApi.getItems()
+    ])
+      .then(([posRes, itemsRes]) => {
+        setPOs(posRes.data || [])
+        setItems(itemsRes.data || [])
+      })
       .catch(()=>{})
-    // If PO pre-selected from POList
+
+    // Pre-select PO if coming from POList
     const prePoId = params.get('po')
     if (prePoId) loadPO(parseInt(prePoId))
   }, [])
+
+  // FIX: resolve UOM from item master — don't trust PO line unit
+  const resolveUOM = (itemCode, poLineUnit) => {
+    if (!itemCode) return poLineUnit || 'Nos'
+    const master = items.find(it =>
+      (it.itemCode || it.code) === itemCode
+    )
+    return master?.uom || poLineUnit || 'Nos'
+  }
 
   const loadPO = async (id) => {
     try {
       const data = await mmApi.getPO(id)
       const po   = data.data
+
+      // Also ensure item master is loaded before mapping lines
+      let itemMaster = items
+      if (!itemMaster.length) {
+        try {
+          const itemsRes = await mmApi.getItems()
+          itemMaster = itemsRes.data || []
+          setItems(itemMaster)
+        } catch {}
+      }
+
       setSelPO(po)
       setHdr(p=>({ ...p, poId:po.id, poNo:po.poNo, vendorName:po.vendorName,
         csNo:po.csNo||'', prNo:po.prNo||'' }))
-      setLines(po.lines.map((l,i)=>({
-        lineNo:i+1, poLineId:l.id,
-        itemCode:l.itemCode||'', itemName:l.itemName,
-        orderedQty:parseFloat(l.qty||0),
-        alreadyRecv:parseFloat(l.receivedQty||0),
-        receivedQty:parseFloat(l.pendingQty||0),
-        unit:l.unit||'Nos',
-        quality:'Accepted', binLocation:'', remarks:''
-      })))
+
+      setLines(po.lines.map((l,i)=>{
+        // Resolve UOM: item master > PO line unit > fallback 'Nos'
+        const masterItem = itemMaster.find(it =>
+          (it.itemCode || it.code) === l.itemCode
+        )
+        const resolvedUnit = masterItem?.uom || l.unit || 'Nos'
+
+        return {
+          lineNo:      i+1,
+          poLineId:    l.id,
+          itemCode:    l.itemCode || '',
+          itemName:    l.itemName,
+          orderedQty:  parseFloat(l.qty || 0),
+          alreadyRecv: parseFloat(l.receivedQty || 0),
+          receivedQty: parseFloat(l.pendingQty || 0),
+          unit:        resolvedUnit,   // FIX: from item master
+          rate:        parseFloat(l.rate || 0),
+          quality:     'Accepted',
+          binLocation: '',
+          remarks:     ''
+        }
+      }))
     } catch(e){ toast.error(e.message) }
   }
 
@@ -59,6 +102,8 @@ export default function GRNNew() {
   const save = async (status='POSTED') => {
     if (!hdr.vendorName) return toast.error('Select a PO first!')
     if (!lines.length)   return toast.error('No items to receive!')
+    const hasQty = lines.some(l=>parseFloat(l.receivedQty||0)>0)
+    if (!hasQty) return toast.error('Enter received qty for at least one item!')
     setSaving(true)
     try {
       const data = await mmApi.createGRN({
@@ -67,11 +112,16 @@ export default function GRNNew() {
         csNo: hdr.csNo || selPO?.csNo || '',
         status,
         lines: lines.map(l=>({
-          lineNo:l.lineNo, poLineId:l.poLineId||null,
-          itemCode:l.itemCode, itemName:l.itemName,
-          orderedQty:l.orderedQty, receivedQty:l.receivedQty,
-          unit:l.unit, quality:l.quality,
-          binLocation:l.binLocation, remarks:l.remarks
+          lineNo:      l.lineNo,
+          poLineId:    l.poLineId || null,
+          itemCode:    l.itemCode,
+          itemName:    l.itemName,
+          orderedQty:  l.orderedQty,
+          receivedQty: parseFloat(l.receivedQty || 0),
+          unit:        l.unit,
+          quality:     l.quality,
+          binLocation: l.binLocation,
+          remarks:     l.remarks
         }))
       })
       toast.success(data.message)
@@ -100,6 +150,7 @@ export default function GRNNew() {
       {/* GRN Header */}
       <div className="mm-fs">
         <div className="mm-fsh">GRN Header — Link to Purchase Order</div>
+
         {/* Reference Chain Banner */}
         {(hdr.prNo || hdr.csNo || hdr.poNo) && (
           <div style={{background:'#EBF5FB',borderBottom:'1px solid #AED6F1',
@@ -132,6 +183,7 @@ export default function GRNNew() {
             </span>
           </div>
         )}
+
         <div className="mm-fsb">
           <div className="mm-fr3">
             <div className="mm-fg"><label>GRN Number</label>
@@ -143,7 +195,7 @@ export default function GRNNew() {
               <select style={{ ...inp, cursor:'pointer' }}
                 value={hdr.poId}
                 onChange={onPOChange}>
-                <option value="">-- Select PO --</option>
+                <option value="">-- Select Approved PO --</option>
                 {pos.map(p=>(
                   <option key={p.id} value={p.id}>
                     {p.poNo} · {p.vendorName} · ₹{Number(p.totalAmount||0).toLocaleString('en-IN')}
@@ -165,9 +217,9 @@ export default function GRNNew() {
           </div>
           <div className="mm-fr3">
             <div className="mm-fg"><label>Received at Location</label>
-              <select style={inp}
+              <select style={inp} value={hdr.receivedAt}
                 onChange={e=>setHdr(p=>({...p,receivedAt:e.target.value}))}>
-                {['Ranipet Main Store','Warehouse B','Production Floor'].map(l=>(
+                {['Ranipet Main Store','Warehouse B','Production Floor','QC Store'].map(l=>(
                   <option key={l}>{l}</option>
                 ))}
               </select></div>
@@ -185,24 +237,38 @@ export default function GRNNew() {
         <div className="mm-fsb" style={{ padding:0 }}>
           {lines.length===0 ? (
             <div style={{ padding:30, textAlign:'center', color:'#6C757D' }}>
-              Select a PO above to load items
+              Select an approved PO above to load items
             </div>
           ) : (
             <div className="mm-lt-wrap">
               <table className="mm-lt">
                 <thead>
                   <tr>
-                    <th>#</th><th>Material</th><th>PO Qty</th>
-                    <th>Already Recv.</th><th>Recv. Qty</th>
-                    <th>Unit</th><th>Quality</th>
-                    <th>Bin / Loc.</th><th>Remarks</th>
+                    <th>#</th>
+                    <th>Material</th>
+                    <th>PO Qty</th>
+                    <th>Already Recv.</th>
+                    <th>Recv. Qty</th>
+                    <th>Unit</th>
+                    <th>Quality</th>
+                    <th>Bin / Loc.</th>
+                    <th>Remarks</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lines.map((l,i)=>(
                     <tr key={i}>
                       <td>{i+1}</td>
-                      <td style={{ fontWeight:600 }}>{l.itemName}</td>
+                      <td style={{ fontWeight:600 }}>
+                        {l.itemName}
+                        {l.itemCode && (
+                          <span style={{ fontSize:10, color:'#6C757D',
+                            display:'block', fontWeight:400,
+                            fontFamily:'DM Mono,monospace' }}>
+                            {l.itemCode}
+                          </span>
+                        )}
+                      </td>
                       <td style={{ color:'#6C757D', textAlign:'center' }}>
                         {l.orderedQty} {l.unit}</td>
                       <td style={{ color:'#856404', textAlign:'center' }}>
@@ -210,13 +276,17 @@ export default function GRNNew() {
                       <td>
                         <input type="number"
                           value={l.receivedQty} min={0}
-                          max={l.orderedQty-l.alreadyRecv}
-                          style={{ width:70, fontSize:11,
+                          max={l.orderedQty - l.alreadyRecv}
+                          style={{ width:80, fontSize:11,
                             border:'1px solid #E0D5E0', borderRadius:4,
-                            padding:'3px 5px' }}
+                            padding:'4px 6px', textAlign:'right' }}
                           onChange={e=>updateLine(i,'receivedQty',e.target.value)} />
                       </td>
-                      <td>{l.unit}</td>
+                      {/* FIX: show resolved UOM from item master */}
+                      <td style={{ fontWeight:600, color:'#714B67',
+                        textAlign:'center', fontSize:11 }}>
+                        {l.unit}
+                      </td>
                       <td>
                         <select style={{ width:115, fontSize:11,
                           border:'1px solid #E0D5E0', borderRadius:4,
@@ -247,6 +317,20 @@ export default function GRNNew() {
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr style={{ background:'#F8F4F8', borderTop:'2px solid #E0D5E0' }}>
+                    <td colSpan={4} style={{ padding:'8px 12px',
+                      fontWeight:700, fontSize:12, color:'#714B67' }}>
+                      Total to receive this GRN
+                    </td>
+                    <td style={{ padding:'8px 12px', fontWeight:800,
+                      color:'#155724', fontFamily:'DM Mono,monospace',
+                      textAlign:'right' }}>
+                      {lines.reduce((s,l)=>s+parseFloat(l.receivedQty||0),0).toFixed(3)}
+                    </td>
+                    <td colSpan={4} />
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}

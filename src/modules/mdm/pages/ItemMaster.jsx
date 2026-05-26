@@ -186,9 +186,6 @@ export default function ItemMaster() {
     }
   }
 
-  useEffect(() => { fetchItems(); fetchMasters() }, [])
-
-
   // ── Fetch HSN/SAC from backend master (NOT hardcoded) ───
   const fetchHsnSac = async () => {
     try {
@@ -287,7 +284,26 @@ export default function ItemMaster() {
       location:      item.location      || '',
       binBox:        item.binBox        || '',
       desc:          item.description   || item.desc     || '',
-      hsnNo:         item.hsnCode       || item.hsnNo    || '',
+      hsnNo:         String(item.hsnCode || item.hsnNo || ''),
+      // Auto-populate GST from hsnList, fallback to 18%/9%/9% if HSN exists
+      igst: (() => {
+        const code = String(item.hsnCode || item.hsnNo || '')
+        if (!code) return ''
+        const found = hsnList.find(h => h.code === code || code.startsWith(h.code) || h.code.startsWith(code))
+        return found ? String(found.igst) : '18'
+      })(),
+      cgst: (() => {
+        const code = String(item.hsnCode || item.hsnNo || '')
+        if (!code) return ''
+        const found = hsnList.find(h => h.code === code || code.startsWith(h.code) || h.code.startsWith(code))
+        return found ? String(found.cgst) : '9'
+      })(),
+      sgst: (() => {
+        const code = String(item.hsnCode || item.hsnNo || '')
+        if (!code) return ''
+        const found = hsnList.find(h => h.code === code || code.startsWith(h.code) || h.code.startsWith(code))
+        return found ? String(found.sgst) : '9'
+      })(),
       stdRate:       item.stdCost       != null ? String(item.stdCost)  : '',
       mrpRate:       item.mrp           != null ? String(item.mrp)      : '',
       minimumStock:  item.minStock      != null ? String(item.minStock)  : '',
@@ -803,14 +819,28 @@ export default function ItemMaster() {
                       style={{ ...inp, fontFamily:'DM Mono,monospace' }}
                       value={form.hsnNo ?? ''}
                       onChange={e => onHsnChange(e.target.value)}
-                      list="hsnDatalist"
-                      placeholder="Type HSN code or description..."
+                      placeholder="Type HSN code (e.g. 39071000)"
                     />
-                    <datalist id="hsnDatalist">
-                      {hsnList.map(h => (
-                        <option key={h.code} value={h.code}>{h.code} — {h.desc}</option>
-                      ))}
-                    </datalist>
+                    {form.hsnNo && (
+                      <div style={{ fontSize:10, color:'#6C757D', marginTop:3 }}>
+                        {hsnList.find(h=>h.code===String(form.hsnNo))?.desc || 'Code saved — type to search'}
+                      </div>
+                    )}
+                    {form.hsnNo?.length >= 2 && !hsnList.find(h=>h.code===form.hsnNo) && (
+                      <div style={{ background:'#fff', border:'1px solid #E0D5E0', borderRadius:4,
+                        maxHeight:120, overflowY:'auto', fontSize:11, marginTop:2 }}>
+                        {hsnList.filter(h=>h.code.startsWith(form.hsnNo)||
+                          h.desc.toLowerCase().includes(form.hsnNo.toLowerCase())
+                        ).slice(0,6).map(h=>(
+                          <div key={h.code} onClick={()=>onHsnChange(h.code)}
+                            style={{ padding:'4px 8px', cursor:'pointer', borderBottom:'1px solid #F0EEF0' }}
+                            onMouseEnter={e=>e.target.style.background='#F8F4F8'}
+                            onMouseLeave={e=>e.target.style.background='#fff'}>
+                            <strong>{h.code}</strong> — {h.desc}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </FG>
                   <FG label="IGST %">
                     <input style={inp} type="number"

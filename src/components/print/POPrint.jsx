@@ -1,189 +1,294 @@
 /**
- * POPrint — Purchase Order (A4)
+ * POPrint — Purchase Order Print (A4)
+ * Route: /print/po/:id
+ * Fetches real PO data from API
  */
-import React from 'react'
-import PrintWrapper from './PrintWrapper'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
 
 const COMPANY = {
-  name:'LNV Manufacturing Pvt. Ltd.',
-  gstin:'33AABCL1234F1Z5', pan:'AABCL1234F',
-  addr:'Plot No. 42, SIDCO Industrial Estate, Ranipet — 632401, Tamil Nadu',
-  phone:'+91 99440 01234', email:'purchase@lnvmfg.com',
+  name:    'LNV Manufacturing Pvt. Ltd.',
+  addr:    'Plot No. 42, SIDCO Industrial Estate, Ranipet — 632401, Tamil Nadu',
+  gstin:   '33AABCL1234F1Z5',
+  phone:   '+91 99440 01234',
+  email:   'purchase@lnvmfg.com',
+  web:     'www.lnvmfg.com',
+  state:   'Tamil Nadu',
+  stateCode: '33',
 }
 
-const SAMPLE_PO = {
-  poNo:'PO-2026-0089', date:'17 Mar 2026', validTill:'31 Mar 2026',
-  prRef:'PR-2026-042', payTerms:'Net 30 days', deliveryBy:'25 Mar 2026',
-  deliveryTo:'Factory — Plot 42, SIDCO, Ranipet',
-  vendor:{
-    name:'Lakshmi Textile Mills', gstin:'33AAACL1234F1Z5',
-    addr:'12, Industrial Estate, Coimbatore — 641021, Tamil Nadu',
-    contact:'Mr. Rajan — +91 98765 43210',
-  },
-  lines:[
-    {sl:1, code:'RM-001', desc:'Powder Coat — RAL 9005 Black', unit:'Kg', qty:500, rate:1600, gstPct:18, taxable:800000, gst:144000, total:944000},
-    {sl:2, code:'RM-002', desc:'Powder Coat — RAL 9010 White', unit:'Kg', qty:300, rate:1600, gstPct:18, taxable:480000, gst:86400,  total:566400},
-    {sl:3, code:'SP-001', desc:'Masking Tape 25mm x 50m',      unit:'Roll',qty:200,rate:85,   gstPct:12, taxable:17000,  gst:2040,   total:19040},
-  ],
-  remarks:'Please ensure quality certificate with each lot. Delivery in factory hours 9AM–5PM only.',
-  approvedBy:'Saravana Kumar', designation:'Purchase Manager',
+const fmt  = n => Number(n||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
+const fmtQ = n => Number(n||0).toLocaleString('en-IN', { maximumFractionDigits:3 })
+
+function numToWords(n) {
+  const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+    'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
+  const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
+  const w = n => {
+    if (n < 20) return a[n]
+    if (n < 100) return b[Math.floor(n/10)] + (n%10 ? ' '+a[n%10] : '')
+    if (n < 1000) return a[Math.floor(n/100)]+' Hundred'+(n%100?' '+w(n%100):'')
+    if (n < 100000) return w(Math.floor(n/1000))+' Thousand'+(n%1000?' '+w(n%1000):'')
+    if (n < 10000000) return w(Math.floor(n/100000))+' Lakh'+(n%100000?' '+w(n%100000):'')
+    return w(Math.floor(n/10000000))+' Crore'+(n%10000000?' '+w(n%10000000):'')
+  }
+  const r = Math.round(n)
+  return 'Rupees ' + w(r) + ' Only'
 }
 
-const fmt = n => n?.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})
-const th = (align='center') => ({ padding:'7px 8px', border:'1px solid #bbb', background:'#1A5276', color:'#fff', fontSize:10, fontWeight:700, textAlign:align })
-const td = (align='center') => ({ padding:'6px 8px', border:'1px solid #ddd', fontSize:10, textAlign:align, verticalAlign:'middle' })
+export default function POPrint() {
+  const { id } = useParams()
+  const nav    = useNavigate()
+  const [po,   setPo]  = useState(null)
+  const [load, setLoad]= useState(true)
 
-export default function POPrint({ po, onClose }) {
-  const data = po || SAMPLE_PO
-  const totals = data.lines.reduce((a,l)=>({
-    taxable:a.taxable+l.taxable, gst:a.gst+l.gst, total:a.total+l.total
-  }),{taxable:0,gst:0,total:0})
+  useEffect(() => {
+    fetch(`${BASE}/mm/po/${id}`, { headers:{ Authorization:`Bearer ${tok()}` } })
+      .then(r=>r.json()).then(d=>{ setPo(d.data); setLoad(false) })
+      .catch(()=>setLoad(false))
+  }, [id])
+
+  if (load) return <div style={{padding:60,textAlign:'center',fontFamily:'Arial'}}>⏳ Loading PO...</div>
+  if (!po)  return <div style={{padding:60,textAlign:'center',fontFamily:'Arial'}}>PO not found</div>
+
+  const lines   = po.lines || []
+  const addDeds = (() => { try { return JSON.parse(po.addDeductions||'[]') } catch { return [] } })()
+  const adds    = addDeds.filter(a=>a.type==='Addition')
+  const deds    = addDeds.filter(a=>a.type==='Deduction')
+
+  const subTotal  = lines.reduce((s,l)=>s+parseFloat(l.taxableAmt||0), 0)
+  const totalCGST = lines.reduce((s,l)=>s+parseFloat(l.cgst||0), 0)
+  const totalSGST = lines.reduce((s,l)=>s+parseFloat(l.sgst||0), 0)
+  const totalIGST = lines.reduce((s,l)=>s+parseFloat(l.igst||0), 0)
+  const totalGST  = totalCGST+totalSGST+totalIGST
+  const lineCharges = lines.reduce((s,l)=>
+    s+parseFloat(l.freight||0)+parseFloat(l.packing||0)+parseFloat(l.insurance||0)+parseFloat(l.otherCharges||0), 0)
+  const addAmt    = adds.reduce((s,a)=>s+parseFloat(a.amount||0), 0)
+  const dedAmt    = deds.reduce((s,a)=>s+parseFloat(a.amount||0), 0)
+  const gross     = subTotal+totalGST+lineCharges+addAmt-dedAmt
+  const roundOff  = Math.round(gross)-gross
+  const netTotal  = Math.round(gross)
+
+  const isIntra = po.vendorGstin?.slice(0,2) === COMPANY.stateCode
+  const poDate  = po.poDate ? new Date(po.poDate).toLocaleDateString('en-IN') : '—'
+
+  const tdS = { border:'1px solid #888', padding:'4px 6px', fontSize:11 }
+  const thS = { ...tdS, background:'#EEEEEE', fontWeight:700, textAlign:'center', fontSize:10 }
 
   return (
-    <PrintWrapper title={`Purchase Order — ${data.poNo}`} onClose={onClose}>
-      <div className="print-page">
+    <>
+      {/* No-print toolbar */}
+      <div style={{ position:'fixed',top:0,left:0,right:0,zIndex:999,
+        background:'#714B67',padding:'8px 16px',
+        display:'flex',alignItems:'center',gap:12,
+        printVisibility:'hidden' }}
+        className="no-print">
+        <button onClick={()=>nav(`/mm/po/${id}`)}
+          style={{ padding:'4px 14px',background:'rgba(255,255,255,.2)',
+            border:'1px solid rgba(255,255,255,.4)',borderRadius:4,
+            color:'#fff',cursor:'pointer',fontSize:12 }}>← Back</button>
+        <span style={{ color:'#fff',fontWeight:700,fontSize:14 }}>
+          Purchase Order — {po.poNo}
+        </span>
+        <button onClick={()=>window.print()}
+          style={{ marginLeft:'auto',padding:'6px 20px',
+            background:'#fff',color:'#714B67',
+            border:'none',borderRadius:4,fontWeight:700,
+            cursor:'pointer',fontSize:13 }}>
+          🖨️ Print / Save PDF
+        </button>
+      </div>
 
-        {/* Header */}
-        <div style={{display:'flex',justifyContent:'space-between',
-          alignItems:'flex-start',borderBottom:'3px solid #1A5276',paddingBottom:12,marginBottom:12}}>
-          <div style={{flex:1}}>
-            <div style={{fontFamily:'Syne,sans-serif',fontSize:22,fontWeight:900,color:'#1A5276',letterSpacing:-1}}>
-              {COMPANY.name}
+      <style>{`
+        @media print {
+          .no-print { display:none !important; }
+          body { margin:0; padding:0; }
+        }
+        @page { size:A4; margin:10mm; }
+      `}</style>
+
+      {/* A4 Document */}
+      <div style={{ maxWidth:800, margin:'60px auto 40px',
+        background:'#fff', fontFamily:'Arial,sans-serif',
+        fontSize:11, color:'#000',
+        border:'1px solid #ccc', boxShadow:'0 2px 10px rgba(0,0,0,.1)' }}>
+
+        {/* Title */}
+        <div style={{ textAlign:'center', fontWeight:800, fontSize:16,
+          padding:'10px 0', letterSpacing:1,
+          borderBottom:'2px solid #000' }}>
+          PURCHASE ORDER
+        </div>
+
+        {/* Vendor + PO Info */}
+        <div style={{ display:'flex', borderBottom:'1px solid #888' }}>
+          {/* Vendor */}
+          <div style={{ flex:1, padding:'10px 12px', borderRight:'1px solid #888' }}>
+            <div style={{ fontWeight:700, fontSize:13, marginBottom:4 }}>
+              {po.vendorName}
             </div>
-            <div style={{fontSize:9.5,color:'#555',marginTop:3,lineHeight:1.6}}>
-              {COMPANY.addr}<br/>
-              Ph: {COMPANY.phone} · GSTIN: <strong>{COMPANY.gstin}</strong>
+            {po.vendorAddress && <div style={{ marginBottom:2 }}>{po.vendorAddress}</div>}
+            {po.vendorGstin && (
+              <div><strong>GSTIN No : </strong>{po.vendorGstin}</div>
+            )}
+            <div>
+              <strong>State : </strong>{po.vendorState || '—'}
+              {po.vendorGstin && <span> , <strong>State Code : </strong>{po.vendorGstin.slice(0,2)}</span>}
             </div>
           </div>
-          <div style={{textAlign:'right',minWidth:170}}>
-            <div style={{background:'#1A5276',color:'#fff',padding:'6px 16px',
-              borderRadius:'6px 6px 0 0',fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:800,letterSpacing:1}}>
-              PURCHASE ORDER
-            </div>
-            <div style={{border:'1px solid #1A5276',borderTop:'none',padding:'8px 12px',borderRadius:'0 0 6px 6px',lineHeight:1.7}}>
-              <div><span style={{color:'#555',fontSize:9}}>PO No. </span>
-                <strong style={{fontSize:12,fontFamily:'DM Mono,monospace',color:'#1A5276'}}>{data.poNo}</strong></div>
-              <div><span style={{color:'#555',fontSize:9}}>Date: </span><strong>{data.date}</strong></div>
-              <div><span style={{color:'#555',fontSize:9}}>Valid Till: </span><strong>{data.validTill}</strong></div>
-              <div><span style={{color:'#555',fontSize:9}}>PR Ref: </span>
-                <strong style={{fontFamily:'DM Mono,monospace'}}>{data.prRef}</strong></div>
-            </div>
+          {/* PO Details */}
+          <div style={{ width:255, padding:'10px 12px' }}>
+            {[
+              ['PO No',     po.poNo],
+              ['PO Dt',     poDate],
+              ['GSTIN',     COMPANY.gstin],
+              po.prNo && ['PR Ref', po.prNo],
+              po.csNo && ['CS Ref', po.csNo],
+              po.validTo && ['Valid To', new Date(po.validTo).toLocaleDateString('en-IN')],
+              po.paymentTerms && ['Payment', po.paymentTerms],
+            ].filter(Boolean).map(([l,v])=>(
+              <div key={l} style={{ display:'flex', gap:4, padding:'1px 0' }}>
+                <span style={{ fontWeight:700, whiteSpace:'nowrap', minWidth:70 }}>{l}</span>
+                <span>: {v}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Vendor + Delivery Info */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
-          <div style={{border:'1px solid #ddd',borderRadius:4,padding:'8px 10px'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#1A5276',textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>
-              Vendor / Supplier
-            </div>
-            <div style={{fontWeight:700,fontSize:11}}>{data.vendor.name}</div>
-            <div style={{fontSize:9.5,color:'#555',lineHeight:1.6,marginTop:2}}>
-              {data.vendor.addr}<br/>
-              Contact: {data.vendor.contact}<br/>
-              GSTIN: <strong>{data.vendor.gstin}</strong>
-            </div>
-          </div>
-          <div style={{border:'1px solid #ddd',borderRadius:4,padding:'8px 10px'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#1A5276',textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>
-              Delivery Details
-            </div>
-            <table style={{fontSize:10,width:'100%',borderCollapse:'collapse'}}>
-              {[
-                ['Deliver By', data.deliveryBy],
-                ['Deliver To', data.deliveryTo],
-                ['Payment Terms', data.payTerms],
-              ].map(([k,v])=>(
-                <tr key={k}>
-                  <td style={{color:'#555',paddingBottom:4,paddingRight:10,fontWeight:600}}>{k}</td>
-                  <td style={{fontWeight:600}}>{v}</td>
-                </tr>
-              ))}
-            </table>
-          </div>
-        </div>
-
-        {/* Line Items */}
-        <table style={{width:'100%',borderCollapse:'collapse',marginBottom:0}}>
+        {/* Line Items Table */}
+        <table style={{ width:'100%', borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['#','Item Code','Description','Unit','Qty','Rate (₹)','Taxable (₹)','GST%','GST (₹)','Total (₹)'].map(h=>(
-                <th key={h} style={th()}>{h}</th>
-              ))}
+              {['S.No','Item Description','HSN Code','UOM','GST Rate',
+                'Qty','Rate/UOM INR','Disc%','Disc Amt','Amount INR']
+                .map(h=><th key={h} style={thS}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {data.lines.map((l,i)=>(
-              <tr key={i} style={{background:i%2===0?'#fff':'#F0F5FA'}}>
-                <td style={td()}>{l.sl}</td>
-                <td style={{...td(),fontFamily:'DM Mono,monospace',fontSize:9}}>{l.code}</td>
-                <td style={{...td('left'),fontWeight:600}}>{l.desc}</td>
-                <td style={td()}>{l.unit}</td>
-                <td style={{...td(),fontFamily:'DM Mono,monospace'}}>{l.qty}</td>
-                <td style={{...td('right'),fontFamily:'DM Mono,monospace'}}>{fmt(l.rate)}</td>
-                <td style={{...td('right'),fontFamily:'DM Mono,monospace'}}>{fmt(l.taxable)}</td>
-                <td style={td()}>{l.gstPct}%</td>
-                <td style={{...td('right'),fontFamily:'DM Mono,monospace'}}>{fmt(l.gst)}</td>
-                <td style={{...td('right'),fontWeight:700,fontFamily:'DM Mono,monospace',color:'#1A5276'}}>{fmt(l.total)}</td>
+            {lines.map((l,i)=>{
+              const qty     = parseFloat(l.qty||0)
+              const rate    = parseFloat(l.rate||0)
+              const disc    = parseFloat(l.discount||0)
+              const discAmt = qty*rate*disc/100
+              const amount  = parseFloat(l.taxableAmt||(qty*rate*(1-disc/100)))
+              const gstR    = parseFloat(l.gstRate||0)
+              return (
+                <tr key={i}>
+                  <td style={{...tdS,textAlign:'center'}}>{i+1}</td>
+                  <td style={tdS}>
+                    <div style={{fontWeight:600}}>{l.itemName}</div>
+                    {l.specification&&<div style={{color:'#555',fontSize:10}}>{l.specification}</div>}
+                  </td>
+                  <td style={{...tdS,textAlign:'center'}}>{l.hsnCode||''}</td>
+                  <td style={{...tdS,textAlign:'center'}}>{l.unit}</td>
+                  <td style={{...tdS,textAlign:'center'}}>{gstR}%</td>
+                  <td style={{...tdS,textAlign:'right'}}>{fmtQ(qty)}</td>
+                  <td style={{...tdS,textAlign:'right'}}>{fmt(rate)}</td>
+                  <td style={{...tdS,textAlign:'right'}}>{disc>0?disc.toFixed(2):'0.00'}</td>
+                  <td style={{...tdS,textAlign:'right'}}>{fmt(discAmt)}</td>
+                  <td style={{...tdS,textAlign:'right',fontWeight:600}}>{fmt(amount)}</td>
+                </tr>
+              )
+            })}
+            {/* Blank rows */}
+            {Array(Math.max(0,6-lines.length)).fill(0).map((_,i)=>(
+              <tr key={`b${i}`}>
+                {Array(10).fill(0).map((_,j)=>(
+                  <td key={j} style={{...tdS,height:22}}></td>
+                ))}
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr style={{background:'#EBF2F8'}}>
-              <td colSpan={6} style={{...td('right'),fontWeight:700,fontSize:11}}>TOTAL</td>
-              <td style={{...td('right'),fontWeight:700,fontFamily:'DM Mono,monospace'}}>{fmt(totals.taxable)}</td>
-              <td style={td()}></td>
-              <td style={{...td('right'),fontWeight:700,fontFamily:'DM Mono,monospace'}}>{fmt(totals.gst)}</td>
-              <td style={{...td('right'),fontWeight:800,fontFamily:'DM Mono,monospace',color:'#1A5276',fontSize:12}}>
-                {fmt(totals.total)}
-              </td>
-            </tr>
-          </tfoot>
         </table>
 
-        {/* Total Box */}
-        <div style={{display:'flex',justifyContent:'flex-end',marginTop:8,marginBottom:14}}>
-          <div style={{border:'1px solid #1A5276',borderRadius:4,overflow:'hidden',minWidth:220}}>
-            {[['Taxable Amount',totals.taxable],['GST',totals.gst]].map(([k,v])=>(
-              <div key={k} style={{display:'flex',justifyContent:'space-between',
-                padding:'5px 12px',borderBottom:'1px solid #eee',fontSize:10}}>
-                <span style={{color:'#555'}}>{k}</span>
-                <span style={{fontFamily:'DM Mono,monospace',fontWeight:600}}>₹{fmt(v)}</span>
+        {/* Footer: T&C + Totals */}
+        <div style={{ display:'flex', borderTop:'1px solid #888' }}>
+          {/* T&C */}
+          <div style={{ flex:1, padding:'8px 12px', borderRight:'1px solid #888' }}>
+            <div style={{marginBottom:6}}>
+              <strong>Remarks : </strong>{po.remarks||''}
+            </div>
+            <div>
+              <strong>Terms and Conditions :</strong>
+              <div style={{marginTop:3,lineHeight:1.8}}>
+                {po.paymentTerms&&<div><strong>Payment Terms</strong> : {po.paymentTerms}</div>}
+                {po.deliveryLocation&&<div><strong>Delivery Term</strong> : {po.deliveryLocation}</div>}
+                {adds.map((a,i)=><div key={i}><strong>{a.description}</strong> : ₹{fmt(a.amount)}</div>)}
+                {po.termsConditions&&<div style={{marginTop:4,whiteSpace:'pre-line',fontSize:10}}>{po.termsConditions}</div>}
+              </div>
+            </div>
+          </div>
+          {/* Totals */}
+          <div style={{ width:250, padding:'8px 12px' }}>
+            {[
+              ['Total Amount (₹)', fmt(subTotal), false],
+              isIntra && totalCGST>0 && ['CGST', fmt(totalCGST), false],
+              isIntra && totalSGST>0 && ['SGST', fmt(totalSGST), false],
+              !isIntra && totalIGST>0 && ['IGST', fmt(totalIGST), false],
+              lineCharges>0 && ['Freight/Packing/Ins', fmt(lineCharges), false],
+              ...adds.map(a=>[`+ ${a.description}`, fmt(a.amount), false]),
+              ...deds.map(a=>[`- ${a.description}`, fmt(a.amount), false]),
+              ['Round Off', fmt(roundOff), false],
+            ].filter(Boolean).map(([l,v])=>(
+              <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'2px 0',borderBottom:'1px solid #eee'}}>
+                <span style={{fontWeight:600}}>{l}</span>
+                <span>{v}</span>
               </div>
             ))}
-            <div style={{display:'flex',justifyContent:'space-between',
-              padding:'8px 12px',background:'#1A5276',color:'#fff'}}>
-              <span style={{fontWeight:700,fontSize:12}}>PO TOTAL</span>
-              <span style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:13}}>₹{fmt(totals.total)}</span>
+            <div style={{ display:'flex',justifyContent:'space-between',
+              padding:'5px 0',borderTop:'2px solid #000',marginTop:2 }}>
+              <span style={{fontWeight:800,fontSize:13}}>Net Amount (₹)</span>
+              <span style={{fontWeight:800,fontSize:13}}>{fmt(netTotal)}</span>
             </div>
           </div>
         </div>
 
-        {/* Remarks */}
-        {data.remarks && (
-          <div style={{border:'1px solid #ddd',borderRadius:4,padding:'8px 10px',marginBottom:14,fontSize:10}}>
-            <div style={{fontWeight:700,color:'#1A5276',marginBottom:4,fontSize:9,textTransform:'uppercase'}}>Remarks / Special Instructions</div>
-            {data.remarks}
-          </div>
-        )}
+        {/* Amount in Words */}
+        <div style={{ display:'flex',justifyContent:'space-between',
+          borderTop:'1px solid #888',padding:'6px 12px' }}>
+          <div><strong>Amount In Words : </strong>{numToWords(netTotal)}</div>
+          <div style={{fontWeight:700}}>Net Amount (₹){fmt(netTotal)}</div>
+        </div>
 
-        {/* Signature */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,
-          borderTop:'1px solid #ddd',paddingTop:12}}>
-          {[['Prepared By','Purchase Dept.'],['Checked By','Store / QC'],['Approved By',data.approvedBy]].map(([role,name])=>(
-            <div key={role} style={{textAlign:'center'}}>
-              <div style={{height:40,borderBottom:'1px solid #333',marginBottom:4}}/>
-              <div style={{fontSize:10,fontWeight:700}}>{name}</div>
-              <div style={{fontSize:9,color:'#555'}}>{role}</div>
+        {/* Instruction */}
+        <div style={{ padding:'6px 12px',fontSize:10,lineHeight:1.5,
+          borderTop:'1px solid #888',borderBottom:'1px solid #888' }}>
+          Kindly acknowledge the receipt of this order and ensure delivery at our address as per
+          scheduled dates. Our GSTIN and Order number must appear on all packing slips, delivery
+          challans and invoices (Two Copies). Inspection report should be provided along with materials.
+        </div>
+
+        {/* Signatures */}
+        <div style={{ display:'flex',borderBottom:'1px solid #888' }}>
+          {['Prepared By','Checked','Authorised By'].map((s,i)=>(
+            <div key={s} style={{ flex:1, padding:'12px',
+              borderRight:i<2?'1px solid #888':'none', minHeight:55 }}>
+              <div style={{fontSize:11}}>{s}</div>
+              {i===1&&<div style={{textAlign:'center',fontWeight:700,fontSize:12,marginTop:8}}>
+                for {COMPANY.name}
+              </div>}
             </div>
           ))}
         </div>
 
-        <div style={{textAlign:'center',marginTop:12,paddingTop:8,
-          borderTop:'1px solid #eee',fontSize:8,color:'#aaa'}}>
-          {COMPANY.name} · GSTIN: {COMPANY.gstin} · {COMPANY.addr}
+        {/* Company Footer */}
+        <div style={{ display:'flex',justifyContent:'space-between',
+          padding:'8px 12px',fontSize:10 }}>
+          <div>
+            <div style={{fontWeight:700,fontSize:12,marginBottom:2}}>{COMPANY.name}</div>
+            <div>{COMPANY.addr}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div><strong>Phone : </strong>{COMPANY.phone}</div>
+            <div><strong>GSTIN : </strong>{COMPANY.gstin}</div>
+            <div><strong>Email : </strong>{COMPANY.email}</div>
+            <div><strong>Web : </strong>{COMPANY.web}</div>
+          </div>
         </div>
       </div>
-    </PrintWrapper>
+    </>
   )
 }

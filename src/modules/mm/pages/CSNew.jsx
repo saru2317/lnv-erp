@@ -181,11 +181,15 @@ function SupplierBlock({ sup, idx, onChange, bgHeader, bgRow, bgLight, vendors=[
                     {txtInp(item.spec, v=>updateItem(i,'spec',v), 'Brand/spec')}
                   </td>
                   <td style={{padding:'3px 5px',border:'1px solid var(--odoo-border)',minWidth:70}}>
-                    <select value={item.uom} onChange={e=>updateItem(i,'uom',e.target.value)}
-                      style={{width:'100%',padding:'4px 4px',border:'1px solid var(--odoo-border)',
-                        borderRadius:4,fontSize:11,background:'#FFFDE7',outline:'none'}}>
-                      {UOM_LIST.map(u=><option key={u}>{u}</option>)}
-                    </select>
+                    {/* UOM read-only — fetched from item master via PR */}
+                    <div style={{width:'100%',padding:'4px 6px',
+                      border:'1px solid #C8E6C9',
+                      borderRadius:4,fontSize:11,
+                      background:'#F1F8E9',color:'#2E7D32',
+                      fontWeight:600,textAlign:'center',
+                      boxSizing:'border-box'}}>
+                      {item.uom || 'Nos'}
+                    </div>
                   </td>
                   <td style={{border:'1px solid var(--odoo-border)',minWidth:65}}>
                     {numInp(item.qty, v=>updateItem(i,'qty',v))}
@@ -315,28 +319,35 @@ export default function CSNew() {
             const updated = [...prev]
             cs.quotes.forEach((q, i) => {
               if (!updated[i]) return
-              // Parse stored JSON items from remarks
+              // Parse stored JSON items from remarks (new format)
               let parsedRemarks = null
               try { parsedRemarks = JSON.parse(q.remarks || '') } catch { parsedRemarks = null }
+
               const storedItems = parsedRemarks?.items?.length
+                // ── New JSON format: all items with packing/freight ──────
                 ? parsedRemarks.items.map(it => ({
                     desc:    it.desc    || '',
                     spec:    it.spec    || '',
                     uom:     it.uom     || 'Nos',
-                    qty:     String(it.qty  || 0),
-                    rate:    String(it.rate || 0),
+                    qty:     String(it.qty     || 0),
+                    rate:    String(it.rate    || 0),
                     discPct: String(it.discPct || 0),
+                    packing: String(it.packing || 0),
+                    freight: String(it.freight || 0),
                     gstPct:  String(it.gstPct  || 18),
+                    cutting: 0, loading: 0,
                   }))
-                : [{
-                    desc:    cs.itemDesc || '',
+                // ── Old plain-text format: split itemDesc for item names ─
+                : (cs.itemDesc || '').split(', ').filter(Boolean).map((desc, di) => ({
+                    desc,
                     spec:    '',
                     uom:     'Nos',
-                    qty:     String(parseFloat(q.qty || 1)),
-                    rate:    String(parseFloat(q.unitRate || 0)),
-                    discPct: '0',
-                    gstPct:  '18',
-                  }]
+                    qty:     di === 0 ? String(parseFloat(q.qty || 1)) : '',
+                    rate:    di === 0 ? String(parseFloat(q.unitRate || 0)) : '',
+                    discPct: '0', packing: '0', freight: '0',
+                    gstPct:  '18', cutting: 0, loading: 0,
+                  }))
+
               updated[i] = {
                 ...updated[i],
                 name:          q.supplierName || '',
@@ -347,6 +358,57 @@ export default function CSNew() {
             })
             return updated
           })
+
+          // ── Enrich from linked RFQ if old format (rates missing for item 2+) ──
+          // Fetch all RFQs and find the one linked to this PR
+          if (cs.prNo) {
+            fetch(`${BASE}/mm/rfq`, { headers: { Authorization: `Bearer ${token}` } })
+              .then(r => r.json())
+              .then(rfqData => {
+                // Find RFQ for this PR
+                const linkedRFQ = (rfqData.data || []).find(r => r.prNo === cs.prNo)
+                if (!linkedRFQ) return
+
+                const rfqQuotes = linkedRFQ.quotes || []
+                if (!rfqQuotes.length) return
+
+                setSuppliers(prev => prev.map(sup => {
+                  if (!sup.name) return sup
+
+                  // Match RFQ quote by vendor name (case-insensitive)
+                  const rfqQuote = rfqQuotes.find(q =>
+                    (q.vendorName || '').toLowerCase().trim() ===
+                    (sup.name     || '').toLowerCase().trim()
+                  )
+                  if (!rfqQuote) return sup
+
+                  // Parse RFQ quote lines (all items per supplier)
+                  let rfqLines = []
+                  try { rfqLines = JSON.parse(rfqQuote.lines || '[]') } catch {}
+                  if (!rfqLines.length) return sup
+
+                  // Merge RFQ rates into supplier items
+                  const enrichedItems = sup.items.map((item, itemIdx) => {
+                    const rl = rfqLines[itemIdx]
+                    if (!rl || !item.desc) return item
+                    // Always use RFQ values — '0' is truthy so || check fails for zeros
+                    // RFQ quote is the authoritative vendor data
+                    return {
+                      ...item,
+                      qty:     String(rl.qty     ?? item.qty     ?? ''),
+                      rate:    String(rl.rate    ?? item.rate    ?? ''),
+                      discPct: String(rl.disc    ?? rl.discPct  ?? item.discPct  ?? 0),
+                      packing: String(rl.packing ?? item.packing ?? 0),
+                      freight: String(rl.freight ?? item.freight ?? 0),
+                      gstPct:  String(rl.gst     ?? rl.gstRate  ?? item.gstPct   ?? 18),
+                    }
+                  })
+
+                  return { ...sup, items: enrichedItems }
+                }))
+              })
+              .catch(() => {})
+          }
         }
       })
       .catch(() => {})
@@ -355,6 +417,7 @@ export default function CSNew() {
   const [csNo,    setCsNo]  = useState('CS-AUTO')
   const [prNo,    setPrNo]  = useState('')
   const [prs,     setPrs]   = useState([])
+  const [itemMaster, setItemMaster] = useState([])  // for UOM lookup
   const [vendorList, setVendorList] = useState([])
   const [rfqInfo,    setRfqInfo]    = useState(null)
   const [activeBlocks, setActiveBlocks] = useState(3)
@@ -378,6 +441,7 @@ export default function CSNew() {
     const prNoFromUrl  = urlParams.get('prNo')
     const rfqIdFromUrl = urlParams.get('rfq')
 
+    mmApi.getItems().then(d => setItemMaster(d.data || [])).catch(()=>{})
     mmApi.getPRList()
       .then(d=>setPrs(d.data||[]))
       .catch(()=>{})
@@ -395,12 +459,20 @@ export default function CSNew() {
 
     // Helper: fill supplier blocks from item list
     const fillSupplierItems = (itemLines) => {
-      const mapped = itemLines.slice(0,5).map(l=>({
-        desc: l.itemName||'', spec: l.specification||l.spec||'',
-        uom:  l.unit||'Nos', qty:  String(parseFloat(l.qty||1)),
-        rate:'', discPct:0, packing:0, freight:0,
-        cutting:0, gstPct:18, loading:0
-      }))
+      const mapped = itemLines.slice(0,5).map(l=>{
+        // Resolve UOM from item master — don't trust PR line unit alone
+        const master = itemMaster.find(it =>
+          (it.itemCode || it.code) === l.itemCode ||
+          (it.itemName || it.name)?.toLowerCase() === (l.itemName||'').toLowerCase()
+        )
+        const resolvedUOM = master?.uom || l.unit || 'Nos'
+        return {
+          desc: l.itemName||'', spec: l.specification||l.spec||'',
+          uom:  resolvedUOM,    qty:  String(parseFloat(l.qty||1)),
+          rate:'', discPct:0, packing:0, freight:0,
+          cutting:0, gstPct:18, loading:0
+        }
+      })
       const padded = [
         ...mapped,
         ...Array.from({length:Math.max(0,5-mapped.length)},
@@ -584,9 +656,11 @@ export default function CSNew() {
       if (!payload.quotes.length)
         return toast.error('Add at least one supplier with name!')
       const res = await mmApi.createCS(payload)
-      toast.success(res.message)
+      toast.success(res.message || `CS ${res.data?.csNo} saved!`)
       setCsNo(res.data?.csNo||csNo)
       setSaved(true)
+      // Navigate to CS Register so user can see Edit/Delete options
+      setTimeout(()=>nav('/mm/cs'), 1000)
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
   const handleApprove = async () => {
@@ -614,7 +688,22 @@ export default function CSNew() {
             qty:          parseFloat(s.items[0]?.qty||1),
             amount:       s.items.reduce((sum,item)=>sum+calcItem(item).totalVal,0),
             deliveryDays: null,
-            remarks: `Payment: ${s.paymentTerms} | Delivery: ${s.deliveryTerms}`
+            // Store full item data as JSON so backend creates correct PO lines
+            remarks: JSON.stringify({
+              paymentTerms: s.paymentTerms,
+              deliveryTerms: s.deliveryTerms,
+              items: s.items.filter(i => i.desc).map(i => ({
+                desc:     i.desc     || '',
+                spec:     i.spec     || '',
+                qty:      parseFloat(i.qty)     || 0,
+                uom:      i.uom      || 'Nos',
+                rate:     parseFloat(i.rate)    || 0,
+                discPct:  parseFloat(i.discPct) || 0,
+                packing:  parseFloat(i.packing) || 0,
+                freight:  parseFloat(i.freight) || 0,
+                gstPct:   parseFloat(i.gstPct)  || 18,
+              }))
+            })
           })),
       }
       if (!payload.quotes.length) return toast.error('Add at least one supplier!')
