@@ -13,8 +13,10 @@ const QuotView     = lazy(() => import('./QuotView'))
 const ItemLedger   = lazy(() => import('./ItemLedger'))
 const SOList       = lazy(() => import('./SOList'))
 const SONew        = lazy(() => import('./SONew'))
+const SOView       = lazy(() => import('./SOView'))
 const InvoiceList  = lazy(() => import('./InvoiceList'))
 const InvoiceNew   = lazy(() => import('./InvoiceNew'))
+const InvoiceView  = lazy(() => import('./InvoiceView'))
 const PaymentList  = lazy(() => import('./PaymentList'))
 const PaymentNew   = lazy(() => import('./PaymentNew'))
 const ReturnList   = lazy(() => import('./ReturnList'))
@@ -23,6 +25,7 @@ const PricingConditions  = lazy(() => import('./PricingConditions'))
 const PriceBook          = lazy(() => import('./PriceBook'))
 const FTADocuments       = lazy(() => import('./FTADocuments'))
 const DeliveryChallan    = lazy(() => import('./DeliveryChallan'))
+const DCPrint            = lazy(() => import('./DCPrint'))
 const LabourInvoice      = lazy(() => import('./LabourInvoice'))
 
 const NAV = [
@@ -80,10 +83,10 @@ export default function SDLayout() {
           <Route path="quotations/:id"  element={<QuotView />} />
           <Route path="orders"          element={<SOList />} />
           <Route path="orders/new"      element={<SONew />} />
-          <Route path="orders/:id"      element={<SONew />} />
+          <Route path="orders/:id"      element={<SOView />} />
           <Route path="invoices"        element={<InvoiceList />} />
           <Route path="invoices/new"    element={<InvoiceNew />} />
-          <Route path="invoices/:id"    element={<InvoiceNew />} />
+          <Route path="invoices/:id"    element={<InvoiceView />} />
           <Route path="payments"        element={<PaymentList />} />
           <Route path="payments/new"    element={<PaymentNew />} />
           <Route path="returns"         element={<ReturnList />} />
@@ -92,7 +95,8 @@ export default function SDLayout() {
           <Route path="pricing"         element={<PricingConditions />} />
           <Route path="pricebook"          element={<PriceBook />} />
           <Route path="fta-documents"      element={<FTADocuments />} />
-          <Route path="delivery-challan"   element={<DeliveryChallan />} />
+          <Route path="delivery-challan"           element={<DeliveryChallan />} />
+          <Route path="delivery-challan/:id/print" element={<DCPrint />} />
           <Route path="labour-invoice"     element={<LabourInvoice />} />
           <Route path="*"               element={<Navigate to="/sd" replace />} />
         </Routes>

@@ -1,98 +1,189 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 
-const MP_DATA = [
-  {dept:'Production',     sanctioned:50,actual:45,open:5, plan2025:55,gap:-5, contractors:8,  skillGap:'Ring Frame Operators'},
-  {dept:'Quality',        sanctioned:14,actual:12,open:2, plan2025:14,gap:0,  contractors:0,  skillGap:'QC Inspector (Chemical)'},
-  {dept:'Maintenance',    sanctioned:10,actual:8, open:2, plan2025:12,gap:-4, contractors:3,  skillGap:'Electrical Technician'},
-  {dept:'Accounts',       sanctioned:10,actual:9, open:1, plan2025:10,gap:0,  contractors:0,  skillGap:'—'},
-  {dept:'HR & Admin',     sanctioned:6, actual:5, open:1, plan2025:6, gap:0,  contractors:0,  skillGap:'HR Executive'},
-  {dept:'Sales',          sanctioned:8, actual:8, open:0, plan2025:10,gap:-2, contractors:0,  skillGap:'Sales Executive'},
-  {dept:'Warehouse',      sanctioned:12,actual:11,open:1, plan2025:12,gap:0,  contractors:2,  skillGap:'—'},
-  {dept:'Security',       sanctioned:6, actual:6, open:0, plan2025:6, gap:0,  contractors:6,  skillGap:'—'},
-  {dept:'Canteen',        sanctioned:4, actual:4, open:0, plan2025:4, gap:0,  contractors:4,  skillGap:'—'},
-]
-
-const BUDGET = {target_ecost:1950000,actual_ecost:1840000,headcount_budget:160,headcount_actual:148}
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization:`Bearer ${tok()}` })
 
 export default function ManpowerPlanning() {
-  const total = MP_DATA.reduce((acc,d)=>({
-    sanctioned:acc.sanctioned+d.sanctioned,actual:acc.actual+d.actual,
-    open:acc.open+d.open,contractors:acc.contractors+d.contractors
-  }),{sanctioned:0,actual:0,open:0,contractors:0})
+  const [employees, setEmployees] = useState([])
+  const [depts,     setDepts]     = useState([])
+  const [loading,   setLoading]   = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`${BASE}/employees?limit=500`, { headers: hdr2() }).then(r=>r.json()),
+      fetch(`${BASE}/hr-master/departments`, { headers: hdr2() }).then(r=>r.json()),
+    ]).then(([empRes, deptRes]) => {
+      const emps  = empRes.data  || empRes  || []
+      const depts = deptRes.data || deptRes || []
+      setEmployees(emps)
+      setDepts(depts)
+    }).catch(() => toast.error('Failed to load data'))
+    .finally(() => setLoading(false))
+  }, [])
+
+  // Build dept summary from actual employees
+  const deptMap = {}
+  employees.forEach(e => {
+    const dept = e.department || e.dept || 'Others'
+    if (!deptMap[dept]) deptMap[dept] = {
+      dept, actual:0, active:0, onLeave:0,
+      staff:0, worker:0, contractor:0
+    }
+    deptMap[dept].actual++
+    if (e.status === 'Active' || e.isActive) deptMap[dept].active++
+    if (e.status === 'OnLeave') deptMap[dept].onLeave++
+    const type = (e.employeeType || e.empType || '').toLowerCase()
+    if (type.includes('staff'))      deptMap[dept].staff++
+    else if (type.includes('worker')) deptMap[dept].worker++
+    else if (type.includes('contract')) deptMap[dept].contractor++
+    else deptMap[dept].staff++ // default
+  })
+
+  const deptRows = Object.values(deptMap).sort((a,b) => b.actual - a.actual)
+  const totalEmp = employees.length
+  const activeEmp= employees.filter(e => e.status === 'Active' || e.isActive).length
+
+  const DEPT_COLORS = {
+    'Production':'#8E44AD', 'Accounts':'#196F3D', 'Quality':'#117A65',
+    'Maintenance':'#E06F39', 'HR & Admin':'#2874A6', 'Sales':'#B7950B',
+    'Warehouse':'#784212', 'Finance':'#196F3D', 'IT':'#1A5276'
+  }
 
   return (
     <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Manpower Planning <small>Department-wise Headcount 2025</small></div>
-        <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-p sd-bsm">Plan New Year</button>
+      <div className="hcm-pg-hdr">
+        <div>
+          <h2 className="hcm-pg-title">Manpower Planning</h2>
+          <p className="hcm-pg-sub">Department-wise headcount & planning</p>
         </div>
       </div>
 
-      {/* E-Cost Budget */}
-      <div style={{background:'var(--odoo-purple)',borderRadius:'10px',padding:'18px',color:'#fff',marginBottom:'16px'}}>
-        <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'16px',marginBottom:'12px'}}>Pay Bill Budget vs Actual — Feb 2025</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'14px'}}>
-          {[['E-Cost Budget',`₹${(BUDGET.target_ecost/100000).toFixed(1)}L`,'month'],
-            ['E-Cost Actual',`₹${(BUDGET.actual_ecost/100000).toFixed(1)}L`,'month'],
-            ['Headcount Budget',BUDGET.headcount_budget,'employees'],
-            ['Headcount Actual',BUDGET.headcount_actual,'employees'],
-          ].map(([l,v,s])=>(
-            <div key={l} style={{background:'rgba(255,255,255,.12)',borderRadius:'8px',padding:'12px',textAlign:'center'}}>
-              <div style={{fontSize:'10px',fontWeight:'700',opacity:.7,textTransform:'uppercase',marginBottom:'4px'}}>{l}</div>
-              <div style={{fontFamily:'Syne,sans-serif',fontWeight:'800',fontSize:'22px'}}>{v}</div>
-              <div style={{fontSize:'10px',opacity:.7}}>{s}</div>
+      {/* KPIs */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)',
+        gap:10, marginBottom:16 }}>
+        {[
+          ['Total Headcount',   totalEmp,                                   '#714B67','#EDE0EA'],
+          ['Active',            activeEmp,                                  '#155724','#D4EDDA'],
+          ['Departments',       deptRows.length,                            '#0C5460','#D1ECF1'],
+          ['Staff',             employees.filter(e=>(e.employeeType||'').toLowerCase().includes('staff')||(!e.employeeType&&!e.empType)).length, '#856404','#FFF3CD'],
+          ['Workers',           employees.filter(e=>(e.employeeType||e.empType||'').toLowerCase().includes('worker')).length, '#721C24','#F8D7DA'],
+        ].map(([l,v,c,bg]) => (
+          <div key={l} style={{ background:bg, borderRadius:8,
+            padding:'10px 14px', textAlign:'center' }}>
+            <div style={{ fontSize:20, fontWeight:800, color:c,
+              fontFamily:'DM Mono,monospace' }}>{v}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:c,
+              textTransform:'uppercase', opacity:.8 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D' }}>
+          Loading...
+        </div>
+      ) : (
+        <>
+          {/* Dept headcount visual */}
+          <div style={{ background:'#fff', borderRadius:8,
+            border:'1.5px solid #E0D5E0', padding:'16px 20px', marginBottom:16 }}>
+            <div style={{ fontWeight:700, fontSize:13, color:'#714B67',
+              marginBottom:14 }}>
+              📊 Department Headcount
             </div>
-          ))}
-        </div>
-        <div style={{marginTop:'12px',background:'rgba(255,255,255,.1)',borderRadius:'6px',padding:'8px 12px',fontSize:'12px'}}>
-           E-Cost utilization: <strong>{Math.round(BUDGET.actual_ecost/BUDGET.target_ecost*100)}%</strong> · 
-          Savings: <strong>₹{((BUDGET.target_ecost-BUDGET.actual_ecost)/1000).toFixed(0)}K</strong> this month
-        </div>
-      </div>
+            {deptRows.map(d => {
+              const color = DEPT_COLORS[d.dept] || '#6C757D'
+              const pct   = totalEmp > 0 ? (d.actual/totalEmp*100).toFixed(0) : 0
+              return (
+                <div key={d.dept} style={{ marginBottom:10 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between',
+                    alignItems:'center', marginBottom:4 }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:'#1A1A2E',
+                      minWidth:140 }}>{d.dept}</span>
+                    <span style={{ fontSize:12, fontFamily:'DM Mono,monospace',
+                      fontWeight:700, color }}>
+                      {d.actual} ({pct}%)
+                    </span>
+                  </div>
+                  <div style={{ height:8, background:'#F0F0F0',
+                    borderRadius:4, overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${pct}%`,
+                      background:color, borderRadius:4,
+                      transition:'width .3s' }} />
+                  </div>
+                  <div style={{ display:'flex', gap:12, marginTop:3,
+                    fontSize:10, color:'#6C757D' }}>
+                    <span>Staff: {d.staff}</span>
+                    <span>Worker: {d.worker}</span>
+                    {d.contractor > 0 && <span>Contractor: {d.contractor}</span>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
-      <table className="fi-data-table">
-        <thead><tr>
-          <th>Department</th>
-          <th>Sanctioned</th><th>Actual (Staff)</th><th>Contractors</th>
-          <th>Total Deployed</th><th>Open Positions</th>
-          <th>2025 Plan</th><th>Gap</th><th>Skill Gap</th>
-        </tr></thead>
-        <tbody>
-          {MP_DATA.map(d=>{
-            const total_deployed = d.actual + d.contractors
-            return (
-              <tr key={d.dept}>
-                <td><strong>{d.dept}</strong></td>
-                <td style={{textAlign:'center'}}>{d.sanctioned}</td>
-                <td style={{textAlign:'center',fontWeight:'700',color:'var(--odoo-green)'}}>{d.actual}</td>
-                <td style={{textAlign:'center',color:'var(--odoo-orange)',fontWeight:d.contractors>0?'700':'400'}}>{d.contractors||'—'}</td>
-                <td style={{textAlign:'center',fontWeight:'700',
-                  color:total_deployed>=d.sanctioned?'var(--odoo-green)':'var(--odoo-orange)'}}>{total_deployed}</td>
-                <td style={{textAlign:'center',color:d.open>0?'var(--odoo-red)':'var(--odoo-green)',fontWeight:'700'}}>{d.open||'—'}</td>
-                <td style={{textAlign:'center',fontFamily:'DM Mono,monospace',fontSize:'12px'}}>{d.plan2025}</td>
-                <td style={{textAlign:'center',fontWeight:'700',
-                  color:d.plan2025-d.actual>0?'var(--odoo-orange)':'var(--odoo-green)'}}>
-                  {d.plan2025-d.actual>0?`+${d.plan2025-d.actual} needed`:d.plan2025-d.actual<0?`${d.plan2025-d.actual}`:''}
-                </td>
-                <td style={{fontSize:'12px',color:d.skillGap==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:d.skillGap==='—'?'400':'600'}}>{d.skillGap}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-        <tfoot>
-          <tr style={{background:'#EDE0EA',fontWeight:'700'}}>
-            <td>Total</td>
-            <td style={{textAlign:'center'}}>{total.sanctioned}</td>
-            <td style={{textAlign:'center',color:'var(--odoo-green)'}}>{total.actual}</td>
-            <td style={{textAlign:'center',color:'var(--odoo-orange)'}}>{total.contractors}</td>
-            <td style={{textAlign:'center'}}>{total.actual+total.contractors}</td>
-            <td style={{textAlign:'center',color:'var(--odoo-red)'}}>{total.open}</td>
-            <td colSpan={3}></td>
-          </tr>
-        </tfoot>
-      </table>
+          {/* Dept table */}
+          <div style={{ background:'#fff', borderRadius:8,
+            border:'1.5px solid #E0D5E0', overflow:'hidden' }}>
+            <table className="hcm-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th style={{ textAlign:'center' }}>Total</th>
+                  <th style={{ textAlign:'center' }}>Active</th>
+                  <th style={{ textAlign:'center' }}>On Leave</th>
+                  <th style={{ textAlign:'center' }}>Staff</th>
+                  <th style={{ textAlign:'center' }}>Worker</th>
+                  <th style={{ textAlign:'center' }}>Contractor</th>
+                  <th style={{ textAlign:'center' }}>% of Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deptRows.map(d => {
+                  const color = DEPT_COLORS[d.dept] || '#6C757D'
+                  const pct   = totalEmp > 0 ? (d.actual/totalEmp*100).toFixed(1) : 0
+                  return (
+                    <tr key={d.dept}>
+                      <td>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <div style={{ width:10, height:10, borderRadius:'50%',
+                            background:color, flexShrink:0 }} />
+                          <strong style={{ fontSize:13 }}>{d.dept}</strong>
+                        </div>
+                      </td>
+                      <td style={{ textAlign:'center', fontFamily:'DM Mono,monospace',
+                        fontWeight:800, color, fontSize:14 }}>{d.actual}</td>
+                      <td style={{ textAlign:'center', color:'#155724',
+                        fontWeight:700 }}>{d.active}</td>
+                      <td style={{ textAlign:'center', color:'#856404' }}>{d.onLeave || '—'}</td>
+                      <td style={{ textAlign:'center' }}>{d.staff}</td>
+                      <td style={{ textAlign:'center' }}>{d.worker}</td>
+                      <td style={{ textAlign:'center',
+                        color: d.contractor > 0 ? '#721C24' : '#6C757D' }}>
+                        {d.contractor || '—'}
+                      </td>
+                      <td style={{ textAlign:'center', fontSize:11,
+                        color:'#6C757D' }}>{pct}%</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot>
+                <tr style={{ background:'#EDE0EA', fontWeight:700 }}>
+                  <td style={{ padding:'8px 12px' }}>Total</td>
+                  <td style={{ textAlign:'center', padding:'8px 12px',
+                    fontFamily:'DM Mono,monospace', fontWeight:800,
+                    color:'#714B67', fontSize:14 }}>{totalEmp}</td>
+                  <td style={{ textAlign:'center', padding:'8px 12px' }}>{activeEmp}</td>
+                  <td colSpan={5} />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   )
 }

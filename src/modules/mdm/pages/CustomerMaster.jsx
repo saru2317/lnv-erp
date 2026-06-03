@@ -67,7 +67,12 @@ function CustomerForm({ customer, onSave, onCancel, rows = [] }) {
   } : BLANK)
   const [tab,      setTab]    = useState('general')
   const [saving,   setSaving] = useState(false)
-  const [shipTos,  setShipTos] = useState(customer?.shipToAddresses || [])
+  const [shipTos,  setShipTos] = useState(() => {
+    const raw = customer?.shipToAddresses
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw
+    try { return JSON.parse(raw) } catch { return [] }
+  })
   const [contacts, setContacts]= useState(customer?.contacts || [])
 
   const addShipTo  = () => setShipTos(s => [...s, { id:Date.now(), label:'', address:'', city:'', state:'Tamil Nadu', pincode:'', gstin:'', gstType:'Regular', contactPerson:'', phone:'', isDefault:s.length===0 }])
@@ -121,7 +126,7 @@ function CustomerForm({ customer, onSave, onCancel, rows = [] }) {
     try {
       const url    = isEdit ? `${BASE_URL}/customers/${customer.id}` : `${BASE_URL}/customers`
       const method = isEdit ? 'PATCH' : 'POST'
-      const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify(form) })
+      const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify({ ...form, shipToAddresses: shipTos }) })
       const data   = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast.success(`Customer ${isEdit?'updated':'created'}!`)

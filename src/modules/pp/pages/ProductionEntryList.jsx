@@ -30,9 +30,23 @@ const effBg    = e => parseFloat(e)>=80?'#D4EDDA':parseFloat(e)>=60?'#FFF3CD':'#
 // ══════════════════════════════════════════════════════════════════════════════
 function DetailModal({ entry, onClose }) {
   if (!entry) return null
+  const [wo, setWo] = useState(null)
+
+  useEffect(() => {
+    if (entry.woId) {
+      fetch(`${BASE_URL}/pp/wo/${entry.woId}`, { headers: authHdrs() })
+        .then(r=>r.json()).then(d=>{ if(d.data) setWo(d.data) }).catch(()=>{})
+    }
+  }, [entry.woId])
+
   const idle = (() => { try { return JSON.parse(entry.industryData||'{}').idleRows || [] } catch { return [] } })()
   const tot  = parseFloat(entry.goodQty||0) + parseFloat(entry.rejectedQty||0)
   const rp   = tot > 0 ? ((parseFloat(entry.rejectedQty||0)/tot)*100).toFixed(1) : '0.0'
+
+  // WO progress context
+  const woPlanned  = parseFloat(wo?.plannedQty   || entry.plannedQty || 0)
+  const woProduced = parseFloat(wo?.producedQty  || 0)
+  const woPct      = woPlanned > 0 ? Math.min(100, Math.round((woProduced/woPlanned)*100)) : 0
 
   const Row = ({l,v,mono}) => (
     <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #F0F0F0',fontSize:12}}>
@@ -100,7 +114,35 @@ function DetailModal({ entry, onClose }) {
               <Row l="Prod. Time"     v={`${entry.prodMins||0} mins`} />
 
               <div style={{fontSize:11,fontWeight:700,color:'#1A5276',textTransform:'uppercase',margin:'14px 0 8px'}}>📦 Production Qty</div>
-              <Row l="Planned Qty"    v={INR(entry.plannedQty)} />
+              {/* WO Progress context */}
+              {wo && (
+                <div style={{background:'#EBF5FB',borderRadius:6,padding:'8px 10px',marginBottom:8}}>
+                  <div style={{fontSize:10,fontWeight:700,color:'#1A5276',marginBottom:6,textTransform:'uppercase'}}>
+                    WO Progress — {entry.woNo}
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+                    <span style={{color:'#6C757D'}}>WO Planned</span>
+                    <strong style={{fontFamily:'DM Mono,monospace'}}>{INR(woPlanned)} {wo.uom}</strong>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+                    <span style={{color:'#6C757D'}}>Total Produced</span>
+                    <strong style={{fontFamily:'DM Mono,monospace',color:'#155724'}}>{INR(woProduced)} {wo.uom}</strong>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:6}}>
+                    <span style={{color:'#6C757D'}}>Balance Remaining</span>
+                    <strong style={{fontFamily:'DM Mono,monospace',color:'#856404'}}>{INR(Math.max(0,woPlanned-woProduced))} {wo.uom}</strong>
+                  </div>
+                  <div style={{background:'#E0E0E0',borderRadius:3,height:6,overflow:'hidden'}}>
+                    <div style={{width:`${woPct}%`,height:'100%',borderRadius:3,
+                      background:woPct>=100?'#28A745':woPct>=80?'#E67E22':'#1A5276'}}/>
+                  </div>
+                  <div style={{fontSize:10,color:'#1A5276',marginTop:3,textAlign:'right',fontWeight:700}}>
+                    {woPct}% of WO complete
+                  </div>
+                </div>
+              )}
+              <div style={{fontSize:10,fontWeight:700,color:'#495057',textTransform:'uppercase',marginBottom:4}}>This Shift</div>
+              <Row l="This Shift Planned"  v={`${INR(entry.plannedQty)} ${wo?.uom||''}`} />
               <Row l="Good Qty"       v={<span style={{color:'#155724',fontWeight:800}}>{INR(entry.goodQty)}</span>} />
               <Row l="Rejected Qty"   v={<span style={{color:'#721C24',fontWeight:700}}>{INR(entry.rejectedQty)}</span>} />
               <Row l="Rework Qty"     v={<span style={{color:'#856404',fontWeight:700}}>{INR(entry.reworkQty)}</span>} />
@@ -169,13 +211,14 @@ export default function ProductionEntryList() {
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const [entries,  setEntries]  = useState([])
+  const [woData,   setWoData]   = useState({}) // cache WO data by woId
   const [machines, setMachines] = useState([])
   const [loading,  setLoading]  = useState(false)
   const [detail,   setDetail]   = useState(null)
 
   // ── Fetch machines ─────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch(`${BASE_URL}/pp/work-centers`, { headers: authHdrs() })
+    fetch(`${BASE_URL}/pp/wc`, { headers: authHdrs() })
       .then(r=>r.json()).then(d=>setMachines(d.data||[])).catch(()=>{})
   }, [])
 
@@ -318,7 +361,7 @@ export default function ProductionEntryList() {
               style={{padding:'6px 10px',border:'1.5px solid #D0D7DE',borderRadius:5,fontSize:12,outline:'none',cursor:'pointer',minWidth:160}}>
               <option value="All">All Machines</option>
               {machines.length > 0
-                ? machines.map(m=><option key={m.id} value={m.wcId}>{m.wcId} — {m.name}</option>)
+                ? machines.map(m=><option key={m.id} value={m.wcId||m.id}>{m.wcId||m.id} — {m.name}</option>)
                 : ['IMM-150T','IMM-200T','IMM-80T'].map(m=><option key={m} value={m}>{m}</option>)
               }
             </select>

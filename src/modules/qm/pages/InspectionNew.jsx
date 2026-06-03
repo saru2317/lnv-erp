@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const BASE   = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -23,12 +23,19 @@ const SOURCES = ['MM — Incoming GRN', 'PP — Production WO', 'SD — Pre-ship
 
 export default function InspectionNew() {
   const nav       = useNavigate()
-  const { id }    = useParams()
+  const { id }      = useParams()
+  const [searchParams] = useSearchParams()
+  const preWoId    = searchParams.get('woId')
+  const preWoNo    = searchParams.get('woNo')
+  const preItemCode= searchParams.get('itemCode')
+  const preItemName= searchParams.get('itemName')
+  const preLotQty  = searchParams.get('qty')
 
   // ── State ─────────────────────────────────────────
   const [lotNo,       setLotNo]       = useState('Auto-generated')
   const [source,      setSource]      = useState('MM — Incoming GRN')
   const [grns,        setGRNs]        = useState([])
+  const [wos,         setWOs]         = useState([])   // for PP source
   const [selGRN,      setSelGRN]      = useState(null)
   const [selLineIdx,  setSelLineIdx]  = useState(0)   // which GRN line being inspected
   const [inspectors,  setInspectors]  = useState([])
@@ -81,6 +88,27 @@ export default function InspectionNew() {
       .then(d => setChecksheets(d.data || []))
       .catch(() => {})
 
+    // PP Work Orders — for PP source inspection
+    // Fetch WOs and inspection lots together
+    Promise.all([
+      fetch(`${BASE}/pp/wo?_t=${Date.now()}`, { headers: hdr2() }).then(r=>r.json()),
+      fetch(`${BASE}/qm/inspection?_t=${Date.now()}`, { headers: hdr2() }).then(r=>r.json()).catch(()=>({data:[]})),
+    ]).then(([woD, insD]) => {
+      const all  = woD.data  || []
+      const lots = insD.data || []
+      // Get WO nos that have ACCEPTED inspection and full qty inspected
+      const inspectedWOs = new Set(
+        lots
+          .filter(l => l.result === 'PASS' || l.result === 'ACCEPTED')
+          .map(l => l.refNo)
+      )
+      // Show WOs with producedQty > 0 that still need inspection
+      // (can re-inspect partial — show if uninspected qty remains)
+      setWOs(all.filter(w =>
+        parseFloat(w.producedQty||0) > 0
+      ))
+    }).catch(() => {})
+
     // If editing existing inspection
     if (id) {
       api(`/qm/inspection/${id}`)
@@ -127,6 +155,110 @@ export default function InspectionNew() {
   }, [id])
 
   // ── Load GRN ──────────────────────────────────────
+  // Auto-fill from URL params when wos are loaded
+  useEffect(() => {
+    if (!preWoId && !preWoNo) return
+    // Set source to PP
+    setSource('PP — Production WO')
+    // Pre-fill header
+    setHdr(p => ({
+      ...p,
+      refId:    preWoId    || '',
+      refNo:    preWoNo    || '',
+      itemCode: preItemCode|| '',
+      itemName: decodeURIComponent(preItemName||''),
+      lotQty:   preLotQty  || '',
+      unit:     'Nos',
+    }))
+    // Auto-load QP if itemCode available
+    if (preItemCode) {
+      fetch(`${BASE}/qm/quality-plan?itemCode=${encodeURIComponent(preItemCode)}`,
+        { headers: hdr2() })
+        .then(r=>r.json())
+        .then(d => {
+          const plans = d.data || []
+          const matched = plans.find(p => p.itemCode === preItemCode) || plans[0]
+          if (matched) {
+            setHdr(p => ({...p, qualityPlan: matched.planNo}))
+            const ops = Array.isArray(matched.operations)
+              ? matched.operations : JSON.parse(matched.operations||'[]')
+            const params = ops.flatMap(op =>
+              (op.chars||[]).map(ch => ({
+                param: ch.shortText, spec: '',
+                unit: ch.uom||'Pass/Fail',
+                result: '', status: 'PENDING',
+              }))
+            )
+            if (params.length > 0) setTests(params)
+          }
+        }).catch(()=>{})
+    }
+  }, [preWoId, preWoNo, wos.length]) // trigger when wos loaded
+
+  // Manual load quality plan
+  const loadQualityPlan = async () => {
+    const itemCode = hdr.itemCode
+    const itemName = hdr.itemName
+    if (!itemCode && !itemName) return toast.error('Select a WO or item first')
+    try {
+      // Try direct quality-plan endpoint first (most reliable)
+      const r1 = await fetch(
+        `${BASE}/qm/quality-plan?itemCode=${encodeURIComponent(itemCode||'')}`,
+        { headers: hdr2() }
+      )
+      const d1 = await r1.json()
+      const plans = d1.data || []
+
+      // Find best match
+      let matched = plans.find(p => p.itemCode === itemCode)
+        || plans.find(p => (p.material||'').toLowerCase().includes((itemName||'').toLowerCase().slice(0,10)))
+        || plans[0]
+
+      if (matched) {
+        const ops = Array.isArray(matched.operations)
+          ? matched.operations
+          : JSON.parse(matched.operations||'[]')
+        const params = ops.flatMap(op =>
+          (op.chars||[]).map(ch => ({
+            param:    ch.shortText,
+            spec:     `${ch.lowerLimit||''}${ch.lowerLimit&&ch.upperLimit?' – ':''}${ch.upperLimit||''}`,
+            unit:     ch.uom || 'Pass/Fail',
+            limit_lo: ch.lowerLimit ? parseFloat(ch.lowerLimit) : null,
+            limit_hi: ch.upperLimit ? parseFloat(ch.upperLimit) : null,
+            isText:   ch.category === 'Qualitative',
+            result:   '',
+            status:   'PENDING',
+          }))
+        )
+        setHdr(p => ({...p, qualityPlan: matched.planNo}))
+        if (params.length > 0) {
+          setTests(params)
+          toast.success(`✅ ${matched.planNo} loaded — ${params.length} test parameters`)
+        } else {
+          toast(`${matched.planNo} found but no characteristics. Add them in Quality Plans.`, {icon:'⚠️'})
+        }
+        return
+      }
+
+      // Fallback: checksheets endpoint
+      const r2 = await fetch(
+        `${BASE}/qm/checksheets?itemCode=${encodeURIComponent(itemCode||'')}&itemName=${encodeURIComponent(itemName||'')}`,
+        { headers: hdr2() }
+      )
+      const d2 = await r2.json()
+      if (d2.matched) {
+        setHdr(p => ({...p, qualityPlan: d2.matched.planNo || d2.matched.name || ''}))
+        const params = (d2.matched.parameters||[]).map(p => ({...p,result:'',status:'PENDING'}))
+        if (params.length > 0) {
+          setTests(params)
+          toast.success(`Quality Plan loaded — ${params.length} params`)
+        }
+      } else {
+        toast.error('No Quality Plan found for this item. Create one in Quality → Planning → Quality Plans')
+      }
+    } catch(e) { toast.error(`Failed: ${e.message}`) }
+  }
+
   const loadGRN = (grnId) => {
     const g = grns.find(g => g.id === parseInt(grnId))
     if (!g) return
@@ -269,6 +401,37 @@ export default function InspectionNew() {
       if (!res.ok) throw new Error(data.error)
 
       const savedLot = data.data?.lotNo || lotNo
+
+      // PP Source + PASS/ACCEPTED/PARTIAL → post FG to stock automatically
+      if (source.startsWith('PP') && (overallResult === 'PASS' || overallResult === 'ACCEPTED' || overallResult === 'PARTIAL_ACCEPT')) {
+        const passQtyFG = parseFloat(hdr.acceptedQty || hdr.lotQty || 0)
+        if (passQtyFG > 0) {
+          try {
+            await fetch(`${BASE}/wm/goods-receipt`, {
+              method: 'POST',
+              headers: hdrJ(),
+              body: JSON.stringify({
+                grnNo:       `FG-QC-${savedLot}`,
+                woNo:        hdr.refNo,
+                movType:     '131 — FG Receipt from Production',
+                recLocation: 'FG-STORE',
+                receivedBy:  hdr.inspector,
+                remarks:     `FG receipt after QC inspection ${savedLot} — WO ${hdr.refNo}`,
+                lines: [{
+                  itemCode: hdr.itemCode,
+                  itemName: hdr.itemName,
+                  recQty:   passQtyFG,
+                  uom:      hdr.unit || 'Nos',
+                  batchNo:  `BATCH-${hdr.refNo}`,
+                }]
+              })
+            })
+            toast.success(`✅ ${passQtyFG} ${hdr.unit} posted to FG Store after QC pass!`)
+          } catch (e) {
+            toast.error(`FG posting failed: ${e.message}`)
+          }
+        }
+      }
 
       // Track this line as inspected
       const updatedInspected = { ...inspectedLines, [selLineIdx]: savedLot }
@@ -477,6 +640,48 @@ export default function InspectionNew() {
                     </option>
                   ))}
                 </select>
+              ) : source.startsWith('PP') ? (
+                <select className="fi-form-ctrl"
+                  value={hdr.refId}
+                  onChange={async e => {
+                    const wo = wos.find(w => String(w.id) === e.target.value)
+                    if (!wo) return
+                    // lotQty = producedQty (editable — user can adjust for this batch)
+                    const produced = parseFloat(wo.producedQty||0)
+                    setHdr(p => ({
+                      ...p,
+                      refId:    String(wo.id),
+                      refNo:    wo.woNo,
+                      itemCode: wo.itemCode || '',
+                      itemName: wo.itemName || '',
+                      lotQty:   String(produced),
+                      unit:     wo.uom || 'Nos',
+                    }))
+                    // Auto-load Quality Plan for this item
+                    if (wo.itemCode || wo.itemName) {
+                      try {
+                        const r = await fetch(
+                          `${BASE}/qm/checksheets?itemCode=${encodeURIComponent(wo.itemCode||'')}&itemName=${encodeURIComponent(wo.itemName||'')}`,
+                          { headers: hdr2() }
+                        )
+                        const d = await r.json()
+                        if (d.matched) {
+                          setHdr(p => ({...p, qualityPlan: d.matched.planNo || d.matched.name || ''}))
+                          const params = d.matched.parameters || []
+                          if (params.length > 0) {
+                            setTests(params.map(p => ({ ...p, result:'', status:'PENDING' })))
+                          }
+                        }
+                      } catch {}
+                    }
+                  }}>
+                  <option value="">-- Select Work Order --</option>
+                  {wos.map(w => (
+                    <option key={w.id} value={w.id}>
+                      {w.woNo} · {w.itemName} · {parseFloat(w.producedQty||0)} {w.uom} produced
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input className="fi-form-ctrl"
                   value={hdr.refNo}
@@ -487,11 +692,20 @@ export default function InspectionNew() {
 
             <div className="fi-form-grp">
               <label>Quality Plan</label>
-              <input className="fi-form-ctrl"
-                value={hdr.qualityPlan}
-                onChange={e => setHdr(p => ({ ...p, qualityPlan: e.target.value }))}
-                placeholder="Auto-loaded from checksheet"
-                style={{ background:'#F8F9FA', fontSize:11 }} />
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <input className="fi-form-ctrl"
+                  value={hdr.qualityPlan}
+                  onChange={e => setHdr(p => ({ ...p, qualityPlan: e.target.value }))}
+                  placeholder="Auto-loaded from checksheet"
+                  style={{ background:'#F8F9FA', fontSize:11, flex:1 }} />
+                <button type="button"
+                  onClick={loadQualityPlan}
+                  style={{padding:'5px 10px',fontSize:11,fontWeight:700,
+                    background:'#714B67',color:'#fff',border:'none',
+                    borderRadius:5,cursor:'pointer',whiteSpace:'nowrap'}}>
+                  🔍 Load QP
+                </button>
+              </div>
             </div>
           </div>
 
@@ -557,7 +771,11 @@ export default function InspectionNew() {
                 style={{ background:'#F8F9FA', color:'#6C757D' }} />
             </div>
             <div className="fi-form-grp">
-              <label>Lot Qty & UOM</label>
+              <label>Lot Qty & UOM
+                <span style={{fontSize:10,color:'#856404',fontWeight:400,marginLeft:6}}>
+                  (Enter qty being inspected in this batch)
+                </span>
+              </label>
               <div style={{ display:'flex', gap:8 }}>
                 <input type="number" className="fi-form-ctrl" style={{ flex:2 }}
                   value={hdr.lotQty}
@@ -567,6 +785,11 @@ export default function InspectionNew() {
                   textAlign:'center' }}
                   value={hdr.unit} readOnly />
               </div>
+              {source.startsWith('PP') && hdr.lotQty && (
+                <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>
+                  ℹ️ Adjust qty if not all produced pcs go for QC at once
+                </div>
+              )}
             </div>
           </div>
 

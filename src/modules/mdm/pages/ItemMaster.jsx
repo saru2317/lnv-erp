@@ -546,7 +546,14 @@ export default function ItemMaster() {
                   value={form.itemType}
                   onChange={e => {
                     const code = e.target.value
-                    setForm(f => ({ ...f, itemType: code }))
+                    setForm(f => ({
+                      ...f,
+                      itemType: code,
+                      // Auto-enable BOM Maintain for FG/SFG, disable for RM/BP
+                      bomMaintain: ['FG','SFG'].includes(code) ? true
+                                 : ['RM','BP','CN','PKG','MI'].includes(code) ? false
+                                 : f.bomMaintain,
+                    }))
                     if (code && !editCode) generateItemCode(code)
                   }}
                   disabled={!!editCode}>
@@ -819,26 +826,19 @@ export default function ItemMaster() {
                       style={{ ...inp, fontFamily:'DM Mono,monospace' }}
                       value={form.hsnNo ?? ''}
                       onChange={e => onHsnChange(e.target.value)}
+                      list="hsnDatalist"
                       placeholder="Type HSN code (e.g. 39071000)"
                     />
-                    {form.hsnNo && (
-                      <div style={{ fontSize:10, color:'#6C757D', marginTop:3 }}>
-                        {hsnList.find(h=>h.code===String(form.hsnNo))?.desc || 'Code saved — type to search'}
-                      </div>
-                    )}
-                    {form.hsnNo?.length >= 2 && !hsnList.find(h=>h.code===form.hsnNo) && (
-                      <div style={{ background:'#fff', border:'1px solid #E0D5E0', borderRadius:4,
-                        maxHeight:120, overflowY:'auto', fontSize:11, marginTop:2 }}>
-                        {hsnList.filter(h=>h.code.startsWith(form.hsnNo)||
-                          h.desc.toLowerCase().includes(form.hsnNo.toLowerCase())
-                        ).slice(0,6).map(h=>(
-                          <div key={h.code} onClick={()=>onHsnChange(h.code)}
-                            style={{ padding:'4px 8px', cursor:'pointer', borderBottom:'1px solid #F0EEF0' }}
-                            onMouseEnter={e=>e.target.style.background='#F8F4F8'}
-                            onMouseLeave={e=>e.target.style.background='#fff'}>
-                            <strong>{h.code}</strong> — {h.desc}
-                          </div>
-                        ))}
+                    <datalist id="hsnDatalist">
+                      {hsnList.map(h => (
+                        <option key={h.code} value={h.code}>{h.code} — {h.desc}</option>
+                      ))}
+                    </datalist>
+                    {form.hsnNo && hsnList.find(h=>h.code===String(form.hsnNo)) && (
+                      <div style={{ fontSize:10, color:'#155724', marginTop:3,
+                        background:'#D4EDDA', padding:'2px 8px', borderRadius:4 }}>
+                        ✅ {hsnList.find(h=>h.code===String(form.hsnNo))?.desc}
+                        &nbsp;· IGST {hsnList.find(h=>h.code===String(form.hsnNo))?.igst}%
                       </div>
                     )}
                   </FG>

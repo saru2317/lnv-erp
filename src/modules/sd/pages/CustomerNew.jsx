@@ -97,15 +97,56 @@ export default function CustomerNew() {
 
   const save = async () => {
     if (!form.name || !form.mobile) return toast.error('Customer Name and Mobile are required')
-    if (!form.gstin) return toast.error('GSTIN is required')
     setSaving(true)
     try {
-      await sdApi.createCustomer({ ...form, billAddrs, shipAddrs })
-      toast.success(`Customer ${form.code} created successfully!`)
+      // Map SD CustomerNew fields → backend Customer model fields
+      const primaryBill = billAddrs[0] || {}
+      const payload = {
+        name:           form.name,
+        type:           form.type        || 'B',
+        gstin:          form.gstin       || null,
+        gstType:        form.gstType     || 'Regular',
+        phone:          form.mobile      || null,   // mobile → phone
+        email:          form.email       || null,
+        website:        form.website     || null,
+        pan:            form.pan         || null,
+        currency:       form.currency    || 'INR',
+        priceList:      form.priceList   || 'Standard',
+        salesRep:       form.salesExec   || null,   // salesExec → salesRep
+        paymentTerms:   form.paymentTerms|| 'Net 30',
+        creditLimit:    parseFloat(form.creditLimit || 0),
+        creditDays:     parseInt(form.creditDays    || 30),
+        // Primary billing address (flat fields)
+        address:        [primaryBill.addr1, primaryBill.addr2].filter(Boolean).join(', ') || null,
+        city:           primaryBill.city   || null,
+        state:          primaryBill.state  || null,
+        pincode:        primaryBill.pincode|| null,
+        // Ship-to addresses as JSON
+        shipToAddresses: shipAddrs.map(s => ({
+          id:            s.id || Date.now(),
+          label:         s.label,
+          address:       [s.addr1, s.addr2].filter(Boolean).join(', '),
+          city:          s.city,
+          state:         s.state,
+          pincode:       s.pincode,
+          gstin:         s.gstin,
+          contactPerson: s.attn,
+          phone:         s.phone,
+          isDefault:     s.isDefault || false,
+        })),
+        contacts: [{
+          name:  primaryBill.attn  || form.name,
+          phone: primaryBill.phone || form.mobile,
+          email: form.email || '',
+          role:  'Primary',
+        }],
+      }
+      const res  = await sdApi.createCustomer(payload)
+      if (res?.error) throw new Error(res.error)
+      toast.success(`Customer created successfully!`)
       navigate('/sd/customers')
-    } catch {
-      toast.success(`Customer ${form.code} saved (dev mode)!`)
-      navigate('/sd/customers')
+    } catch(e) {
+      toast.error('Failed to save: ' + e.message)
     } finally { setSaving(false) }
   }
 

@@ -20,12 +20,6 @@ const STATUS_STYLE = {
   ON_HOLD:     ['#EDE0EA','#714B67'],
 }
 
-const SEED = [
-  { id:1, woNo:'WO-2026-0001', itemName:'Brake Bracket — Powder Coat',  itemCode:'BRK-001', plannedQty:500, uom:'Nos', producedQty:320, rejectedQty:8,  status:'IN_PROGRESS', scheduledStart:'2026-04-10', scheduledEnd:'2026-04-12', priority:'High',   workCenter:'BOOTH-01' },
-  { id:2, woNo:'WO-2026-0002', itemName:'Engine Mount — Surface Treat.', itemCode:'ENG-006', plannedQty:300, uom:'Nos', producedQty:300, rejectedQty:2,  status:'COMPLETED',   scheduledStart:'2026-04-08', scheduledEnd:'2026-04-09', priority:'Normal', workCenter:'TANK-01'  },
-  { id:3, woNo:'WO-2026-0003', itemName:'Gear Housing — Heat Treatment', itemCode:'GER-A2',  plannedQty:150, uom:'Nos', producedQty:0,   rejectedQty:0,  status:'RELEASED',    scheduledStart:'2026-04-13', scheduledEnd:'2026-04-15', priority:'High',   workCenter:'FURNACE-01'},
-]
-
 export default function WOList() {
   const nav   = useNavigate()
   const [params] = useSearchParams()

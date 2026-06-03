@@ -91,6 +91,7 @@ export default function BOMNew() {
 
   // Master data
   const [allItems,   setAllItems]   = useState([])   // all items from API
+  const [rmItems,    setRmItems]    = useState([])   // RM/SFG/Packing items only (for component lines)
   const [itemGroups, setItemGroups] = useState([])   // item groups
 
   // Derived lists
@@ -136,22 +137,67 @@ export default function BOMNew() {
           const items = Array.isArray(d) ? d : (d.data || d.items || d.result || [])
           if (items.length > 0) {
             setAllItems(items)
+            // Component lines: exclude FG (finished goods) — RM, SFG, Packing, Chemical etc.
+            const componentItems = items.filter(it => {
+              const type = (it.itemType || '').toUpperCase()
+              const code = (it.code || '').toUpperCase()
+              // Exclude pure FG items from component selector
+              if (type === 'FG') return false
+              if (code.startsWith('FG-') || code.startsWith('FG_')) return false
+              return true
+            })
+            setRmItems(componentItems.length > 0 ? componentItems : items)
             // Exclude obvious RM/Packing/Spare/Chemical items from FG header dropdown
             // Based on code prefix (RM-001, SP-001, PKG-001 etc.) and category name
-            const RM_CODE_PREFIXES = ['RM','SP','PKG','PK','CHM','OIL','CON','RAW','MAT']
-            const RM_CATEGORIES    = ['raw','consumable','packing','spare','chemical','paint','oil','gas']
-            const isNotRM = it => {
+            // ── FG/SFG ONLY filter ────────────────────────────────────
+            // Priority 1: use itemType field (FG, SFG)
+            // Priority 2: code prefix FG- or SFG-
+            // Exclude: BP (By-Product), RM, SP, PKG, CHM etc.
+            const FG_TYPES    = ['FG','SFG','fg','sfg','Finished Goods','Semi-Finished','Semi Finished']
+            const BP_PREFIXES = ['BP','RM','SP','PKG','PK','CHM','OIL','CON','RAW','MAT']
+            const BP_CATEGORIES = ['raw','consumable','packing','spare','chemical','paint','oil','by-product','byproduct','by product']
+
+            const isFGorSFG = it => {
               const code = (it.code || '').toUpperCase()
+              const type = (it.itemType || it.type || '').toUpperCase()
               const cat  = (it.category || '').toLowerCase()
-              // Exclude if code starts with RM prefix pattern
-              const rmByCode = RM_CODE_PREFIXES.some(p => code.startsWith(p+'-') || code.startsWith(p+'_') || code === p)
-              // Exclude if category name contains RM keywords
-              const rmByCat  = RM_CATEGORIES.some(c => cat.includes(c))
-              return !rmByCode && !rmByCat
+
+              // Exclude BP/RM prefix
+              const isBP = code.startsWith('BP-') || code.startsWith('BP_')
+              if (isBP) return false
+              const isRM = BP_PREFIXES.some(p => code.startsWith(p+'-') || code.startsWith(p+'_'))
+              if (isRM) return false
+              const isBPCat = BP_CATEGORIES.some(c => cat.includes(c))
+              if (isBPCat) return false
+
+              // If itemType is explicitly set — use it
+              if (type) return ['FG','SFG'].includes(type)
+
+              // Code prefix check
+              if (code.startsWith('FG-') || code.startsWith('SFG-') ||
+                  code.startsWith('FG_') || code.startsWith('SFG_')) return true
+
+              return true
             }
-            const headerItems = items.filter(isNotRM)
-            // If nothing matches (unknown prefix pattern) → show all items
-            setFgItems(headerItems.length > 0 ? headerItems : items)
+
+            // Step 1: FG/SFG items
+            const fgSfgItems = items.filter(isFGorSFG)
+
+            // Step 2: FG header dropdown — prefer bomMaintain=true items
+            // Note: allItems (used for RM components) is NOT filtered by bomMaintain
+            // bomMaintain only controls the HEADER item (product being manufactured)
+            const bomEnabled = fgSfgItems.filter(it => it.bomMaintain === true)
+
+            // Step 3: fallback — show all FG/SFG if none have bomMaintain
+            setFgItems(bomEnabled.length > 0 ? bomEnabled : fgSfgItems)
+
+            // Warn once if no items have bomMaintain enabled
+            if (fgSfgItems.length > 0 && bomEnabled.length === 0) {
+              setTimeout(() => toast(
+                '⚙️ Tip: Enable "BOM Maintain" in Item Master → Inventory tab for FG/SFG items to appear here.',
+                { duration: 6000 }
+              ), 1500)
+            }
             return // success — stop trying
           }
         } catch { continue }
@@ -236,18 +282,44 @@ export default function BOMNew() {
 
   // ── Get items for a group — match by ID or category name ───────────────────
   const getGroupItems = (groupId) => {
-    if (!groupId) return allItems
-    // Find the group to get its name
-    const grp = itemGroups.find(g => String(g.id||g.code) === String(groupId))
-    const grpName = (grp?.name || grp?.groupName || grp?.label || '').toLowerCase()
-    return allItems.filter(it => {
-      // Match by FK id
+    if (!groupId) return rmItems   // No group = show all RM/SFG/Packing items
+    // Find the group
+    const grp     = itemGroups.find(g => String(g.id||g.code) === String(groupId))
+    const grpName = (grp?.name || grp?.groupName || grp?.label || '').toLowerCase().trim()
+    const grpCode = (grp?.code || grp?.shortCode || grp?.groupCode || '').toUpperCase().trim()
+
+    return rmItems.filter(it => {
+      // 1. Match by FK groupId stored on item
       const byId = String(it.groupId||it.itemGroupId||'') === String(groupId)
-      // Match by category name (Item.category stores the group name)
-      const byCat = grpName && (it.category||'').toLowerCase().includes(grpName)
-      // Match by code prefix (RM-001 → group "Raw Material")
-      const byPrefix = grpName && (it.code||'').toUpperCase().startsWith(grpName.slice(0,2).toUpperCase())
-      return byId || byCat || byPrefix
+
+      // 2. Match by itemGroupCode field (e.g. 'RMB' matches grpCode 'RMB')
+      const itGrpCode = (it.itemGroupCode || it.groupCode || '').toUpperCase().trim()
+      const byGrpCode = grpCode && itGrpCode === grpCode
+
+      // 3. Match by itemGroup name field (e.g. 'RMB — Master Batch' includes 'master batch')
+      const itGrpName = (it.itemGroup || it.groupName || '').toLowerCase()
+      const byGrpName = grpName && (
+        itGrpName.includes(grpName) ||
+        grpName.includes(itGrpName.split('—').pop().trim())
+      )
+
+      // 4. Match by category code against group code
+      // e.g. item.category='MBR', grp.code='RMB' → first 2 chars match
+      const itCat = (it.category || '').toUpperCase().trim()
+      const byCatCode = grpCode && itCat.length >= 2 && grpCode.length >= 2 &&
+        (itCat === grpCode ||
+         itCat.includes(grpCode) ||
+         grpCode.includes(itCat))
+
+      // 5. Match by category name (original logic)
+      const byCatName = grpName && (it.category||'').toLowerCase().includes(grpName)
+
+      // 6. Match by item code segment
+      // e.g. RM-RMB-MBR-0001 contains 'RMB' which is grpCode
+      const itCode = (it.code || '').toUpperCase()
+      const byCodeSegment = grpCode && itCode.includes('-' + grpCode + '-')
+
+      return byId || byGrpCode || byGrpName || byCatCode || byCatName || byCodeSegment
     })
   }
 

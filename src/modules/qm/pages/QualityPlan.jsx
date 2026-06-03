@@ -18,7 +18,7 @@ const AQL_TABLE    = [['2–8','2','0','1'],['9–15','3','0','1'],['16–25','5
 
 const EMPTY_CHAR = { charNo:'',shortText:'',category:'Quantitative',targetVal:'',lowerLimit:'',upperLimit:'',uom:'Ne',method:'',sampleProc:'AQL 1.5',sampleSize:'',resultReq:true,destruct:false,docReq:true,qualAccept:'',qualReject:'',controlKey:'QM01 - Inspection w/ Results' }
 const EMPTY_OP   = { opNo:'',workCenter:'',controlKey:'QM01 - Inspection w/ Results',shortText:'',inspScope:'100%',chars:[] }
-const EMPTY_PLAN = { planNo:'',revision:'00',plant:'LNVM01 - Ranipet Plant',material:'',materialDesc:'',usage:'02 - Goods Receipt',inspType:'01 - GR from Vendor',status:'Active',validFrom:'',validTo:'',lotSizeFrom:'1',lotSizeTo:'99999',inspInterval:'',inspIntervalUnit:'Days',aql:'1.5',sampleProc:'AQL 1.5',inspScope:'Sampling',description:'',longText:'',operations:[],plannerGroup:'QC',changeDoc:true,dynMod:false,dynModRule:'',skipLotAllowed:false }
+const EMPTY_PLAN = { planNo:'',revision:'00',plant:'LNVM01 - Ranipet Plant',itemCode:'',material:'',materialDesc:'',usage:'02 - Goods Receipt',inspType:'01 - GR from Vendor',status:'Active',validFrom:'',validTo:'',lotSizeFrom:'1',lotSizeTo:'99999',inspInterval:'',inspIntervalUnit:'Days',aql:'1.5',sampleProc:'AQL 1.5',inspScope:'Sampling',description:'',longText:'',operations:[],plannerGroup:'QC',changeDoc:true,dynMod:false,dynModRule:'',skipLotAllowed:false }
 
 const nextOpNo   = ops  => !ops.length ? '0010'  : String(Math.max(...ops.map(o=>parseInt(o.opNo)||0))+10).padStart(4,'0')
 const nextCharNo = chars=> !chars.length? '0001' : String(Math.max(...chars.map(c=>parseInt(c.charNo)||0))+1).padStart(4,'0')
@@ -33,8 +33,8 @@ const FieldRow = ({label,children}) => (
     <div style={{flex:1}}>{children}</div>
   </div>
 )
-const Modal = ({title,children,onClose,wide}) => (
-  <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+const Modal = ({title,children,onClose,wide,zIndex=9000}) => (
+  <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex,display:'flex',alignItems:'center',justifyContent:'center'}}>
     <div style={{background:'#fff',borderRadius:'10px',padding:'24px',width:wide?'800px':'480px',maxHeight:'88vh',overflowY:'auto',boxShadow:'0 8px 40px rgba(0,0,0,0.22)'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
         <strong style={{color:'var(--odoo-purple)',fontSize:'14px'}}>{title}</strong>
@@ -79,6 +79,9 @@ export default function QualityPlan() {
   const [view,       setView]      = useState('list')
   const [plans,      setPlans]     = useState([])
   const [loading,    setLoading]   = useState(true)
+  const [items,      setItems]     = useState([])  // Item Master for dropdown
+  const [itemGroupFilter, setItemGroupFilter] = useState('')
+  const [workCenters, setWorkCenters] = useState([])
   const [form,       setForm]      = useState(EMPTY_PLAN)
   const [tab,        setTab]       = useState('general')
   const [selOpIdx,   setSelOp]     = useState(null)
@@ -97,16 +100,31 @@ export default function QualityPlan() {
     try {
       const res  = await fetch(`${BASE_URL}/qm/quality-plan`,{headers:{Authorization:`Bearer ${getToken()}`}})
       const data = await res.json()
-      setPlans(data.data?.length ? data.data : SEED_PLANS)
-    } catch { setPlans(SEED_PLANS) }
+      setPlans(data.data || [])
+    } catch(e) { toast.error('Failed to load quality plans') }
     finally  { setLoading(false) }
   },[])
-  useEffect(()=>{ loadPlans() },[loadPlans])
+  useEffect(()=>{
+    loadPlans()
+    // Load items for dropdown
+    fetch(`${BASE_URL}/mdm/items`, { headers:{ Authorization:`Bearer ${getToken()}` } })
+      .then(r=>r.json())
+      .then(d => setItems(d.data||[])).catch(()=>{})
+    // Work Centers for operation dropdown
+    fetch(`${BASE_URL}/pp/work-centers`, { headers:{ Authorization:`Bearer ${getToken()}` } })
+      .then(r=>r.json())
+      .then(d => setWorkCenters(d.data||[])).catch(()=>{})
+  },[loadPlans])
 
   const fSet = (k,v) => setForm(f=>({...f,[k]:v}))
 
-  const openNew = () => {
-    const nextNo = `QP-${String(plans.length+1).padStart(3,'0')}`
+  const openNew = async () => {
+    let nextNo = `QP-${String(plans.length+1).padStart(3,'0')}`
+    try {
+      const r = await fetch(`${BASE_URL}/qm/quality-plan/next-no`,{headers:{Authorization:`Bearer ${getToken()}`}})
+      const d = await r.json()
+      if (d.planNo) nextNo = d.planNo
+    } catch {}
     setForm({...EMPTY_PLAN,planNo:nextNo,validFrom:new Date().toISOString().slice(0,10),validTo:'2099-12-31'})
     setTab('general'); setSelOp(null); setView('form')
   }
@@ -153,8 +171,8 @@ export default function QualityPlan() {
     if(!form.material) return toast.error('Material is required')
     setSaving(true)
     try {
-      const method=form.id?'PUT':'POST'
-      const url=form.id?`${BASE_URL}/qm/quality-plan/${form.id}`:`${BASE_URL}/qm/quality-plan`
+      const method = form.id ? 'PUT' : 'POST'
+      const url    = form.id ? `${BASE_URL}/qm/quality-plan/${form.id}` : `${BASE_URL}/qm/quality-plan`
       try {
         const res=await fetch(url,{method,headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify(form)})
         if(res.ok){ toast.success('Saved to DB'); loadPlans(); setView('list'); return }
@@ -311,9 +329,76 @@ export default function QualityPlan() {
               <FieldRow label="Plan Number"><input className="sd-inp" value={form.planNo} onChange={e=>fSet('planNo',e.target.value)}/></FieldRow>
               <FieldRow label="Revision"><input className="sd-inp" style={{width:80}} value={form.revision} onChange={e=>fSet('revision',e.target.value)} placeholder="00"/></FieldRow>
               <FieldRow label="Description"><input className="sd-inp" value={form.description} onChange={e=>fSet('description',e.target.value)} placeholder="Plan description"/></FieldRow>
-              <SectionTitle style={{marginTop:16}}>Material</SectionTitle>
-              <FieldRow label="Material *"><input className="sd-inp" value={form.material} onChange={e=>fSet('material',e.target.value)} placeholder="e.g. Ring Yarn (30s)"/></FieldRow>
-              <FieldRow label="Material Desc."><input className="sd-inp" value={form.materialDesc} onChange={e=>fSet('materialDesc',e.target.value)} placeholder="Short description"/></FieldRow>
+              <SectionTitle style={{marginTop:16}}>Material / Product</SectionTitle>
+              <FieldRow label="Item Group">
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {[
+                    {k:'',    l:'All'},
+                    {k:'RM',  l:'Raw Material'},
+                    {k:'FG',  l:'Finished Goods'},
+                    {k:'SFG', l:'Semi Finished'},
+                    {k:'BP',  l:'By-Product'},
+                    {k:'CN',  l:'Consumable'},
+                  ].map(g=>(
+                    <button key={g.k} type="button"
+                      onClick={()=>{ setItemGroupFilter(g.k); fSet('itemCode',''); fSet('material',''); fSet('materialDesc','') }}
+                      style={{
+                        padding:'3px 10px', fontSize:11, fontWeight:700,
+                        borderRadius:5, cursor:'pointer', border:'1.5px solid',
+                        borderColor: itemGroupFilter===g.k ? '#714B67' : '#E0D5E0',
+                        background:  itemGroupFilter===g.k ? '#714B67' : '#fff',
+                        color:       itemGroupFilter===g.k ? '#fff'    : '#6C757D',
+                      }}>
+                      {g.l}
+                    </button>
+                  ))}
+                </div>
+              </FieldRow>
+              <FieldRow label="Item Code">
+                {(() => {
+                  const filteredItems = items.filter(i => {
+                    if (!itemGroupFilter) return true
+                    const type = (i.itemType || i.category || '').toUpperCase()
+                    return type === itemGroupFilter || type.startsWith(itemGroupFilter)
+                  })
+                  return (
+                    <>
+                      <select className="sd-inp"
+                        value={form.itemCode||''}
+                        onChange={e=>{
+                          const item = items.find(i=>(i.code||i.itemCode)===e.target.value)
+                          fSet('itemCode',    e.target.value)
+                          fSet('material',    item?.code || item?.itemCode || '')
+                          fSet('materialDesc',item?.name || item?.itemName || '')
+                        }}>
+                        <option value="">
+                          -- Select {itemGroupFilter||'All'} Item ({filteredItems.length}) --
+                        </option>
+                        {filteredItems.map(i=>(
+                          <option key={i.code||i.itemCode} value={i.code||i.itemCode}>
+                            {i.code||i.itemCode} — {i.name||i.itemName}
+                          </option>
+                        ))}
+                      </select>
+                      {itemGroupFilter && filteredItems.length === 0 && (
+                        <div style={{fontSize:10,color:'#856404',marginTop:2}}>
+                          No {itemGroupFilter} items found
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
+              </FieldRow>
+              <FieldRow label="Material *">
+                <input className="sd-inp" value={form.material}
+                  onChange={e=>fSet('material',e.target.value)}
+                  placeholder="e.g. Chair Bottom Bush - Red"/>
+              </FieldRow>
+              <FieldRow label="Material Desc.">
+                <input className="sd-inp" value={form.materialDesc}
+                  onChange={e=>fSet('materialDesc',e.target.value)}
+                  placeholder="Short description" style={{background:'#F8F9FA'}} readOnly={!!form.itemCode}/>
+              </FieldRow>
               <FieldRow label="Plant">
                 <select className="sd-inp" value={form.plant} onChange={e=>fSet('plant',e.target.value)}>
                   {PLANT_OPTS.map(o=><option key={o}>{o}</option>)}
@@ -610,8 +695,25 @@ export default function QualityPlan() {
               onChange={e=>setOpForm(f=>({...f,opNo:e.target.value}))} placeholder="0010"/>
           </FieldRow>
           <FieldRow label="Work Center *">
-            <input className="sd-inp" value={opForm.workCenter}
-              onChange={e=>setOpForm(f=>({...f,workCenter:e.target.value}))} placeholder="QC-LAB, QC-LINE1"/>
+            <select className="sd-inp"
+              value={opForm.workCenter}
+              onChange={e=>setOpForm(f=>({...f,workCenter:e.target.value}))}>
+              <option value="">-- Select Work Center --</option>
+              {workCenters.length > 0 ? (
+                workCenters.map(w=>(
+                  <option key={w.wcId} value={w.wcId}>
+                    {w.wcId} — {w.name}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="QC-LAB">QC-LAB — Quality Lab</option>
+                  <option value="QC-LINE">QC-LINE — QC Line</option>
+                  <option value="QC-FG">QC-FG — FG Inspection</option>
+                  <option value="QC-RM">QC-RM — RM Inspection</option>
+                </>
+              )}
+            </select>
           </FieldRow>
           <FieldRow label="Control Key">
             <select className="sd-inp" value={opForm.controlKey}
@@ -638,7 +740,7 @@ export default function QualityPlan() {
 
       {/* ── CHARACTERISTIC MODAL ── */}
       {charModal && (
-        <Modal title={editCharIdx!==null?'Edit Characteristic':'Add Inspection Characteristic'} onClose={()=>setCharModal(false)} wide>
+        <Modal title={editCharIdx!==null?'Edit Characteristic':'Add Inspection Characteristic'} onClose={()=>setCharModal(false)} wide zIndex={9200}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:10}}>
             <FieldRow label="Char No.">
               <input className="sd-inp" style={{width:90}} value={charForm.charNo}

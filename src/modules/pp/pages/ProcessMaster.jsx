@@ -1,179 +1,393 @@
-import React, { useState } from 'react'
-import { DEMO_COMPANY_CONFIG, CHARGE_BASES } from './_ppConfig'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const INITIAL_PROCESSES = DEMO_COMPANY_CONFIG.processes.map((p,i)=>({
-  id:`PROC-${String(i+1).padStart(3,'0')}`,
-  name:p, seq:i+1, mandatory:true,
-  stdTime:30+(i*10), timeUnit:'Minutes',
-  chargeBy:'Per Piece', defaultRate:5+(i*2),
-  canParallel:false, canSkip:false, status:'Active',
-}))
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
+const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${tok()}` })
+const hdr2 = () => ({ Authorization:`Bearer ${tok()}` })
+
+const CHARGE_BASES = ['Per Piece','Per Kg','Per Hour','Per Minute','Per Batch','Lumpsum']
+const TIME_UNITS   = ['Minutes','Hours','Seconds']
+
+const EMPTY = {
+  name:'', stdTime:30, timeUnit:'Minutes',
+  chargeBy:'Per Piece', defaultRate:'',
+  mandatory:true, canParallel:false, canSkip:false
+}
 
 export default function ProcessMaster() {
-  const [processes, setProcesses] = useState(INITIAL_PROCESSES)
+  const nav = useNavigate()
+  const [processes, setProcesses] = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState(false)
   const [dragging,  setDragging]  = useState(null)
   const [showAdd,   setShowAdd]   = useState(false)
-  const [newProc,   setNewProc]   = useState({name:'',stdTime:30,timeUnit:'Minutes',chargeBy:'Per Piece',defaultRate:'',mandatory:true,canParallel:false,canSkip:false})
-  const set = (k,v) => setNewProc(f=>({...f,[k]:v}))
+  const [editing,   setEditing]   = useState(null)  // id of row being edited inline
+  const [newProc,   setNewProc]   = useState(EMPTY)
+  const set = (k,v) => setNewProc(f => ({ ...f, [k]:v }))
 
-  // Drag to reorder
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res  = await fetch(`${BASE}/pp/process-master`, { headers: hdr2() })
+      const data = await res.json()
+      setProcesses(data.data || [])
+    } catch { toast.error('Failed to load processes') }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  // ── Add new process ────────────────────────────────────────────────────────
+  const handleAdd = async () => {
+    if (!newProc.name.trim()) return toast.error('Process name required!')
+    setSaving(true)
+    try {
+      const res  = await fetch(`${BASE}/pp/process-master`, {
+        method:'POST', headers: hdr(),
+        body: JSON.stringify({
+          ...newProc,
+          stdTime:     parseFloat(newProc.stdTime||30),
+          defaultRate: parseFloat(newProc.defaultRate||0),
+          seq:         processes.length + 1,
+          status:      'Active',
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(`${newProc.name} added!`)
+      setNewProc(EMPTY)
+      setShowAdd(false)
+      load()
+    } catch(e) { toast.error(e.message) }
+    finally { setSaving(false) }
+  }
+
+  // ── Toggle field ──────────────────────────────────────────────────────────
+  const toggleField = async (proc, field) => {
+    const updated = { ...proc, [field]: !proc[field] }
+    try {
+      await fetch(`${BASE}/pp/process-master/${proc.id}`, {
+        method:'PATCH', headers: hdr(),
+        body: JSON.stringify({ [field]: !proc[field] })
+      })
+      setProcesses(ps => ps.map(p => p.id === proc.id ? updated : p))
+    } catch { toast.error('Update failed') }
+  }
+
+  // ── Delete process ────────────────────────────────────────────────────────
+  const deleteProc = async (proc) => {
+    if (!window.confirm(`Delete "${proc.name}"?`)) return
+    try {
+      const res = await fetch(`${BASE}/pp/process-master/${proc.id}`, {
+        method:'DELETE', headers: hdr2()
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      toast.success('Deleted!')
+      load()
+    } catch(e) { toast.error(e.message) }
+  }
+
+  // ── Drag to reorder ──────────────────────────────────────────────────────
   const handleDragStart = idx => setDragging(idx)
-  const handleDragOver  = (e,idx) => {
+  const handleDragOver  = (e, idx) => {
     e.preventDefault()
-    if(dragging===null||dragging===idx) return
+    if (dragging === null || dragging === idx) return
     const reordered = [...processes]
-    const [moved] = reordered.splice(dragging,1)
-    reordered.splice(idx,0,moved)
-    reordered.forEach((p,i)=>p.seq=i+1)
+    const [moved] = reordered.splice(dragging, 1)
+    reordered.splice(idx, 0, moved)
+    reordered.forEach((p, i) => p.seq = i + 1)
     setProcesses(reordered)
     setDragging(idx)
   }
-
-  const handleAddProcess = () => {
-    if(!newProc.name) { alert('Enter process name'); return }
-    setProcesses(p=>[...p,{
-      id:`PROC-${String(p.length+1).padStart(3,'0')}`,
-      ...newProc, seq:p.length+1, status:'Active'
-    }])
-    setNewProc({name:'',stdTime:30,timeUnit:'Minutes',chargeBy:'Per Piece',defaultRate:'',mandatory:true,canParallel:false,canSkip:false})
-    setShowAdd(false)
+  const handleDragEnd = async () => {
+    setDragging(null)
+    // Save new seq order to backend
+    try {
+      await Promise.all(processes.map((p, i) =>
+        fetch(`${BASE}/pp/process-master/${p.id}`, {
+          method:'PATCH', headers: hdr(),
+          body: JSON.stringify({ seq: i + 1 })
+        })
+      ))
+    } catch { /* non-critical */ }
   }
 
-  const toggleField = (id,field) => setProcesses(ps=>ps.map(p=>p.id===id?{...p,[field]:!p[field]}:p))
-  const updateSeq   = (id,dir) => {
-    const ps = [...processes]
-    const idx = ps.findIndex(p=>p.id===id)
-    if(dir==='up'&&idx>0){ [ps[idx-1],ps[idx]]=[ps[idx],ps[idx-1]] }
-    if(dir==='dn'&&idx<ps.length-1){ [ps[idx],ps[idx+1]]=[ps[idx+1],ps[idx]] }
-    ps.forEach((p,i)=>p.seq=i+1)
+  const moveSeq = (id, dir) => {
+    const ps  = [...processes]
+    const idx = ps.findIndex(p => p.id === id)
+    if (dir === 'up' && idx > 0) { [ps[idx-1], ps[idx]] = [ps[idx], ps[idx-1]] }
+    if (dir === 'dn' && idx < ps.length-1) { [ps[idx], ps[idx+1]] = [ps[idx+1], ps[idx]] }
+    ps.forEach((p, i) => { p.seq = i + 1 })
     setProcesses(ps)
   }
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Process Master <small>{processes.length} processes · Drag to reorder</small></div>
+        <div className="fi-lv-title">
+          Process Master
+          <small>{processes.length} processes · Drag to reorder</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/routing-template')}> Routing Template</button>
-          <button className="btn btn-p btn-s" onClick={()=>setShowAdd(true)}>+ Add Process</button>
+          <button className="btn btn-s sd-bsm" onClick={load}>↻ Refresh</button>
+          <button className="btn btn-s sd-bsm"
+            onClick={() => nav('/pp/routing-master')}>
+            Routing Master →
+          </button>
+          <button className="btn btn-p sd-bsm"
+            onClick={() => setShowAdd(true)}>
+            + Add Process
+          </button>
         </div>
       </div>
 
-      {/* Industry badge */}
-      <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px',padding:'10px 14px',background:'#EDE0EA',borderRadius:'8px'}}>
-        <span style={{fontSize:'20px'}}></span>
+      {/* Info banner */}
+      <div style={{ background:'#EDE0EA', borderRadius:8, padding:'10px 16px',
+        marginBottom:14, display:'flex', alignItems:'center', gap:10 }}>
+        <span style={{ fontSize:20 }}>⚙️</span>
         <div>
-          <div style={{fontWeight:'700',fontSize:'13px',color:'var(--odoo-purple)'}}>{DEMO_COMPANY_CONFIG.subType.replace('_',' ').toUpperCase()} — Process Configuration</div>
-          <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>Drag rows to reorder sequence · Toggle mandatory/parallel/skip flags per process</div>
+          <div style={{ fontWeight:700, fontSize:13, color:'#714B67' }}>
+            LNV Manufacturing — Process Configuration
+          </div>
+          <div style={{ fontSize:11, color:'#6C757D' }}>
+            Drag rows to reorder sequence · Toggle mandatory/parallel/skip per process
+          </div>
         </div>
-        <div style={{marginLeft:'auto',fontSize:'12px',color:'var(--odoo-purple)',fontWeight:'600'}}>Charge basis: {DEMO_COMPANY_CONFIG.chargeBy}</div>
       </div>
 
-      {/* Add form */}
-      {showAdd&&(
-        <div className="fi-panel" style={{marginBottom:'14px',border:'2px solid var(--odoo-purple)'}}>
-          <div className="fi-panel-hdr"><h3>Add New Process</h3></div>
-          <div className="fi-panel-body">
-            <div className="sd-form-grid">
-              <div className="sd-field"><label>Process Name *</label><input value={newProc.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Zinc Phosphating" /></div>
-              <div className="sd-field"><label>Std. Time</label><input type="number" value={newProc.stdTime} onChange={e=>set('stdTime',e.target.value)} /></div>
-              <div className="sd-field"><label>Time Unit</label>
-                <select value={newProc.timeUnit} onChange={e=>set('timeUnit',e.target.value)}>
-                  {['Minutes','Hours','Seconds'].map(t=><option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="sd-field"><label>Default Rate (₹)</label><input type="number" value={newProc.defaultRate} onChange={e=>set('defaultRate',e.target.value)} /></div>
-              <div className="sd-field"><label>Charge By</label>
-                <select value={newProc.chargeBy} onChange={e=>set('chargeBy',e.target.value)}>
-                  {CHARGE_BASES.map(c=><option key={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{display:'flex',gap:'16px',marginTop:'10px',fontSize:'12px'}}>
-              {[['mandatory','Mandatory (cannot skip)'],['canParallel','Can run parallel with other processes'],['canSkip','Customer can opt-out this process']].map(([k,l])=>(
-                <label key={k} style={{display:'flex',alignItems:'center',gap:'6px',cursor:'pointer'}}>
-                  <input type="checkbox" checked={newProc[k]} onChange={e=>set(k,e.target.checked)} />
+      {/* Add Form */}
+      {showAdd && (
+        <div style={{ background:'#fff', border:'2px solid #714B67',
+          borderRadius:8, padding:'16px 20px', marginBottom:14 }}>
+          <div style={{ fontWeight:700, fontSize:13, color:'#714B67',
+            marginBottom:12 }}>
+            Add New Process
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',
+            gap:10, marginBottom:10 }}>
+            {[
+              ['name',        'Process Name *', 'text',   'e.g. Material Drying'],
+              ['stdTime',     'Std. Time',       'number', '30'],
+              ['timeUnit',    'Time Unit',       'select', ''],
+              ['defaultRate', 'Default Rate (₹)','number', '0'],
+              ['chargeBy',    'Charge By',       'select', ''],
+            ].map(([k,l,type,ph]) => (
+              <div key={k}>
+                <label style={{ fontSize:10, fontWeight:700, color:'#495057',
+                  display:'block', marginBottom:3, textTransform:'uppercase' }}>
                   {l}
                 </label>
-              ))}
-            </div>
-            <div style={{display:'flex',gap:'8px',marginTop:'10px'}}>
-              <button className="btn btn-p btn-s" onClick={handleAddProcess}> Add Process</button>
-              <button className="btn btn-s sd-bsm" onClick={()=>setShowAdd(false)}>Cancel</button>
-            </div>
+                {type === 'select' ? (
+                  <select value={newProc[k]}
+                    onChange={e => set(k, e.target.value)}
+                    style={{ padding:'7px 10px', border:'1.5px solid #E0D5E0',
+                      borderRadius:5, fontSize:12, width:'100%', outline:'none' }}>
+                    {(k === 'timeUnit' ? TIME_UNITS : CHARGE_BASES).map(v => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input type={type}
+                    value={newProc[k]}
+                    onChange={e => set(k, e.target.value)}
+                    placeholder={ph}
+                    style={{ padding:'7px 10px', border:'1.5px solid #E0D5E0',
+                      borderRadius:5, fontSize:12, width:'100%',
+                      boxSizing:'border-box', outline:'none' }} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:16, marginBottom:10, fontSize:12 }}>
+            {[
+              ['mandatory',   'Mandatory (cannot skip)'],
+              ['canParallel', 'Can run parallel'],
+              ['canSkip',     'Customer can opt-out'],
+            ].map(([k,l]) => (
+              <label key={k} style={{ display:'flex', alignItems:'center',
+                gap:6, cursor:'pointer' }}>
+                <input type="checkbox"
+                  checked={!!newProc[k]}
+                  onChange={e => set(k, e.target.checked)} />
+                {l}
+              </label>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button className="btn btn-p sd-bsm"
+              disabled={saving} onClick={handleAdd}>
+              {saving ? '⏳' : '✅ Add Process'}
+            </button>
+            <button className="btn btn-s sd-bsm"
+              onClick={() => setShowAdd(false)}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
-      {/* Process table with drag-to-reorder */}
-      <div className="sd-table-wrap">
-        <table className="sd-table">
-          <thead>
-            <tr>
-              <th style={{width:'32px'}}></th>
-              <th>Seq</th><th>Process Name</th><th>Std. Time</th><th>Charge By</th><th>Default Rate</th>
-              <th>Mandatory</th><th>Parallel OK</th><th>Can Skip</th><th>Status</th><th>Reorder</th>
-            </tr>
-          </thead>
-          <tbody>
-            {processes.map((p,idx)=>(
-              <tr key={p.id}
-                draggable
-                onDragStart={()=>handleDragStart(idx)}
-                onDragOver={e=>handleDragOver(e,idx)}
-                style={{background:dragging===idx?'#EDE0EA':'',cursor:'grab',borderBottom:'1px solid var(--odoo-border)'}}>
-                <td style={{textAlign:'center',color:'var(--odoo-gray)',fontSize:'16px',cursor:'grab'}}>⠿</td>
-                <td>
-                  <span style={{width:'24px',height:'24px',borderRadius:'50%',background:'var(--odoo-purple)',color:'#fff',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'700'}}>{p.seq}</span>
-                </td>
-                <td><strong style={{fontSize:'12px'}}>{p.name}</strong><div style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{p.id}</div></td>
-                <td style={{fontSize:'12px',fontFamily:'DM Mono,monospace'}}>{p.stdTime} {p.timeUnit}</td>
-                <td style={{fontSize:'12px'}}>{p.chargeBy}</td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700',color:'var(--odoo-purple)'}}>₹{p.defaultRate}</td>
-                <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'mandatory')} style={{cursor:'pointer',fontSize:'16px'}}>{p.mandatory?'':'⬜'}</span>
-                </td>
-                <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'canParallel')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canParallel?'':'⬜'}</span>
-                </td>
-                <td style={{textAlign:'center'}}>
-                  <span onClick={()=>toggleField(p.id,'canSkip')} style={{cursor:'pointer',fontSize:'16px'}}>{p.canSkip?'':'⬜'}</span>
-                </td>
-                <td><span className={p.status==='Active'?'crm-stage-won':'crm-badge-notq'}>{p.status}</span></td>
-                <td>
-                  <button style={{border:'none',background:'none',cursor:'pointer',fontSize:'14px',padding:'2px'}} onClick={()=>updateSeq(p.id,'up')}>▲</button>
-                  <button style={{border:'none',background:'none',cursor:'pointer',fontSize:'14px',padding:'2px'}} onClick={()=>updateSeq(p.id,'dn')}>▼</button>
-                </td>
+      {/* Process Table */}
+      {loading ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D' }}>
+          Loading processes...
+        </div>
+      ) : processes.length === 0 ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D',
+          background:'#fff', borderRadius:8, border:'1.5px solid #E0D5E0' }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>⚙️</div>
+          No processes found.
+          <button className="btn-xs pri" style={{ marginLeft:8 }}
+            onClick={() => setShowAdd(true)}>
+            + Add First Process
+          </button>
+        </div>
+      ) : (
+        <div style={{ background:'#fff', borderRadius:8,
+          border:'1.5px solid #E0D5E0', overflow:'hidden' }}>
+          <table className="fi-data-table">
+            <thead>
+              <tr>
+                <th style={{ width:32 }}></th>
+                <th>Seq</th>
+                <th>Process Name</th>
+                <th>Std. Time</th>
+                <th>Charge By</th>
+                <th style={{ textAlign:'right' }}>Default Rate</th>
+                <th style={{ textAlign:'center' }}>Mandatory</th>
+                <th style={{ textAlign:'center' }}>Parallel OK</th>
+                <th style={{ textAlign:'center' }}>Can Skip</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {processes.map((p, idx) => (
+                <tr key={p.id}
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={e => handleDragOver(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    background: dragging === idx ? '#EDE0EA' : idx%2===0 ? '#fff' : '#FAFAFA',
+                    cursor:'grab',
+                  }}>
+                  <td style={{ textAlign:'center', color:'#6C757D',
+                    fontSize:16, cursor:'grab' }}>⠿</td>
+                  <td>
+                    <span style={{ width:24, height:24, borderRadius:'50%',
+                      background:'#714B67', color:'#fff',
+                      display:'inline-flex', alignItems:'center',
+                      justifyContent:'center', fontSize:11, fontWeight:700 }}>
+                      {p.seq || idx+1}
+                    </span>
+                  </td>
+                  <td>
+                    <strong style={{ fontSize:12 }}>{p.name}</strong>
+                    <div style={{ fontSize:10, color:'#6C757D',
+                      fontFamily:'DM Mono,monospace' }}>
+                      {p.processCode || p.code || `PROC-${String(idx+1).padStart(3,'0')}`}
+                    </div>
+                  </td>
+                  <td style={{ fontFamily:'DM Mono,monospace', fontSize:12 }}>
+                    {p.stdTime} {p.timeUnit || 'Min'}
+                  </td>
+                  <td style={{ fontSize:12, color:'#6C757D' }}>{p.chargeBy}</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', fontSize:12,
+                    fontWeight:700, color:'#714B67', textAlign:'right' }}>
+                    ₹{parseFloat(p.defaultRate||0).toLocaleString('en-IN')}
+                  </td>
+                  <td style={{ textAlign:'center' }}>
+                    <span onClick={() => toggleField(p,'mandatory')}
+                      style={{ cursor:'pointer', fontSize:16 }}>
+                      {p.mandatory ? '✅' : '⬜'}
+                    </span>
+                  </td>
+                  <td style={{ textAlign:'center' }}>
+                    <span onClick={() => toggleField(p,'canParallel')}
+                      style={{ cursor:'pointer', fontSize:16 }}>
+                      {p.canParallel ? '✅' : '⬜'}
+                    </span>
+                  </td>
+                  <td style={{ textAlign:'center' }}>
+                    <span onClick={() => toggleField(p,'canSkip')}
+                      style={{ cursor:'pointer', fontSize:16 }}>
+                      {p.canSkip ? '✅' : '⬜'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{
+                      padding:'2px 8px', borderRadius:10, fontSize:11,
+                      fontWeight:700,
+                      background: p.status==='Active' ? '#D4EDDA' : '#F8D7DA',
+                      color:      p.status==='Active' ? '#155724' : '#721C24',
+                    }}>
+                      {p.status || 'Active'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+                      <button style={{ border:'none', background:'none',
+                        cursor:'pointer', fontSize:14, padding:'2px' }}
+                        onClick={() => moveSeq(p.id,'up')}>▲</button>
+                      <button style={{ border:'none', background:'none',
+                        cursor:'pointer', fontSize:14, padding:'2px' }}
+                        onClick={() => moveSeq(p.id,'dn')}>▼</button>
+                      <button className="btn-xs"
+                        onClick={() => deleteProc(p)}
+                        style={{ background:'#F8D7DA', color:'#721C24',
+                          border:'none', borderRadius:3,
+                          padding:'2px 6px', cursor:'pointer',
+                          fontSize:11 }}>
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Sequence visual */}
-      <div className="fi-panel" style={{marginTop:'14px'}}>
-        <div className="fi-panel-hdr"><h3> Current Process Sequence</h3></div>
-        <div className="fi-panel-body">
-          <div style={{display:'flex',flexWrap:'wrap',gap:'0',alignItems:'center'}}>
-            {processes.map((p,i)=>(
+      {/* Sequence Visual */}
+      {processes.length > 0 && (
+        <div style={{ background:'#fff', border:'1.5px solid #E0D5E0',
+          borderRadius:8, padding:'14px 18px', marginTop:14 }}>
+          <div style={{ fontWeight:700, fontSize:12, color:'#714B67',
+            marginBottom:10 }}>
+            🔗 Current Process Sequence
+          </div>
+          <div style={{ display:'flex', flexWrap:'wrap',
+            gap:0, alignItems:'center' }}>
+            {processes.map((p, i) => (
               <React.Fragment key={p.id}>
-                <div style={{padding:'6px 12px',borderRadius:'4px',fontSize:'12px',fontWeight:'600',
-                  background:p.mandatory?'var(--odoo-purple)':'var(--odoo-border)',
-                  color:p.mandatory?'#fff':'var(--odoo-gray)'}}>
-                  {p.seq}. {p.name}
-                  {p.canParallel&&<span style={{fontSize:'9px',marginLeft:'4px',opacity:.8}}>‖</span>}
+                <div style={{
+                  padding:'6px 12px', borderRadius:4, fontSize:12,
+                  fontWeight:600,
+                  background: p.mandatory ? '#714B67' : '#E0D5E0',
+                  color:      p.mandatory ? '#fff'    : '#6C757D',
+                }}>
+                  {p.seq || i+1}. {p.name}
+                  {p.canParallel && (
+                    <span style={{ fontSize:9, marginLeft:4, opacity:.8 }}>‖</span>
+                  )}
                 </div>
-                {i<processes.length-1&&<div style={{fontSize:'18px',color:'var(--odoo-gray)',padding:'0 4px'}}>→</div>}
+                {i < processes.length-1 && (
+                  <div style={{ fontSize:18, color:'#6C757D', padding:'0 4px' }}>→</div>
+                )}
               </React.Fragment>
             ))}
           </div>
-          <div style={{marginTop:'8px',fontSize:'11px',color:'var(--odoo-gray)'}}>
-            <span style={{marginRight:'16px'}}>● Purple = Mandatory</span>
-            <span style={{marginRight:'16px'}}>● Gray = Optional</span>
+          <div style={{ marginTop:8, fontSize:11, color:'#6C757D',
+            display:'flex', gap:16 }}>
+            <span>🟣 Purple = Mandatory</span>
+            <span>⬜ Gray = Optional</span>
             <span>‖ = Can run parallel</span>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

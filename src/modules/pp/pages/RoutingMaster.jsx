@@ -31,8 +31,8 @@ const INDUSTRY_SUBTYPES = [
     processes:['Pre-Press / Artwork','Plate / Cylinder Making','Substrate Setup','Printing Run','Lamination / Coating','Die Cutting / Slitting','Inspection & Packing'],
     defaultSequence:['Pre-Press / Artwork','Plate Making','Printing Run','Die Cutting','Inspection & Packing'] },
   { key:'injection_moulding',name:'Injection Moulding',   color:'#1A5276',
-    processes:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Degating / Trimming','Final Inspection','Packing'],
-    defaultSequence:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Final Inspection','Packing'] },
+    processes:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Degating / Trimming','Packing'],
+    defaultSequence:['Material Drying','Mould Setup','Trial Shot','Production Run','Inline QC','Packing'] },
   { key:'fabrication',       name:'Fabrication',          color:'#4D5656',
     processes:['Drawing Issue','Material Issue','Cutting / Laser','Forming / Bending','Welding','Grinding / Finishing','Dimensional / NDT','Dispatch'],
     defaultSequence:['Drawing Issue','Material Issue','Cutting','Welding','Inspection','Dispatch'] },
@@ -165,7 +165,7 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
                   if (!op.wcId) onUpdate(idx, 'wcId', proc.wcId || '')
                   onUpdate(idx, 'ctrlKey',     proc.controlKey || 'PP01')
                   onUpdate(idx, 'setupTime',   String(+proc.stdSetup   || 0))
-                  onUpdate(idx, 'machineTime', String(+proc.stdMachine || 0))
+                  onUpdate(idx, 'machineTime', String(isNaN(+proc.stdMachine) ? 0 : (+proc.stdMachine || 0)))
                   onUpdate(idx, 'laborTime',   String(+proc.stdLabor   || 0))
                 }
               }}>
@@ -177,20 +177,20 @@ function OpRow({ op, idx, items, onUpdate, onDelete, processList, wcList, procLi
       </td>
       {/* Setup Time */}
       <td style={{ padding:'4px 6px', width:75 }}>
-        <input style={inpStyle} type='number' value={op.setupTime}
-          onChange={e => onUpdate(idx,'setupTime',e.target.value)}
+        <input style={inpStyle} type='number' value={op.setupTime === 'NaN' ? '0' : (op.setupTime || '0')}
+          onChange={e => onUpdate(idx,'setupTime', isNaN(parseFloat(e.target.value)) ? '0' : e.target.value)}
           placeholder="0" min="0" />
       </td>
       {/* Machine Time */}
       <td style={{ padding:'4px 6px', width:75 }}>
-        <input style={inpStyle} type='number' value={op.machineTime}
-          onChange={e => onUpdate(idx,'machineTime',e.target.value)}
+        <input style={inpStyle} type='number' value={op.machineTime === 'NaN' ? '0' : (op.machineTime || '0')}
+          onChange={e => onUpdate(idx,'machineTime', isNaN(parseFloat(e.target.value)) ? '0' : e.target.value)}
           placeholder="0" min="0" />
       </td>
       {/* Labor Time */}
       <td style={{ padding:'4px 6px', width:75 }}>
-        <input style={inpStyle} type='number' value={op.laborTime}
-          onChange={e => onUpdate(idx,'laborTime',e.target.value)}
+        <input style={inpStyle} type='number' value={op.laborTime === 'NaN' ? '0' : (op.laborTime || '0')}
+          onChange={e => onUpdate(idx,'laborTime', isNaN(parseFloat(e.target.value)) ? '0' : e.target.value)}
           placeholder="0" min="0" />
       </td>
       {/* Unit — now global from header, shown as read-only label */}
@@ -255,7 +255,7 @@ function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel 
       wcId:        op.wcId        || op.workCenter  || '',
       opName:      op.processName || op.opName      || '',       // DB: processName
       setupTime:   String(op.setupTime   || 0),
-      machineTime: String(op.machineTime || 0),
+      machineTime: String(isNaN(parseFloat(op.machineTime)) ? 0 : (parseFloat(op.machineTime) || 0)),
       laborTime:   String(op.laborTime   || 0),
       mhr:         String(op.mhr         || 0),
       unit:        op.unit   || 'MIN',
@@ -291,8 +291,8 @@ function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel 
         wcId:        proc?.wcId  || wc?.id || '',
         ctrlKey:     proc?.controlKey || 'PP01',  // PP03 for inspection, PP04 for rework
         setupTime:   proc ? String(+proc.stdSetup)   : '0',
-        machineTime: proc ? String(+proc.stdMachine) : '30',
-        laborTime:   proc ? String(+proc.stdLabor)   : '15',
+        machineTime: proc ? String(isNaN(+proc.stdMachine) ? 0 : (+proc.stdMachine)) : '0',
+        laborTime:   proc ? String(isNaN(+proc.stdLabor)   ? 0 : (+proc.stdLabor))   : '0',
         unit:        proc?.unit  || 'MIN',
         _id:         Date.now() + i
       }
@@ -323,19 +323,29 @@ function RoutingForm({ routing, items, wcListFromDB, procList, onSave, onCancel 
       // Store as JSON in routing table for now
       const payload = {
         ...hdr,
-        operations: ops.map((o, i) => ({
-          opNo:        autoOpNo(i),
-          ctrlKey:     o.ctrlKey,
-          wcId:        o.wcId,
-          opName:      o.opName,
-          setupTime:   parseFloat(o.setupTime)   || 0,
-          machineTime: parseFloat(o.machineTime) || 0,
-          laborTime:   parseFloat(o.laborTime)   || 0,
-          mhr:         parseFloat(o.mhr)         || 0,
-          unit:        o.unit    || hdr.timeUnit || 'MIN',
-          stdValue:    parseFloat(o.stdValue)    || 1,
-          remarks:     o.remarks || '',
-        }))
+        operations: ops.map((o, i) => {
+          // Safe number — handles NaN, null, undefined, "NaN" string
+          const safeNum = (v, def=0) => {
+            if (v === null || v === undefined) return def
+            const n = Number(v)
+            return isNaN(n) ? def : n
+          }
+          return {
+            opNo:        autoOpNo(i),
+            processCode: o.processCode  || o.ctrlKey || 'PP01',
+            ctrlKey:     o.ctrlKey      || 'PP01',
+            wcId:        o.wcId         || null,
+            processName: o.opName       || o.processName || '',
+            opName:      o.opName       || '',
+            setupTime:   safeNum(o.setupTime,   0),
+            machineTime: safeNum(o.machineTime, 0),
+            laborTime:   safeNum(o.laborTime,   0),
+            mhr:         safeNum(o.mhr,         0),
+            unit:        o.unit    || hdr.timeUnit || 'MIN',
+            stdValue:    safeNum(o.stdValue, 1) || 1,
+            remarks:     o.remarks || '',
+          }
+        })
       }
       toast.success(`Routing ${isEdit?'updated':'created'} successfully!`)
       onSave(payload)
@@ -763,8 +773,8 @@ export default function RoutingMaster() {
       `${BASE_URL}/mdm/items`, `${BASE_URL}/mdm/item`,
       `${BASE_URL}/items`,     `${BASE_URL}/item`,
     ]
-    const RM_PREFIXES = ['RM','SP','PKG','PK','CHM','OIL','CON','RAW','MAT']
-    const RM_CATS     = ['raw','consumable','packing','spare','chemical','paint','oil']
+    const EXCL_PREFIXES = ['RM','SP','PKG','PK','CHM','OIL','CON','RAW','MAT','BP']
+    const EXCL_CATS     = ['raw','consumable','packing','spare','chemical','paint','oil','by-product','byproduct']
     for (const url of endpoints) {
       try {
         const res  = await fetch(url, { headers: authHdrs() })
@@ -772,14 +782,22 @@ export default function RoutingMaster() {
         const data = await res.json()
         const all  = Array.isArray(data) ? data : (data.data || data.items || [])
         if (all.length > 0) {
-          const isNotRM = it => {
+          const isFGorSFG = it => {
             const code = (it.code||'').toUpperCase()
+            const type = (it.itemType||it.type||'').toUpperCase()
             const cat  = (it.category||'').toLowerCase()
-            return !RM_PREFIXES.some(p=>code.startsWith(p+'-')||code.startsWith(p+'_'))
-                && !RM_CATS.some(c=>cat.includes(c))
+            // Use itemType if explicitly set
+            if (type === 'FG' || type === 'SFG') return true
+            if (type && !['FG','SFG'].includes(type)) return false
+            // Exclude BP and RM prefixes
+            if (EXCL_PREFIXES.some(p=>code.startsWith(p+'-')||code.startsWith(p+'_'))) return false
+            if (EXCL_CATS.some(c=>cat.includes(c))) return false
+            // Include FG/SFG code patterns
+            if (code.startsWith('FG-')||code.startsWith('SFG-')) return true
+            return true
           }
-          const fg = all.filter(isNotRM)
-          setItems(fg.length > 0 ? fg : all)
+          const fgSfg = all.filter(isFGorSFG)
+          setItems(fgSfg.length > 0 ? fgSfg : all)
           return
         }
       } catch { continue }
@@ -817,7 +835,22 @@ export default function RoutingMaster() {
     try {
       const url    = editRt?.id ? `${BASE_URL}/pp/routing-master/${editRt.id}` : `${BASE_URL}/pp/routing-master`
       const method = editRt?.id ? 'PATCH' : 'POST'
-      const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify(payload) })
+
+      // ── Final sanitize before JSON.stringify (NaN → null → Prisma error) ──
+      const safeN = v => (v == null || isNaN(Number(v))) ? 0 : Number(v)
+      const cleanPayload = {
+        ...payload,
+        operations: (payload.operations || []).map(op => ({
+          ...op,
+          setupTime:   safeN(op.setupTime),
+          machineTime: safeN(op.machineTime),
+          laborTime:   safeN(op.laborTime),
+          mhr:         safeN(op.mhr),
+          stdValue:    safeN(op.stdValue) || 1,
+        }))
+      }
+
+      const res    = await fetch(url, { method, headers: authHdrs(), body: JSON.stringify(cleanPayload) })
       const data   = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
       toast.success(`Routing ${editRt ? 'updated' : 'created'}!`)

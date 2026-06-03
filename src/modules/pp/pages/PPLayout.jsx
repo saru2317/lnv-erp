@@ -156,6 +156,7 @@ export default function PPLayout() {
           {/* WO New only via planId param from Production Plan */}
           <Route path="wo/new"          element={<PlannerGuard><WONew /></PlannerGuard>}               />
           <Route path="wo/:id"          element={<WONew />}            />
+          <Route path="complete/:id" element={<WOComplete />} />
 
           {/* Production — operator primary */}
           <Route path="entry-list"       element={<ProductionEntryList />} />

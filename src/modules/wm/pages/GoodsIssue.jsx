@@ -22,6 +22,7 @@ export default function GoodsIssue() {
   ])
   const [form, setForm] = useState({
     issueTo: 'Production Floor',
+    fromLocation: 'RM-STORE',   // source location
     movType: '201 — GI for Production Order',
     reference: '',
     issueDate: new Date().toISOString().split('T')[0],
@@ -29,12 +30,12 @@ export default function GoodsIssue() {
   })
 
   useEffect(()=>{
-    fetch(`${BASE_URL}/wm/stock`, { headers:authHdrs2() })
+    fetch(`${BASE_URL}/wm/stock?location=${form?.fromLocation||'RM-STORE'}`, { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setItems(d.data||[])).catch(()=>{})
     fetch(`${BASE_URL}/wm/gi/next-no`, { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setGiNo(d.giNo||'GI-AUTO')).catch(()=>{})
     // Load open Work Orders
-    fetch(`${BASE_URL}/production/work-orders?status=RELEASED,IN_PROGRESS,PLANNED`,
+    fetch(`${BASE_URL}/pp/wo?status=RELEASED,IN_PROGRESS,DRAFT`,
       { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setWOs(d.data||d||[])).catch(()=>{})
   },[])
@@ -46,63 +47,118 @@ export default function GoodsIssue() {
     try {
       const wo = wos.find(w => w.woNo === woNo)
       if (!wo) return
-      // Load BOM for this WO's product
-      const bomRes = await fetch(
-        `${BASE_URL}/production/bom-items?bomId=${wo.bomId||''}`,
+      // Load material issues for this WO (has correct bomQty scaled to plannedQty)
+      const issRes = await fetch(
+        `${BASE_URL}/pp/material-issues?woId=${wo.id}`,
         { headers: authHdrs2() })
-      const bomData = await bomRes.json()
-      const bomItems = bomData.data || bomData || []
-      if (bomItems.length > 0) {
-        // Map BOM items to issue lines — check stock availability
-        const newLines = bomItems.map(bItem => {
+      const issData = await issRes.json()
+      const issItems = (issData.data || []).filter(i => !i.isByProduct)
+      if (issItems.length > 0) {
+        const newLines = issItems.map(iss => {
           const stockItem = items.find(it =>
-            it.itemCode === bItem.itemCode ||
-            it.itemName?.toLowerCase() === bItem.itemName?.toLowerCase()
+            (iss.itemCode && it.itemCode === iss.itemCode) ||
+            it.itemName?.toLowerCase() === (iss.itemName||'').toLowerCase()
           )
-          const needed = parseFloat(bItem.qty || 0) * parseFloat(wo.planQty || 1) / parseFloat(bItem.bomQty || 1)
+          const reqQty      = parseFloat(parseFloat(iss.bomQty    || 0).toFixed(3))
+          const alreadyIssued = parseFloat(parseFloat(iss.issuedQty || 0).toFixed(3))
+          const remaining   = parseFloat(Math.max(0, reqQty - alreadyIssued).toFixed(3))
           return {
-            itemCode: bItem.itemCode || stockItem?.itemCode || '',
-            itemName: bItem.itemName || bItem.description || '',
-            availQty: parseFloat(stockItem?.balanceQty || 0),
-            qty:      parseFloat(needed.toFixed(3)),
-            uom:      bItem.uom || stockItem?.uom || 'Nos',
-            remarks:  `For WO: ${woNo}`
+            itemCode:    iss.itemCode || stockItem?.itemCode || '',
+            itemName:    iss.itemName || stockItem?.itemName || '',
+            availQty:    parseFloat(stockItem?.balanceQty || 0),
+            bomQty:      reqQty,         // total required by BOM
+            issuedQty:   alreadyIssued,  // already issued in previous GIs
+            remaining:   remaining,      // bomQty - issuedQty
+            qty:         remaining,      // default issue qty = remaining
+            issueId:     iss.id,         // materialIssue id for update
+            uom:         iss.uom || stockItem?.uom || 'Nos',
+            remarks:     `For WO: ${woNo}`,
+            autoLoaded:  true,
+            fullyIssued: remaining <= 0
           }
         })
         setLines(newLines)
-        toast.success(`${bomItems.length} BOM material(s) loaded from WO`)
+        toast.success(`${issItems.length} material(s) loaded from WO`)
+      } else {
+        // No material issues — try BOM explosion fallback
+        const bomRes = await fetch(`${BASE_URL}/pp/bom?itemCode=${wo.itemCode||''}`, { headers: authHdrs2() })
+        const bomData = await bomRes.json()
+        const bom = (bomData.data||[])[0]
+        if (bom?.lines?.length) {
+          const newLines = bom.lines.filter(l=>!l.isByProduct).map(comp => {
+            const stockItem = items.find(it =>
+              it.itemCode === comp.itemCode ||
+              it.itemName?.toLowerCase() === (comp.itemName||'').toLowerCase()
+            )
+            const needed = (parseFloat(comp.qty||0) / parseFloat(bom.baseQty||1)) * parseFloat(wo.plannedQty||1)
+            return {
+              itemCode: comp.itemCode || stockItem?.itemCode || '',
+              itemName: comp.itemName || '',
+              availQty: parseFloat(stockItem?.balanceQty || 0),
+              qty:      parseFloat(needed.toFixed(3)),
+              uom:      comp.uom || stockItem?.uom || 'Nos',
+              remarks:  `For WO: ${woNo}`
+            }
+          })
+          setLines(newLines)
+          toast.success(`${newLines.length} BOM material(s) loaded`)
+        }
       }
     } catch { /* BOM not available — manual entry */ }
   }
 
   const onItemChange = (i, code) => {
-    const item = items.find(it=>it.itemCode===code)
+    const item = items.find(it=>it.itemCode===code||it.itemName===code)
     setLines(prev=>prev.map((l,idx)=>idx!==i?l:{
       ...l,
-      itemCode:code,
-      itemName:item?.itemName||'',
-      availQty:parseFloat(item?.balanceQty||0),
-      uom:item?.uom||'Nos'
+      itemCode: item?.itemCode||code,
+      itemName: item?.itemName||'',
+      availQty: parseFloat(item?.balanceQty||0),
+      uom:      item?.uom||'Nos'
     }))
   }
 
+  // Find available qty for a material by itemCode or itemName
+  const getAvailQty = (itemCode, itemName) => {
+    const found = items.find(it =>
+      (itemCode && it.itemCode === itemCode) ||
+      (itemName && it.itemName?.toLowerCase() === itemName?.toLowerCase())
+    )
+    return parseFloat(found?.balanceQty || 0)
+  }
+
   const addLine = () => setLines(p=>[...p,
-    { itemCode:'', itemName:'', availQty:0, qty:1, uom:'Nos', remarks:'' }])
+    { itemCode:'', itemName:'', availQty:0, qty:1, uom:'Nos', remarks:'', autoLoaded:false }])
   const delLine = i => setLines(p=>p.filter((_,idx)=>idx!==i))
 
   const post = async () => {
-    const validLines = lines.filter(l=>l.itemCode&&l.qty>0)
-    if (!validLines.length) return toast.error('Add at least one item!')
+    const validLines = lines.filter(l=>l.itemCode && parseFloat(l.qty||0)>0 && !l.fullyIssued)
+    if (!validLines.length) return toast.error('All materials fully issued or no qty entered!')
     // Check available qty
     for (const l of validLines) {
-      if (parseFloat(l.qty)>parseFloat(l.availQty))
-        return toast.error(`${l.itemName}: Issue qty exceeds available stock!`)
+      if (parseFloat(l.qty) > parseFloat(l.availQty||0))
+        return toast.error(`${l.itemName}: Issue qty (${l.qty}) exceeds available stock (${l.availQty})!`)
+    }
+    // Check excess — lines where qty > remaining need approval flag
+    const hasExcess = validLines.some(l =>
+      l.autoLoaded && parseFloat(l.qty) > parseFloat(l.remaining||0) && parseFloat(l.remaining||0) > 0
+    )
+    if (hasExcess) {
+      const confirm = window.confirm(
+        '⚠️ Some lines exceed the required BOM qty (Excess Issue).\n\nThis will be flagged for approval. Proceed?'
+      )
+      if (!confirm) return
     }
     setSaving(true)
     try {
+      const linesWithFlags = validLines.map(l => ({
+        ...l,
+        isExcess: l.autoLoaded && parseFloat(l.qty) > parseFloat(l.remaining||0) && parseFloat(l.remaining||0) > 0,
+        excessQty: l.autoLoaded ? Math.max(0, parseFloat(l.qty) - parseFloat(l.remaining||0)) : 0
+      }))
       const res  = await fetch(`${BASE_URL}/wm/gi`,
         { method:'POST', headers:authHdrs(),
-          body:JSON.stringify({ ...form, lines:validLines })})
+          body:JSON.stringify({ ...form, lines:linesWithFlags })})
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast.success(data.message)
@@ -197,10 +253,25 @@ export default function GoodsIssue() {
             <div style={{ display:'grid',
               gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
               <div>
+                <label style={lbl}>From Location</label>
+                <select style={{ ...inp, cursor:'pointer' }}
+                  value={form.fromLocation}
+                  onChange={e=>setForm(f=>({...f,fromLocation:e.target.value}))}>
+                  {['RM-STORE','SHOP-FLOOR','FG-STORE','QC-HOLD'].map(l=>(
+                    <option key={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label style={lbl}>Issue To</label>
                 <select style={{ ...inp, cursor:'pointer' }}
                   value={form.issueTo}
-                  onChange={e=>setForm(f=>({...f,issueTo:e.target.value}))}>
+                  onChange={e=>{
+                    const loc = e.target.value === 'Production Floor' ? 'SHOP-FLOOR'
+                              : e.target.value === 'Sales / Dispatch'  ? 'FG-STORE'
+                              : e.target.value
+                    setForm(f=>({...f, issueTo:e.target.value}))
+                  }}>
                   {['Production Floor','Sales / Dispatch',
                     'QC Lab','Admin','Maintenance'].map(l=>(
                     <option key={l}>{l}</option>
@@ -216,7 +287,7 @@ export default function GoodsIssue() {
                     <option value="">-- Select Work Order --</option>
                     {wos.map(wo => (
                       <option key={wo.id} value={wo.woNo}>
-                        {wo.woNo} · {wo.productName || wo.itemName} · Qty: {wo.planQty} {wo.uom}
+                        {wo.woNo} · {wo.itemName} · Qty: {parseFloat(wo.plannedQty||0).toLocaleString()} {wo.uom}
                       </option>
                     ))}
                   </select>
@@ -259,7 +330,7 @@ export default function GoodsIssue() {
               fontSize:12 }}>
               <thead style={{ background:'#F8F4F8' }}>
                 <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
-                  {['#','Material','Available','Issue Qty','UOM','Remarks',''].map(h=>(
+                  {['#','Material','Available','Required','Already Issued','Remaining','Issue Qty','UOM','Remarks',''].map(h=>(
                     <th key={h} style={{ padding:'7px 10px', fontSize:10,
                       fontWeight:700, color:'#6C757D', textAlign:'left',
                       textTransform:'uppercase', whiteSpace:'nowrap' }}>{h}</th>
@@ -271,39 +342,96 @@ export default function GoodsIssue() {
                   <tr key={i} style={{ borderBottom:'1px solid #F0EEF0' }}>
                     <td style={{ padding:'6px 10px', color:'#6C757D',
                       fontWeight:700, textAlign:'center' }}>{i+1}</td>
-                    <td style={{ padding:'4px 6px', minWidth:180 }}>
-                      <select style={{ width:'100%', padding:'5px 6px',
-                        border:'1px solid #E0D5E0', borderRadius:4,
-                        fontSize:11, cursor:'pointer' }}
-                        value={l.itemCode}
-                        onChange={e=>onItemChange(i,e.target.value)}>
-                        <option value="">-- Select Item --</option>
-                        {items.map(it=>(
-                          <option key={it.itemCode} value={it.itemCode}>
-                            {it.itemCode} — {it.itemName}
-                          </option>
-                        ))}
-                      </select>
+                    <td style={{ padding:'4px 6px', minWidth:200 }}>
+                      {l.autoLoaded ? (
+                        // Auto-loaded from WO — show as read-only text
+                        <div style={{ padding:'5px 8px', background:'#F0F8FF',
+                          border:'1px solid #AED6F1', borderRadius:4,
+                          fontSize:11, fontWeight:600, color:'#1A5276' }}>
+                          <div style={{ fontFamily:'DM Mono,monospace', fontSize:10,
+                            color:'#6C757D' }}>{l.itemCode}</div>
+                          {l.itemName}
+                        </div>
+                      ) : (
+                        <select style={{ width:'100%', padding:'5px 6px',
+                          border:'1px solid #E0D5E0', borderRadius:4,
+                          fontSize:11, cursor:'pointer' }}
+                          value={l.itemCode}
+                          onChange={e=>onItemChange(i,e.target.value)}>
+                          <option value="">-- Select Item --</option>
+                          {items.map(it=>(
+                            <option key={it.itemCode||it.itemName} value={it.itemCode||it.itemName}>
+                              {it.itemCode ? `${it.itemCode} — ` : ''}{it.itemName}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td style={{ padding:'6px 10px', textAlign:'right',
                       fontWeight:700,
                       color:parseFloat(l.availQty||0)<=0?'#DC3545':'#155724',
                       fontFamily:'DM Mono,monospace' }}>
-                      {parseFloat(l.availQty||0)} {l.uom}
+                      {parseFloat(l.availQty||0).toFixed(3)} {l.uom}
                     </td>
-                    <td style={{ padding:'4px 6px', width:80 }}>
-                      <input type="number" min={0}
-                        max={l.availQty}
-                        style={{ width:'100%', padding:'5px 6px',
-                          border:'1px solid #E0D5E0', borderRadius:4,
-                          fontSize:11, textAlign:'right',
-                          fontFamily:'DM Mono,monospace',
-                          boxSizing:'border-box',
-                          background:parseFloat(l.qty)>parseFloat(l.availQty)
-                            ?'#FFF5F5':'#fff' }}
-                        value={l.qty}
-                        onChange={e=>setLines(prev=>prev.map((x,idx)=>
-                          idx===i?{...x,qty:e.target.value}:x))} />
+                    {/* Required (BOM qty) */}
+                    <td style={{ padding:'6px 10px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontWeight:700,
+                      color:'#1A5276', background:'#EBF5FB' }}>
+                      {l.autoLoaded
+                        ? <>{parseFloat(l.bomQty||0).toFixed(3)} <span style={{fontSize:10,color:'#6C757D'}}>{l.uom}</span></>
+                        : <span style={{color:'#6C757D'}}>—</span>}
+                    </td>
+                    {/* Already Issued */}
+                    <td style={{ padding:'6px 10px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontWeight:700,
+                      color: l.issuedQty > 0 ? '#856404' : '#6C757D',
+                      background: l.issuedQty > 0 ? '#FFFBF0' : 'transparent' }}>
+                      {l.autoLoaded
+                        ? <>{parseFloat(l.issuedQty||0).toFixed(3)} <span style={{fontSize:10,color:'#6C757D'}}>{l.uom}</span></>
+                        : <span style={{color:'#6C757D'}}>—</span>}
+                    </td>
+                    {/* Remaining */}
+                    <td style={{ padding:'6px 10px', textAlign:'right',
+                      fontFamily:'DM Mono,monospace', fontWeight:800,
+                      color: l.fullyIssued ? '#155724' : '#DC3545',
+                      background: l.fullyIssued ? '#D4EDDA' : '#FFF5F5' }}>
+                      {l.autoLoaded
+                        ? l.fullyIssued
+                          ? <span style={{fontSize:11}}>✅ Fully Issued</span>
+                          : <>{parseFloat(l.remaining||0).toFixed(3)} <span style={{fontSize:10,color:'#6C757D'}}>{l.uom}</span></>
+                        : <span style={{color:'#6C757D'}}>—</span>}
+                    </td>
+                    <td style={{ padding:'4px 6px', width:100 }}>
+                      {l.fullyIssued ? (
+                        <div style={{ padding:'5px 8px', background:'#D4EDDA',
+                          borderRadius:4, fontSize:10, fontWeight:700,
+                          color:'#155724', textAlign:'center' }}>
+                          ✅ Fully Issued
+                        </div>
+                      ) : (
+                        <>
+                          <input type="number" min={0}
+                            style={{ width:'100%', padding:'5px 6px',
+                              border:`1.5px solid ${
+                                parseFloat(l.qty) > parseFloat(l.availQty||0) ? '#DC3545'
+                                : parseFloat(l.qty) > parseFloat(l.remaining||l.bomQty||0) ? '#FFC107'
+                                : '#28A745'}`,
+                              borderRadius:4, fontSize:11, textAlign:'right',
+                              fontFamily:'DM Mono,monospace', boxSizing:'border-box',
+                              background: parseFloat(l.qty) > parseFloat(l.availQty||0) ? '#FFF5F5'
+                                : parseFloat(l.qty) > parseFloat(l.remaining||l.bomQty||0) ? '#FFFBF0'
+                                : '#F0FFF8' }}
+                            value={l.qty}
+                            onChange={e=>setLines(prev=>prev.map((x,idx)=>
+                              idx===i?{...x,qty:e.target.value}:x))} />
+                          {/* Excess warning */}
+                          {parseFloat(l.qty) > parseFloat(l.remaining||0) && parseFloat(l.remaining||0) > 0 && (
+                            <div style={{ fontSize:9, color:'#856404', marginTop:2, fontWeight:700 }}>
+                              ⚠️ Excess: +{(parseFloat(l.qty)-parseFloat(l.remaining||0)).toFixed(3)} — needs approval
+                            </div>
+                          )}
+                        </>
+                      )}
                     </td>
                     <td style={{ padding:'6px 10px',
                       textAlign:'center' }}>{l.uom}</td>

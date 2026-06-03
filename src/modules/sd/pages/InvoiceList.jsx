@@ -1,127 +1,302 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Badge from '@components/ui/Badge'
-import ListViewToggle from '@components/ui/ListViewToggle'
-import { useListView } from '@hooks/useListView'
+import { sdApi } from '../services/sdApi'
+import toast from 'react-hot-toast'
 
-const STATIC = [
-  { id:'INV-0124', date:'27 Jan 26', customer:'Sri Lakshmi Mills',   soRef:'SO-0124', taxable:'3,32,780', gst:'59,000',    total:'3,91,780', due:'26 Feb 26', status:'paid'    },
-  { id:'INV-0123', date:'25 Jan 26', customer:'Coimbatore Spinners', soRef:'SO-0123', taxable:'6,88,644', gst:'1,23,956',  total:'8,12,600', due:'24 Feb 26', status:'pending' },
-  { id:'INV-0121', date:'20 Jan 26', customer:'ARS Cotton Mills',    soRef:'SO-0121', taxable:'3,92,805', gst:'70,705',    total:'4,63,510', due:'19 Jan 26', status:'overdue' },
-  { id:'INV-0120', date:'18 Jan 26', customer:'Vijay Fabrics',       soRef:'SO-0120', taxable:'2,38,178', gst:'42,872',    total:'2,81,050', due:'17 Feb 26', status:'paid'    },
-]
+const fmtC = n  => '₹' + Number(n||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 })
+const fmtD = s  => s ? new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'
 
-const SC = {
-  paid:    { bg:'#D4EDDA', c:'#155724' },
-  pending: { bg:'#FFF3CD', c:'#856404' },
-  overdue: { bg:'#F8D7DA', c:'#721C24' },
+const STATUS = {
+  DRAFT:            { bg:'#E2E3E5', c:'#383D41', label:'Draft'              },
+  PENDING_APPROVAL: { bg:'#FFF3CD', c:'#856404', label:'⏳ Pending Approval' },
+  APPROVED:         { bg:'#D4EDDA', c:'#155724', label:'✓ Approved'         },
+  REJECTED:         { bg:'#F8D7DA', c:'#721C24', label:'✗ Rejected'         },
+  POSTED:           { bg:'#D1ECF1', c:'#0C5460', label:'Posted'             },
+  PENDING:          { bg:'#FFF3CD', c:'#856404', label:'Pending'            },
+  PAID:             { bg:'#CCE5FF', c:'#004085', label:'✓ Paid'             },
+  PARTIAL:          { bg:'#EDE0EA', c:'#714B67', label:'Partial'            },
+  OVERDUE:          { bg:'#F8D7DA', c:'#721C24', label:'⚠ Overdue'         },
+  CANCELLED:        { bg:'#E2E3E5', c:'#6C757D', label:'Cancelled'          },
 }
 
 export default function InvoiceList() {
-  const navigate = useNavigate()
-  const { viewMode, toggleView } = useListView('SD-InvoiceList')
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
+  const nav = useNavigate()
+  const [invoices, setInvoices] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+  const [status,   setStatus]   = useState('')
 
-  const filtered = STATIC.filter(i =>
-    (i.id.toLowerCase().includes(search.toLowerCase()) ||
-     i.customer.toLowerCase().includes(search.toLowerCase())) &&
-    (status === '' || i.status === status)
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await sdApi.getInvoices(status ? { status } : {})
+      // Handle both { data: [...] } and direct array responses
+      const data = res?.data || (Array.isArray(res) ? res : [])
+      if (res?.error) throw new Error(res.error)
+      setInvoices(data)
+    } catch(e) {
+      toast.error('Failed to load invoices: ' + e.message)
+      setInvoices([])
+    }
+    finally { setLoading(false) }
+  }, [status])
+
+  useEffect(() => { load() }, [load])
+
+  const postInvoice = async (e, id) => {
+    e.stopPropagation()
+    try {
+      const res = await sdApi.postInvoice(id)
+      if (res.error) throw new Error(res.error)
+      toast.success('Invoice posted!')
+      load()
+    } catch(e) { toast.error(e.message) }
+  }
+
+  const submitApproval = async (e, id) => {
+    e.stopPropagation()
+    try {
+      const res = await sdApi.submitForApproval(id, {})
+      if (res.error) throw new Error(res.error)
+      toast.success(res.message || 'Submitted for approval!')
+      load()
+    } catch(e) { toast.error(e.message) }
+  }
+
+  const filtered = invoices.filter(inv =>
+    !search ||
+    inv.invoiceNo?.toLowerCase().includes(search.toLowerCase()) ||
+    inv.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+    inv.soNo?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalTaxable  = filtered.reduce((s,i) => s + parseFloat(i.taxableAmt||0), 0)
+  const totalGST      = filtered.reduce((s,i) => s + parseFloat((parseFloat(i.cgst||0)+parseFloat(i.sgst||0)+parseFloat(i.igst||0))), 0)
+  const grandTotal    = filtered.reduce((s,i) => s + parseFloat(i.grandTotal||0), 0)
+  const pendingAmt    = filtered.filter(i=>['PENDING','POSTED','PARTIAL'].includes(i.status))
+                                .reduce((s,i) => s + parseFloat(i.balanceAmt||i.totalAmount||0), 0)
 
   return (
     <div>
+      {/* Header */}
       <div className="lv-hdr">
-        <div className="lv-ttl">Invoices <small>VF05 · {filtered.length} records</small></div>
+        <div className="lv-ttl">
+          Customer Invoices
+          <small>VF05 · {filtered.length} record(s)</small>
+        </div>
         <div className="lv-acts">
-          <ListViewToggle viewMode={viewMode} onToggle={toggleView} />
-          <button className="btn btn-s sd-bsm">Export</button>
-          <button className="btn btn-p" onClick={() => navigate('/sd/invoices/new')}>+ New Invoice</button>
+          <button className="btn btn-s sd-bsm" onClick={load}>↻ Refresh</button>
+          <button className="btn btn-s sd-bsm">GST Summary</button>
+          <button className="btn btn-p"
+            onClick={() => nav('/sd/invoices/new')}>
+            + New Invoice
+          </button>
         </div>
       </div>
 
+      {/* Filters */}
       <div className="sd-fb">
         <div className="sd-fs">
-          <input placeholder="Search invoice #, customer..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input placeholder="Search Invoice #, SO #, customer..."
+            value={search}
+            onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className="sd-fsel" value={status} onChange={e => setStatus(e.target.value)}>
+        <select className="sd-fsel"
+          value={status}
+          onChange={e => setStatus(e.target.value)}>
           <option value="">All Status</option>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-          <option value="overdue">Overdue</option>
+          {Object.entries(STATUS).map(([k,v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
         </select>
+        <button className="btn btn-s sd-bsm">Export</button>
       </div>
 
-      {viewMode === 'normal' && (
-        <div className="dc">
-          <table className="sd-tbl">
-            <thead>
-              <tr>
-                <th><input type="checkbox"/></th>
-                <th>Invoice #</th><th>Date</th><th>Customer</th><th>SO Ref</th>
-                <th>Taxable</th><th>GST</th><th>Total</th><th>Due Date</th>
-                <th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(inv => (
-                <tr key={inv.id} onClick={() => navigate(`/sd/invoices/${inv.id}`)} style={{cursor:'pointer'}}>
-                  <td onClick={e => e.stopPropagation()}><input type="checkbox"/></td>
-                  <td><strong style={{color:'#714B67',fontFamily:'DM Mono,monospace',fontSize:11}}>{inv.id}</strong></td>
-                  <td style={{fontSize:12}}>{inv.date}</td>
-                  <td style={{fontWeight:600}}>{inv.customer}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'var(--odoo-purple)'}}>{inv.soRef}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:12}}>Rs.{inv.taxable}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:12}}>Rs.{inv.gst}</td>
-                  <td><strong style={{fontFamily:'DM Mono,monospace'}}>Rs.{inv.total}</strong></td>
-                  <td style={{fontSize:12}}>{inv.due}</td>
-                  <td><Badge status={inv.status}>{inv.status.toUpperCase()}</Badge></td>
-                  <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:4}}>
-                    <button className="act-btn-view" onClick={() => navigate(`/sd/invoices/${inv.id}`)}>View</button>
-                    <button className="act-btn-print" onClick={() => navigate('/print/invoice')}>Print</button>
+      {/* KPI Strip */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)',
+        gap:8, marginBottom:14 }}>
+        {[
+          ['Total Invoices',   filtered.length,                       '#714B67','#EDE0EA'],
+          ['Posted',           filtered.filter(i=>['POSTED','PAID','PARTIAL'].includes(i.status)).length, '#155724','#D4EDDA'],
+          ['Pending Approval', filtered.filter(i=>i.status==='PENDING_APPROVAL').length,                '#856404','#FFF3CD'],
+          ['Pending Payment',  filtered.filter(i=>['PENDING','POSTED'].includes(i.status)).length,        '#1A5276','#CCE5FF'],
+          ['Overdue',          filtered.filter(i=>i.status==='OVERDUE').length,                            '#721C24','#F8D7DA'],
+          ['Outstanding Amt',  null,                                  '#1A1A2E','#F8F9FA'],
+        ].map(([l,v,c,bg]) => (
+          <div key={l} style={{ background:bg, borderRadius:8,
+            padding:'10px 14px', textAlign:'center' }}>
+            <div style={{ fontSize:18, fontWeight:800,
+              color:c, fontFamily:'DM Mono,monospace' }}>
+              {l === 'Outstanding Amt' ? fmtC(pendingAmt) : v}
+            </div>
+            <div style={{ fontSize:10, fontWeight:700,
+              color:c, opacity:.8, textTransform:'uppercase' }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="dc">
+        <table className="sd-tbl">
+          <thead>
+            <tr>
+              <th>INV NUMBER</th>
+              <th>DATE</th>
+              <th>CUSTOMER</th>
+              <th>SO REF</th>
+              <th>TAXABLE</th>
+              <th>GST</th>
+              <th>TOTAL</th>
+              <th>DUE DATE</th>
+              <th>BALANCE</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={11}
+                style={{ padding:40, textAlign:'center', color:'#6C757D' }}>
+                Loading...
+              </td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={11}
+                style={{ padding:40, textAlign:'center', color:'#6C757D' }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>🧾</div>
+                No invoices found.
+                <button className="btn-xs pri" style={{ marginLeft:8 }}
+                  onClick={() => nav('/sd/invoices/new')}>
+                  + Create Invoice
+                </button>
+              </td></tr>
+            ) : filtered.map(inv => {
+              const st = STATUS[inv.status] || STATUS.PENDING
+              const isOverdue = inv.dueDate && new Date(inv.dueDate) < new Date()
+                && !['PAID','CANCELLED'].includes(inv.status)
+              return (
+                <tr key={inv.id}
+                  style={{ cursor:'pointer',
+                    background: isOverdue ? '#FFF5F5' : 'inherit' }}
+                  onClick={() => nav(`/sd/invoices/${inv.id}`)}>
+                  <td>
+                    <strong style={{ color:'#714B67',
+                      fontFamily:'DM Mono,monospace', fontSize:11 }}>
+                      {inv.invoiceNo}
+                    </strong>
+                    {isOverdue && (
+                      <div style={{ fontSize:9, color:'#DC3545',
+                        fontWeight:700 }}>⚠ OVERDUE</div>
+                    )}
+                  </td>
+                  <td style={{ fontSize:12, color:'#6C757D' }}>
+                    {fmtD(inv.date || inv.createdAt)}
+                  </td>
+                  <td>
+                    <strong style={{ fontSize:12 }}>
+                      {inv.customerName || '—'}
+                    </strong>
+                    {inv.customerCode || inv.customerId && (
+                      <div style={{ fontSize:10, color:'#6C757D',
+                        fontFamily:'DM Mono,monospace' }}>
+                        {inv.customerCode || inv.customerId}
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ fontSize:11, color:'#6C757D',
+                    fontFamily:'DM Mono,monospace' }}>
+                    {inv.soRef || inv.soNo || '—'}
+                  </td>
+                  <td style={{ fontFamily:'DM Mono,monospace', fontSize:12 }}>
+                    {fmtC(inv.taxableAmt)}
+                  </td>
+                  <td style={{ fontFamily:'DM Mono,monospace',
+                    fontSize:12, color:'#856404' }}>
+                    {fmtC((parseFloat(inv.cgst||0)+parseFloat(inv.sgst||0)+parseFloat(inv.igst||0)))}
+                  </td>
+                  <td>
+                    <strong style={{ fontFamily:'DM Mono,monospace',
+                      color:'#714B67' }}>
+                      {fmtC(inv.grandTotal)}
+                    </strong>
+                  </td>
+                  <td style={{ fontSize:11,
+                    color: isOverdue ? '#DC3545' : '#6C757D' }}>
+                    {fmtD(inv.dueDate)}
+                  </td>
+                  <td style={{ fontFamily:'DM Mono,monospace',
+                    fontSize:12, fontWeight:700,
+                    color: parseFloat(inv.balanceAmt||0) > 0 ? '#DC3545' : '#155724' }}>
+                    {fmtC((parseFloat(inv.grandTotal||0) - parseFloat(inv.paidAmt||0)))}
+                  </td>
+                  <td>
+                    <span style={{ background:st.bg, color:st.c,
+                      padding:'2px 8px', borderRadius:10,
+                      fontSize:11, fontWeight:700 }}>
+                      {st.label}
+                    </span>
+                  </td>
+                  <td onClick={e => e.stopPropagation()}
+                    style={{ display:'flex', gap:4 }}>
+                    <button className="act-btn-view"
+                      onClick={() => nav(`/sd/invoices/${inv.id}`)}>
+                      View
+                    </button>
+                    {inv.status === 'DRAFT' && (
+                      <button className="act-btn-green"
+                        onClick={e => submitApproval(e, inv.id)}>
+                        Submit
+                      </button>
+                    )}
+                    {inv.status === 'PENDING_APPROVAL' && (
+                      <button style={{ padding:'3px 8px', fontSize:10, fontWeight:700,
+                        background:'#FFF3CD', color:'#856404', border:'1px solid #FFEAA7',
+                        borderRadius:4, cursor:'pointer' }}
+                        onClick={e => { e.stopPropagation(); nav('/admin/approvals') }}>
+                        Inbox →
+                      </button>
+                    )}
+                    {inv.status === 'APPROVED' && (
+                      <button className="act-btn-green"
+                        onClick={e => postInvoice(e, inv.id)}>
+                        Post
+                      </button>
+                    )}
+                    {['POSTED','PENDING','PARTIAL','OVERDUE'].includes(inv.status) && (
+                      <button className="act-btn-green"
+                        onClick={() => nav(`/sd/payments/new?invId=${inv.id}`)}>
+                        Pay
+                      </button>
+                    )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {viewMode === 'detail' && (
-        <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
-          {filtered.map(inv => {
-            const sc = SC[inv.status] || {bg:'#eee',c:'#555'}
-            return (
-              <div key={inv.id} onClick={() => navigate(`/sd/invoices/${inv.id}`)}
-                style={{background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:8,
-                  overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)',
-                  borderLeft:`4px solid ${sc.c}`,cursor:'pointer'}}>
-                <div style={{padding:'10px 16px',background:'var(--odoo-bg)',
-                  borderBottom:'1px solid var(--odoo-border)',
-                  display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:12}}>
-                    <span style={{fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13,color:'var(--odoo-purple)'}}>{inv.id}</span>
-                    <span style={{fontSize:12,color:'var(--odoo-gray)'}}>{inv.date}</span>
-                    <span style={{fontSize:12,fontWeight:600}}>{inv.customer}</span>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:10}}>
-                    <span style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)'}}>Rs.{inv.total}</span>
-                    <span style={{padding:'3px 10px',borderRadius:10,fontSize:11,fontWeight:700,background:sc.bg,color:sc.c}}>{inv.status.toUpperCase()}</span>
-                  </div>
-                </div>
-                <div style={{padding:'10px 16px',display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'8px 16px'}}>
-                  {[['SO Ref',inv.soRef],['Taxable','Rs.'+inv.taxable],['GST','Rs.'+inv.gst],['Due Date',inv.due]].map(([l,v]) => (
-                    <div key={l}>
-                      <div style={{fontSize:9,color:'var(--odoo-gray)',textTransform:'uppercase',letterSpacing:.5,marginBottom:2}}>{l}</div>
-                      <div style={{fontSize:12,fontWeight:600}}>{v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </tbody>
+          {filtered.length > 0 && (
+            <tfoot>
+              <tr style={{ background:'#EDE0EA', fontWeight:700 }}>
+                <td colSpan={4} style={{ padding:'10px 12px' }}>
+                  Total ({filtered.length} invoices)
+                </td>
+                <td style={{ padding:'10px 12px',
+                  fontFamily:'DM Mono,monospace' }}>
+                  {fmtC(totalTaxable)}
+                </td>
+                <td style={{ padding:'10px 12px',
+                  fontFamily:'DM Mono,monospace', color:'#856404' }}>
+                  {fmtC(totalGST)}
+                </td>
+                <td style={{ padding:'10px 12px',
+                  fontFamily:'DM Mono,monospace',
+                  color:'#714B67', fontSize:14, fontWeight:800 }}>
+                  {fmtC(grandTotal)}
+                </td>
+                <td colSpan={4} />
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
     </div>
   )
 }

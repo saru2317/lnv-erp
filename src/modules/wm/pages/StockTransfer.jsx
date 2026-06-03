@@ -61,13 +61,13 @@ export default function StockTransfer() {
   useEffect(() => { load() }, [load])
 
   const onItemChange = (idx, code) => {
-    const item = stockItems.find(i => i.itemCode === code)
+    const item = stockItems.find(i => (i.itemCode||i.itemName) === code)
     setLines(prev => prev.map((l, i) => i !== idx ? l : {
       ...l,
-      itemCode: code,
+      itemCode: item?.itemCode || code,
       itemName: item?.itemName || '',
       availQty: parseFloat(item?.balanceQty || 0),
-      uom: item?.uom || 'Nos',
+      uom:      item?.uom || 'Nos',
     }))
   }
   const addLine = () => setLines(p => [...p, { itemCode:'', itemName:'', availQty:0, qty:'', uom:'Nos', fromBin:'', toBin:'', batchNo:'', remarks:'' }])
@@ -208,7 +208,9 @@ export default function StockTransfer() {
                         value={l.itemCode} onChange={e => onItemChange(i, e.target.value)}>
                         <option value="">-- Select Item --</option>
                         {stockItems.filter(it => parseFloat(it.balanceQty) > 0).map(it => (
-                          <option key={it.itemCode} value={it.itemCode}>{it.itemCode} — {it.itemName}</option>
+                          <option key={it.itemCode||it.itemName} value={it.itemCode||it.itemName}>
+                            {it.itemCode ? `${it.itemCode} — ` : ''}{it.itemName}
+                          </option>
                         ))}
                       </select>
                     </td>

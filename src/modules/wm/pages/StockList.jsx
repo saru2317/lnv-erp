@@ -19,19 +19,29 @@ export default function StockList() {
   const [loading, setLoading] = useState(true)
   const [chip,    setChip]    = useState('all')
   const [search,  setSearch]  = useState('')
+  const [location,setLocation]= useState('ALL')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo,   setDateTo]   = useState('')
 
-  const fetchStock = useCallback(async () => {
+  const fetchStock = useCallback(async (forceLoc) => {
     setLoading(true)
     try {
-      const res  = await fetch(`${BASE_URL}/wm/stock`,
+      const activeLoc = forceLoc !== undefined ? forceLoc : location
+      const params = new URLSearchParams()
+      if (activeLoc && activeLoc !== 'ALL') params.set('location', activeLoc)
+      if (dateFrom) params.set('from', dateFrom)
+      if (dateTo)   params.set('to',   dateTo)
+      const param = params.toString() ? `?${params.toString()}` : ''
+      const res  = await fetch(`${BASE_URL}/wm/stock${param}`,
         { headers:{ Authorization:`Bearer ${getToken()}` }})
       const data = await res.json()
       setStocks(data.data||[])
     } catch(e){ toast.error(e.message) }
     finally { setLoading(false) }
-  },[])
+  },[location])
 
   useEffect(()=>{ fetchStock() },[])
+
 
   const filtered = stocks.filter(s => {
     const matchChip = chip==='all' ||
@@ -62,8 +72,36 @@ export default function StockList() {
               style={{ padding:'6px 12px',
                 border:'1px solid #E0D5E0',
                 borderRadius:5, fontSize:12, width:180 }} />
+            {/* Location tabs */}
+            <div style={{ display:'flex', border:'1.5px solid #E0D5E0',
+              borderRadius:6, overflow:'hidden' }}>
+              {[
+                {k:'ALL',        l:'All Locations'},
+                {k:'RM-STORE',   l:'RM Store'},
+                {k:'SHOP-FLOOR', l:'Shop Floor'},
+                {k:'FG-STORE',   l:'FG Store'},
+              ].map(t => (
+                <button key={t.k} onClick={() => { setLocation(t.k); fetchStock(t.k) }}
+                  style={{ padding:'5px 10px', fontSize:11, fontWeight:700,
+                    border:'none', cursor:'pointer',
+                    background: location===t.k ? '#714B67' : '#fff',
+                    color:      location===t.k ? '#fff'    : '#6C757D' }}>
+                  {t.l}
+                </button>
+              ))}
+            </div>
+            <span style={{fontSize:11,color:'#6C757D'}}>From:</span>
+            <input type="date" value={dateFrom}
+              onChange={e=>setDateFrom(e.target.value)}
+              style={{padding:'5px 8px',border:'1px solid #E0D5E0',borderRadius:5,fontSize:12}}/>
+            <span style={{fontSize:11,color:'#6C757D'}}>To:</span>
+            <input type="date" value={dateTo}
+              onChange={e=>setDateTo(e.target.value)}
+              style={{padding:'5px 8px',border:'1px solid #E0D5E0',borderRadius:5,fontSize:12}}/>
             <button className="btn btn-s sd-bsm"
-              onClick={fetchStock}>↻</button>
+              onClick={()=>fetchStock()}>Apply</button>
+            <button className="btn btn-s sd-bsm"
+              onClick={()=>{setDateFrom('');setDateTo('');fetchStock()}}>↻</button>
             <button className="btn btn-s sd-bsm">Export</button>
             <button className="btn btn-p sd-bsm"
               onClick={()=>nav('/wm/goods-issue')}>
@@ -130,9 +168,9 @@ export default function StockList() {
             <thead style={{ background:'#F8F4F8' }}>
               <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
                 {['','Code','Material','Category',
-                  'UOM','Received','Issued',
-                  'Balance','Reorder Lvl',
-                  'Value','Status'].map(h=>(
+                  'UOM',
+                  ...(dateFrom||dateTo ? ['Opening','Received','Issued','Closing'] : ['Received','Issued','Balance']),
+                  'Reorder Lvl','Value','Status'].map(h=>(
                   <th key={h} style={{ padding:'8px 10px',
                     fontSize:10, fontWeight:700,
                     color:'#6C757D', textAlign:'left',
@@ -171,24 +209,48 @@ export default function StockList() {
                     </td>
                     <td style={{ padding:'8px 10px',
                       textAlign:'center' }}>{s.uom}</td>
-                    <td style={{ padding:'8px 10px',
-                      textAlign:'right', color:'#155724',
-                      fontWeight:600,
-                      fontFamily:'DM Mono,monospace' }}>
-                      {parseFloat(s.inQty||0).toFixed(2)}
-                    </td>
-                    <td style={{ padding:'8px 10px',
-                      textAlign:'right', color:'#DC3545',
-                      fontWeight:600,
-                      fontFamily:'DM Mono,monospace' }}>
-                      {parseFloat(s.outQty||0).toFixed(2)}
-                    </td>
-                    <td style={{ padding:'8px 10px',
-                      textAlign:'right', fontWeight:800,
-                      fontFamily:'DM Mono,monospace',
-                      color:sc.color }}>
-                      {parseFloat(s.balanceQty||0).toFixed(2)}
-                    </td>
+                    {(dateFrom||dateTo) ? (
+                      // Ledger view — Opening/Received/Issued/Closing
+                      <>
+                        <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#495057',fontWeight:700}}>
+                          {parseFloat(s.openingQty||0).toFixed(2)}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#155724',fontWeight:700}}>
+                          +{parseFloat(s.inQty||0).toFixed(2)}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#DC3545',fontWeight:700}}>
+                          -{parseFloat(s.outQty||0).toFixed(2)}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,color:sc.color}}>
+                          {parseFloat(s.balanceQty||0).toFixed(2)}
+                        </td>
+                      </>
+                    ) : (
+                      // Normal view
+                      <>
+                        <td style={{padding:'8px 10px',textAlign:'right',color:'#155724',fontWeight:600,fontFamily:'DM Mono,monospace'}}>
+                          {parseFloat(s.inQty||0).toFixed(2)}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'right',color:'#DC3545',fontWeight:600,fontFamily:'DM Mono,monospace'}}>
+                          {parseFloat(s.outQty||0).toFixed(2)}
+                          {s.byLocation?.['SHOP-FLOOR'] > 0 && (
+                            <div style={{fontSize:9,color:'#856404',marginTop:1}}>
+                              SF: {parseFloat(s.byLocation['SHOP-FLOOR']).toFixed(2)}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'right',fontWeight:800,fontFamily:'DM Mono,monospace',color:sc.color}}>
+                          {parseFloat(s.balanceQty||0).toFixed(2)}
+                          {s.byLocation && Object.keys(s.byLocation).filter(l=>s.byLocation[l]>0).length > 1 && (
+                            <div style={{fontSize:9,fontWeight:400,color:'#6C757D',marginTop:2}}>
+                              {Object.entries(s.byLocation).filter(([,q])=>q>0)
+                                .map(([l,q])=>`${l.replace('RM-STORE','Store').replace('SHOP-FLOOR','SF').replace('FG-STORE','FG')}: ${parseFloat(q).toFixed(2)}`)
+                                .join(' · ')}
+                            </div>
+                          )}
+                        </td>
+                      </>
+                    )}
                     <td style={{ padding:'8px 10px',
                       textAlign:'right', color:'#6C757D',
                       fontFamily:'DM Mono,monospace' }}>

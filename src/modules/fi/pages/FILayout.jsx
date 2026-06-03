@@ -11,6 +11,8 @@ const GeneralLedger      = lazy(() => import('./GeneralLedger'))
 const TrialBalance       = lazy(() => import('./TrialBalance'))
 const PLReport           = lazy(() => import('./PLReport'))
 const BalanceSheet       = lazy(() => import('./BalanceSheet'))
+const OpeningBalances    = lazy(() => import('./OpeningBalances'))
+const BankRecon          = lazy(() => import('./BankRecon'))
 const CashFlow           = lazy(() => import('./CashFlow'))
 const GSTR1              = lazy(() => import('./GSTR1'))
 const GSTR2B             = lazy(() => import('./GSTR2B'))
@@ -27,7 +29,6 @@ const ARaging            = lazy(() => import('./ARaging'))
 const APAging            = lazy(() => import('./APAging'))
 const CustomerReceipts   = lazy(() => import('./CustomerReceipts'))
 const VendorPayments     = lazy(() => import('./VendorPayments'))
-const BankRecon          = lazy(() => import('./BankRecon'))
 const ProductCosting     = lazy(() => import('./ProductCosting'))
 const CostCenterAllocation = lazy(() => import('./CostCenterAllocation'))
 const MultiCurrency      = lazy(() => import('./MultiCurrency'))
@@ -167,7 +168,9 @@ export default function FILayout() {
           {/* GL */}
           <Route path="coa"           element={<ChartOfAccounts />}     />
           <Route path="ledger"        element={<GeneralLedger />}       />
-          <Route path="trial"         element={<TrialBalance />}        />
+          <Route path="trial"            element={<TrialBalance />}       />
+          <Route path="opening-balances" element={<OpeningBalances />}  />
+          <Route path="bank-recon"       element={<BankRecon />}        />
 
           {/* Reports */}
           <Route path="pl"            element={<PLReport />}            />
@@ -185,7 +188,6 @@ export default function FILayout() {
           <Route path="receipts"      element={<CustomerReceipts />}    />
           <Route path="ap-aging"      element={<APAging />}             />
           <Route path="payments"      element={<VendorPayments />}      />
-          <Route path="bank-recon"    element={<BankRecon />}           />
           <Route path="product-costing" element={<ProductCosting />}      />
           <Route path="cc-allocation"   element={<CostCenterAllocation />}/>
           <Route path="multi-currency"  element={<MultiCurrency />}       />

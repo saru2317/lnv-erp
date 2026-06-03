@@ -1,55 +1,95 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-const getToken = () => localStorage.getItem('lnv_token')
 
-const RECENT_LOTS = [
-  {lot:'QIL-048',date:'28 Feb',mat:'Ring Yarn (30s)',qty:400,pass:394,fail:6,yield:98.5,ncr:'—',sb:'badge-pass'},
-  {lot:'QIL-047',date:'27 Feb',mat:'OE Yarn (12s)',qty:588,pass:580,fail:8,yield:98.6,ncr:'NCR-018',sb:'badge-pass'},
-  {lot:'QIL-046',date:'25 Feb',mat:'Ring Yarn (40s)',qty:384,pass:368,fail:16,yield:95.8,ncr:'NCR-017',sb:'badge-review'},
-  {lot:'QIL-045',date:'23 Feb',mat:'Cotton Sliver',qty:792,pass:792,fail:0,yield:100,ncr:'—',sb:'badge-pass'},
-]
-
-const OPEN_NCRS = [
-  {id:'NCR-019',mat:'Ring Yarn (30s)',issue:'Twist variation — CV% high',raised:'28 Feb',severity:'Major',sb:'badge-open'},
-  {id:'NCR-018',mat:'OE Yarn (12s)',issue:'Nep count above limit',raised:'27 Feb',severity:'Minor',sb:'badge-wip'},
-  {id:'NCR-017',mat:'Ring Yarn (40s)',issue:'Strength below spec — 16 Kg fail',raised:'25 Feb',severity:'Critical',sb:'badge-critical'},
-]
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${tok()}` })
 
 export default function QMDashboard() {
   const nav = useNavigate()
-  const [stats, setStats] = useState({passRate:0,openNCRs:0,openCAPAs:0,totalLots:0})
-  const [recentLots, setRecentLots] = useState([])
-  const [openNCRs,   setOpenNCRs]   = useState([])
+  const [lots,    setLots]    = useState([])
+  const [ncrs,    setNCRs]    = useState([])
+  const [capas,   setCAPAs]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const now = new Date()
+  const monthLabel = now.toLocaleString('en-IN', { month:'long', year:'numeric' })
 
-  useEffect(()=>{
-    const h = { headers:{ Authorization:`Bearer ${getToken()}` } }
-    fetch(`${BASE_URL}/qm/dashboard`, h)
-      .then(r=>r.json()).then(d=>setStats(d)).catch(()=>{})
-    fetch(`${BASE_URL}/qm/inspection`, h)
-      .then(r=>r.json()).then(d=>setRecentLots((d.data||[]).slice(0,4))).catch(()=>{})
-    fetch(`${BASE_URL}/qm/ncr?status=OPEN`, h)
-      .then(r=>r.json()).then(d=>setOpenNCRs((d.data||[]).slice(0,3))).catch(()=>{})
-  },[])
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [rL, rN, rC] = await Promise.all([
+        fetch(`${BASE}/qm/inspection`, { headers: hdr2() }),
+        fetch(`${BASE}/qm/ncr`,        { headers: hdr2() }),
+        fetch(`${BASE}/qm/capa`,       { headers: hdr2() }),
+      ])
+      const [dL, dN, dC] = await Promise.all([rL.json(), rN.json(), rC.json()])
+      setLots(dL.data  || [])
+      setNCRs(dN.data  || [])
+      setCAPAs(dC.data || [])
+    } catch {}
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  // ── KPIs ────────────────────────────────────────────────────────
+  const totalLots  = lots.length
+  const passLots   = lots.filter(l => l.result === 'PASS').length
+  const passRate   = totalLots > 0 ? ((passLots/totalLots)*100).toFixed(1) : 0
+  const totalRej   = lots.reduce((s,l) => s + parseFloat(l.failQty||0), 0)
+  const openNCRs   = ncrs.filter(n => n.status === 'OPEN' || n.status === 'WIP').length
+  const openCAPAs  = capas.filter(c => c.status !== 'CLOSED' && c.status !== 'Closed').length
+
+  // Product-wise yield
+  const productMap = {}
+  lots.forEach(l => {
+    const key = l.itemName || 'Unknown'
+    if (!productMap[key]) productMap[key] = { prod:key, lots:0, pass:0, qty:0 }
+    productMap[key].lots++
+    productMap[key].qty  += parseFloat(l.lotQty||0)
+    productMap[key].pass += parseFloat(l.passQty||0)
+  })
+  const productYields = Object.values(productMap)
+    .map(p => ({ ...p, yield: p.qty>0 ? ((p.pass/p.qty)*100).toFixed(1) : 100 }))
+    .sort((a,b) => b.lots - a.lots).slice(0, 4)
+
+  const recentLots = [...lots].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,5)
+  const openNCRList = ncrs.filter(n => n.status==='OPEN'||n.status==='WIP').slice(0,3)
+
+  const yc = y => parseFloat(y)>=98 ? '#155724' : parseFloat(y)>=95 ? '#856404' : '#DC3545'
+  const yb = y => parseFloat(y)>=98 ? 'var(--odoo-green)' : parseFloat(y)>=95 ? 'var(--odoo-orange)' : 'var(--odoo-red)'
+  const rb = r => r==='PASS'?'badge-pass':r==='FAIL'?'badge-fail':'badge-review'
+  const sl = r => r==='PASS'?' Pass':r==='FAIL'?' Fail':' Review'
+  const sc = s => s==='Critical'?'#F5B7B1':s==='Major'?'#FAD7A0':'#E9ECEF'
+  const sb = s => s==='Critical'?'#FFF5F5':s==='Major'?'#FFFBF0':'#F8F9FA'
 
   return (
     <div>
+      {/* Header */}
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">QM Dashboard <small>Quality Overview · Feb 2025</small></div>
+        <div className="fi-lv-title">
+          QM Dashboard <small>Quality Overview · {monthLabel}</small>
+        </div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}> Quality Report</button>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}> New Inspection</button>
+          <button className="btn btn-s sd-bsm" onClick={load}>↻</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}>Quality Report</button>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>+ New Inspection</button>
         </div>
       </div>
 
+      {/* KPI Cards */}
       <div className="qm-kpi-grid">
-        {[{cls:'green', ic:'',l:'Overall Pass Rate', v:`${stats.passRate||0}%`, s:`${stats.totalLots||0} lots total`},
-          {cls:'red',   ic:'',l:'Rejections (MTD)',  v:'62 Kg', s:'0.34% rejection rate'},
-          {cls:'orange',ic:'',l:'Open NCRs',         v:stats.openNCRs||0, s:'Pending closure'},
-          {cls:'blue',  ic:'',l:'Open CAPAs',          v:stats.openCAPAs||0, s:'Action pending'},
-        ].map(k=>(
+        {[
+          { cls:'green',  l:'Overall Pass Rate',   v: loading?'...': `${passRate}%`,
+            s: `${totalLots} lots inspected` },
+          { cls:'red',    l:'Total Rejections',    v: loading?'...': totalRej.toFixed(0),
+            s: totalLots>0 ? `${((totalRej/(lots.reduce((s,l)=>s+parseFloat(l.lotQty||0),0)||1))*100).toFixed(2)}% rejection rate` : '—' },
+          { cls:'orange', l:'Open NCRs',           v: loading?'...': openNCRs,
+            s: 'Pending closure' },
+          { cls:'blue',   l:'Open CAPAs',          v: loading?'...': openCAPAs,
+            s: 'Action pending' },
+        ].map(k => (
           <div key={k.l} className={`qm-kpi-card ${k.cls}`}>
-            <div className="qm-kpi-icon">{k.ic}</div>
             <div className="qm-kpi-label">{k.l}</div>
             <div className="qm-kpi-value">{k.v}</div>
             <div className="qm-kpi-sub">{k.s}</div>
@@ -61,95 +101,156 @@ export default function QMDashboard() {
         {/* Recent Inspections */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3> Recent Inspection Lots</h3>
+            <h3>Recent Inspection Lots</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/inspection')}>View All</button>
           </div>
-          <div style={{padding:'0'}}>
-            <table className="fi-data-table" style={{margin:0}}>
-              <thead><tr><th>Lot No.</th><th>Material</th><th>Yield %</th><th>NCR</th><th>Status</th></tr></thead>
-              <tbody>
-                {RECENT_LOTS.map(l=>(
-                  <tr key={l.lot} style={{cursor:'pointer'}} onClick={() => nav('/qm/inspection')}>
-                    <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{l.lot}</strong><div style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{l.date} · {l.qty} Kg</div></td>
-                    <td>{l.mat}</td>
-                    <td>
-                      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                        <div className="yield-bar" style={{width:'60px'}}>
-                          <div className="yield-fill" style={{width:`${l.yield}%`,background:l.yield>=98?'var(--odoo-green)':l.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}></div>
-                        </div>
-                        <span style={{fontSize:'11px',fontWeight:'700',color:l.yield>=98?'var(--odoo-green)':l.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}>{l.yield}%</span>
-                      </div>
-                    </td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:l.ncr==='—'?'var(--odoo-gray)':'var(--odoo-red)',fontWeight:l.ncr==='—'?'400':'700'}}>{l.ncr}</td>
-                    <td><span className={`badge ${l.sb}`}>{l.sb==='badge-pass'?' Pass':l.sb==='badge-fail'?' Fail':' Review'}</span></td>
+          <div style={{ padding:0 }}>
+            {loading ? (
+              <div style={{ padding:30, textAlign:'center', color:'#6C757D' }}>Loading...</div>
+            ) : recentLots.length === 0 ? (
+              <div style={{ padding:30, textAlign:'center', color:'#6C757D' }}>
+                <div style={{ fontSize:28, marginBottom:8 }}>🔬</div>
+                No inspection lots yet
+                <button className="btn btn-p sd-bsm"
+                  style={{ display:'block', margin:'10px auto 0' }}
+                  onClick={() => nav('/qm/inspection/new')}>
+                  + New Inspection
+                </button>
+              </div>
+            ) : (
+              <table className="fi-data-table" style={{ margin:0 }}>
+                <thead>
+                  <tr>
+                    <th>Lot No.</th><th>Material</th><th>Yield %</th>
+                    <th>NCR</th><th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentLots.map(l => {
+                    const yld = parseFloat(l.yieldPct || (l.lotQty>0?(l.passQty/l.lotQty*100):0) || 0)
+                    return (
+                      <tr key={l.id} style={{ cursor:'pointer' }}
+                        onClick={() => nav(`/qm/inspection/${l.id}`)}>
+                        <td>
+                          <strong style={{ fontFamily:'DM Mono,monospace', fontSize:12,
+                            color:'var(--odoo-purple)' }}>{l.lotNo}</strong>
+                          <div style={{ fontSize:10, color:'var(--odoo-gray)' }}>
+                            {new Date(l.inspDate||l.createdAt).toLocaleDateString('en-IN')} · {parseFloat(l.lotQty||0)} {l.unit}
+                          </div>
+                        </td>
+                        <td style={{ fontSize:12 }}>{l.itemName}</td>
+                        <td>
+                          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                            <div className="yield-bar" style={{ width:60 }}>
+                              <div className="yield-fill" style={{ width:`${yld}%`, background:yb(yld) }} />
+                            </div>
+                            <span style={{ fontSize:11, fontWeight:700, color:yb(yld) }}>
+                              {yld.toFixed(1)}%
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ fontFamily:'DM Mono,monospace', fontSize:11,
+                          color: l.ncrNo ? 'var(--odoo-red)' : 'var(--odoo-gray)',
+                          fontWeight: l.ncrNo ? 700 : 400 }}>
+                          {l.ncrNo || '—'}
+                        </td>
+                        <td><span className={`badge ${rb(l.result)}`}>{sl(l.result)}</span></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
         {/* Open NCRs */}
         <div className="fi-panel">
           <div className="fi-panel-hdr">
-            <h3> Open NCRs</h3>
+            <h3>Open NCRs</h3>
             <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr')}>View All</button>
           </div>
           <div className="fi-panel-body">
-            {OPEN_NCRS.map(n=>(
-              <div key={n.id} style={{padding:'10px',borderRadius:'6px',marginBottom:'8px',
-                background:n.severity==='Critical'?'#FFF5F5':n.severity==='Major'?'#FFFBF0':'#F8F9FA',
-                border:`1px solid ${n.severity==='Critical'?'#F5B7B1':n.severity==='Major'?'#FAD7A0':'var(--odoo-border)'}`,
-                cursor:'pointer'}} onClick={() => nav('/qm/ncr')}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
-                  <strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>{n.id}</strong>
-                  <span className={`badge ${n.sb}`}>{n.severity}</span>
-                </div>
-                <div style={{fontSize:'12px',fontWeight:'600'}}>{n.mat}</div>
-                <div style={{fontSize:'11px',color:'var(--odoo-gray)',marginTop:'2px'}}>{n.issue}</div>
-                <div style={{fontSize:'10px',color:'var(--odoo-gray)',marginTop:'3px'}}>Raised: {n.raised}</div>
+            {loading ? (
+              <div style={{ textAlign:'center', color:'#6C757D', padding:20 }}>Loading...</div>
+            ) : openNCRList.length === 0 ? (
+              <div style={{ textAlign:'center', color:'#155724', padding:20,
+                background:'#D4EDDA', borderRadius:8, fontSize:12, fontWeight:700 }}>
+                ✅ No open NCRs — All clear!
               </div>
-            ))}
-            <button className="btn btn-p sd-bsm" style={{width:'100%',marginTop:'4px'}} onClick={() => nav('/qm/ncr/new')}>
-               Raise New NCR
+            ) : (
+              openNCRList.map(n => (
+                <div key={n.id}
+                  style={{ padding:10, borderRadius:6, marginBottom:8,
+                    background:sb(n.severity), border:`1px solid ${sc(n.severity)}`,
+                    cursor:'pointer' }}
+                  onClick={() => nav(`/qm/ncr/${n.id}`)}>
+                  <div style={{ display:'flex', justifyContent:'space-between',
+                    alignItems:'center', marginBottom:4 }}>
+                    <strong style={{ fontFamily:'DM Mono,monospace', fontSize:12,
+                      color:'var(--odoo-purple)' }}>{n.ncrNo}</strong>
+                    <span className={`badge ${n.severity==='Critical'?'badge-critical':n.severity==='Major'?'badge-open':'badge-wip'}`}>
+                      {n.severity}
+                    </span>
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:600 }}>{n.itemName}</div>
+                  <div style={{ fontSize:11, color:'var(--odoo-gray)', marginTop:2 }}>{n.description?.slice(0,60)}</div>
+                  <div style={{ fontSize:10, color:'var(--odoo-gray)', marginTop:3 }}>
+                    Raised: {new Date(n.date||n.createdAt).toLocaleDateString('en-IN')}
+                  </div>
+                </div>
+              ))
+            )}
+            <button className="btn btn-p sd-bsm"
+              style={{ width:'100%', marginTop:4 }}
+              onClick={() => nav('/qm/ncr/new')}>
+              + Raise New NCR
             </button>
           </div>
         </div>
       </div>
 
-      {/* Yield Trend by Product */}
-      <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3>Yield by Product (Feb 2025)</h3></div>
-        <div className="fi-panel-body">
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'14px'}}>
-            {[{prod:'Ring Yarn (30s)',yield:98.5,lots:18,clr:'var(--odoo-purple)'},
-              {prod:'Ring Yarn (40s)',yield:95.8,lots:12,clr:'var(--odoo-orange)'},
-              {prod:'OE Yarn (12s)',yield:98.6,lots:8,clr:'var(--odoo-blue)'},
-              {prod:'Compact Sliver',yield:99.2,lots:10,clr:'var(--odoo-green)'},
-            ].map(p=>(
-              <div key={p.prod} style={{background:'#F8F9FA',borderRadius:'8px',padding:'14px',textAlign:'center'}}>
-                <div style={{fontSize:'12px',fontWeight:'700',color:'var(--odoo-dark)',marginBottom:'8px'}}>{p.prod}</div>
-                <div style={{fontFamily:'Syne,sans-serif',fontSize:'24px',fontWeight:'800',color:p.yield>=98?'var(--odoo-green)':p.yield>=95?'var(--odoo-orange)':'var(--odoo-red)'}}>{p.yield}%</div>
-                <div className="yield-bar" style={{margin:'8px 0 4px'}}>
-                  <div className="yield-fill" style={{width:`${p.yield}%`,background:p.clr}}></div>
+      {/* Product Yield */}
+      {productYields.length > 0 && (
+        <div className="fi-panel">
+          <div className="fi-panel-hdr">
+            <h3>Yield by Product</h3>
+          </div>
+          <div className="fi-panel-body">
+            <div style={{ display:'grid',
+              gridTemplateColumns:`repeat(${Math.min(productYields.length,4)},1fr)`,
+              gap:14 }}>
+              {productYields.map(p => (
+                <div key={p.prod} style={{ background:'#F8F9FA', borderRadius:8,
+                  padding:14, textAlign:'center' }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#333',
+                    marginBottom:8 }}>{p.prod}</div>
+                  <div style={{ fontFamily:'Syne,sans-serif', fontSize:24,
+                    fontWeight:800, color:yc(p.yield) }}>{p.yield}%</div>
+                  <div className="yield-bar" style={{ margin:'8px 0 4px' }}>
+                    <div className="yield-fill"
+                      style={{ width:`${p.yield}%`, background:yb(p.yield) }} />
+                  </div>
+                  <div style={{ fontSize:11, color:'var(--odoo-gray)' }}>
+                    {p.lots} lots · {parseFloat(p.qty).toFixed(0)} {lots.find(l=>l.itemName===p.prod)?.unit||'Nos'}
+                  </div>
                 </div>
-                <div style={{fontSize:'11px',color:'var(--odoo-gray)'}}>{p.lots} lots inspected</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="fi-panel">
-        <div className="fi-panel-hdr"><h3> Quick Actions</h3></div>
-        <div className="fi-panel-body" style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}> New Inspection</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr/new')}> Raise NCR</button>
+        <div className="fi-panel-hdr"><h3>Quick Actions</h3></div>
+        <div className="fi-panel-body" style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button className="btn btn-p sd-bsm" onClick={() => nav('/qm/inspection/new')}>+ New Inspection</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/ncr/new')}>Raise NCR</button>
           <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/capa/new')}>New CAPA</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/certificates')}> Issue Certificate</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/vendor')}>⭐ Vendor Rating</button>
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}> Quality Report</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/plan')}>Quality Plans</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/vendor')}>Vendor Rating</button>
+          <button className="btn btn-s sd-bsm" onClick={() => nav('/qm/report')}>Quality Report</button>
         </div>
       </div>
     </div>

@@ -16,7 +16,9 @@ const STATIC_CUSTOMERS = [
 
 export default function CustomerList() {
   const navigate = useNavigate()
-  const [viewMode, setViewMode] = useState('list') // list | detail
+  const [viewMode, setViewMode] = useState('list')
+  const [page,     setPage]     = useState(1)
+  const PAGE_SIZE = 10 // list | detail
   const [customers, setCustomers] = useState(STATIC_CUSTOMERS)
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState('Tamil Nadu')
@@ -32,8 +34,8 @@ export default function CustomerList() {
   }, [search, stateFilter])
 
   const filtered = customers.filter(c =>
-    (c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.gstin.includes(search) || c.city.toLowerCase().includes(search.toLowerCase())) &&
+    (c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.gstin.includes(search) || c.city?.toLowerCase().includes(search.toLowerCase())) &&
     (statusFilter === '' || c.status === statusFilter)
   )
 
@@ -96,9 +98,12 @@ export default function CustomerList() {
               <th><input type="checkbox" /></th>
               <th>Code</th>
               <th>Customer Name</th>
+              <th>Type</th>
               <th>GSTIN</th>
+              <th>Phone</th>
               <th>City</th>
-              {viewMode==='detail'&&<><th>Mobile</th><th>Email</th><th>Type</th><th>GST Type</th><th>Pay Terms</th><th>Price List</th><th>Sales Exec</th><th>Job Work</th></>}
+              <th>State</th>
+              {viewMode==='detail'&&<><th>Email</th><th>GST Type</th><th>Pay Terms</th><th>Price List</th><th>Sales Exec</th><th>Job Work</th></>}
               <th>Credit Limit</th>
               <th>Outstanding</th>
               <th>Status</th>
@@ -106,13 +111,22 @@ export default function CustomerList() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(c => (
+            {filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map(c => (
               <tr key={c.id} onClick={() => navigate(`/sd/customers/${c.id}`)}>
                 <td onClick={e => e.stopPropagation()}><input type="checkbox" /></td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'#714B67'}}>{c.id}</td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px',color:'#714B67'}}>{c.code||c.customerCode||`#${c.id}`}</td>
                 <td><strong>{c.name}</strong></td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{c.gstin}</td>
-                <td>{c.city}</td>
+                <td>
+                  <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,
+                    background:c.type==='A'?'#D4EDDA':'#E8F4FD',
+                    color:c.type==='A'?'#155724':'#1A5276'}}>
+                    {c.type||'B'}
+                  </span>
+                </td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{c.gstin||'—'}</td>
+                <td style={{fontSize:12}}>{c.phone||c.mobile||'—'}</td>
+                <td>{c.city||'—'}</td>
+                <td style={{fontSize:11,color:'#6C757D'}}>{c.state||'—'}</td>
                 {viewMode==='detail'&&<>
                   <td>{c.mobile}</td>
                   <td style={{fontSize:11}}>{c.email||'—'}</td>
@@ -124,35 +138,49 @@ export default function CustomerList() {
                   <td style={{textAlign:'center'}}>{c.jobWork?'':'—'}</td>
                 </>}
                 <td>{c.creditLimit}</td>
-                <td><strong style={{color: c.status === 'overdue' ? '#B03A37' : '#212529'}}>{c.outstanding}</strong></td>
-                <td><Badge status={c.status}>{c.status.toUpperCase()}</Badge></td>
-                <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
-                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'1px solid #DEE2E6',background:'#fff',color:'#714B67',cursor:'pointer'}} onClick={() => navigate(`/sd/customers/${c.id}`)}>View</button>
-                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'1px solid #714B67',background:'#EDE0EA',color:'#714B67',cursor:'pointer'}}
-                    onClick={() => navigate(`/sd/customers/${c.id}?edit=true`)}>Edit</button>
-                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'none',
-                    background: c.status==='inactive'?'#00A09D':'#6C757D',color:'#fff',cursor:'pointer'}}
-                    onClick={() => {
-                      setCustomers(cs => cs.map(x => x.id===c.id ? {...x, status: x.status==='inactive'?'active':'inactive'} : x))
-                      toast.success(`${c.name} marked as ${c.status==='inactive'?'Active':'Inactive'}`)
-                    }}>
-                    {c.status==='inactive' ? 'Activate' : 'Deactivate'}
+                <td><strong style={{color: (c.status||'') === 'overdue' ? '#B03A37' : '#212529'}}>{c.outstanding}</strong></td>
+                <td><Badge status={c.status}>{(c.status||'active').toUpperCase()}</Badge></td>
+                <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
+                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',
+                    border:'1px solid #DEE2E6',background:'#fff',color:'#714B67',cursor:'pointer'}}
+                    onClick={() => navigate(`/sd/customers/${c.id}`)}>
+                    View
                   </button>
-                  {c.status !== 'inactive' && (
-                    <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',border:'none',background:'#714B67',color:'#fff',cursor:'pointer'}} onClick={() => navigate('/sd/invoices/new')}>Invoice</button>
-                  )}
+                  <button style={{padding:'3px 10px',fontSize:'11px',fontWeight:'700',borderRadius:'4px',
+                    border:'none',background:'#714B67',color:'#fff',cursor:'pointer'}}
+                    onClick={() => navigate(`/sd/invoices/new?customerId=${c.id}&customerName=${encodeURIComponent(c.name)}`)}>
+                    + Invoice
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
         <div className="sd-pgn">
-          <span>Showing 1–{filtered.length} of {customers.length}</span>
+          <span>
+            Showing {filtered.length === 0 ? 0 : (page-1)*PAGE_SIZE+1}–{Math.min(page*PAGE_SIZE, filtered.length)} of {filtered.length}
+          </span>
           <div className="sd-pbs">
-            <div className="sd-pb">‹</div>
-            <div className="sd-pb" style={{background:'#714B67',color:'#fff',borderColor:'#714B67'}}>1</div>
-            <div className="sd-pb">2</div>
-            <div className="sd-pb">›</div>
+            {/* Prev */}
+            <div className="sd-pb"
+              style={{ cursor: page>1 ? 'pointer' : 'default', opacity: page>1 ? 1 : 0.4 }}
+              onClick={() => page>1 && setPage(p => p-1)}>‹</div>
+
+            {/* Page numbers */}
+            {Array.from({ length: Math.ceil(filtered.length / PAGE_SIZE) }, (_, i) => i+1).map(p => (
+              <div key={p} className="sd-pb"
+                style={{ background: p===page ? '#714B67' : '', color: p===page ? '#fff' : '',
+                  borderColor: p===page ? '#714B67' : '', cursor:'pointer', fontWeight: p===page ? 700 : 400 }}
+                onClick={() => setPage(p)}>
+                {p}
+              </div>
+            ))}
+
+            {/* Next */}
+            <div className="sd-pb"
+              style={{ cursor: page < Math.ceil(filtered.length/PAGE_SIZE) ? 'pointer' : 'default',
+                opacity: page < Math.ceil(filtered.length/PAGE_SIZE) ? 1 : 0.4 }}
+              onClick={() => page < Math.ceil(filtered.length/PAGE_SIZE) && setPage(p => p+1)}>›</div>
           </div>
         </div>
       </div>

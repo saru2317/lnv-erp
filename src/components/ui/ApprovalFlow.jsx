@@ -49,6 +49,14 @@ const APPROVAL_WORKFLOWS = {
       { level:3, role:'Managing Director', users:['admin'],                label:'MD Approval'   },
     ]
   },
+  INVOICE: {
+    label: 'Sales Invoice',
+    escalationDays: 1,
+    levels: [
+      { level:1, role:'Sales Manager',     users:['sales','manager','admin'], label:'Sales Mgr Review' },
+      { level:2, role:'Managing Director', users:['admin'],                   label:'MD Final Approval' },
+    ]
+  },
 }
 
 const STATUS_COLORS = {

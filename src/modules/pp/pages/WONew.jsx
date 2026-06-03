@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -49,13 +49,21 @@ export default function WONew() {
   const [tab,      setTab]      = useState('header') // header | operations | materials | summary
   const [saving,   setSaving]   = useState(false)
 
+  // ── View / Edit mode (when opened from /pp/wo/:id) ───────────────────────
+  const { id: woId } = useParams()
+  const isView = !!woId
+  const [viewMode,  setViewMode]  = useState(true)   // true=read-only, false=editing
+  const [woStatus,  setWoStatus]  = useState('')
+  const [deleting,  setDeleting]  = useState(false)
+
   // Header
   const [form, setForm] = useState({
     itemCode, itemName, plannedQty: qty, uom,
     soNo, planId: planId ? parseInt(planId) : null, priority:'Normal', rmMethod:'push',
     scheduledStart: today(), scheduledEnd: addDays(today(), 3),
     plant:'MAIN', warehouse:'FG-STORE',
-    customerName:'', dcNo:'', mouldId:'', remarks:'',
+    customerName:'', dcNo:'', mouldId:'', insertId:'', cavityCount:1, remarks:'',
+    // rmMethod read from PP Config — not set per WO
     routingId:'', routingNo:'',
   })
 
@@ -68,14 +76,48 @@ export default function WONew() {
 
   // Stock availability map { itemCode: balance }
   const [stockMap,  setStockMap]  = useState({})
+  const getStock = (itemCode, itemName) => {
+    if (itemCode && stockMap[itemCode] !== undefined) return stockMap[itemCode]
+    if (itemName && stockMap[itemName] !== undefined) return stockMap[itemName]
+    return 0
+  }
 
   // Master data
+  const [ppConfig,   setPPConfig]   = useState({}) // PP Config for rmMethod etc
   const [routings,  setRoutings]  = useState([])
   const [workCenters, setWCs]     = useState([])
+  const [moulds,    setMoulds]    = useState([])  // all active moulds
+  const [inserts,   setInserts]   = useState([])  // inserts for selected mould
   const [items,     setItems]     = useState([])
   const [boms,      setBoms]      = useState([])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // When mould selected — fetch its inserts + auto-fill cavity
+  const onMouldSelect = async (mouldId) => {
+    set('mouldId', mouldId)
+    set('insertId', '')
+    setInserts([])
+    if (!mouldId) return
+    const mould = moulds.find(m => m.mouldId === mouldId)
+    if (mould) set('cavityCount', parseInt(mould.cavity || 1))
+    try {
+      const r = await fetch(`${BASE_URL}/pp/moulds/${mouldId}/inserts`, { headers: authHdrs() })
+      const d = await r.json()
+      setInserts(d.data || [])
+    } catch {}
+  }
+
+  // When insert selected — override cavity if insert has cavityOverride
+  const onInsertSelect = (insertId) => {
+    set('insertId', insertId)
+    const ins = inserts.find(i => i.insertId === insertId)
+    if (ins?.cavityOverride) set('cavityCount', parseInt(ins.cavityOverride))
+    else {
+      const mould = moulds.find(m => m.mouldId === form.mouldId)
+      if (mould) set('cavityCount', parseInt(mould.cavity || 1))
+    }
+  }
 
   // ── Load master data ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -116,20 +158,108 @@ export default function WONew() {
     fetch(`${BASE_URL}/pp/work-centers`, { headers: authHdrs() })
       .then(r=>r.json()).then(d=>setWCs(d.data||[])).catch(()=>{})
 
+    // Moulds
+    fetch(`${BASE_URL}/pp/moulds`, { headers: authHdrs() })
+      .then(r=>r.json()).then(d=>setMoulds(d.data||[])).catch(()=>{})
+
+    // PP Config — read rmMethod, storeLocation, sfLocation
+    try {
+      const cached = JSON.parse(sessionStorage.getItem('pp_config')||'{}')
+      if (cached.rmMethod) setPPConfig(cached)
+      else {
+        fetch(`${BASE_URL}/pp/config`, { headers: authHdrs() })
+          .then(r=>r.json()).then(d => {
+            const cfg = d.data || d
+            setPPConfig(cfg)
+            sessionStorage.setItem('pp_config', JSON.stringify(cfg))
+          }).catch(()=>{})
+      }
+    } catch {}
+
     // Items
     fetch(`${BASE_URL}/items`, { headers: authHdrs() })
       .then(r=>r.json()).then(d=>setItems(d.data||[])).catch(()=>{})
 
-    // Stock summary — build itemCode→balance map
-    fetch(`${BASE_URL}/stock/summary`, { headers: authHdrs() })
+    // Stock — build itemCode+itemName→balanceQty map from /wm/stock
+    fetch(`${BASE_URL}/wm/stock`, { headers: authHdrs() })
       .then(r=>r.json()).then(d => {
-        if (Array.isArray(d)) {
-          const map = {}
-          d.forEach(i => { map[i.code] = parseFloat(i.balance || 0) })
-          setStockMap(map)
-        }
+        const list = d.data || []
+        const map = {}
+        list.forEach(i => {
+          // Key by both itemCode and itemName for flexible lookup
+          if (i.itemCode) map[i.itemCode] = parseFloat(i.balanceQty || 0)
+          if (i.itemName) map[i.itemName] = parseFloat(i.balanceQty || 0)
+        })
+        setStockMap(map)
       }).catch(()=>{})
   }, [])
+
+  // ── Load existing WO when viewing /pp/wo/:id ─────────────────────────────
+  useEffect(() => {
+    if (!woId) return
+    fetch(`${BASE_URL}/pp/wo/${woId}`, { headers: authHdrs() })
+      .then(r => r.json())
+      .then(d => {
+        const wo = d.data || d
+        if (!wo?.id) return toast.error('WO not found')
+
+        setWoStatus(wo.status || '')
+        setWoNo(wo.woNo || '')
+        setWoType(wo.woType || 'MTS')
+
+        setForm({
+          itemCode:       wo.itemCode       || '',
+          itemName:       wo.itemName       || '',
+          plannedQty:     wo.plannedQty     || '',
+          uom:            wo.uom            || 'Nos',
+          soNo:           wo.soNo           || '',
+          planId:         wo.planId         || null,
+          priority:       wo.priority       || 'Normal',
+          rmMethod:       wo.rmMethod       || 'push',
+          scheduledStart: wo.scheduledStart ? wo.scheduledStart.split('T')[0] : '',
+          scheduledEnd:   wo.scheduledEnd   ? wo.scheduledEnd.split('T')[0]   : '',
+          plant:          wo.plant          || 'MAIN',
+          warehouse:      wo.warehouse      || 'FG-STORE',
+          customerName:   wo.customerName   || '',
+          dcNo:           wo.dcNo           || '',
+          mouldId:        wo.mouldId        || '',
+          insertId:       wo.insertId       || '',
+          cavityCount:    parseInt(wo.cavityCount || 1),
+          remarks:        wo.remarks        || '',
+          routingId:      wo.routingId      || '',
+          routingNo:      wo.routingNo      || '',
+        })
+
+        // Load operations
+        if (wo.operations?.length) {
+          setOperations(wo.operations.map(op => ({
+            opNo:       op.opNo       || 10,
+            opName:     op.opName     || '',
+            workCenter: op.workCenter || '',
+            machine:    op.machine    || '',
+            setupTime:  parseFloat(op.setupTime || 0),
+            runTime:    parseFloat(op.runTime   || 0),
+            mhr:        parseFloat(op.mhr       || 0),
+            status:     op.status     || 'PENDING',
+            controlKey: op.controlKey || 'PP01',
+          })))
+        }
+
+        // Load materials / BOM components
+        if (wo.bomComponents?.length) {
+          setMaterials(wo.bomComponents.map(m => ({
+            itemCode:  m.itemCode  || '',
+            itemName:  m.itemName  || '',
+            reqQty:    parseFloat(m.reqQty   || 0),
+            uom:       m.uom       || 'Nos',
+            stdCost:   parseFloat(m.stdCost  || 0),
+            issuedQty: parseFloat(m.issuedQty|| 0),
+            status:    m.status    || 'RESERVED',
+          })))
+        }
+      })
+      .catch(e => toast.error('Failed to load WO: ' + e.message))
+  }, [woId])
 
   // ── Load BOM when itemCode changes ────────────────────────────────────────
   useEffect(() => {
@@ -220,8 +350,11 @@ export default function WONew() {
         ...form,
         woNo,
         woType,
+        rmMethod: ppConfig.rmMethod || form.rmMethod || 'push',
         planId:        form.planId ? parseInt(form.planId) : null,
         plannedQty:    parseFloat(form.plannedQty||0),
+        insertId:      form.insertId     || null,
+        cavityCount:   parseInt(form.cavityCount || 1),
         scheduledStart: form.scheduledStart ? new Date(form.scheduledStart).toISOString() : null,
         scheduledEnd:   form.scheduledEnd   ? new Date(form.scheduledEnd).toISOString()   : null,
         status:        releaseNow ? 'RELEASED' : 'DRAFT',
@@ -274,28 +407,134 @@ export default function WONew() {
     marginBottom:-2,
   })
 
+  const printWO   = () => window.print()
+
+  const deleteWO  = async () => {
+    if (!window.confirm(`Delete ${woNo}? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      const res  = await fetch(`${BASE_URL}/pp/wo/${woId}`, { method:'DELETE', headers: authHdrs() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(`${woNo} deleted!`)
+      navigate('/pp/wo')
+    } catch(e) { toast.error(e.message) }
+    finally { setDeleting(false) }
+  }
+
+  const saveEdit = async () => {
+    setSaving(true)
+    try {
+      const payload = {
+        ...form, woType,
+        plannedQty:     parseFloat(form.plannedQty||0),
+        scheduledStart: form.scheduledStart ? new Date(form.scheduledStart).toISOString() : null,
+        scheduledEnd:   form.scheduledEnd   ? new Date(form.scheduledEnd).toISOString()   : null,
+        operations:     operations.map(op => ({ ...op, opNo:parseInt(op.opNo)||10, setupTime:parseFloat(op.setupTime||0), runTime:parseFloat(op.runTime||0), mhr:parseFloat(op.mhr||0) })),
+        bomComponents:  materials,
+      }
+      const res  = await fetch(`${BASE_URL}/pp/wo/${woId}`, { method:'PUT', headers: authHdrs(), body: JSON.stringify(payload) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setWoStatus(data.data?.status || woStatus)
+      setViewMode(true)
+      toast.success(`${woNo} updated!`)
+    } catch(e) { toast.error(e.message) }
+    finally { setSaving(false) }
+  }
+
   return (
     <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13 }}>
 
       {/* ── Page Header ── */}
       <div className="fi-lv-hdr" style={{ marginBottom:14 }}>
         <div className="fi-lv-title">
-          Create Work Order
-          <small>SAP: CO01 — {woNo}{planId ? ` · Plan: PLAN-${String(planId).padStart(4,'0')}` : ''}{soNo ? ` · SO: ${soNo}` : ''}</small>
+          {isView ? `Work Order — ${woNo}` : 'Create Work Order'}
+          <small>
+            {isView
+              ? ` CO03 · ${woStatus}`
+              : `SAP: CO01 — ${woNo}${planId ? ` · Plan: PLAN-${String(planId).padStart(4,'0')}` : ''}${soNo ? ` · SO: ${soNo}` : ''}`
+            }
+          </small>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button onClick={() => navigate(-1)}
-            style={{ padding:'7px 16px', background:'#fff', border:'1.5px solid #DEE2E6', borderRadius:6, fontSize:12, cursor:'pointer', color:'#6C757D' }}>
-            ← Back to Plan
-          </button>
-          <button onClick={() => saveWO(false)} disabled={saving}
-            style={{ padding:'7px 18px', background:'#6C757D', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer' }}>
-            💾 Save as Draft
-          </button>
-          <button onClick={() => saveWO(true)} disabled={saving}
-            style={{ padding:'7px 20px', background:'#155724', color:'#fff', border:'none', borderRadius:6, fontSize:13, fontWeight:700, cursor:'pointer' }}>
-            🚀 Create & Release to Floor
-          </button>
+
+          {/* ── VIEW MODE ── */}
+          {isView && viewMode && (
+            <>
+              <button onClick={printWO}
+                style={{ padding:'7px 14px', background:'#fff', border:'1.5px solid #DEE2E6', borderRadius:6, fontSize:12, cursor:'pointer' }}>
+                🖨️ Print
+              </button>
+              {['DRAFT','RELEASED'].includes(woStatus) && (
+                <button onClick={() => setViewMode(false)}
+                  style={{ padding:'7px 14px', background:'#D1ECF1', border:'1.5px solid #BEE5EB', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', color:'#0C5460' }}>
+                  ✏️ Edit
+                </button>
+              )}
+              <button
+                onClick={() => navigate(`/pp/wo/new?itemCode=${form.itemCode}&itemName=${encodeURIComponent(form.itemName)}&qty=${form.plannedQty}&uom=${form.uom}`)}
+                style={{ padding:'7px 14px', background:'#FFF3CD', border:'1.5px solid #FFE69C', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', color:'#856404' }}>
+                📋 Amend
+              </button>
+              {woStatus === 'DRAFT' && (
+                <>
+                  <button onClick={async () => {
+                      try {
+                        const res = await fetch(`${BASE_URL}/pp/wo/${woId}/release`, { method:'POST', headers: authHdrs() })
+                        const d   = await res.json()
+                        if (!res.ok) throw new Error(d.error)
+                        setWoStatus('RELEASED')
+                        toast.success('WO Released!')
+                      } catch(e) { toast.error(e.message) }
+                    }}
+                    style={{ padding:'7px 14px', background:'#D4EDDA', border:'1.5px solid #C3E6CB', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', color:'#155724' }}>
+                    ✅ Release
+                  </button>
+                  <button onClick={deleteWO} disabled={deleting}
+                    style={{ padding:'7px 14px', background:'#F8D7DA', border:'1.5px solid #F5C6CB', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', color:'#721C24' }}>
+                    🗑️ Delete
+                  </button>
+                </>
+              )}
+              <button onClick={() => navigate('/pp/wo')}
+                style={{ padding:'7px 14px', background:'#fff', border:'1.5px solid #DEE2E6', borderRadius:6, fontSize:12, cursor:'pointer', color:'#6C757D' }}>
+                ← Back
+              </button>
+            </>
+          )}
+
+          {/* ── EDIT MODE ── */}
+          {isView && !viewMode && (
+            <>
+              <button onClick={() => setViewMode(true)}
+                style={{ padding:'7px 14px', background:'#fff', border:'1.5px solid #DEE2E6', borderRadius:6, fontSize:12, cursor:'pointer' }}>
+                ✕ Cancel
+              </button>
+              <button onClick={saveEdit} disabled={saving}
+                style={{ padding:'7px 18px', background:'#714B67', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                {saving ? '⏳' : '💾 Save Changes'}
+              </button>
+            </>
+          )}
+
+          {/* ── CREATE MODE ── */}
+          {!isView && (
+            <>
+              <button onClick={() => navigate(-1)}
+                style={{ padding:'7px 16px', background:'#fff', border:'1.5px solid #DEE2E6', borderRadius:6, fontSize:12, cursor:'pointer', color:'#6C757D' }}>
+                ← Back to Plan
+              </button>
+              <button onClick={() => saveWO(false)} disabled={saving}
+                style={{ padding:'7px 18px', background:'#6C757D', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                💾 Save as Draft
+              </button>
+              <button onClick={() => saveWO(true)} disabled={saving}
+                style={{ padding:'7px 20px', background:'#155724', color:'#fff', border:'none', borderRadius:6, fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                🚀 Create & Release to Floor
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -343,11 +582,11 @@ export default function WONew() {
                 </div>
                 <div>
                   <label style={lbl}>Item Code</label>
-                  <input style={{ ...inp, fontFamily:'DM Mono,monospace' }} value={form.itemCode} onChange={e=>set('itemCode',e.target.value)} placeholder="ITEM-001" />
+                  <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontFamily:'DM Mono,monospace' }} value={form.itemCode} onChange={e=>set('itemCode',e.target.value)} placeholder="ITEM-001" />
                 </div>
                 <div>
                   <label style={lbl}>Planned Qty *</label>
-                  <input style={{ ...inp, fontWeight:700, fontSize:14 }} type="number" value={form.plannedQty} onChange={e=>set('plannedQty',e.target.value)} placeholder="0" min="1" />
+                  <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontWeight:700, fontSize:14 }} type="number" value={form.plannedQty} onChange={e=>set('plannedQty',e.target.value)} placeholder="0" min="1" />
                 </div>
                 <div>
                   <label style={lbl}>UOM</label>
@@ -392,7 +631,7 @@ export default function WONew() {
                 {(woType==='MTO' || woType==='MRP') && (
                   <div>
                     <label style={lbl}>Sales Order No.</label>
-                    <input style={{ ...inp, fontFamily:'DM Mono,monospace' }} value={form.soNo} onChange={e=>set('soNo',e.target.value)} placeholder="SO-2026-001" />
+                    <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontFamily:'DM Mono,monospace' }} value={form.soNo} onChange={e=>set('soNo',e.target.value)} placeholder="SO-2026-001" />
                   </div>
                 )}
                 {woType==='JW' && (
@@ -403,13 +642,69 @@ export default function WONew() {
                     </div>
                     <div>
                       <label style={lbl}>DC / Challan No.</label>
-                      <input style={{ ...inp, fontFamily:'DM Mono,monospace' }} value={form.dcNo} onChange={e=>set('dcNo',e.target.value)} placeholder="DC-2026-001" />
-                    </div>
-                    <div>
-                      <label style={lbl}>Mould / Tool No.</label>
-                      <input style={{ ...inp, fontFamily:'DM Mono,monospace' }} value={form.mouldId} onChange={e=>set('mouldId',e.target.value)} placeholder="MLD-001" />
+                      <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontFamily:'DM Mono,monospace' }} value={form.dcNo} onChange={e=>set('dcNo',e.target.value)} placeholder="DC-2026-001" />
                     </div>
                   </>
+                )}
+                {/* Mould / Insert — available for ALL WO types (MTS, MTO, JW, MRP) */}
+                <div>
+                  <label style={lbl}>Mould / Tool</label>
+                  {isView && viewMode ? (
+                    <input style={{ ...inp, background:'#F8F9FA', fontFamily:'DM Mono,monospace' }}
+                      value={form.mouldId || '—'} readOnly />
+                  ) : (
+                    <select style={sel} value={form.mouldId}
+                      onChange={e => onMouldSelect(e.target.value)}>
+                      <option value="">-- Select Mould (optional) --</option>
+                      {moulds.map(m => (
+                        <option key={m.mouldId} value={m.mouldId}>
+                          {m.mouldId} — {m.mouldName} (Cav:{m.cavity})
+                          {m.status !== 'Active' ? ` [${m.status}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                {/* Insert — shows only when mould selected and has inserts */}
+                {(form.mouldId && (inserts.length > 0 || (isView && form.insertId))) && (
+                  <div>
+                    <label style={lbl}>Insert / Core Set</label>
+                    {isView && viewMode ? (
+                      <input style={{ ...inp, background:'#F8F9FA', fontFamily:'DM Mono,monospace' }}
+                        value={form.insertId || '—'} readOnly />
+                    ) : (
+                      <select style={sel} value={form.insertId}
+                        onChange={e => onInsertSelect(e.target.value)}>
+                        <option value="">-- Select Insert --</option>
+                        {inserts.map(ins => (
+                          <option key={ins.insertId} value={ins.insertId}>
+                            {ins.insertId} — {ins.itemName||'?'}
+                            {ins.cavityOverride ? ` (Cav:${ins.cavityOverride})` : ''}
+                            {ins.currentMachine ? ` [On: ${ins.currentMachine}]` : ''}
+                            {ins.pmDue ? ' ⚠️PM Due' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+                {/* Cavity count — auto-filled from mould/insert */}
+                {form.mouldId && (
+                  <div>
+                    <label style={lbl}>Cavity Count</label>
+                    <div style={{ ...inp, background:'#EBF5FB', fontWeight:800,
+                      fontSize:16, color:'#1A5276', border:'1.5px solid #AED6F1',
+                      fontFamily:'DM Mono,monospace', textAlign:'center',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      {form.cavityCount}
+                      <span style={{ fontSize:11, fontWeight:400, color:'#6C757D' }}>cavity</span>
+                    </div>
+                    {form.insertId && inserts.find(i=>i.insertId===form.insertId)?.cavityOverride && (
+                      <div style={{ fontSize:10, color:'#856404', marginTop:2 }}>
+                        Override from insert
+                      </div>
+                    )}
+                  </div>
                 )}
                 {woType==='MTS' && (
                   <div>
@@ -548,7 +843,7 @@ export default function WONew() {
                         </>) : (<>
                           {/* Edit mode */}
                           <td style={{ padding:'6px 12px' }}>
-                            <input style={{ ...inp, textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700, width:60 }}
+                            <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700, width:60 }}
                               value={op.opNo} onChange={e=>setOp(i,'opNo',e.target.value)} />
                           </td>
                           <td style={{ padding:'6px 12px' }}>
@@ -561,16 +856,16 @@ export default function WONew() {
                             </select>
                           </td>
                           <td style={{ padding:'6px 12px' }}>
-                            <input style={{ ...inp, fontSize:11 }} value={op.machine} onChange={e=>setOp(i,'machine',e.target.value)} placeholder="Machine ID" />
+                            <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontSize:11 }} value={op.machine} onChange={e=>setOp(i,'machine',e.target.value)} placeholder="Machine ID" />
                           </td>
                           <td style={{ padding:'6px 12px' }}>
-                            <input style={{ ...inp, textAlign:'center' }} type="number" value={op.setupTime} onChange={e=>setOp(i,'setupTime',e.target.value)} min="0" />
+                            <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center' }} type="number" value={op.setupTime} onChange={e=>setOp(i,'setupTime',e.target.value)} min="0" />
                           </td>
                           <td style={{ padding:'6px 12px' }}>
-                            <input style={{ ...inp, textAlign:'center' }} type="number" value={op.runTime} onChange={e=>setOp(i,'runTime',e.target.value)} min="0" step="0.1" />
+                            <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center' }} type="number" value={op.runTime} onChange={e=>setOp(i,'runTime',e.target.value)} min="0" step="0.1" />
                           </td>
                           <td style={{ padding:'6px 12px' }}>
-                            <input style={{ ...inp, textAlign:'center', color:'#155724', fontWeight:700 }} type="number" value={op.mhr} onChange={e=>setOp(i,'mhr',e.target.value)} min="0" />
+                            <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center', color:'#155724', fontWeight:700 }} type="number" value={op.mhr} onChange={e=>setOp(i,'mhr',e.target.value)} min="0" />
                           </td>
                           <td style={{ padding:'6px 12px', textAlign:'center' }}>
                             <button onClick={()=>delOp(i)}
@@ -626,11 +921,11 @@ export default function WONew() {
 
             {/* Stock shortage warning */}
             {materials.length > 0 && Object.keys(stockMap).length > 0 && (() => {
-              const shortItems = materials.filter(m => m.itemCode && (stockMap[m.itemCode] ?? 0) < parseFloat(m.reqQty||0))
+              const shortItems = materials.filter(m => m.itemCode && getStock(m.itemCode, m.itemName) < parseFloat(m.reqQty||0))
               return shortItems.length > 0 ? (
                 <div style={{background:'#F8D7DA',border:'1px solid #F5C6CB',borderRadius:6,padding:'8px 14px',marginBottom:10,fontSize:12,color:'#721C24',display:'flex',gap:8,alignItems:'center'}}>
                   <strong>⚠ Stock Shortage:</strong> {shortItems.length} material(s) below required quantity —
-                  {shortItems.map(m=>`${m.itemCode} (need ${m.reqQty} ${m.uom}, have ${stockMap[m.itemCode]??0})`).join(', ')}
+                  {shortItems.map(m=>`${m.itemCode} (need ${m.reqQty} ${m.uom}, have ${getStock(m.itemCode, m.itemName)})`).join(', ')}
                 </div>
               ) : (
                 <div style={{background:'#D4EDDA',border:'1px solid #C3E6CB',borderRadius:6,padding:'8px 14px',marginBottom:10,fontSize:12,color:'#155724',display:'flex',gap:8,alignItems:'center'}}>
@@ -668,13 +963,13 @@ export default function WONew() {
                     {materials.map((m,i) => (
                       <tr key={i} style={{ borderBottom:'1px solid #F0F0F0', background:i%2===0?'#fff':'#FAFAFA' }}>
                         <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, fontFamily:'DM Mono,monospace', fontSize:11 }} value={m.itemCode} onChange={e=>setMat(i,'itemCode',e.target.value)} placeholder="RM-001" />
+                          <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', fontFamily:'DM Mono,monospace', fontSize:11 }} value={m.itemCode} onChange={e=>setMat(i,'itemCode',e.target.value)} placeholder="RM-001" />
                         </td>
                         <td style={{ padding:'6px 12px' }}>
                           <input style={inp} value={m.itemName} onChange={e=>setMat(i,'itemName',e.target.value)} placeholder="Raw material name" />
                         </td>
                         <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center', fontWeight:700 }} type="number" value={m.reqQty} onChange={e=>setMat(i,'reqQty',e.target.value)} placeholder="0" min="0" step="0.01" />
+                          <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center', fontWeight:700 }} type="number" value={m.reqQty} onChange={e=>setMat(i,'reqQty',e.target.value)} placeholder="0" min="0" step="0.01" />
                         </td>
                         <td style={{ padding:'6px 12px' }}>
                           <select style={sel} value={m.uom} onChange={e=>setMat(i,'uom',e.target.value)}>
@@ -682,15 +977,15 @@ export default function WONew() {
                           </select>
                         </td>
                         <td style={{ padding:'6px 12px' }}>
-                          <input style={{ ...inp, textAlign:'center' }} type="number" value={m.stdCost} onChange={e=>setMat(i,'stdCost',e.target.value)} placeholder="0" min="0" step="0.01" />
+                          <input style={{ ...inp, background: isView && viewMode ? '#F8F9FA' : '#fff', textAlign:'center' }} type="number" value={m.stdCost} onChange={e=>setMat(i,'stdCost',e.target.value)} placeholder="0" min="0" step="0.01" />
                         </td>
                         <td style={{ padding:'6px 12px', textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700,
-                            color: (stockMap[m.itemCode] ?? 0) >= parseFloat(m.reqQty||0) ? '#155724' : '#856404' }}>
-                          {m.itemCode ? (stockMap[m.itemCode] ?? 0).toLocaleString('en-IN',{maximumFractionDigits:2}) : '—'}
+                            color: getStock(m.itemCode, m.itemName) >= parseFloat(m.reqQty||0) ? '#155724' : '#856404' }}>
+                          {m.itemCode || m.itemName ? getStock(m.itemCode, m.itemName).toLocaleString('en-IN',{maximumFractionDigits:3}) : '—'}
                         </td>
                         <td style={{ padding:'6px 12px', textAlign:'center', fontFamily:'DM Mono,monospace', fontWeight:700 }}>
                           {m.itemCode ? (() => {
-                            const avail = stockMap[m.itemCode] ?? 0
+                            const avail = getStock(m.itemCode, m.itemName)
                             const short = parseFloat(m.reqQty||0) - avail
                             return short > 0
                               ? <span style={{color:'#DC3545'}}>-{short.toLocaleString('en-IN',{maximumFractionDigits:2})}</span>
@@ -699,7 +994,7 @@ export default function WONew() {
                         </td>
                         <td style={{ padding:'6px 12px', textAlign:'center' }}>
                           {m.itemCode ? (() => {
-                            const avail = stockMap[m.itemCode] ?? 0
+                            const avail = getStock(m.itemCode, m.itemName)
                             const ok    = avail >= parseFloat(m.reqQty||0)
                             return (
                               <span style={{

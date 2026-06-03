@@ -72,7 +72,8 @@ const S = {
 const BLANK_IDLE = { reasonCode:'IR01', startTime:'', endTime:'', mins:0, remarks:'' }
 const BLANK_FORM = {
   entryDate: today(), shift:'A', startTime:'06:00', endTime:'14:00',
-  woNo:'', wcId:'', machineName:'', mouldId:'', itemCode:'', itemName:'',
+  woNo:'', woId:null, wcId:'', machineName:'', mouldId:'', itemCode:'', itemName:'',
+  stdCycleTimeSec:0, stdCavity:1, rmConsumption:[],
   plannedQty:0, goodQty:'', rejectedQty:'', reworkQty:'',
   rejectionReason:'RJ01', rejectionRemarks:'',
   shots:'', cycleTimeSec:'', materialUsedKg:'',
@@ -90,6 +91,9 @@ export default function ProductionEntry() {
 
   const [saving,   setSaving]   = useState(false)
   const [selWO,    setSelWO]    = useState(null)
+  const [rmLines,  setRmLines]  = useState([]) // RM consumption from BOM
+  const [stockMap,  setStockMap]  = useState({}) // itemCode/itemName → balanceQty
+  const [producedSoFar, setProducedSoFar] = useState(0) // already produced in prev entries
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -97,33 +101,115 @@ export default function ProductionEntry() {
   useEffect(() => {
     fetch(`${BASE_URL}/pp/wo?status=RELEASED,IN_PROGRESS`, { headers: authHdrs() })
       .then(r => r.json()).then(d => setWos(d.data || [])).catch(() => {})
-    fetch(`${BASE_URL}/pp/work-centers?status=Active`, { headers: authHdrs() })
+    fetch(`${BASE_URL}/pp/work-centers`, { headers: authHdrs() })
       .then(r => r.json()).then(d => setWcs(d.data || [])).catch(() => {})
+
+    // Stock map — fetch from correct location based on PP Config rmMethod
+    const ppCfg = (() => { try { return JSON.parse(sessionStorage.getItem('pp_config')||'{}') } catch { return {} } })()
+    const stockLoc = ppCfg.rmMethod === 'twostep' ? 'SHOP-FLOOR' : 'RM-STORE'
+    fetch(`${BASE_URL}/wm/stock?location=${stockLoc}`, { headers: authHdrs() })
+      .then(r=>r.json()).then(d => {
+        const map = {}
+        ;(d.data||[]).forEach(i => {
+          if (i.itemCode) map[i.itemCode] = parseFloat(i.balanceQty||0)
+          if (i.itemName) map[i.itemName] = parseFloat(i.balanceQty||0)
+        })
+        setStockMap(map)
+      }).catch(()=>{})
+
     fetchEntries()
   }, [])
 
-  const fetchEntries = () => {
-    fetch(`${BASE_URL}/pp/production-entry`, { headers: authHdrs() })
+  const fetchEntries = (date) => {
+    const d = date || today()
+    fetch(`${BASE_URL}/pp/production-entry?date=${d}`, { headers: authHdrs() })
       .then(r => r.json()).then(d => setEntries(d.data || [])).catch(() => {})
   }
 
   // ── Auto-fill on WO select ───────────────────────────────────────────────
-  const onWOSelect = (woNo) => {
-    const wo = wos.find(w => w.woNo === woNo)
-    setSelWO(wo || null)
-    if (wo) setForm(f => ({
+  const onWOSelect = async (woNo) => {
+    const woCached = wos.find(w => w.woNo === woNo)
+    if (!woCached) { setSelWO(null); setForm(f => ({ ...f, woNo:'', woId:null, itemCode:'', itemName:'', plannedQty:0, stdCycleTimeSec:0, stdCavity:1 })); setRmLines([]); return }
+
+    // Fetch fresh WO data from API to get latest producedQty
+    let wo = woCached
+    try {
+      const r = await fetch(`${BASE_URL}/pp/wo/${woCached.id}`, { headers: authHdrs() })
+      const d = await r.json()
+      if (d.data) wo = d.data
+    } catch {}
+
+    setSelWO(wo)
+    const alreadyProduced = parseFloat(wo.producedQty || 0)
+    setProducedSoFar(alreadyProduced)
+    setForm(f => ({
       ...f, woNo,
-      itemCode:    wo.itemCode    || '',
-      itemName:    wo.itemName    || '',
-      plannedQty:  wo.plannedQty  || 0,
+      woId:       wo.id        || null,
+      itemCode:   wo.itemCode  || '',
+      itemName:   wo.itemName  || '',
+      plannedQty: wo.plannedQty|| 0,
+      stdCavity:  wo.cavityCount || 1,
+      mouldId:    wo.mouldId   || f.mouldId,
     }))
+
+    // Fetch materialIssues for RM consumption display
+    try {
+      const woIdInt = parseInt(wo.id)
+      const r = await fetch(`${BASE_URL}/pp/material-issues?woId=${woIdInt}`, { headers: authHdrs() })
+      const d = await r.json()
+      const issues = (d.data||[]).filter(i => i.woId === woIdInt && !i.isByProduct)
+
+      // Consolidate duplicate rows for same item (same itemCode/itemName)
+      const consolidated = {}
+      issues.forEach(iss => {
+        const key = iss.itemCode || iss.itemName
+        if (!consolidated[key]) {
+          consolidated[key] = {
+            itemCode:  iss.itemCode,
+            itemName:  iss.itemName,
+            bomQty:    0,
+            issuedQty: 0,
+            uom:       iss.uom,
+          }
+        }
+        consolidated[key].bomQty    += parseFloat(iss.bomQty    || 0)
+        consolidated[key].issuedQty += parseFloat(iss.issuedQty || 0)
+      })
+
+      // Enrich with live stock availability
+      const enriched = Object.values(consolidated).map(rm => ({
+        ...rm,
+        availQty: (() => {
+          if (rm.itemCode && stockMap[rm.itemCode] !== undefined) return stockMap[rm.itemCode]
+          if (rm.itemName && stockMap[rm.itemName] !== undefined) return stockMap[rm.itemName]
+          return null // null = not fetched yet
+        })()
+      }))
+      setRmLines(enriched)
+    } catch { setRmLines([]) }
+
+    // Fetch routing for std cycle time (machineTime from routing ops for this WO's itemCode)
+    try {
+      const r2 = await fetch(`${BASE_URL}/pp/routing?itemCode=${wo.itemCode||''}`, { headers: authHdrs() })
+      const d2 = await r2.json()
+      const routing = (d2.data||[])[0]
+      if (routing?.operations?.length) {
+        // Find op matching current wcId or first op
+        const op = routing.operations.find(o => o.wcId === form.wcId) || routing.operations[0]
+        const machTimeMins = parseFloat(op?.machineTime || 0)
+        const cavity       = wo.cavityCount || 1
+        // stdCycleTimeSec = machineTime (mins per unit) × 60 / cavity
+        const stdCycle = machTimeMins > 0 ? Math.round((machTimeMins * 60) / cavity) : 0
+        setForm(f => ({ ...f, stdCycleTimeSec: stdCycle, cycleTimeSec: stdCycle || f.cycleTimeSec }))
+      }
+    } catch {}
   }
 
   // ── Auto-fill on Work Center select ─────────────────────────────────────
-  const onWCSelect = (wcId) => {
-    const wc = wcs.find(w => w.wcId === wcId)
-    set('wcId', wcId)
-    if (wc) setForm(f => ({ ...f, wcId, machineName: wc.name || '' }))
+  const onWCSelect = (val) => {
+    const wc = wcs.find(w => (w.wcId||String(w.id)) === val)
+    if (wc) setForm(f => ({ ...f, wcId: wc.wcId||val, machineName: wc.name||wc.wcName||'' }))
+    else setForm(f => ({ ...f, wcId: val }))
   }
 
   // ── Shift auto-fill times ────────────────────────────────────────────────
@@ -133,12 +219,20 @@ export default function ProductionEntry() {
   }
 
   // ── Calculated values ────────────────────────────────────────────────────
+  const possibleQty  = Math.max(0, parseFloat(form.plannedQty||0) - producedSoFar)
   const totalMins    = diffMins(form.startTime, form.endTime)
+  // Standard calculations
+  const cycSec       = parseFloat(form.cycleTimeSec || form.stdCycleTimeSec || 0)
+  const cavity       = parseInt(form.stdCavity || 1)
+  const calcShots    = cycSec > 0 ? Math.floor((Math.max(0, totalMins - (diffMins(form.startTime,form.endTime) > 0 ? 0 : 0)) * 60) / cycSec) : 0
+  const prodShotsCalc= cycSec > 0 ? Math.floor(((diffMins(form.startTime, form.endTime) - idleRows.reduce((s,r)=>s+(parseInt(r.mins)||0),0)) * 60) / cycSec) : 0
+  const expectedOutput = prodShotsCalc * cavity
   const totalIdleMins= idleRows.reduce((s, r) => s + (parseInt(r.mins) || 0), 0)
   const prodMins     = Math.max(0, totalMins - totalIdleMins)
   const efficiency   = totalMins > 0 ? ((prodMins / totalMins) * 100).toFixed(1) : '0.0'
-  const totalQty     = (parseInt(form.goodQty || 0) + parseInt(form.rejectedQty || 0) + parseInt(form.reworkQty || 0))
-  const rejPct       = totalQty > 0 ? ((parseInt(form.rejectedQty || 0) / totalQty) * 100).toFixed(1) : '0.0'
+  const totalQty     = parseInt(form.goodQty || 0)  // Only good qty counts toward WO completion
+  const totalProcessed = (parseInt(form.goodQty||0) + parseInt(form.rejectedQty||0) + parseInt(form.reworkQty||0)) // total shots processed
+  const rejPct       = totalProcessed > 0 ? ((parseInt(form.rejectedQty || 0) / totalProcessed) * 100).toFixed(1) : '0.0'
 
   // ── Idle row handlers ────────────────────────────────────────────────────
   const addIdle = () => setIdleRows(r => [...r, { ...BLANK_IDLE }])
@@ -156,6 +250,9 @@ export default function ProductionEntry() {
   const submit = async () => {
     if (!form.wcId)     return toast.error('Select Work Center / Machine')
     if (!form.goodQty && form.goodQty !== 0) return toast.error('Enter Good Qty (can be 0)')
+    const totalProcNow = parseInt(form.goodQty||0) + parseInt(form.rejectedQty||0) + parseInt(form.reworkQty||0)
+    if (form.woNo && totalProcNow > possibleQty)
+      return toast.error(`Total processed (Good ${form.goodQty} + Rejected ${form.rejectedQty||0} + Rework ${form.reworkQty||0} = ${totalProcNow}) exceeds material issued for ${possibleQty} pcs!`)
     if (!form.operatorName) return toast.error('Operator name required')
     setSaving(true)
     try {
@@ -164,23 +261,43 @@ export default function ProductionEntry() {
         goodQty:     parseFloat(form.goodQty     || 0),
         rejectedQty: parseFloat(form.rejectedQty || 0),
         reworkQty:   parseFloat(form.reworkQty   || 0),
-        shots:       parseFloat(form.shots       || 0),
+        shots:       parseFloat(form.shots||0) || prodShotsCalc,
         cycleTimeSec:parseFloat(form.cycleTimeSec|| 0),
         materialUsedKg: parseFloat(form.materialUsedKg || 0),
         totalMins, prodMins, totalIdleMins,
         efficiency: parseFloat(efficiency),
         industryData: {
           idleRows,
-          shots:       form.shots,
-          cycleTimeSec:form.cycleTimeSec,
+          shots:          prodShotsCalc,
+          cycleTimeSec:   form.cycleTimeSec || form.stdCycleTimeSec,
+          stdCycleTimeSec:form.stdCycleTimeSec,
+          stdCavity:      form.stdCavity,
+          expectedOutput,
           materialUsedKg: form.materialUsedKg,
-          mouldId:     form.mouldId,
+          mouldId:        form.mouldId,
+          rmConsumption:  rmLines.map(rm => {
+            const goodQ = parseFloat(form.goodQty||0)
+            const planQ = parseFloat(form.plannedQty||1)
+            return { ...rm, shiftConsumed: planQ>0?(goodQ/planQ)*rm.bomQty:0 }
+          }),
         }
       }
       const res  = await fetch(`${BASE_URL}/pp/production-entry`, { method:'POST', headers: authHdrs(), body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
       toast.success(`✅ ${data.message || 'Production Entry saved!'}`)
+      // Refresh producedSoFar from fresh WO data
+      if (form.woId) {
+        try {
+          const r2 = await fetch(`${BASE_URL}/pp/wo/${form.woId}`, { headers: authHdrs() })
+          const d2 = await r2.json()
+          if (d2.data) {
+            const freshProduced = parseFloat(d2.data.producedQty || 0)
+            setProducedSoFar(freshProduced)
+            setSelWO(d2.data)
+          }
+        } catch {}
+      }
       setForm({ ...BLANK_FORM, entryDate: form.entryDate, shift: form.shift, wcId: form.wcId, machineName: form.machineName, operatorName: form.operatorName })
       setIdleRows([])
       fetchEntries()
@@ -229,7 +346,8 @@ export default function ProductionEntry() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px 12px' }}>
                 <div>
                   <label style={S.lbl}>Entry Date *</label>
-                  <input style={S.inp} type="date" value={form.entryDate} onChange={e => set('entryDate', e.target.value)} />
+                  <input style={S.inp} type="date" value={form.entryDate}
+                    onChange={e => { set('entryDate', e.target.value); fetchEntries(e.target.value) }} />
                 </div>
                 <div>
                   <label style={S.lbl}>Shift *</label>
@@ -261,7 +379,7 @@ export default function ProductionEntry() {
                   <select style={S.sel} value={form.wcId} onChange={e => onWCSelect(e.target.value)}>
                     <option value="">— Select Machine —</option>
                     {wcs.length > 0
-                      ? wcs.map(w => <option key={w.id} value={w.wcId}>{w.wcId} — {w.name}</option>)
+                      ? wcs.map(w => <option key={w.id} value={w.wcId||w.id}>{w.wcId||w.id} — {w.name}</option>)
                       : ['IMM-150T','IMM-200T','IMM-80T'].map(m => <option key={m} value={m}>{m}</option>)
                     }
                   </select>
@@ -285,6 +403,53 @@ export default function ProductionEntry() {
                 <div>
                   <label style={S.lbl}>Planned Qty</label>
                   <input style={{ ...S.inp, background:'#F8F9FA', fontWeight:700 }} value={form.plannedQty} readOnly />
+                </div>
+                <div>
+                  <label style={S.lbl}>Std Cycle Time (sec)</label>
+                  <div style={{ display:'flex', gap:4 }}>
+                    <input style={{ ...S.inp, flex:1, background: form.stdCycleTimeSec>0?'#EBF5FB':'#fff',
+                      fontWeight:700, color:'#1A5276' }}
+                      type="number" value={form.cycleTimeSec}
+                      onChange={e => set('cycleTimeSec', e.target.value)}
+                      placeholder={form.stdCycleTimeSec||'0'} />
+                  </div>
+                  {form.stdCycleTimeSec>0 && (
+                    <div style={{fontSize:9,color:'#1A5276',marginTop:2}}>
+                      Std: {form.stdCycleTimeSec}s (from Routing)
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label style={S.lbl}>Std Cavity Count</label>
+                  <input style={{ ...S.inp, background:'#EBF5FB', fontWeight:700, color:'#1A5276' }}
+                    type="number" value={form.stdCavity}
+                    onChange={e => set('stdCavity', e.target.value)} min="1" />
+                </div>
+                <div>
+                  <label style={S.lbl}>Total Shots (calc)</label>
+                  <div style={{ padding:'7px 10px', background: prodShotsCalc>0?'#D4EDDA':'#F8F9FA',
+                    borderRadius:5, fontWeight:800, fontSize:14,
+                    color: prodShotsCalc>0?'#155724':'#6C757D',
+                    border:'1.5px solid #A9DFBF', fontFamily:'DM Mono,monospace' }}>
+                    {prodShotsCalc.toLocaleString('en-IN')}
+                    <span style={{fontSize:10,fontWeight:400,color:'#6C757D',marginLeft:4}}>shots</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={S.lbl}>Expected Output (calc)</label>
+                  <div style={{ padding:'7px 10px', background: expectedOutput>0?'#D1ECF1':'#F8F9FA',
+                    borderRadius:5, fontWeight:800, fontSize:14,
+                    color: expectedOutput>0?'#0C5460':'#6C757D',
+                    border:'1.5px solid #AED6F1', fontFamily:'DM Mono,monospace' }}>
+                    {expectedOutput.toLocaleString('en-IN')}
+                    <span style={{fontSize:10,fontWeight:400,color:'#6C757D',marginLeft:4}}>pcs</span>
+                  </div>
+                  {form.plannedQty>0 && expectedOutput>0 && (
+                    <div style={{fontSize:9,marginTop:2,
+                      color: expectedOutput>=form.plannedQty?'#155724':'#856404'}}>
+                      {expectedOutput>=form.plannedQty?'✅':'⚠️'} Planned: {form.plannedQty} pcs
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -377,24 +542,94 @@ export default function ProductionEntry() {
               <div style={S.hdr}>📦 Production Quantities</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px 12px', marginBottom:12 }}>
                 <div>
-                  <label style={S.lbl}>Good Qty *</label>
-                  <input style={{ ...S.inp, borderColor:'#28A745', fontWeight:700, fontSize:14 }}
-                    type="number" value={form.goodQty} onChange={e => set('goodQty', e.target.value)} placeholder="0" min="0" />
+                  <label style={S.lbl}>Good Qty *
+                    {form.woNo && (
+                      <span style={{ marginLeft:6, fontWeight:600, color:'#1A5276',
+                        textTransform:'none', fontSize:10 }}>
+                        (Max: {possibleQty.toLocaleString('en-IN')} {selWO?.uom||''})
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    style={{ ...S.inp, fontSize:14, fontWeight:700,
+                      borderColor: form.woNo && (parseInt(form.goodQty||0)+parseInt(form.rejectedQty||0)+parseInt(form.reworkQty||0)) > possibleQty
+                        ? '#DC3545'
+                        : parseFloat(form.goodQty||0) > 0 ? '#28A745' : '#D0D7DE' }}
+                    type="number" min="0"
+                    max={form.woNo ? possibleQty : undefined}
+                    value={form.goodQty}
+                    onChange={e => {
+                      const val = e.target.value
+                      const proc = parseInt(val||0) + parseInt(form.rejectedQty||0) + parseInt(form.reworkQty||0)
+                      if (form.woNo && proc > possibleQty) {
+                        toast.error(`Total processed (${proc}) will exceed material issued for ${possibleQty} pcs!`)
+                      }
+                      set('goodQty', val)
+                    }}
+                    placeholder="0" />
+                  {form.woNo && producedSoFar > 0 && (
+                    <div style={{ fontSize:10, marginTop:3, color:'#856404' }}>
+                      Already produced: {producedSoFar.toLocaleString('en-IN')} · Remaining: {possibleQty.toLocaleString('en-IN')}
+                    </div>
+                  )}
+                  {form.woNo && (parseInt(form.goodQty||0)+parseInt(form.rejectedQty||0)+parseInt(form.reworkQty||0)) > possibleQty && (
+                    <div style={{ fontSize:10, marginTop:2, color:'#DC3545', fontWeight:700 }}>
+                      ⛔ Total processed ({parseInt(form.goodQty||0)+parseInt(form.rejectedQty||0)+parseInt(form.reworkQty||0)}) exceeds material issued for {possibleQty} pcs
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={S.lbl}>Rejected Qty</label>
-                  <input style={{ ...S.inp, borderColor: parseInt(form.rejectedQty) > 0 ? '#DC3545' : '#D0D7DE' }}
-                    type="number" value={form.rejectedQty} onChange={e => set('rejectedQty', e.target.value)} placeholder="0" min="0" />
+                  <input style={{ ...S.inp,
+                    borderColor: form.woNo && (parseInt(form.goodQty||0)+parseInt(form.rejectedQty||0)+parseInt(form.reworkQty||0)) > possibleQty
+                      ? '#DC3545' : parseInt(form.rejectedQty) > 0 ? '#DC3545' : '#D0D7DE' }}
+                    type="number" value={form.rejectedQty}
+                    onChange={e => {
+                      const proc = parseInt(form.goodQty||0) + parseInt(e.target.value||0) + parseInt(form.reworkQty||0)
+                      if (form.woNo && proc > possibleQty)
+                        toast.error(`Total processed (${proc}) exceeds material issued for ${possibleQty} pcs!`)
+                      set('rejectedQty', e.target.value)
+                    }} placeholder="0" min="0" />
                 </div>
                 <div>
                   <label style={S.lbl}>Rework Qty</label>
-                  <input style={{ ...S.inp, borderColor: parseInt(form.reworkQty) > 0 ? '#FFC107' : '#D0D7DE' }}
-                    type="number" value={form.reworkQty} onChange={e => set('reworkQty', e.target.value)} placeholder="0" min="0" />
+                  <input style={{ ...S.inp,
+                    borderColor: form.woNo && (parseInt(form.goodQty||0)+parseInt(form.rejectedQty||0)+parseInt(form.reworkQty||0)) > possibleQty
+                      ? '#DC3545' : parseInt(form.reworkQty) > 0 ? '#FFC107' : '#D0D7DE' }}
+                    type="number" value={form.reworkQty}
+                    onChange={e => {
+                      const proc = parseInt(form.goodQty||0) + parseInt(form.rejectedQty||0) + parseInt(e.target.value||0)
+                      if (form.woNo && proc > possibleQty)
+                        toast.error(`Total processed (${proc}) exceeds material issued for ${possibleQty} pcs!`)
+                      set('reworkQty', e.target.value)
+                    }} placeholder="0" min="0" />
                 </div>
                 <div>
-                  <label style={S.lbl}>Total Produced</label>
-                  <div style={{ padding:'7px 10px', background:'#F8F9FA', borderRadius:5, fontWeight:800, fontSize:15, color:'#1A5276', border:'1.5px solid #D0D7DE' }}>
-                    {totalQty}
+                  <label style={S.lbl}>Total Processed</label>
+                  <div style={{ padding:'7px 10px', background:'#F8F9FA', borderRadius:5,
+                    fontWeight:800, fontSize:15, color:'#1A5276', border:'1.5px solid #D0D7DE' }}>
+                    {totalProcessed}
+                    <div style={{fontSize:9,fontWeight:400,color:'#6C757D',marginTop:2}}>
+                      Good {parseInt(form.goodQty||0)} + Rej {parseInt(form.rejectedQty||0)} + Rework {parseInt(form.reworkQty||0)}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label style={S.lbl}>WO Completion</label>
+                  <div style={{ padding:'7px 10px', borderRadius:5, fontWeight:800, fontSize:13,
+                    border:'1.5px solid',
+                    background: parseInt(form.goodQty||0) >= possibleQty && possibleQty > 0
+                      ? '#D4EDDA' : parseInt(form.goodQty||0) > 0 ? '#EBF5FB' : '#F8F9FA',
+                    color: parseInt(form.goodQty||0) >= possibleQty && possibleQty > 0
+                      ? '#155724' : '#1A5276',
+                    borderColor: parseInt(form.goodQty||0) >= possibleQty && possibleQty > 0
+                      ? '#A9DFBF' : '#AED6F1' }}>
+                    {form.plannedQty > 0
+                      ? `${Math.min(100,((parseInt(form.goodQty||0)+producedSoFar)/parseFloat(form.plannedQty||1)*100).toFixed(1))}%`
+                      : '—'}
+                    <div style={{fontSize:9,fontWeight:400,color:'#6C757D',marginTop:2}}>
+                      {parseInt(form.goodQty||0)+producedSoFar} / {form.plannedQty} good pcs
+                    </div>
                   </div>
                 </div>
               </div>
@@ -419,7 +654,140 @@ export default function ProductionEntry() {
               )}
             </div>
 
-            {/* BLOCK 5 — Operator */}
+            {/* BLOCK 5 — RM Consumption */}
+            {rmLines.length > 0 && (
+              <div style={S.card}>
+                <div style={S.hdr}>🧪 RM Consumption (Backflush Preview)</div>
+                <div style={{ fontSize:11, color:'#6C757D', marginBottom:10 }}>
+                  Based on Good Qty entered — actual consumption vs BOM standard.
+                  This is auto-posted on WO Close (Movement 261).
+                </div>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr style={{ background:'#F8F4F8', borderBottom:'2px solid #E0D5E0' }}>
+                      {[
+                        {h:'Material',          a:'left'},
+                        {h:'BOM Qty (WO)',      a:'right'},
+                        {h:'Already Issued',    a:'right'},
+                        {h:'Balance Remaining', a:'right'},
+                        {h:'In Store',          a:'right'},
+                        {h:'This Shift Est.',   a:'right'},
+                        {h:'UOM',               a:'center'},
+                        {h:'Status',            a:'center'},
+                      ].map(col=>(
+                        <th key={col.h} style={{ padding:'6px 10px', fontSize:10, fontWeight:700,
+                          color:'#6C757D', textAlign:col.a, textTransform:'uppercase' }}>{col.h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rmLines.map((rm, i) => {
+                      const goodQ        = parseFloat(form.goodQty || 0)
+                      const planQ        = parseFloat(form.plannedQty || 1)
+                      // This shift estimate = (goodQty / plannedQty) × bomQty
+                      const shiftEst     = planQ > 0 && goodQ > 0
+                        ? parseFloat(((goodQ / planQ) * rm.bomQty).toFixed(3)) : 0
+                      // Balance to issue = bomQty - issuedQty (can be negative if over-issued)
+                      const balance      = parseFloat((rm.bomQty - rm.issuedQty).toFixed(3))
+                      const overIssued   = rm.issuedQty > rm.bomQty
+                      const fullyIssued  = Math.abs(balance) < 0.001
+                      return (
+                        <tr key={i} style={{ borderBottom:'1px solid #F0EEF0',
+                          background: overIssued ? '#FFF5F5'
+                            : fullyIssued ? '#F0FFF8'
+                            : i%2===0 ? '#fff' : '#FDFBFD' }}>
+                          <td style={{ padding:'7px 10px', fontWeight:600 }}>
+                            {rm.itemName}
+                            {rm.itemCode && <div style={{fontSize:10,color:'#714B67',fontFamily:'DM Mono,monospace'}}>{rm.itemCode}</div>}
+                          </td>
+                          {/* BOM Qty */}
+                          <td style={{ padding:'7px 10px', textAlign:'right',
+                            fontFamily:'DM Mono,monospace', fontWeight:700, color:'#1A5276' }}>
+                            {rm.bomQty.toFixed(3)}
+                          </td>
+                          {/* Already Issued */}
+                          <td style={{ padding:'7px 10px', textAlign:'right',
+                            fontFamily:'DM Mono,monospace', fontWeight:700,
+                            color: overIssued ? '#DC3545' : rm.issuedQty>0 ? '#856404' : '#6C757D' }}>
+                            {rm.issuedQty.toFixed(3)}
+                            {overIssued && <div style={{fontSize:9,color:'#DC3545',fontWeight:700}}>
+                              ⚠️ Over by {(rm.issuedQty-rm.bomQty).toFixed(3)}
+                            </div>}
+                          </td>
+                          {/* Balance Remaining */}
+                          <td style={{ padding:'7px 10px', textAlign:'right',
+                            fontFamily:'DM Mono,monospace', fontWeight:800,
+                            color: overIssued ? '#DC3545' : fullyIssued ? '#155724' : '#856404',
+                            background: overIssued ? '#FFF5F5' : fullyIssued ? '#F0FFF8' : '#FFFBF0' }}>
+                            {overIssued
+                              ? <span style={{color:'#DC3545',fontSize:11}}>Excess {Math.abs(balance).toFixed(3)}</span>
+                              : fullyIssued
+                                ? <span style={{color:'#155724'}}>✅ Fully Issued</span>
+                                : balance.toFixed(3)}
+                          </td>
+                          {/* In Store — live stock */}
+                          <td style={{ padding:'7px 10px', textAlign:'right',
+                            fontFamily:'DM Mono,monospace', fontWeight:700,
+                            color: rm.availQty === null ? '#6C757D'
+                              : rm.availQty <= 0 ? '#DC3545'
+                              : rm.availQty < balance ? '#856404'
+                              : '#155724',
+                            background: rm.availQty === null ? 'transparent'
+                              : rm.availQty <= 0 ? '#FFF5F5'
+                              : rm.availQty < balance ? '#FFFBF0'
+                              : '#F0FFF8' }}>
+                            {rm.availQty === null ? '...'
+                              : rm.availQty <= 0
+                                ? <span style={{color:'#DC3545',fontWeight:800}}>⛔ 0</span>
+                                : rm.availQty.toFixed(3)}
+                            {rm.availQty !== null && rm.availQty > 0 && rm.availQty < balance && (
+                              <div style={{fontSize:9,color:'#856404',fontWeight:700}}>
+                                Short by {(balance-rm.availQty).toFixed(3)}
+                              </div>
+                            )}
+                          </td>
+                          {/* This Shift Estimate */}
+                          <td style={{ padding:'7px 10px', textAlign:'right',
+                            fontFamily:'DM Mono,monospace', fontWeight:700,
+                            color: '#1A5276',
+                            background: shiftEst>0 ? '#EBF5FB' : 'transparent' }}>
+                            {shiftEst > 0 ? shiftEst.toFixed(3) : '—'}
+                          </td>
+                          <td style={{ padding:'7px 10px', textAlign:'center',
+                            color:'#6C757D', fontSize:11 }}>{rm.uom}</td>
+                          <td style={{ padding:'7px 10px', textAlign:'center' }}>
+                            {overIssued
+                              ? <span style={{background:'#F8D7DA',color:'#721C24',padding:'2px 8px',borderRadius:8,fontSize:10,fontWeight:700}}>⚠️ Over Issued</span>
+                              : fullyIssued
+                                ? <span style={{background:'#D4EDDA',color:'#155724',padding:'2px 8px',borderRadius:8,fontSize:10,fontWeight:700}}>✅ Issued</span>
+                                : <span style={{background:'#FFF3CD',color:'#856404',padding:'2px 8px',borderRadius:8,fontSize:10,fontWeight:700}}>Pending</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background:'#F8F4F8', borderTop:'2px solid #E0D5E0', fontWeight:800 }}>
+                      <td colSpan={5} style={{ padding:'8px 10px', color:'#714B67', fontSize:12 }}>
+                        Total RM for {form.goodQty||0} good pcs produced this shift (estimate)
+                      </td>
+                      <td style={{ padding:'8px 10px', textAlign:'right',
+                        fontFamily:'DM Mono,monospace', color:'#155724', fontSize:13 }}>
+                        {rmLines.reduce((s, rm) => {
+                          const goodQ = parseFloat(form.goodQty||0)
+                          const planQ = parseFloat(form.plannedQty||1)
+                          return s + (planQ>0 && goodQ>0 ? (goodQ/planQ)*rm.bomQty : 0)
+                        }, 0).toFixed(3)} {rmLines[0]?.uom||'kg'} (est.)
+                      </td>
+                      <td colSpan={2}/>
+                    </tr>
+
+                  </tfoot>
+                </table>
+              </div>
+            )}
+
+            {/* BLOCK 6 — Operator */}
             <div style={S.card}>
               <div style={S.hdr}>👷 Operator Details</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px 12px' }}>
@@ -495,10 +863,13 @@ export default function ProductionEntry() {
             <div style={{ ...S.card, padding:12 }}>
               <div style={{ fontSize:11, fontWeight:700, color:'#1A5276', marginBottom:10 }}>📦 Qty Summary</div>
               {[
-                { label:'Planned',  val: form.plannedQty || 0,              c:'#1A5276' },
-                { label:'Good',     val: parseInt(form.goodQty     || 0),   c:'#155724' },
-                { label:'Rejected', val: parseInt(form.rejectedQty || 0),   c:'#721C24' },
-                { label:'Rework',   val: parseInt(form.reworkQty   || 0),   c:'#856404' },
+                { label:'Planned',   val: form.plannedQty || 0,             c:'#1A5276' },
+                { label:'Produced',  val: producedSoFar,                    c:'#856404' },
+                { label:'Possible',  val: possibleQty,                      c:'#0C5460' },
+                { label:'Good',      val: parseInt(form.goodQty    || 0),   c:'#155724' },
+                { label:'Rejected',  val: parseInt(form.rejectedQty || 0),   c:'#721C24' },
+                { label:'Rework',    val: parseInt(form.reworkQty   || 0),   c:'#856404' },
+                { label:'Processed', val: totalProcessed,                    c:'#1A5276' },
               ].map(r => (
                 <div key={r.label} style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid #F0F0F0', fontSize:12 }}>
                   <span style={{ color:'#6C757D' }}>{r.label}</span>

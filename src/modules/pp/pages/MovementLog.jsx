@@ -10,8 +10,6 @@ const MOV_STYLE = {
   TRANSFER:   { bg:'#D1ECF1', color:'#0C5460', label:'Transfer',  icon:'⇄' },
   ADJUSTMENT: { bg:'#FFF3CD', color:'#856404', label:'Adjustment',icon:'~' },
 }
-// Map refType filter labels to backend refType values
-const TYPE_OPTS = ['All','GI','GR','TRANSFER','ADJUSTMENT','PI_ADJUSTMENT','PP_ISSUE']
 
 export default function MovementLog() {
   const [movements, setMovements] = useState([])
@@ -20,12 +18,13 @@ export default function MovementLog() {
   const [typeFilter,setType]      = useState('All')
   const [dateFrom,  setFrom]      = useState('')
   const [dateTo,    setTo]        = useState('')
+  const [location,  setLocation]  = useState('')
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
     try {
-      let url = `${BASE_URL}/wm/movement?`
-      if (typeFilter!=='All') url+=`refType=${typeFilter}&`
+      let url = `${BASE_URL}/wm/movements?`
+      if (typeFilter!=='All') url+=`type=${typeFilter}&`
       if (dateFrom) url+=`from=${dateFrom}&`
       if (dateTo)   url+=`to=${dateTo}`
       const res  = await fetch(url,
@@ -41,8 +40,7 @@ export default function MovementLog() {
   const filtered = movements.filter(m =>
     !search ||
     m.refNo?.toLowerCase().includes(search.toLowerCase()) ||
-    m.itemName?.toLowerCase().includes(search.toLowerCase()) ||
-    m.itemCode?.toLowerCase().includes(search.toLowerCase()))
+    m.item?.itemName?.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div>
@@ -54,7 +52,7 @@ export default function MovementLog() {
           <div className="lv-ttl">
             Movement Log <small>MB51 · All Stock Movements</small>
           </div>
-          <div className="lv-acts">
+          <div className="lv-acts" style={{ flexWrap:'wrap', gap:6 }}>
             <input placeholder="Search doc, material..."
               value={search} onChange={e=>setSearch(e.target.value)}
               style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
@@ -67,14 +65,25 @@ export default function MovementLog() {
                 <option key={t}>{t}</option>
               ))}
             </select>
+            <select value={location} onChange={e=>setLocation(e.target.value)}
+              style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
+                borderRadius:5, fontSize:12, cursor:'pointer' }}>
+              <option value="">All Locations</option>
+              <option value="RM-STORE">RM Store</option>
+              <option value="SHOP-FLOOR">Shop Floor</option>
+              <option value="FG-STORE">FG Store</option>
+            </select>
+            <span style={{ fontSize:11, color:'#6C757D', alignSelf:'center' }}>From:</span>
             <input type="date" value={dateFrom}
               onChange={e=>setFrom(e.target.value)}
               style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
                 borderRadius:5, fontSize:12 }} />
+            <span style={{ fontSize:11, color:'#6C757D', alignSelf:'center' }}>To:</span>
             <input type="date" value={dateTo}
               onChange={e=>setTo(e.target.value)}
               style={{ padding:'6px 10px', border:'1px solid #E0D5E0',
                 borderRadius:5, fontSize:12 }} />
+            <button className="btn btn-s sd-bsm" onClick={fetch_}>Apply</button>
             <button className="btn btn-s sd-bsm">Export</button>
           </div>
         </div>
@@ -109,7 +118,7 @@ export default function MovementLog() {
             </thead>
             <tbody>
               {filtered.map((m,i)=>{
-                const sc = MOV_STYLE[m.direction]||MOV_STYLE.IN
+                const sc = MOV_STYLE[m.movement]||MOV_STYLE.IN
                 return (
                   <tr key={m.id} style={{
                     borderBottom:'1px solid #F0EEF0',
@@ -128,32 +137,31 @@ export default function MovementLog() {
                     </td>
                     <td style={{ padding:'8px 10px', fontSize:11,
                       color:'#6C757D' }}>
-                      {new Date(m.transDate||m.createdAt)
+                      {new Date(m.date||m.createdAt)
                         .toLocaleDateString('en-IN')}
                     </td>
                     <td style={{ padding:'8px 10px', fontWeight:600 }}>
-                      <div>{m.itemName||'—'}</div>
-                      {m.itemCode && <div style={{fontSize:10,color:'#6C757D',fontFamily:'DM Mono,monospace'}}>{m.itemCode}</div>}
+                      {m.item?.itemName||'—'}
                     </td>
                     <td style={{ padding:'8px 10px', textAlign:'right',
                       color:'#155724', fontWeight:700,
                       fontFamily:'DM Mono,monospace' }}>
-                      {m.direction==='IN'
-                        ?'+'+parseFloat(m.qty||0).toFixed(3):'—'}
+                      {parseFloat(m.qtyIn||0)>0
+                        ?'+'+parseFloat(m.qtyIn).toFixed(2):'—'}
                     </td>
                     <td style={{ padding:'8px 10px', textAlign:'right',
                       color:'#DC3545', fontWeight:700,
                       fontFamily:'DM Mono,monospace' }}>
-                      {m.direction==='OUT'
-                        ?'-'+parseFloat(m.qty||0).toFixed(3):'—'}
+                      {parseFloat(m.qtyOut||0)>0
+                        ?'-'+parseFloat(m.qtyOut).toFixed(2):'—'}
                     </td>
                     <td style={{ padding:'8px 10px', textAlign:'right',
                       fontWeight:800, fontFamily:'DM Mono,monospace' }}>
-                      {m.movType||'—'}
+                      {parseFloat(m.balanceQty||0).toFixed(2)}
                     </td>
                     <td style={{ padding:'8px 10px', fontSize:11,
                       color:'#714B67', fontFamily:'DM Mono,monospace' }}>
-                      {m.refType||'—'} · {m.refNo||''}
+                      {m.refType||'—'}
                     </td>
                     <td style={{ padding:'8px 10px', fontSize:11,
                       color:'#6C757D' }}>{m.remarks||'—'}</td>

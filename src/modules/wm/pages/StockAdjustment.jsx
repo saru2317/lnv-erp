@@ -24,10 +24,13 @@ export default function StockAdjustment() {
   },[])
 
   const onItemChange = e => {
-    const item = items.find(i=>i.itemCode===e.target.value)
+    const val  = e.target.value
+    const item = items.find(i=>(i.itemCode||i.itemName)===val)
     setForm(f=>({ ...f,
-      itemCode: e.target.value,
-      currentStock: parseFloat(item?.balanceQty||0)
+      itemCode:     val,
+      itemName:     item?.itemName || val,
+      currentStock: parseFloat(item?.balanceQty||0),
+      uom:          item?.uom || ''
     }))
   }
 
@@ -65,9 +68,13 @@ export default function StockAdjustment() {
         <div className="wm-form-sec-body">
           <div className="wm-form-row">
             <div className="wm-form-grp"><label>Adjustment No.</label><input className="wm-form-ctrl" value={adjNo} readOnly/></div>
-            <div className="wm-form-grp"><label>Date</label><input type="date" className="wm-form-ctrl" defaultValue="2025-02-28"/></div>
+            <div className="wm-form-grp"><label>Date</label>
+              <input type="date" className="wm-form-ctrl" value={form.date}
+                onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
+            </div>
             <div className="wm-form-grp"><label>Reason</label>
-              <select className="wm-form-ctrl">
+              <select className="wm-form-ctrl" value={form.reason}
+                onChange={e=>setForm(f=>({...f,reason:e.target.value}))}>
                 <option>Physical Count Variance</option>
                 <option>Damage / Write-off</option>
                 <option>Production Loss</option>
@@ -78,26 +85,41 @@ export default function StockAdjustment() {
           </div>
           <div className="wm-form-row2">
             <div className="wm-form-grp"><label>Material <span>*</span></label>
-              <select className="wm-form-ctrl">
+              <select className="wm-form-ctrl" value={form.itemCode} onChange={onItemChange}>
+                <option value="">-- Select Item --</option>
                 {items.map(i=>(
-                <option key={i.itemCode} value={i.itemCode}>
-                  {i.itemCode} — {i.itemName}
-                </option>
-              ))}
+                  <option key={i.itemCode||i.itemName} value={i.itemCode||i.itemName}>
+                    {i.itemCode ? `${i.itemCode} — ` : ''}{i.itemName}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="wm-form-grp"><label>Remarks</label>
-              <input className="wm-form-ctrl" placeholder="Reason for adjustment..."/>
+              <input className="wm-form-ctrl" placeholder="Reason for adjustment..."
+                value={form.remarks}
+                onChange={e=>setForm(f=>({...f,remarks:e.target.value}))}/>
             </div>
           </div>
           <div className="wm-form-row4">
-            <div className="wm-form-grp"><label>Current Stock</label><input className="wm-form-ctrl" value={`${form.currentStock} ${items.find(i=>i.itemCode===form.itemCode)?.uom||''}`} readOnly/></div>
-            <div className="wm-form-grp"><label>Adjustment Qty <span>*</span></label><input type="number" className="wm-form-ctrl" placeholder="-5 or +10"/></div>
-            <div className="wm-form-grp"><label>New Stock (after)</label><input className="wm-form-ctrl" value={`${isNaN(newStock)?'—':newStock.toFixed(2)} ${items.find(i=>i.itemCode===form.itemCode)?.uom||''}`} readOnly/></div>
+            <div className="wm-form-grp"><label>Current Stock</label>
+              <input className="wm-form-ctrl" readOnly
+                value={`${form.currentStock} ${items.find(i=>(i.itemCode||i.itemName)===form.itemCode)?.uom||''}`}/>
+            </div>
+            <div className="wm-form-grp"><label>Adjustment Qty <span>*</span></label>
+              <input type="number" className="wm-form-ctrl" placeholder="Enter qty"
+                value={form.adjQty}
+                onChange={e=>setForm(f=>({...f,adjQty:e.target.value}))}/>
+            </div>
+            <div className="wm-form-grp"><label>New Stock (after)</label>
+              <input className="wm-form-ctrl" readOnly
+                value={`${isNaN(newStock)?'—':newStock.toFixed(3)} ${items.find(i=>(i.itemCode||i.itemName)===form.itemCode)?.uom||''}`}
+                style={{color: newStock < 0 ? '#DC3545' : '#155724', fontWeight:700}}/>
+            </div>
             <div className="wm-form-grp"><label>Adjustment Type</label>
-              <select className="wm-form-ctrl">
-                <option> Negative (Reduce)</option>
-                <option>Positive (Increase)</option>
+              <select className="wm-form-ctrl" value={form.adjType}
+                onChange={e=>setForm(f=>({...f,adjType:e.target.value}))}>
+                <option value="Negative">Negative (Reduce)</option>
+                <option value="Positive">Positive (Increase)</option>
               </select>
             </div>
           </div>

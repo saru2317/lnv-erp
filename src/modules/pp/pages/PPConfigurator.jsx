@@ -131,9 +131,14 @@ const BIZ_TYPES = [
   { key:'hybrid',  label:'Hybrid (Both)',               icon:'⚡', desc:'Both own manufacturing AND job work processing.' },
 ]
 const RM_METHODS = [
-  { key:'push',   label:'Push — Issue on WO Release',      desc:'Materials pre-allocated when WO is released. Best for short cycle, batch.' },
-  { key:'pull',   label:'Pull — Backflush on Completion',  desc:'Materials auto-consumed on WO completion based on BOM. Best for high-volume, moulding.' },
-  { key:'manual', label:'Manual — Operator Issues',        desc:'Operator raises material request during production. Best for job work, custom.' },
+  { key:'push',      label:'Push — Issue on WO Release',
+    desc:'Store person issues materials to Shop Floor when WO released. Manual GI entry. Best for MSME, batch.' },
+  { key:'backflush', label:'Backflush — Auto consume on WO Complete',
+    desc:'Materials auto-consumed on WO completion based on BOM × good qty. Best for conveyorised/high-volume moulding.' },
+  { key:'twostep',   label:'Two-Step — Issue to Shop Floor WH then Consume',
+    desc:'Materials move Store→Shop Floor WH (GI 201). Consume from Shop Floor. Returns via 202. Best for large plants.' },
+  { key:'manual',    label:'Manual — Operator Issues',
+    desc:'Operator raises material request during production. Best for job work, custom.' },
 ]
 const SEQ_TYPES = [
   { key:'sequence',     label:'Sequence (Forced)',         desc:'Each stage must complete before next unlocks. Surface treatment, Heat treatment.' },
@@ -172,7 +177,9 @@ export default function PPConfigurator() {
   // Config state
   const [bizType,    setBizType]   = useState('mfg')
   const [indKey,     setIndKey]    = useState('manufacturing')
-  const [rmMethod,   setRmMethod]  = useState('push')
+  const [rmMethod,       setRmMethod]       = useState('push')
+  const [storeLocation,  setStoreLocation]  = useState('RM-STORE')
+  const [sfLocation,     setSfLocation]     = useState('SHOP-FLOOR')
   const [seqType,    setSeqType]   = useState('sequence')
   const [chargeBy,   setChargeBy]  = useState('Per Piece')
   const [processes,  setProcesses] = useState([])
@@ -205,6 +212,8 @@ export default function PPConfigurator() {
         setBizType(cfg.bizType      || 'mfg')
         setIndKey(cfg.industryKey   || 'manufacturing')
         setRmMethod(cfg.rmMethod    || 'push')
+        setStoreLocation(cfg.storeLocation || 'RM-STORE')
+        setSfLocation(cfg.sfLocation       || 'SHOP-FLOOR')
         setSeqType(cfg.sequenceType || 'sequence')
         setChargeBy(cfg.chargeBy    || 'Per Piece')
         const procs = Array.isArray(cfg.processes) ? cfg.processes : JSON.parse(cfg.processes || '[]')
@@ -265,7 +274,7 @@ export default function PPConfigurator() {
       const payload = {
         bizType, industryKey: indKey, industryName: ind.name,
         prodType: ind.prodType, sequenceType: seqType,
-        rmMethod, chargeBy, processes, workCenters,
+        rmMethod, storeLocation, sfLocation, chargeBy, processes, workCenters,
         moEnabled, moAutoFromSO, moAutoWO,
         industrySettings: {
           mouldConcept: ind.prodType === 'mould',
@@ -343,7 +352,7 @@ export default function PPConfigurator() {
             {[
               ['Industry',   INDUSTRIES[indKey]?.name || indKey],
               ['Prod Type',  ind?.prodType || '—'],
-              ['RM Method',  rmMethod === 'push' ? 'Push (auto-issue)' : 'Pull (manual)'],
+              ['RM Method',  RM_METHODS.find(r=>r.key===rmMethod)?.label || rmMethod],
               ['Charge By',  chargeBy],
               ['Processes',  `${processes.length} stages configured`],
               ['Work Centers',`${workCenters.length} WCs`],
@@ -524,6 +533,56 @@ export default function PPConfigurator() {
               </div>
             ))}
           </div>
+
+          {/* Location config — shows when two-step selected */}
+          {rmMethod === 'twostep' && (
+            <div style={{ background:'#EBF5FB', borderRadius:8, padding:'12px 14px',
+              marginBottom:16, border:'1px solid #AED6F1' }}>
+              <div style={{ fontWeight:700, color:'#1A5276', fontSize:12, marginBottom:10 }}>
+                Warehouse Location Config (Two-Step)
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div>
+                  <label style={lbl}>Raw Material Store Location</label>
+                  <input style={inp} value={storeLocation}
+                    onChange={e=>setStoreLocation(e.target.value)}
+                    placeholder="RM-STORE" />
+                  <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>
+                    Where RM is received and stored
+                  </div>
+                </div>
+                <div>
+                  <label style={lbl}>Shop Floor Location</label>
+                  <input style={inp} value={sfLocation}
+                    onChange={e=>setSfLocation(e.target.value)}
+                    placeholder="SHOP-FLOOR" />
+                  <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>
+                    Where material is staged before production
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Also show location for push method */}
+          {rmMethod === 'push' && (
+            <div style={{ background:'#F8F9FA', borderRadius:8, padding:'10px 14px',
+              marginBottom:16, border:'1px solid #E0D5E0', fontSize:11,
+              color:'#6C757D' }}>
+              Store person creates GI entry manually →
+              Materials move from <strong>{storeLocation}</strong> to Shop Floor.
+              Stock reduces from Store immediately.
+            </div>
+          )}
+
+          {rmMethod === 'backflush' && (
+            <div style={{ background:'#F0FFF8', borderRadius:8, padding:'10px 14px',
+              marginBottom:16, border:'1px solid #A9DFBF', fontSize:11,
+              color:'#155724' }}>
+              ✅ No GI needed. On WO Complete → system auto-calculates BOM × good qty
+              and reduces stock from <strong>{storeLocation}</strong>.
+            </div>
+          )}
 
           {/* Charge by (for job work) */}
           {(bizType === 'jobwork' || bizType === 'hybrid') && (
@@ -739,6 +798,10 @@ export default function PPConfigurator() {
                 ['Production Type',ind.prodType],
                 ['Sequence',       SEQ_TYPES.find(s=>s.key===seqType)?.label],
                 ['RM Method',      RM_METHODS.find(r=>r.key===rmMethod)?.label],
+                ...(rmMethod==='twostep' ? [
+                  ['Store Location',     storeLocation],
+                  ['Shop Floor Location',sfLocation],
+                ] : []),
                 ['Stages',         `${processes.length} stages configured`],
                 ['Work Centers',   `${workCenters.length} defined`],
                 ['QC Stages',      `${processes.filter(p=>p.isQC).length} QC checkpoints`],
