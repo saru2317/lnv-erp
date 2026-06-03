@@ -5,6 +5,7 @@ import PageLoader from '@components/ui/PageLoader'
 
 const ListScreenSettings = lazy(() => import('./ListScreenSettings'))
 const ApprovalInbox  = lazy(() => import('./ApprovalInbox'))
+const BillingAdmin   = lazy(() => import('./BillingAdmin'))
 const ListViewConfig = lazy(() => import('./ListViewConfig'))
 const AuditDashboard = lazy(() => import('./AuditDashboard'))
 const AuditLog       = lazy(() => import('./AuditLog'))
@@ -23,6 +24,7 @@ const SIDEBAR_GROUPS = [
   { label:'Administration', icon:'🛡️', items:[
     {to:'/admin/users',              label:'User Management'},
     {to:'/admin/approvals',          label:'Approval Inbox'},
+    ...((() => { try { const u = JSON.parse(localStorage.getItem('lnv_user')||'{}'); return u?.role==='SUPER_ADMIN'||u?.email==='admin@lnverp.com' } catch{return false} })() ? [{to:'/admin/billing', label:'💰 LNV Billing'}] : []),
     {to:'/admin/listview',           label:'List View Settings'},
     {to:'/admin/list-settings',      label:'List Screen Settings'},
   ]},
@@ -38,6 +40,7 @@ export default function AdminLayout() {
         <Routes>
           <Route path="list-settings"    element={<ListScreenSettings />} />
           <Route path="approvals"        element={<ApprovalInbox />} />
+          <Route path="billing"           element={<BillingAdmin />} />
           <Route path="listview"         element={<ListViewConfig />} />
           <Route index                   element={<AuditDashboard />} />
           <Route path="audit/logs"       element={<AuditLog />} />

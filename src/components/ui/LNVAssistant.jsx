@@ -96,7 +96,6 @@ export default function LNVAssistant({ config }) {
       prevModuleRef.current = currentModule
       setHistory([])  // clear chat history
       setInput('')
-      setShowReject && setShowReject(false)
     }
   }, [currentModule])
 

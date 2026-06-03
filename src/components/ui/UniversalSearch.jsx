@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 
 // ── SEARCH INDEX — all searchable items across ERP ───────
-const buildSearchIndex = (userModules = []) => {
-  const has = (mod) => userModules.includes(mod)
+const buildSearchIndex = () => {
+  // Show all — access controlled by route guards
 
   const index = [
     // ── MODULES (always shown) ────────────────────────
@@ -64,8 +64,8 @@ const buildSearchIndex = (userModules = []) => {
     { type:'master', icon:'🔐', label:'Roles & Permissions',      sub:'Config → RBAC',   path:'/config/roles',          mod:'config',  keywords:['role','permission','rbac','access control'] },
   ]
 
-  // Filter by user's accessible modules
-  return index.filter(item => has(item.mod))
+  // Show all items — module access controlled by route guards
+  return index
 }
 
 const TYPE_CONFIG = {
@@ -86,7 +86,8 @@ const addRecent = (item) => {
 }
 
 export default function UniversalSearch() {
-  const { userModules } = useAuth()
+  const { hasAccess } = useAuth()
+  const userModules = null // use hasAccess instead
   const navigate        = useNavigate()
   const [query,   setQuery]   = useState('')
   const [open,    setOpen]    = useState(false)
@@ -95,12 +96,12 @@ export default function UniversalSearch() {
 
   const inputRef    = useRef(null)
   const dropRef     = useRef(null)
-  const searchIndex = useRef(buildSearchIndex(userModules || []))
+  const searchIndex = useRef(buildSearchIndex())
 
   // Re-build index when user modules change
   useEffect(() => {
-    searchIndex.current = buildSearchIndex(userModules || [])
-  }, [userModules])
+    searchIndex.current = buildSearchIndex()
+  }, [JSON.stringify(userModules)])
 
   // Search logic
   const results = query.trim().length < 1 ? [] : (() => {
@@ -242,9 +243,34 @@ export default function UniversalSearch() {
             border:'1px solid var(--odoo-border)', overflow:'hidden', maxHeight:480, overflowY:'auto',
           }}>
 
-          {/* No query — show recent + shortcuts */}
+          {/* No query — show recent + quick nav */}
           {!query && (
             <>
+              {/* Quick Nav shortcuts when no recent */}
+              {recent.length === 0 && (
+                <div style={{ padding:'10px 14px' }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:'#6C757D',
+                    textTransform:'uppercase', marginBottom:8 }}>Quick Navigate</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                    {[
+                      { label:'Sales Dashboard', path:'/sd',           icon:'📋' },
+                      { label:'New Invoice',      path:'/sd/invoices/new', icon:'🧾' },
+                      { label:'Purchase Orders',  path:'/mm',          icon:'📦' },
+                      { label:'Work Orders',      path:'/pp/wo',       icon:'⚙️'  },
+                      { label:'Finance',          path:'/fi',          icon:'💰' },
+                      { label:'Stock',            path:'/wm',          icon:'🏭' },
+                    ].map(item => (
+                      <button key={item.path}
+                        onClick={() => { navigate(item.path); setOpen(false) }}
+                        style={{ padding:'5px 12px', background:'#F3EEF3', color:'#714B67',
+                          border:'1px solid #E0D5E0', borderRadius:16, fontSize:11,
+                          fontWeight:600, cursor:'pointer', display:'flex', gap:4, alignItems:'center' }}>
+                        {item.icon} {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {recent.length > 0 && (
                 <>
                   <div style={{ padding:'8px 14px 4px', fontSize:10, fontWeight:700,
