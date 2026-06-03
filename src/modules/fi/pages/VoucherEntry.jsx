@@ -137,10 +137,14 @@ export default function VoucherEntry() {
   const [vendors,    setVendors]    = useState([])
 
   // PV fields
-  const [pvVendor,   setPvVendor]   = useState('')
-  const [pvVendorPan,setPvVendorPan]= useState('')
-  const [pvVendorType,setPvVendorType]= useState('Company')
-  const [pvInvRef,   setPvInvRef]   = useState('')
+  const [pvVendor,      setPvVendor]      = useState('')
+  const [pvVendorId,    setPvVendorId]    = useState('')
+  const [pvVendorCode,  setPvVendorCode]  = useState('')
+  const [pvVendorPan,   setPvVendorPan]   = useState('')
+  const [pvVendorType,  setPvVendorType]  = useState('Company')
+  const [pvPendingInvs, setPvPendingInvs] = useState([])
+  const [pvSelInvId,    setPvSelInvId]    = useState('')
+  const [pvInvRef,      setPvInvRef]      = useState('')
   const [pvGross,    setPvGross]    = useState(0)
   const [pvTdsSec,   setPvTdsSec]   = useState('')
   const [pvTdsAmt,   setPvTdsAmt]   = useState(0)
@@ -176,8 +180,8 @@ export default function VoucherEntry() {
       try {
         const [rA, rC, rV] = await Promise.all([
           fetch(`${BASE_URL}/fi/coa/balances`, { headers: hdr2() }),
-          fetch(`${BASE_URL}/mdm/customer`,    { headers: hdr2() }),
-          fetch(`${BASE_URL}/mdm/vendor`,      { headers: hdr2() }),
+          fetch(`${BASE_URL}/sd/customers`,    { headers: hdr2() }),
+          fetch(`${BASE_URL}/vendors`,          { headers: hdr2() }),
         ])
         const [dA, dC, dV] = await Promise.all([rA.json(), rC.json(), rV.json()])
         setAccts(dA.data || [])
@@ -234,12 +238,45 @@ export default function VoucherEntry() {
     if (vType === 'PV') calcTDS(pvGross, pvTdsSec, pvVendorType)
   }, [pvGross, pvTdsSec, pvVendorType, vType])
 
-  // Vendor select → auto-fill PAN
-  const onVendorSelect = e => {
+  // Vendor select → auto-fill PAN + load pending invoices
+  const onVendorSelect = async (e) => {
     const v = vendors.find(x => x.id === parseInt(e.target.value))
-    setPvVendor(v?.name || e.target.value)
-    setPvVendorPan(v?.pan || '')
-    setPvVendorType(v?.vendorType === 'Individual' ? 'Individual' : 'Company')
+    if (!v) return
+    setPvVendorId(v.id)
+    setPvVendorCode(v.code || '')
+    setPvVendor(v.name || '')
+    setPvVendorPan(v.panNo || v.pan || '')
+    setPvVendorType(v.type === 'Individual' ? 'Individual' : 'Company')
+    setPvSelInvId('')
+    setPvInvRef('')
+    setPvPendingInvs([])
+
+    // Fetch FI-approved invoices for this vendor (PENDING = approved by FI, ready to pay)
+    if (v.code) {
+      try {
+        const res  = await fetch(`${BASE_URL}/mm/invoices?vendorCode=${v.code}&status=PENDING,PARTIAL,OVERDUE`, { headers: hdr2() })
+        const data = await res.json()
+        const approved = (data.data || []).filter(i => i.status !== 'PENDING_APPROVAL' && i.status !== 'REJECTED')
+        setPvPendingInvs(approved)
+        if (approved.length === 0) {
+          toast('No approved invoices — vendor invoices need FI approval first', { icon:'ℹ️' })
+        }
+      } catch {}
+    }
+  }
+
+  // Invoice select → auto-fill gross amount
+  const onPvInvSelect = (e) => {
+    const invId = e.target.value
+    setPvSelInvId(invId)
+    if (!invId) { setPvInvRef(''); setPvGross(0); setPvNet(0); return }
+    const inv = pvPendingInvs.find(i => String(i.id) === String(invId))
+    if (!inv) return
+    const balance = parseFloat(inv.balance || inv.totalAmount || 0)
+    setPvInvRef(inv.invNo)
+    setPvGross(balance)
+    setPvNet(balance)
+    toast.success(`Invoice ${inv.invNo} — Balance: ₹${balance.toLocaleString('en-IN')}`, { duration:2000 })
   }
 
   // Save voucher
@@ -394,8 +431,38 @@ export default function VoucherEntry() {
             {/* Invoice ref */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
               <div>
-                <label style={lbl}>Invoice / Bill Reference</label>
-                <input style={inp} value={pvInvRef} onChange={e=>setPvInvRef(e.target.value)} placeholder="VINV-2026-001"/>
+                <label style={lbl}>
+                  Invoice / Bill Reference
+                  {pvPendingInvs.length > 0 && (
+                    <span style={{ marginLeft:6, fontSize:9, background:'#D4EDDA', color:'#155724',
+                      padding:'1px 5px', borderRadius:3, fontWeight:700 }}>
+                      {pvPendingInvs.length} pending
+                    </span>
+                  )}
+                </label>
+                {pvPendingInvs.length > 0 ? (
+                  <select style={{...inp, cursor:'pointer',
+                    borderColor: pvSelInvId ? '#28A745' : '#E0D5E0',
+                    background:  pvSelInvId ? '#F0FFF4' : '#fff' }}
+                    value={pvSelInvId} onChange={onPvInvSelect}>
+                    <option value="">-- Select Pending Invoice --</option>
+                    {pvPendingInvs.map(inv => {
+                      const bal = parseFloat(inv.balance || inv.totalAmount || 0)
+                      const due = inv.dueDate ? new Date(inv.dueDate) : null
+                      const overdue = due && due < new Date()
+                      return (
+                        <option key={inv.id} value={inv.id}>
+                          {inv.invNo} | {inv.vendorInvNo||'—'} | ₹{bal.toLocaleString('en-IN')} pending
+                          {overdue ? ' ⚠ OVERDUE' : ''}
+                        </option>
+                      )
+                    })}
+                  </select>
+                ) : (
+                  <input style={inp} value={pvInvRef}
+                    onChange={e=>setPvInvRef(e.target.value)}
+                    placeholder={pvVendor ? 'No pending invoices — enter manually' : 'Select vendor first'} />
+                )}
               </div>
               <div>
                 <label style={lbl}>Payment Mode</label>
@@ -485,9 +552,9 @@ export default function VoucherEntry() {
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12,marginBottom:12}}>
               <div>
                 <label style={{...lbl}}>Receive From (Customer) *</label>
-                <select style={{...inp,cursor:'pointer'}} onChange={e=>{const c=customers.find(x=>x.id===parseInt(e.target.value));setRvCust(c?.name||e.target.value)}} defaultValue="">
+                <select style={{...inp,cursor:'pointer'}} onChange={e=>{const c=customers.find(x=>x.id===parseInt(e.target.value));setRvCust(c?.name||c?.customerName||e.target.value)}} defaultValue="">
                   <option value="">-- Select Customer --</option>
-                  {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  {customers.map(c=><option key={c.id} value={c.id}>{c.name||c.customerName}</option>)}
                 </select>
                 {!customers.length && (
                   <input style={{...inp,marginTop:6}} value={rvCust} onChange={e=>setRvCust(e.target.value)} placeholder="Customer name"/>

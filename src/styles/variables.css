@@ -41,7 +41,7 @@
   --card-shadow: 0 1px 4px rgba(0,0,0,0.10);
 
   /* TYPOGRAPHY */
-  --font-body:    'DM Sans', sans-serif;
-  --font-display: 'Syne', sans-serif;
-  --font-mono:    'DM Mono', monospace;
+  --font-body:    'Tahoma', 'Verdana', sans-serif;
+  --font-display: 'Tahoma', 'Verdana', sans-serif;
+  --font-mono:    'Tahoma', 'Courier New', monospace;
 }

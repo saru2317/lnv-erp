@@ -34,22 +34,23 @@ const Badge = ({ s }) => {
 }
 
 const MODULES = [
-  { id:'mdm',  name:'Master Data',      tier:1, monthly:500  },
-  { id:'sd',   name:'Sales (SD)',        tier:1, monthly:1500 },
-  { id:'mm',   name:'Purchase (MM)',     tier:1, monthly:1500 },
-  { id:'wm',   name:'Warehouse (WM)',    tier:1, monthly:1000 },
-  { id:'fi',   name:'Finance (FI)',      tier:1, monthly:2000 },
-  { id:'pp',   name:'Production (PP)',   tier:2, monthly:2000 },
-  { id:'qm',   name:'Quality (QM)',      tier:2, monthly:1000 },
-  { id:'hcm',  name:'HR & Payroll',      tier:2, monthly:1500 },
-  { id:'crm',  name:'CRM',              tier:2, monthly:1000 },
-  { id:'tm',   name:'Transport',        tier:2, monthly:800  },
-  { id:'am',   name:'Assets',           tier:2, monthly:800  },
-  { id:'vm',   name:'Visitor',          tier:2, monthly:500  },
-  { id:'cn',   name:'Canteen',          tier:2, monthly:500  },
-  { id:'ai',   name:'LNV Claude AI',    tier:3, monthly:2000 },
-  { id:'einv', name:'e-Invoice',        tier:3, monthly:500  },
-  { id:'iot',  name:'IoT Integration',  tier:3, monthly:1500 },
+  // cost = your infra+support cost, monthly = selling price to client
+  { id:'mdm',  name:'Master Data',      tier:1, monthly:500,  cost:150  },
+  { id:'sd',   name:'Sales (SD)',        tier:1, monthly:1500, cost:400  },
+  { id:'mm',   name:'Purchase (MM)',     tier:1, monthly:1500, cost:400  },
+  { id:'wm',   name:'Warehouse (WM)',    tier:1, monthly:1000, cost:300  },
+  { id:'fi',   name:'Finance (FI)',      tier:1, monthly:2000, cost:500  },
+  { id:'pp',   name:'Production (PP)',   tier:2, monthly:2000, cost:600  },
+  { id:'qm',   name:'Quality (QM)',      tier:2, monthly:1000, cost:300  },
+  { id:'hcm',  name:'HR & Payroll',      tier:2, monthly:1500, cost:400  },
+  { id:'crm',  name:'CRM',              tier:2, monthly:1000, cost:250  },
+  { id:'tm',   name:'Transport',        tier:2, monthly:800,  cost:200  },
+  { id:'am',   name:'Assets',           tier:2, monthly:800,  cost:200  },
+  { id:'vm',   name:'Visitor',          tier:2, monthly:500,  cost:150  },
+  { id:'cn',   name:'Canteen',          tier:2, monthly:500,  cost:150  },
+  { id:'ai',   name:'LNV Claude AI',    tier:3, monthly:2000, cost:800  },
+  { id:'einv', name:'e-Invoice',        tier:3, monthly:500,  cost:100  },
+  { id:'iot',  name:'IoT Integration',  tier:3, monthly:1500, cost:500  },
 ]
 
 const inp  = { padding:'7px 10px', border:'1.5px solid #DDD', borderRadius:5, fontSize:12, outline:'none', width:'100%', boxSizing:'border-box' }
@@ -106,18 +107,21 @@ export default function BillingAdmin() {
 
   // Quote calc
   const calcQuote = () => {
-    const mods    = MODULES.filter(m => quoteForm.modules[m.id])
-    const modAmt  = mods.reduce((s,m)=>s+m.monthly, 0)
-    const users   = parseInt(quoteForm.users||5)
-    const extra   = Math.max(0, users-5) * 500
-    const sub     = modAmt + extra
-    const disc    = sub * parseFloat(quoteForm.discount||0) / 100
-    const after   = sub - disc
-    const gst     = after * parseFloat(quoteForm.gst||18) / 100
-    const monthly = after + gst
-    const setup   = parseFloat(quoteForm.setup||0) * (1 + parseFloat(quoteForm.gst||18)/100)
-    const annual  = monthly * 12 + setup
-    return { mods, modAmt, extra, sub, disc, gst, monthly, setup, annual }
+    const mods      = MODULES.filter(m => quoteForm.modules[m.id])
+    const modAmt    = mods.reduce((s,m)=>s+m.monthly, 0)
+    const totalCost = mods.reduce((s,m)=>s+m.cost, 0)
+    const users     = parseInt(quoteForm.users||5)
+    const extra     = Math.max(0, users-5) * 500
+    const sub       = modAmt + extra
+    const disc      = sub * parseFloat(quoteForm.discount||0) / 100
+    const after     = sub - disc
+    const gst       = after * parseFloat(quoteForm.gst||18) / 100
+    const monthly   = after + gst
+    const setup     = parseFloat(quoteForm.setup||0) * (1 + parseFloat(quoteForm.gst||18)/100)
+    const annual    = monthly * 12 + setup
+    const profit    = after - totalCost
+    const margin    = after > 0 ? Math.round((profit/after)*100) : 0
+    return { mods, modAmt, totalCost, extra, sub, disc, gst, monthly, setup, annual, profit, margin }
   }
 
   const loadTierModules = (tier) => {
@@ -348,16 +352,29 @@ export default function BillingAdmin() {
                     </button>
                   ))}
                 </div>
-                {MODULES.map(m=>(
-                  <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'5px 0', borderBottom:'1px solid #F5F5F5' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'20px 1fr 30px 80px 80px 60px', gap:6, padding:'4px 0', borderBottom:'1px solid #EEE', fontSize:10, fontWeight:700, color:'#6C757D' }}>
+                  <span/><span>Module</span><span/><span style={{textAlign:'right'}}>Cost/mo</span><span style={{textAlign:'right'}}>Sell/mo</span><span style={{textAlign:'right',color:'#155724'}}>Margin</span>
+                </div>
+                {MODULES.map(m=>{
+                  const margin = m.monthly > 0 ? Math.round(((m.monthly - m.cost)/m.monthly)*100) : 0
+                  return (
+                  <div key={m.id} style={{ display:'grid', gridTemplateColumns:'20px 1fr 30px 80px 80px 60px', gap:6, alignItems:'center', padding:'5px 0', borderBottom:'1px solid #F5F5F5' }}>
                     <input type="checkbox" checked={!!quoteForm.modules[m.id]}
                       onChange={e=>setQuoteForm(f=>({...f, modules:{...f.modules, [m.id]:e.target.checked}}))} />
-                    <span style={{ flex:1, fontSize:12 }}>{m.name}</span>
-                    <span style={{ fontSize:10, background:`${m.tier<=1?'#CCE5FF':m.tier<=2?'#D4EDDA':'#FFF3CD'}`,
-                      color:`${m.tier<=1?'#004085':m.tier<=2?'#155724':'#856404'}`, padding:'1px 6px', borderRadius:3, fontWeight:700 }}>T{m.tier}</span>
-                    <span style={{ fontSize:11, fontFamily:'DM Mono,monospace', color:'#6C757D', minWidth:60, textAlign:'right' }}>{INR(m.monthly)}/mo</span>
+                    <span style={{ fontSize:12 }}>{m.name}</span>
+                    <span style={{ fontSize:9, background:`${m.tier<=1?'#CCE5FF':m.tier<=2?'#D4EDDA':'#FFF3CD'}`,
+                      color:`${m.tier<=1?'#004085':m.tier<=2?'#155724':'#856404'}`, padding:'1px 4px', borderRadius:3, fontWeight:700, textAlign:'center' }}>T{m.tier}</span>
+                    <input type="number" value={m.cost} min={0} step={50}
+                      onChange={e=>{ m.cost=parseInt(e.target.value)||0; setQuoteForm(f=>({...f})) }}
+                      style={{ fontSize:11, padding:'2px 4px', textAlign:'right', border:'1px solid #E0E0E0', borderRadius:3, fontFamily:'DM Mono,monospace', color:'#DC3545' }} />
+                    <input type="number" value={m.monthly} min={0} step={100}
+                      onChange={e=>{ m.monthly=parseInt(e.target.value)||0; setQuoteForm(f=>({...f})) }}
+                      style={{ fontSize:11, padding:'2px 4px', textAlign:'right', border:'1px solid #E0E0E0', borderRadius:3, fontFamily:'DM Mono,monospace', color:'#155724' }} />
+                    <span style={{ fontSize:10, fontWeight:700, textAlign:'right',
+                      color: margin>=50?'#155724':margin>=30?'#856404':'#DC3545',
+                      fontFamily:'DM Mono,monospace' }}>{margin}%</span>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
@@ -388,14 +405,17 @@ export default function BillingAdmin() {
               <div style={secH}>Quote Summary</div>
               <div style={secB}>
                 {[
-                  ['Modules selected', `${calc.mods.length} modules`],
-                  ['Module charges',   INR(calc.modAmt)+'/mo'],
-                  ['Extra users',      calc.extra>0?INR(calc.extra)+'/mo':'Included'],
-                  ['Discount',         calc.disc>0?'-'+INR(calc.disc)+'/mo':'None'],
-                  ['GST',              INR(calc.gst)+'/mo'],
-                  ['Monthly Total',    INR(calc.monthly)+'/mo'],
-                  ['Setup (incl GST)', INR(calc.setup)+' one-time'],
-                  ['Annual Value',     INR(calc.annual)],
+                  ['Modules selected',   `${calc.mods.length} modules`],
+                  ['Module charges',     INR(calc.modAmt)+'/mo'],
+                  ['Your cost',          INR(calc.totalCost)+'/mo'],
+                  ['Gross Profit',       INR(calc.profit)+'/mo'],
+                  ['Margin %',           `${calc.margin}%`],
+                  ['Extra users',        calc.extra>0?INR(calc.extra)+'/mo':'Included'],
+                  ['Discount',           calc.disc>0?'-'+INR(calc.disc)+'/mo':'None'],
+                  ['GST',                INR(calc.gst)+'/mo'],
+                  ['Monthly Total',      INR(calc.monthly)+'/mo'],
+                  ['Setup (incl GST)',   INR(calc.setup)+' one-time'],
+                  ['Annual Value',       INR(calc.annual)],
                 ].map(([k,v])=>(
                   <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid #F0F0F0', fontSize:13 }}>
                     <span style={{ color:'#6C757D' }}>{k}</span>

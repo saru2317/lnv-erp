@@ -30,6 +30,7 @@ const DOC_META = {
   LEAVE:      { label:'Leave Request',    icon:'🏖', color:'#2E86C1', path:'/hcm/leave',    api:null                },
   QUOTATION:  { label:'Quotation',        icon:'💬', color:'#7D3C98', path:'/sd/quotations',api:'/sd/quotations'    },
   DC:         { label:'Delivery Challan', icon:'🚚', color:'#0E6655', path:'/sd/delivery',  api:'/sd/delivery-challan'},
+  VENDOR_INVOICE: { label:'Vendor Invoice', icon:'📦', color:'#196F3D', path:'/mm/invoices', api:'/mm/invoices' },
 }
 
 const STATUS_ST = {
@@ -64,7 +65,29 @@ async function fetchPendingApprovals() {
     })
   } catch {}
 
-  // 2. Matrix approval transactions
+  // 2. Vendor Invoice approvals (MM → FI)
+  try {
+    const r = await fetch(`${BASE}/mm/invoices/pending-approval`, { headers:hdr2() })
+    const d = await r.json()
+    ;(d.data||[]).forEach(inv => {
+      results.push({
+        id:          `VINV-${inv.id}`,
+        docType:     'VENDOR_INVOICE',
+        docId:       inv.id,
+        docNo:       inv.invNo,
+        description: inv.vendorName,
+        amount:      parseFloat(inv.totalAmount||0),
+        submittedBy: inv.createdBy || 'Purchase Team',
+        submittedAt: inv.createdAt,
+        currentLevel:1,
+        status:      'PENDING',
+        raw:         inv,
+        source:      'mm',
+      })
+    })
+  } catch {}
+
+  // 3. Matrix approval transactions
   try {
     const r = await fetch(`${BASE}/approval-matrix/transactions/pending`, { headers:hdr2() })
     const d = await r.json()
@@ -156,7 +179,13 @@ export default function ApprovalInbox() {
     try {
       let res, data
 
-      if (selected.docType === 'INVOICE') {
+      if (selected.docType === 'VENDOR_INVOICE') {
+        res = await fetch(`${BASE}/mm/invoices/${selected.docId}/approve`, {
+          method:'POST', headers:hdr(),
+          body: JSON.stringify({ approvedBy: req?.user?.name||'Finance', remark })
+        })
+        data = await res.json()
+      } else if (selected.docType === 'INVOICE') {
         // Use sd.js invoice approve route
         res = await fetch(`${BASE}/sd/invoices/${selected.docId}/approve`, {
           method:'POST', headers:hdr(),
@@ -187,7 +216,13 @@ export default function ApprovalInbox() {
     try {
       let res, data
 
-      if (selected.docType === 'INVOICE') {
+      if (selected.docType === 'VENDOR_INVOICE') {
+        res = await fetch(`${BASE}/mm/invoices/${selected.docId}/reject`, {
+          method:'POST', headers:hdr(),
+          body: JSON.stringify({ rejectedBy:'Finance', reason:rejectReason })
+        })
+        data = await res.json()
+      } else if (selected.docType === 'INVOICE') {
         res = await fetch(`${BASE}/sd/invoices/${selected.docId}/reject`, {
           method:'POST', headers:hdr(),
           body: JSON.stringify({ level:selected.currentLevel, rejectedBy:'Admin', reason:rejectReason })
@@ -248,7 +283,7 @@ export default function ApprovalInbox() {
                 <div style={{ fontSize:11, opacity:.8, marginBottom:3 }}>
                   {dm.icon} {dm.label} — Approval Required
                 </div>
-                <div style={{ fontFamily:'DM Mono,monospace', fontSize:18, fontWeight:800 }}>
+                <div style={{ fontFamily:'Tahoma,monospace', fontSize:18, fontWeight:800 }}>
                   {selected.docNo}
                 </div>
                 <div style={{ fontSize:11, opacity:.85, marginTop:2 }}>
@@ -306,6 +341,41 @@ export default function ApprovalInbox() {
               </div>
             )}
 
+            {/* Vendor Invoice details panel */}
+            {selected?.docType === 'VENDOR_INVOICE' && selected?.raw && (
+              <div style={{ background:'#F0FFF4', border:'1px solid #C3E6CB',
+                borderRadius:8, padding:'12px 14px', marginBottom:16, fontSize:12 }}>
+                <div style={{ fontWeight:700, color:'#155724', marginBottom:10 }}>📦 Vendor Invoice — 3-Way Match Verification</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                  {[
+                    ['Vendor',        selected.raw.vendorName],
+                    ['Vendor GSTIN',  selected.raw.vendorGstin || '—'],
+                    ['Our Invoice No',selected.raw.invNo],
+                    ['Vendor Inv No',  selected.raw.vendorInvNo || '—'],
+                    ['PO Reference',  selected.raw.poNo || '—'],
+                    ['GRN Reference', selected.raw.grnNo || '—'],
+                    ['Sub Total',     '₹'+parseFloat(selected.raw.subTotal||0).toLocaleString('en-IN')],
+                    ['GST Amount',    '₹'+parseFloat(selected.raw.totalGST||0).toLocaleString('en-IN')],
+                    ['Total Amount',  '₹'+parseFloat(selected.raw.totalAmount||0).toLocaleString('en-IN')],
+                    ['Balance Due',   '₹'+parseFloat(selected.raw.balance||selected.raw.totalAmount||0).toLocaleString('en-IN')],
+                    ['Due Date',      selected.raw.dueDate ? new Date(selected.raw.dueDate).toLocaleDateString('en-IN') : '—'],
+                    ['Created By',    selected.raw.createdBy || 'Purchase Team'],
+                  ].map(([k,v])=>(
+                    <div key={k} style={{ display:'flex', justifyContent:'space-between',
+                      padding:'3px 0', borderBottom:'1px solid #C3E6CB', fontSize:11 }}>
+                      <span style={{ color:'#6C757D' }}>{k}</span>
+                      <span style={{ fontWeight:600, color:'#2D3748' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop:10, padding:'8px', background:'#FFFDE7',
+                  border:'1px solid #FFF176', borderRadius:5, fontSize:11, color:'#856404' }}>
+                  ✅ <strong>Approve</strong> → Invoice moves to Payment Queue (F-53)<br/>
+                  ❌ <strong>Reject</strong> → Returned to Purchase Team
+                </div>
+              </div>
+            )}
+
             {/* Amount summary */}
             {inv && (
               <div style={{ background:`${dm.color}08`, border:`1px solid ${dm.color}20`,
@@ -318,7 +388,7 @@ export default function ApprovalInbox() {
                   ].map(([k,v,c])=>(
                     <div key={k} style={{ textAlign:'center' }}>
                       <div style={{ fontSize:10, color:'#6C757D', fontWeight:700, textTransform:'uppercase' }}>{k}</div>
-                      <div style={{ fontFamily:'DM Mono,monospace', fontWeight:800, fontSize:14, color:c }}>
+                      <div style={{ fontFamily:'Tahoma,monospace', fontWeight:800, fontSize:14, color:c }}>
                         {fmtC(v)}
                       </div>
                     </div>
@@ -350,12 +420,12 @@ export default function ApprovalInbox() {
                           background:i%2===0?'#fff':'#FAFAFA' }}>
                           <td style={{ padding:'6px 8px' }}>
                             <div style={{ fontWeight:600 }}>{l.itemName||l.description||'—'}</div>
-                            {l.itemCode&&<div style={{ fontSize:9, color:'#999', fontFamily:'DM Mono,monospace' }}>{l.itemCode}</div>}
+                            {l.itemCode&&<div style={{ fontSize:9, color:'#999', fontFamily:'Tahoma,monospace' }}>{l.itemCode}</div>}
                           </td>
-                          <td style={{ padding:'6px 8px', fontFamily:'DM Mono,monospace', color:'#6C757D', fontSize:10 }}>{l.hsnCode||'—'}</td>
-                          <td style={{ padding:'6px 8px', fontFamily:'DM Mono,monospace' }}>{parseFloat(l.qty||0).toLocaleString('en-IN')}</td>
-                          <td style={{ padding:'6px 8px', fontFamily:'DM Mono,monospace' }}>{fmtC(l.rate||l.unitPrice||0)}</td>
-                          <td style={{ padding:'6px 8px', fontFamily:'DM Mono,monospace', fontWeight:700 }}>{fmtC(l.total||l.totalAmt||0)}</td>
+                          <td style={{ padding:'6px 8px', fontFamily:'Tahoma,monospace', color:'#6C757D', fontSize:10 }}>{l.hsnCode||'—'}</td>
+                          <td style={{ padding:'6px 8px', fontFamily:'Tahoma,monospace' }}>{parseFloat(l.qty||0).toLocaleString('en-IN')}</td>
+                          <td style={{ padding:'6px 8px', fontFamily:'Tahoma,monospace' }}>{fmtC(l.rate||l.unitPrice||0)}</td>
+                          <td style={{ padding:'6px 8px', fontFamily:'Tahoma,monospace', fontWeight:700 }}>{fmtC(l.total||l.totalAmt||0)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -499,7 +569,7 @@ export default function ApprovalInbox() {
           ['Approved Today', history.filter(h=>h.status==='APPROVED'&&daysSince(h.actionAt)===0).length, '#155724','#D4EDDA'],
         ].map(([l,v,c,bg])=>(
           <div key={l} style={{ background:bg, borderRadius:8, padding:'10px 14px', textAlign:'center' }}>
-            <div style={{ fontSize:22, fontWeight:800, color:c, fontFamily:'DM Mono,monospace' }}>{v}</div>
+            <div style={{ fontSize:22, fontWeight:800, color:c, fontFamily:'Tahoma,monospace' }}>{v}</div>
             <div style={{ fontSize:10, fontWeight:700, color:c, opacity:.8, textTransform:'uppercase' }}>{l}</div>
           </div>
         ))}
@@ -570,7 +640,7 @@ export default function ApprovalInbox() {
                   {/* Doc info */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <span style={{ fontFamily:'DM Mono,monospace', fontWeight:800,
+                      <span style={{ fontFamily:'Tahoma,monospace', fontWeight:800,
                         fontSize:13, color:dm.color }}>{item.docNo}</span>
                       <span style={{ fontSize:10, background:`${dm.color}15`, color:dm.color,
                         padding:'1px 6px', borderRadius:3, fontWeight:700 }}>{dm.label}</span>
@@ -592,7 +662,7 @@ export default function ApprovalInbox() {
 
                   {/* Amount */}
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontFamily:'DM Mono,monospace', fontWeight:800,
+                    <div style={{ fontFamily:'Tahoma,monospace', fontWeight:800,
                       fontSize:15, color:'#2D3748' }}>{fmtC(item.amount)}</div>
                     <div style={{ fontSize:10, color:'#6C757D', marginTop:2 }}>Grand Total</div>
                   </div>
@@ -619,10 +689,10 @@ export default function ApprovalInbox() {
                     padding:'10px 14px', background:'#fff', borderRadius:7,
                     border:'1px solid #F0F0F0', fontSize:12 }}>
                     <span style={{ fontSize:16 }}>{dm.icon}</span>
-                    <span style={{ fontFamily:'DM Mono,monospace', fontWeight:700,
+                    <span style={{ fontFamily:'Tahoma,monospace', fontWeight:700,
                       color:dm.color, minWidth:120 }}>{h.docNo}</span>
                     <span style={{ flex:1, color:'#495057' }}>{h.description}</span>
-                    <span style={{ fontFamily:'DM Mono,monospace', color:'#6C757D' }}>{fmtC(h.amount)}</span>
+                    <span style={{ fontFamily:'Tahoma,monospace', color:'#6C757D' }}>{fmtC(h.amount)}</span>
                     <span style={{ background:st.bg, color:st.c, padding:'2px 10px',
                       borderRadius:10, fontSize:11, fontWeight:700 }}>{st.label}</span>
                     <span style={{ color:'#6C757D', fontSize:11, minWidth:120, textAlign:'right' }}>
