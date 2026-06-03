@@ -18,7 +18,13 @@ export default function VendorPayments() {
     try {
       const res  = await fetch(`${BASE_URL}/fi/je?refType=MM`, { headers: hdr2() })
       const data = await res.json()
-      setPayments(data.data || [])
+      // Filter vendor payment JEs — vendor payable credited/bank debited
+      setPayments((data.data||[]).filter(j =>
+        j.lines?.some(l => ['2102','2100','2103'].includes(l.creditAcctCode)) ||
+        j.narration?.toLowerCase().includes('vendor') ||
+        j.narration?.toLowerCase().includes('payable') ||
+        j.narration?.toLowerCase().includes('vinv')
+      ))
     } catch { toast.error('Failed to load payments') }
     finally { setLoading(false) }
   }, [])

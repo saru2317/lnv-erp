@@ -18,9 +18,9 @@ export default function CustomerReceipts() {
     try {
       const res  = await fetch(`${BASE_URL}/fi/je?refType=SD`, { headers: hdr2() })
       const data = await res.json()
-      // Only receipt JEs — bank account debited
+      // Receipt JEs — bank/cash debited (1211 Bank, 1212 Cash, 1121 AR cleared)
       setReceipts((data.data||[]).filter(j =>
-        j.lines?.some(l => l.debitAcctCode==='1200' || l.debitAcctCode==='1100')
+        j.lines?.some(l => ['1211','1212','1200','1100'].includes(l.debitAcctCode))
       ))
     } catch { toast.error('Failed to load receipts') }
     finally { setLoading(false) }

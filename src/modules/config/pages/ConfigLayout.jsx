@@ -4,6 +4,7 @@ import ModuleLayout from '@components/layout/ModuleLayout'
 import PageLoader from '@components/ui/PageLoader'
 
 const ApprovalMatrixConfig = lazy(() => import('./ApprovalMatrixConfig'))
+const AISettings           = lazy(() => import('./AISettings'))
 const ConfigDashboard = lazy(() => import('./ConfigDashboard'))
 const CompanyProfile  = lazy(() => import('./CompanyProfile'))
 const BranchConfig    = lazy(() => import('./BranchConfig'))
@@ -42,6 +43,7 @@ const SIDEBAR_GROUPS = [
     { to:'/config/print',        label:'Print Templates' },
     { to:'/config/audit',        label:'Audit Log' },
     { to:'/config/approval-matrix', label:'🔐 Approval Matrix' },
+    { to:'/config/ai-settings',      label:'🤖 AI Assistant' },
   ]},
 ]
 
@@ -59,6 +61,7 @@ export default function ConfigLayout() {
           <Route path="fiscal-year"     element={<FiscalYear />} />
           <Route path="number-series"   element={<NumberSeries />} />
           <Route path="approval-matrix" element={<ApprovalMatrixConfig />} />
+          <Route path="ai-settings"    element={<AISettings />} />
           <Route path="approvals" element={<Navigate to="/config/approval-matrix" replace />} />
           <Route path="tax"             element={<TaxConfig />} />
           <Route path="currency"        element={<CurrencyConfig />} />

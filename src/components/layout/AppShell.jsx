@@ -5,6 +5,7 @@ import { useAuth } from '@hooks/useAuth'
 import UniversalSearch from '@components/ui/UniversalSearch'
 import NotificationsPanel from '@components/ui/NotificationsPanel'
 import styles from './AppShell.module.css'
+import LNVAssistant from '@components/ui/LNVAssistant'
 
 const ALL_MODULES = [
   { key:'home',    label:'Home',        icon:'' },
@@ -41,6 +42,44 @@ export default function AppShell() {
   const location   = useLocation()
   const currentMod = location.pathname.split('/')[1] || 'home'
   const now = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+  const [aiConfig, setAiConfig] = React.useState(null)
+
+  // Load AI config — check localStorage first (instant), then verify with API
+  const loadAiConfig = React.useCallback(() => {
+    const token = localStorage.getItem('lnv_token')
+    if (!token) return
+
+    // Check localStorage for instant load
+    const cached = localStorage.getItem('lnv_ai_config')
+    if (cached) {
+      try {
+        const cfg = JSON.parse(cached)
+        if (cfg.aiEnabled) { setAiConfig(cfg); return }
+      } catch {}
+    }
+
+    // Verify with API
+    fetch((import.meta.env.VITE_API_URL||'http://localhost:3000/api') + '/ai/settings', {
+      headers:{ Authorization:`Bearer ${token}` }
+    }).then(r=>r.json()).then(d => {
+      if (d.data?.aiEnabled) {
+        setAiConfig(d.data)
+        localStorage.setItem('lnv_ai_config', JSON.stringify(d.data))
+      } else {
+        setAiConfig(null)
+      }
+    }).catch(()=>{})
+  }, [])
+
+  React.useEffect(() => {
+    loadAiConfig()
+    // Re-check when localStorage changes (e.g. after saving AI settings)
+    const onStorage = (e) => {
+      if (e.key === 'lnv_ai_config' || e.key === 'lnv_ai_enabled') loadAiConfig()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [loadAiConfig])
 
   return (
     <div className={styles.shell}>
@@ -99,6 +138,9 @@ export default function AppShell() {
         </main>
       </div>
       {/* Toast Notifications — SharePoint style bottom center */}
+      {/* LNV Claude AI Assistant — only renders if enabled in Config */}
+      {aiConfig?.aiEnabled && <LNVAssistant config={aiConfig} />}
+
       <Toaster
         position="bottom-center"
         gutter={12}
