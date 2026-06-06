@@ -87,7 +87,6 @@ const addRecent = (item) => {
 
 export default function UniversalSearch() {
   const { hasAccess } = useAuth()
-  const userModules = null // use hasAccess instead
   const navigate        = useNavigate()
   const [query,   setQuery]   = useState('')
   const [open,    setOpen]    = useState(false)
@@ -96,12 +95,12 @@ export default function UniversalSearch() {
 
   const inputRef    = useRef(null)
   const dropRef     = useRef(null)
-  const searchIndex = useRef(buildSearchIndex())
 
-  // Re-build index when user modules change
+  // Build role-filtered index
+  const searchIndex = useRef([])
   useEffect(() => {
-    searchIndex.current = buildSearchIndex()
-  }, [JSON.stringify(userModules)])
+    searchIndex.current = buildSearchIndex().filter(item => hasAccess(item.mod))
+  }, [hasAccess])
 
   // Search logic
   const results = query.trim().length < 1 ? [] : (() => {
@@ -253,13 +252,13 @@ export default function UniversalSearch() {
                     textTransform:'uppercase', marginBottom:8 }}>Quick Navigate</div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {[
-                      { label:'Sales Dashboard', path:'/sd',           icon:'📋' },
-                      { label:'New Invoice',      path:'/sd/invoices/new', icon:'🧾' },
-                      { label:'Purchase Orders',  path:'/mm',          icon:'📦' },
-                      { label:'Work Orders',      path:'/pp/wo',       icon:'⚙️'  },
-                      { label:'Finance',          path:'/fi',          icon:'💰' },
-                      { label:'Stock',            path:'/wm',          icon:'🏭' },
-                    ].map(item => (
+                      { label:'Sales Dashboard', path:'/sd',              icon:'📋', mod:'sd' },
+                      { label:'New Invoice',      path:'/sd/invoices/new', icon:'🧾', mod:'sd' },
+                      { label:'Purchase Orders',  path:'/mm',              icon:'📦', mod:'mm' },
+                      { label:'Work Orders',      path:'/pp/wo',           icon:'⚙️', mod:'pp' },
+                      { label:'Finance',          path:'/fi',              icon:'💰', mod:'fi' },
+                      { label:'Stock',            path:'/wm',              icon:'🏭', mod:'wm' },
+                    ].filter(item => hasAccess(item.mod)).map(item => (
                       <button key={item.path}
                         onClick={() => { navigate(item.path); setOpen(false) }}
                         style={{ padding:'5px 12px', background:'#F3EEF3', color:'#714B67',

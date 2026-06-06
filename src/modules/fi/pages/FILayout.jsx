@@ -50,6 +50,7 @@ const ProfitabilityReport= lazy(() => import('./ProfitabilityReport'))
 const BudgetVsActual     = lazy(() => import('./BudgetVsActual'))
 const InterModuleJournals= lazy(() => import('./InterModuleJournals'))
 const DayBook            = lazy(() => import('./DayBook'))
+const FIApprovals        = lazy(() => import('@components/ui/MyApprovals'))
 const ITCLossRegister    = lazy(() => import('./ITCLossRegister'))
 const CreditLimitDashboard = lazy(() => import('./CreditLimitDashboard'))
 const PDCRegister          = lazy(() => import('./PDCRegister'))
@@ -164,6 +165,7 @@ export default function FILayout() {
           <Route path="jv/new"        element={<JVNew />}               />
           <Route path="daybook"       element={<DayBook />}             />
           <Route path="inter-module"  element={<InterModuleJournals />} />
+          <Route path="approvals"       element={<FIApprovals module="FI" />} />
 
           {/* GL */}
           <Route path="coa"           element={<ChartOfAccounts />}     />
@@ -203,6 +205,7 @@ export default function FILayout() {
           <Route path="gstr9"         element={<GSTR9 />}               />
           <Route path="itc"           element={<ITCRegister />}         />
           <Route path="itc-recon"     element={<ITCReconciliation />}   />
+          <Route path="itc-loss"      element={<ITCLossRegister />}     />
           <Route path="gst-pay"       element={<GSTPayment />}          />
           <Route path="e-invoice"     element={<EInvoice />}            />
           <Route path="eway-bill"     element={<EWayBill />}            />

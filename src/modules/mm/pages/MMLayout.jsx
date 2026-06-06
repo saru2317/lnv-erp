@@ -28,7 +28,9 @@ const PRNew         = lazy(() => import('./PRNew'))
 const CSList        = lazy(() => import('./CSList'))
 const CSNew         = lazy(() => import('./CSNew'))
 const GRNList       = lazy(() => import('./GRNList'))
-const GRNNew        = lazy(() => import('./GRNNew'))
+const GRNNew              = lazy(() => import('./GRNNew'))
+const VendorPaymentRequest = lazy(() => import('./VendorPaymentRequest'))
+const MMApprovals   = lazy(() => import('@components/ui/MyApprovals'))
 
 const NAV_ITEMS = [
   { to: '/mm',           label: ' Home',            icon: '' },
@@ -73,7 +75,8 @@ const SIDEBAR_GROUPS = [
     items: [
       { to: '/mm/invoices',     label: 'Invoice List (MIRO)' },
       { to: '/mm/invoices/new', label: 'Enter Invoice' },
-      { to: '/mm/payments',     label: 'Vendor Payments' },
+      { to: '/mm/payment-requests', label: '📋 Payment Requests' },
+      { to: '/mm/payments',         label: 'Vendor Payments' },
       { to: '/mm/vendors/ledger', label: 'Vendor Ledger' },
     ]
   },
@@ -124,6 +127,7 @@ export default function MMLayout() {
 
           {/* Vendor Invoice */}
           <Route path="invoices"    element={<VendorInvList />} />
+          <Route path="approvals"   element={<MMApprovals module="MM" />} />
           <Route path="invoices/new" element={<VendorInvNew />} />
 
           {/* Vendors */}
@@ -132,7 +136,8 @@ export default function MMLayout() {
           <Route path="vendors/ledger" element={<VendorLedger />} />
 
           {/* Others */}
-          <Route path="payments"    element={<PaymentList />} />
+          <Route path="payments"           element={<PaymentList />} />
+          <Route path="payment-requests"  element={<VendorPaymentRequest />} />
           <Route path="rfq"         element={<RFQList />} />
           <Route path="materials"   element={<MaterialList />} />
           <Route path="report"      element={<POReport />} />

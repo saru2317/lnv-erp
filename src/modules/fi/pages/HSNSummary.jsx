@@ -37,7 +37,8 @@ export default function HSNSummary() {
   const [month,   setMonth]   = useState(now.getMonth()+1)
   const [year,    setYear]    = useState(now.getFullYear())
   const [rows,    setRows]    = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading,    setLoading]    = useState(true)
+  const [missingHSN, setMissingHSN] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -45,6 +46,7 @@ export default function HSNSummary() {
       const res  = await fetch(`${BASE_URL}/fi/gst/hsn?month=${month}&year=${year}`, { headers: hdr2() })
       const d    = await res.json()
       setRows(d.data||[])
+      setMissingHSN(d.missingHSN||0)
     } catch {} finally { setLoading(false) }
   }, [month, year])
   useEffect(() => { load() }, [load])
@@ -64,6 +66,15 @@ export default function HSNSummary() {
         </div>
       </div>
 
+      {missingHSN > 0 && (
+        <div style={{ background:'#FFF3CD', border:'1px solid #FFEAA7', borderRadius:6,
+          padding:'10px 14px', marginBottom:12, fontSize:12, color:'#856404', display:'flex',
+          alignItems:'center', gap:8 }}>
+          ⚠️ <strong>{missingHSN} item(s) have missing HSN codes.</strong>
+          &nbsp;Go to MDM → Item Master → update HSN code for each item. GSTR-1 requires valid 4-digit HSN codes.
+        </div>
+      )}
+
       {loading ? <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading HSN Summary...</div> : (
         <table className="fi-data-table">
           <thead><tr>
@@ -82,8 +93,13 @@ export default function HSNSummary() {
                 <br/><span style={{fontSize:12}}>Add HSN codes to Item Master to see this report.</span>
               </td></tr>
             ) : rows.map((r,i)=>(
-              <tr key={i}>
-                <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13,color:'#714B67'}}>{r.hsn}</td>
+              <tr key={i} style={{ background: r.missing ? '#FFF8E7' : 'transparent' }}>
+                <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13,
+                  color: r.missing ? '#856404' : '#714B67'}}>
+                  {r.missing
+                    ? <span title="HSN code missing — update Item Master">⚠️ Missing</span>
+                    : r.hsn}
+                </td>
                 <td style={{fontSize:12}}>{r.description}</td>
                 <td style={{fontSize:12}}>{r.uom}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{r.qty?.toLocaleString('en-IN')}</td>

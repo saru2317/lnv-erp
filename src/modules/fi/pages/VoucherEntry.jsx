@@ -251,15 +251,15 @@ export default function VoucherEntry() {
     setPvInvRef('')
     setPvPendingInvs([])
 
-    // Fetch FI-approved invoices for this vendor (PENDING = approved by FI, ready to pay)
+    // Fetch all payable invoices for this vendor
     if (v.code) {
       try {
-        const res  = await fetch(`${BASE_URL}/mm/invoices?vendorCode=${v.code}&status=PENDING,PARTIAL,OVERDUE`, { headers: hdr2() })
+        const res  = await fetch(`${BASE_URL}/mm/invoices?vendorCode=${v.code}&status=PENDING,PARTIAL,OVERDUE,APPROVED,POSTED`, { headers: hdr2() })
         const data = await res.json()
-        const approved = (data.data || []).filter(i => i.status !== 'PENDING_APPROVAL' && i.status !== 'REJECTED')
+        const approved = (data.data || []).filter(i => !['PENDING_APPROVAL','REJECTED','PAID','CANCELLED'].includes(i.status))
         setPvPendingInvs(approved)
         if (approved.length === 0) {
-          toast('No approved invoices — vendor invoices need FI approval first', { icon:'ℹ️' })
+          toast('No payable invoices found for this vendor', { icon:'ℹ️' })
         }
       } catch {}
     }

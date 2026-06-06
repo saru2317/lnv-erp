@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@hooks/useAuth'
 import { sdApi } from '../services/sdApi'
 import toast from 'react-hot-toast'
 
@@ -21,10 +22,40 @@ const STATUS = {
 
 export default function InvoiceList() {
   const nav = useNavigate()
+  const { user } = useAuth()
+  const role = user?.role || ''
+  // Only Finance/Accounts/Manager/Admin can Pay and Cancel posted invoices
+  const canPay    = ['ACCOUNTS','FINANCE','MANAGER','ADMIN','SUPER_ADMIN'].includes(role)
+  const canCancel = ['ACCOUNTS','FINANCE','MANAGER','ADMIN','SUPER_ADMIN'].includes(role)
+  const canPost   = ['ACCOUNTS','FINANCE','MANAGER','ADMIN','SUPER_ADMIN'].includes(role)
   const [invoices, setInvoices] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [search,   setSearch]   = useState('')
   const [status,   setStatus]   = useState('')
+
+  const deleteInvoice = async (e, inv) => {
+    e.stopPropagation()
+    if (!window.confirm(`Delete ${inv.invoiceNo}? Cannot be undone.`)) return
+    try {
+      const r = await fetch(`${BASE}/sd/invoices/${inv.id}`, { method:'DELETE', headers:hdr2() })
+      const d = await r.json()
+      if (d.error) throw new Error(d.error)
+      toast.success(`${inv.invoiceNo} deleted`)
+      load()
+    } catch(ex) { toast.error(ex.message) }
+  }
+
+  const cancelInvoice = async (e, inv) => {
+    e.stopPropagation()
+    if (!window.confirm(`Cancel ${inv.invoiceNo}? This will reverse the accounting entries.`)) return
+    try {
+      const r = await fetch(`${BASE}/sd/invoices/${inv.id}/cancel`, { method:'POST', headers:hdr2() })
+      const d = await r.json()
+      if (d.error) throw new Error(d.error)
+      toast.success(`${inv.invoiceNo} cancelled`)
+      load()
+    } catch(ex) { toast.error(ex.message) }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -126,7 +157,7 @@ export default function InvoiceList() {
           <div key={l} style={{ background:bg, borderRadius:8,
             padding:'10px 14px', textAlign:'center' }}>
             <div style={{ fontSize:18, fontWeight:800,
-              color:c, fontFamily:'DM Mono,monospace' }}>
+              color:c, fontFamily:'Tahoma,monospace' }}>
               {l === 'Outstanding Amt' ? fmtC(pendingAmt) : v}
             </div>
             <div style={{ fontSize:10, fontWeight:700,
@@ -180,7 +211,7 @@ export default function InvoiceList() {
                   onClick={() => nav(`/sd/invoices/${inv.id}`)}>
                   <td>
                     <strong style={{ color:'#714B67',
-                      fontFamily:'DM Mono,monospace', fontSize:11 }}>
+                      fontFamily:'Tahoma,monospace', fontSize:11 }}>
                       {inv.invoiceNo}
                     </strong>
                     {isOverdue && (
@@ -197,24 +228,24 @@ export default function InvoiceList() {
                     </strong>
                     {inv.customerCode || inv.customerId && (
                       <div style={{ fontSize:10, color:'#6C757D',
-                        fontFamily:'DM Mono,monospace' }}>
+                        fontFamily:'Tahoma,monospace' }}>
                         {inv.customerCode || inv.customerId}
                       </div>
                     )}
                   </td>
                   <td style={{ fontSize:11, color:'#6C757D',
-                    fontFamily:'DM Mono,monospace' }}>
+                    fontFamily:'Tahoma,monospace' }}>
                     {inv.soRef || inv.soNo || '—'}
                   </td>
-                  <td style={{ fontFamily:'DM Mono,monospace', fontSize:12 }}>
+                  <td style={{ fontFamily:'Tahoma,monospace', fontSize:12 }}>
                     {fmtC(inv.taxableAmt)}
                   </td>
-                  <td style={{ fontFamily:'DM Mono,monospace',
+                  <td style={{ fontFamily:'Tahoma,monospace',
                     fontSize:12, color:'#856404' }}>
                     {fmtC((parseFloat(inv.cgst||0)+parseFloat(inv.sgst||0)+parseFloat(inv.igst||0)))}
                   </td>
                   <td>
-                    <strong style={{ fontFamily:'DM Mono,monospace',
+                    <strong style={{ fontFamily:'Tahoma,monospace',
                       color:'#714B67' }}>
                       {fmtC(inv.grandTotal)}
                     </strong>
@@ -223,7 +254,7 @@ export default function InvoiceList() {
                     color: isOverdue ? '#DC3545' : '#6C757D' }}>
                     {fmtD(inv.dueDate)}
                   </td>
-                  <td style={{ fontFamily:'DM Mono,monospace',
+                  <td style={{ fontFamily:'Tahoma,monospace',
                     fontSize:12, fontWeight:700,
                     color: parseFloat(inv.balanceAmt||0) > 0 ? '#DC3545' : '#155724' }}>
                     {fmtC((parseFloat(inv.grandTotal||0) - parseFloat(inv.paidAmt||0)))}
@@ -241,6 +272,27 @@ export default function InvoiceList() {
                       onClick={() => nav(`/sd/invoices/${inv.id}`)}>
                       View
                     </button>
+                    {['DRAFT','PENDING_APPROVAL'].includes(inv.status) && (
+                      <button className="btn-xs"
+                        style={{ background:'#EDE0EA', color:'#714B67', border:'1px solid #D0C4D8' }}
+                        onClick={e=>{ e.stopPropagation(); nav(`/sd/invoices/${inv.id}/edit`) }}>
+                        ✏️
+                      </button>
+                    )}
+                    {['DRAFT','PENDING_APPROVAL'].includes(inv.status) && (
+                      <button className="btn-xs"
+                        style={{ background:'#F8D7DA', color:'#721C24', border:'none' }}
+                        onClick={e => deleteInvoice(e, inv)}>
+                        🗑
+                      </button>
+                    )}
+                    {['POSTED','PENDING','PARTIAL','OVERDUE'].includes(inv.status) && canCancel && (
+                      <button className="btn-xs"
+                        style={{ background:'#FFF3CD', color:'#856404', border:'1px solid #FFEAA7' }}
+                        onClick={e => cancelInvoice(e, inv)}>
+                        Cancel
+                      </button>
+                    )}
                     {inv.status === 'DRAFT' && (
                       <button className="act-btn-green"
                         onClick={e => submitApproval(e, inv.id)}>
@@ -255,13 +307,13 @@ export default function InvoiceList() {
                         Inbox →
                       </button>
                     )}
-                    {inv.status === 'APPROVED' && (
+                    {inv.status === 'APPROVED' && canPost && (
                       <button className="act-btn-green"
                         onClick={e => postInvoice(e, inv.id)}>
                         Post
                       </button>
                     )}
-                    {['POSTED','PENDING','PARTIAL','OVERDUE'].includes(inv.status) && (
+                    {['POSTED','PENDING','PARTIAL','OVERDUE'].includes(inv.status) && canPay && (
                       <button className="act-btn-green"
                         onClick={() => nav(`/sd/payments/new?invId=${inv.id}`)}>
                         Pay
@@ -279,15 +331,15 @@ export default function InvoiceList() {
                   Total ({filtered.length} invoices)
                 </td>
                 <td style={{ padding:'10px 12px',
-                  fontFamily:'DM Mono,monospace' }}>
+                  fontFamily:'Tahoma,monospace' }}>
                   {fmtC(totalTaxable)}
                 </td>
                 <td style={{ padding:'10px 12px',
-                  fontFamily:'DM Mono,monospace', color:'#856404' }}>
+                  fontFamily:'Tahoma,monospace', color:'#856404' }}>
                   {fmtC(totalGST)}
                 </td>
                 <td style={{ padding:'10px 12px',
-                  fontFamily:'DM Mono,monospace',
+                  fontFamily:'Tahoma,monospace',
                   color:'#714B67', fontSize:14, fontWeight:800 }}>
                   {fmtC(grandTotal)}
                 </td>

@@ -44,14 +44,14 @@ export default function GSTR1() {
     try {
       const res  = await fetch(`${BASE_URL}/fi/gst/gstr1?month=${month}&year=${year}`, { headers: hdr2() })
       const d    = await res.json()
-      setData(d.data ? d : null)
+      setData(d.data ? d.data : null)
     } catch {} finally { setLoading(false) }
   }, [month, year])
   useEffect(() => { load() }, [load])
 
   const invoices = data?.invoices || []
-  const b2b = invoices.filter(i=>i.gstNo||i.gstin)
-  const b2c = invoices.filter(i=>!i.gstNo&&!i.gstin)
+  const b2b = invoices.filter(i=>i.customerGstin||i.gstNo||i.gstin)
+  const b2c = invoices.filter(i=>!i.customerGstin&&!i.gstNo&&!i.gstin)
 
   return (
     <div>
@@ -92,14 +92,22 @@ export default function GSTR1() {
               <tr key={i}>
                 <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>{inv.invoiceNo}</td>
                 <td style={{fontWeight:600,fontSize:12}}>{inv.customerName||inv.custName}</td>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{inv.gstNo||inv.gstin||'B2C'}</td>
-                <td style={{fontSize:11}}>{inv.invoiceDate?new Date(inv.invoiceDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{inv.customerGstin||inv.gstNo||inv.gstin||'B2C'}</td>
+                <td style={{fontSize:11}}>{(inv.invoiceDate||inv.date)?new Date(inv.invoiceDate||inv.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(inv.taxableAmt||inv.amount||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(inv.cgst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(inv.sgst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#0C5460'}}>{INR(inv.igst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(inv.totalAmt||inv.grandTotal||0)}</td>
-                <td><span className="badge badge-posted">Filed</span></td>
+                <td>
+                  <span style={{
+                    background: inv.gstrFiled ? '#D4EDDA' : '#FFF3CD',
+                    color:       inv.gstrFiled ? '#155724' : '#856404',
+                    padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700
+                  }}>
+                    {inv.gstrFiled ? 'Filed' : 'Pending'}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

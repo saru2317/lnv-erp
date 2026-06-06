@@ -8,9 +8,15 @@ const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','
 
 const CC_COLORS = {
   'Production':  { color:'#155724', bg:'#D4EDDA' },
-  'Admin':       { color:'#004085', bg:'#CCE5FF' },
   'Sales':       { color:'#856404', bg:'#FFF3CD' },
+  'Purchase':    { color:'#004085', bg:'#CCE5FF' },
+  'Admin':       { color:'#383D41', bg:'#E2E3E5' },
+  'HR':          { color:'#4B2E83', bg:'#EDE0EA' },
+  'Finance':     { color:'#0C5460', bg:'#D1ECF1' },
   'Maintenance': { color:'#721C24', bg:'#F8D7DA' },
+  'Quality':     { color:'#1A5276', bg:'#D6EAF8' },
+  'Warehouse':   { color:'#117A65', bg:'#D5F5E3' },
+  'Transport':   { color:'#6E2F00', bg:'#FDEBD0' },
 }
 
 export default function CostCenterLedger() {
@@ -53,6 +59,18 @@ export default function CostCenterLedger() {
             {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
           </select>
           <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
+          <button className="btn btn-s sd-bsm" onClick={async () => {
+            try {
+              toast.loading('Fixing cost centers...', { id:'cc-bf' })
+              const r = await fetch(`${BASE_URL}/fi/cost-center/backfill`, {
+                method:'POST', headers:{ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` }
+              })
+              const d = await r.json()
+              toast.dismiss('cc-bf')
+              toast.success(d.message)
+              load()
+            } catch(e) { toast.dismiss('cc-bf'); toast.error(e.message) }
+          }}>⚙️ Fix CC Data</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
       </div>
@@ -107,13 +125,16 @@ export default function CostCenterLedger() {
             {rows.length===0 ? (
               <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
                 No expense entries for {MONTHS[month]} {year}.
-                Tag JV narrations with department names (Admin/Sales/Maintenance) for auto-allocation.
+                <br/><span style={{fontSize:11}}>Post invoices, payroll, WOs — cost centers are auto-assigned by module.</span>
               </td></tr>
             ) : rows.map((r,i)=>{
               const cc = CC_COLORS[r.cc]||{color:'#714B67',bg:'#EDE0EA'}
               return (
                 <tr key={i}>
-                  <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>{r.jeNo||'—'}</td>
+                  <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>
+                    {r.jeNo||'—'}
+                    {r.refType && <div><span style={{fontSize:9,background:'#F0EEEB',padding:'1px 4px',borderRadius:3,color:'#6C757D'}}>{r.refType}</span></div>}
+                  </td>
                   <td style={{fontSize:11}}>{r.date?new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
                   <td style={{fontSize:12,maxWidth:220}}>{r.narration}</td>
                   <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{r.acct}</td>

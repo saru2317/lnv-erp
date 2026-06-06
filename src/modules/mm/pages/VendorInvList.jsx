@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@hooks/useAuth'
 import toast from 'react-hot-toast'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -100,19 +101,49 @@ function PayModal({ inv, onSave, onCancel }) {
 
 export default function VendorInvList() {
   const nav = useNavigate()
-  const [invs,   setInvs]  = useState([])
-  const [loading,setLoad]  = useState(true)
-  const [chip,   setChip]  = useState('all')
-  const [payInv, setPayInv]= useState(null)
+  const { user } = useAuth()
+  const canPay = ['ACCOUNTS','FINANCE','MANAGER','ADMIN','SUPER_ADMIN'].includes(user?.role)
+  const canRequestPayment = !canPay
+
+  const raisePaymentRequest = (inv) => {
+    const params = new URLSearchParams({
+      vendorCode:  inv.vendorCode  || '',
+      vendorName:  inv.vendorName  || '',
+      vendorGstin: inv.vendorGstin || '',
+      invoiceRef:  inv.invNo       || '',
+      invoiceAmt:  inv.totalAmount || 0,
+      requestAmt:  inv.balance     || inv.totalAmount || 0,
+      isAdvance:   'false',
+      purpose:     `Payment for Invoice ${inv.invNo}`,
+    })
+    nav(`/mm/payment-requests?${params.toString()}`)
+  }
+
+  const [invs,            setInvs]           = useState([])
+  const [requestedInvNos, setRequestedInvNos] = useState(new Set()) // invoice nos already requested
+  const [loading,         setLoad]           = useState(true)
+  const [chip,            setChip]           = useState('all')
+  const [payInv,          setPayInv]         = useState(null)
   const [search, setSearch]= useState('')
   const [viewInv,setViewInv]= useState(null)
 
   const fetchInvs = useCallback(async () => {
     setLoad(true)
     try {
-      const res  = await fetch(`${BASE_URL}/mm/invoices`, { headers:{ Authorization:`Bearer ${getToken()}` }})
-      const data = await res.json()
-      setInvs(data.data||[])
+      const [invRes, prRes] = await Promise.all([
+        fetch(`${BASE_URL}/mm/invoices`, { headers:{ Authorization:`Bearer ${getToken()}` }}),
+        fetch(`${BASE_URL}/mm/payment-requests`, { headers:{ Authorization:`Bearer ${getToken()}` }})
+      ])
+      const invData = await invRes.json()
+      const prData  = await prRes.json().catch(()=>({ data:[] }))
+      setInvs(invData.data||[])
+      // Build set of invoice nos that already have a PENDING/APPROVED payment request
+      const reqSet = new Set(
+        (prData.data||[])
+          .filter(r => !r.isAdvance && ['PENDING','APPROVED'].includes(r.status))
+          .map(r => r.invoiceRef)
+      )
+      setRequestedInvNos(reqSet)
     } catch(e){ toast.error(e.message) } finally { setLoad(false) }
   }, [])
 
@@ -229,12 +260,30 @@ export default function VendorInvList() {
                         onClick={()=>setViewInv(inv)}>
                         👁 View
                       </button>
-                      {inv.status!=='PAID' && (
+                      {inv.status!=='PAID' && canPay && (
                         <button className="btn-xs suc"
                           onClick={()=>setPayInv(inv)}>
                           💳 Pay
                         </button>
                       )}
+                      {inv.status!=='PAID' && canRequestPayment && (() => {
+                        const alreadyRequested = requestedInvNos.has(inv.invNo)
+                        return (
+                          <button className="btn-xs"
+                            disabled={alreadyRequested}
+                            title={alreadyRequested ? 'Payment request already raised' : 'Raise payment request to Finance'}
+                            style={{
+                              background: alreadyRequested ? '#E9ECEF' : '#CCE5FF',
+                              color:      alreadyRequested ? '#6C757D' : '#004085',
+                              border:     `1px solid ${alreadyRequested ? '#CED4DA' : '#B8DAFF'}`,
+                              cursor:     alreadyRequested ? 'not-allowed' : 'pointer',
+                              opacity:    alreadyRequested ? 0.7 : 1,
+                            }}
+                            onClick={() => !alreadyRequested && raisePaymentRequest(inv)}>
+                            {alreadyRequested ? '✓ Req. Raised' : '📋 Request Payment'}
+                          </button>
+                        )
+                      })()}
                       {inv.status!=='PAID' && (
                         <button className="btn-xs"
                           style={{ color:'#DC3545' }}
@@ -319,7 +368,7 @@ export default function VendorInvList() {
               borderTop:'1px solid #E0D5E0',
               display:'flex', justifyContent:'flex-end',
               gap:10, background:'#F8F7FA' }}>
-              {viewInv.status!=='PAID' && (
+              {canPay && viewInv.status!=='PAID' && (
                 <button onClick={()=>{ setPayInv(viewInv); setViewInv(null) }}
                   style={{ padding:'8px 20px', background:'#155724',
                     color:'#fff', border:'none', borderRadius:6,
@@ -327,6 +376,22 @@ export default function VendorInvList() {
                   💳 Pay Now
                 </button>
               )}
+              {canRequestPayment && viewInv.status!=='PAID' && (() => {
+                const alreadyRequested = requestedInvNos.has(viewInv.invNo)
+                return (
+                  <button
+                    disabled={alreadyRequested}
+                    onClick={() => { if(!alreadyRequested){ raisePaymentRequest(viewInv); setViewInv(null) } }}
+                    style={{ padding:'8px 20px',
+                      background: alreadyRequested ? '#E9ECEF' : '#004085',
+                      color:      alreadyRequested ? '#6C757D' : '#fff',
+                      border:'none', borderRadius:6, fontSize:13,
+                      cursor: alreadyRequested ? 'not-allowed' : 'pointer',
+                      fontWeight:700, opacity: alreadyRequested ? 0.7 : 1 }}>
+                    {alreadyRequested ? '✓ Request Already Raised' : '📋 Request Payment'}
+                  </button>
+                )
+              })()}
               <button onClick={()=>setViewInv(null)}
                 style={{ padding:'8px 20px', background:'#714B67',
                   color:'#fff', border:'none', borderRadius:6,

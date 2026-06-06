@@ -59,37 +59,40 @@ export default function COGMReport() {
 
   // Filter by date range
   const filtered = wos.filter(w => {
-    const dt = new Date(w.actualEnd || w.updatedAt || w.createdAt)
-    const from = new Date(dateFrom)
-    const to   = new Date(dateTo)
-    const matchDate = (!dateFrom || dt >= from) && (!dateTo || dt <= to)
+    const dt   = new Date(w.actualEnd || w.completedAt || w.updatedAt || w.createdAt)
+    const from = dateFrom ? new Date(dateFrom + 'T00:00:00') : null
+    const to   = dateTo   ? new Date(dateTo   + 'T23:59:59') : null
+    const matchDate = (!from || dt >= from) && (!to || dt <= to)
     const matchSrch = !search ||
       w.woNo?.toLowerCase().includes(search.toLowerCase()) ||
       w.itemName?.toLowerCase().includes(search.toLowerCase())
     return matchDate && matchSrch
   })
 
-  // Cost calculations from WO data
+  // Cost calculations from WO data — uses actual schema fields
   const calcCosts = (w) => {
     const matIssues  = w.materialIssues || []
     const operations = w.operations     || []
     const produced   = parseFloat(w.producedQty || 0)
-    const planned    = parseFloat(w.plannedQty  || 0)
 
+    // Material cost: sum from material issues (totalCost field)
     const matCost = matIssues.reduce((s, m) =>
-      s + parseFloat(m.issuedQty || m.bomQty || 0) * parseFloat(m.unitCost || 0), 0)
+      s + parseFloat(m.totalCost || (parseFloat(m.issuedQty||0) * parseFloat(m.unitCost||0)) || 0), 0)
+      || parseFloat(w.actualRMCost || 0)
 
+    // MHR cost from operations (runTime in mins × mhr rate)
     const mhrCost = operations.reduce((s, op) => {
-      const hrs = (parseFloat(op.runTime || 0) / 60) * produced
-      return s + hrs * parseFloat(op.mhr || 0)
-    }, 0)
+      const hrs = parseFloat(op.runTime || 0) / 60
+      return s + hrs * parseFloat(op.mhr || op.mhrRate || 0)
+    }, 0) || parseFloat(w.labourCost || 0)
 
-    const totalActual  = parseFloat(w.actualCost  || matCost + mhrCost)
-    const totalPlanned = parseFloat(w.plannedCost || 0)
+    const overhead     = parseFloat(w.overheadCost || 0)
+    const totalActual  = parseFloat(w.totalCost || 0) || (matCost + mhrCost + overhead)
+    const totalPlanned = parseFloat(w.plannedRMCost || 0)
     const unitCost     = produced > 0 ? totalActual / produced : 0
     const variance     = totalActual - totalPlanned
 
-    return { matCost, mhrCost, totalActual, totalPlanned, unitCost, variance }
+    return { matCost, mhrCost, overhead, totalActual, totalPlanned, unitCost, variance }
   }
 
   // Totals across all filtered WOs
@@ -150,6 +153,20 @@ export default function COGMReport() {
             onChange={e => setDateTo(e.target.value)} />
           <button className="btn btn-s sd-bsm" onClick={load}>↻</button>
           <button className="btn btn-s sd-bsm" onClick={exportExcel}>⬇️ Export</button>
+          <button className="btn btn-p sd-bsm" onClick={async () => {
+            if (!window.confirm('Backfill COGM JVs for all completed WOs? This posts auto-journals for WOs that were completed before this feature was added.')) return
+            try {
+              toast.loading('Processing...', { id:'cogm-bf' })
+              const r = await fetch(`${BASE}/pp/wo/backfill-cogm`, {
+                method:'POST', headers:{ ...hdr2(), 'Content-Type':'application/json' }
+              })
+              const d = await r.json()
+              toast.dismiss('cogm-bf')
+              if (d.error) { toast.error(d.error); return }
+              toast.success(d.message)
+              load()
+            } catch(e) { toast.dismiss('cogm-bf'); toast.error(e.message) }
+          }}>⚙️ Recalculate All</button>
         </div>
       </div>
 

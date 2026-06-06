@@ -2,52 +2,10 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 
-// ── DEMO NOTIFICATIONS ────────────────────────────────
-const ALL_NOTIFICATIONS = [
-  // Critical / Urgent
-  { id:'N001', type:'critical', module:'FI',  icon:'▸', title:'GSTR-3B Filing Due Today',
-    body:'March 2026 return must be filed by 20 Mar. Net payable: ₹1,62,000.',
-    path:'/fi/gstr3b', time:'2 min ago', read:false, roles:['admin','accounts'] },
-  { id:'N002', type:'critical', module:'MM',  icon:'▸', title:'3 Items Below Reorder Level',
-    body:'Masking Tape (12 rolls), Burner Nozzle (3 nos), Phosphating Chemical (85 kg).',
-    path:'/reports/inventory', time:'15 min ago', read:false, roles:['admin','manager','operations'] },
-  { id:'N003', type:'critical', module:'FI',  icon:'▸', title:'Vendor Payment Overdue — Lakshmi Mills',
-    body:'Invoice #LTM/2026/0124 — ₹1,42,000 overdue by 12 days.',
-    path:'/fi/payments', time:'1 hr ago', read:false, roles:['admin','accounts'] },
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-  // Warnings
-  { id:'N004', type:'warning', module:'TM',  icon:'▸', title:'Vehicle Document Expiring — TN38 IJ 7890',
-    body:'FC, Insurance and Road Tax all expire today. Renew immediately.',
-    path:'/tm/vehicles', time:'2 hrs ago', read:false, roles:['admin','manager','transport'] },
-  { id:'N005', type:'warning', module:'PM',  icon:'▸', title:'Preventive Maintenance Due — Oven #2',
-    body:'Scheduled PM overdue by 3 days. Raise work order.',
-    path:'/pm', time:'3 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N006', type:'warning', module:'QM',  icon:'▸', title:'NCR #QM-089 Awaiting Action',
-    body:'Quality hold on Job J-2026-044 — TVS Motor batch. Root cause pending.',
-    path:'/qm/ncr', time:'4 hrs ago', read:true,  roles:['admin','manager','operations'] },
-
-  // Info
-  { id:'N007', type:'info', module:'SD',  icon:'▸', title:'Sales Order #SO-2026-0124 Confirmed',
-    body:'Ashok Leyland — ₹3,91,680. Delivery due 20 Mar 2026.',
-    path:'/sd/sales', time:'5 hrs ago', read:true,  roles:['admin','sales','accounts'] },
-  { id:'N008', type:'info', module:'MM',  icon:'▸', title:'GRN #GRN-2026-031 Completed',
-    body:'Lakshmi Textile Mills — 500 kg Powder Coat received and inspected.',
-    path:'/mm/grn', time:'6 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N009', type:'info', module:'PP',  icon:'▸', title:'Job #J-2026-047 Started',
-    body:'TVS Motor batch — Epoxy coating. Qty: 500. Est. completion: 19 Mar.',
-    path:'/pp/wo', time:'7 hrs ago', read:true,  roles:['admin','manager','operations'] },
-  { id:'N010', type:'info', module:'HCM', icon:'▸', title:'Leave Request — Selvam D.',
-    body:'Leave applied: 21–22 Mar 2026 (2 days). Pending approval.',
-    path:'/hcm/leave', time:'Yesterday', read:true,  roles:['admin','hr','manager'] },
-
-  // Success
-  { id:'N011', type:'success', module:'FI',  icon:'▸', title:'Bank Reconciliation Completed',
-    body:'Feb 2026 bank recon done. All entries matched. Difference: ₹0.',
-    path:'/fi/bank-recon', time:'Yesterday', read:true,  roles:['admin','accounts'] },
-  { id:'N012', type:'success', module:'SD',  icon:'▸', title:'Payment Received — TVS Motors',
-    body:'₹9,80,000 received against Invoice #INV-2026-0083. Fully settled.',
-    path:'/fi/receipts', time:'2 days ago', read:true,  roles:['admin','accounts','sales'] },
-]
+// Live API only — no hardcoded notifications
+const ALL_NOTIFICATIONS = []
 
 const TYPE_CONFIG = {
   critical: { color:'#721C24', bg:'#F8D7DA', border:'#F5C6CB', dot:'#D9534F', label:'Critical' },
@@ -66,12 +24,48 @@ export default function NotificationsPanel() {
   const navigate   = useNavigate()
   const [open, setOpen]       = useState(false)
   const [filter, setFilter]   = useState('all')
-  const [notifs, setNotifs]   = useState(ALL_NOTIFICATIONS)
+  const [pendingApprovals, setPendingApprovals] = useState([])
   const panelRef = useRef(null)
 
-  // Filter by role
-  const roleNotifs = notifs.filter(n =>
-    !user?.role || n.roles.includes(user.role)
+  // Fetch live pending approvals
+  const fetchApprovals = async () => {
+    try {
+      const tok = localStorage.getItem('lnv_token')
+      if (!tok) return
+      const r = await fetch(`${BASE}/fi/my-approvals`, {
+        headers: { Authorization: `Bearer ${tok}` }
+      })
+      const d = await r.json()
+      const approvals = (d.data || []).map(a => ({
+        id:     `APPROVAL-${a.type}-${a.id}`,
+        type:   'critical',
+        module: a.module || 'FI',
+        icon:   a.type === 'LEAVE' ? '🏖' : a.type === 'WO' ? '⚙️' : a.type === 'VENDOR_INVOICE' ? '📦' : '🧾',
+        title:  `Pending Approval: ${a.docNo}`,
+        body:   `${a.party} · ${a.amount > 0 ? '₹'+Number(a.amount).toLocaleString('en-IN') : ''} · ${a.submittedBy || ''}`,
+        path:   a.actionUrl || '/admin/approvals',
+        time:   'Pending',
+        read:   false,
+        roles:  ['admin','accounts','sales','hr','production','manager','operations'],
+        isApproval: true,
+      }))
+      setPendingApprovals(approvals)
+    } catch {}
+  }
+
+  useEffect(() => {
+    fetchApprovals()
+    const t = setInterval(fetchApprovals, 30000)
+    return () => clearInterval(t)
+  }, [])
+
+  // All notifs = live approvals only
+  const allNotifs = [...pendingApprovals]
+
+  // Filter by role — normalize both sides to lowercase for safety
+  const userRole = (user?.role || '').toLowerCase()
+  const roleNotifs = allNotifs.filter(n =>
+    !userRole || n.roles.map(r => r.toLowerCase()).includes(userRole)
   )
 
   // Apply tab filter
@@ -83,9 +77,9 @@ export default function NotificationsPanel() {
 
   const unreadCount = roleNotifs.filter(n => !n.read).length
 
-  const markRead = (id) => setNotifs(ns => ns.map(n => n.id === id ? {...n, read:true} : n))
-  const markAllRead = () => setNotifs(ns => ns.map(n => ({...n, read:true})))
-  const dismiss = (id, e) => { e.stopPropagation(); setNotifs(ns => ns.filter(n => n.id !== id)) }
+  const markRead = (id) => setPendingApprovals(ns => ns.map(n => n.id === id ? {...n, read:true} : n))
+  const markAllRead = () => setPendingApprovals(ns => ns.map(n => ({...n, read:true})))
+  const dismiss = (id, e) => { e.stopPropagation(); setPendingApprovals(ns => ns.filter(n => n.id !== id)) }
 
   const handleClick = (notif) => {
     markRead(notif.id)
@@ -118,7 +112,11 @@ export default function NotificationsPanel() {
         }}
         onMouseEnter={e => { if(!open) e.currentTarget.style.background='rgba(255,255,255,.12)' }}
         onMouseLeave={e => { if(!open) e.currentTarget.style.background='transparent' }}>
-        
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
         {unreadCount > 0 && (
           <span style={{
             position:'absolute', top:4, right:4,
@@ -149,7 +147,7 @@ export default function NotificationsPanel() {
             background:'linear-gradient(135deg,#4A3050,#714B67)',
           }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-              <div style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:800, color:'#fff' }}>
+              <div style={{ fontFamily:'Tahoma,Verdana,sans-serif', fontSize:14, fontWeight:800, color:'#fff' }}>
                  Notifications
                 {unreadCount > 0 && (
                   <span style={{ marginLeft:8, background:'var(--odoo-red)', color:'#fff',
@@ -162,7 +160,7 @@ export default function NotificationsPanel() {
                 <button onClick={markAllRead}
                   style={{ background:'rgba(255,255,255,.15)', border:'1px solid rgba(255,255,255,.3)',
                     color:'#fff', fontSize:11, padding:'3px 10px', borderRadius:5,
-                    cursor:'pointer', fontFamily:'DM Sans,sans-serif', fontWeight:600 }}>
+                    cursor:'pointer', fontFamily:'Tahoma,Verdana,sans-serif', fontWeight:600 }}>
                    Mark all read
                 </button>
               )}

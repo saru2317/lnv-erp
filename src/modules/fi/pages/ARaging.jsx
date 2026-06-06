@@ -22,6 +22,7 @@ export default function ARaging() {
   const [bucket,  setBucket]  = useState('all')
   const [search,  setSearch]  = useState('')
   const [selected,setSelected]= useState(null)
+  const [total,   setTotal]   = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -30,6 +31,7 @@ export default function ARaging() {
       const d = await r.json()
       setRows(d.data    || [])
       setSummary(d.summary || {})
+      setTotal(d.total || 0)
     } catch { toast.error('Failed to load AR Aging') }
     finally { setLoading(false) }
   }, [])
@@ -51,8 +53,7 @@ export default function ARaging() {
     return acc
   }, {})
 
-  const totalOS    = summary.total  || 0
-  const overdueTot = (summary.d1_30||0)+(summary.d31_60||0)+(summary.d61_90||0)+(summary.over90||0)
+  const overdueTot = (summary.d1_30||0)+(summary.d31_60||0)+(summary.d61_90||0)+(summary.over_90?.amount||0)
 
   return (
     <div>
@@ -71,10 +72,10 @@ export default function ARaging() {
       {/* KPI Buckets */}
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(5,1fr)',marginBottom:14}}>
         {Object.entries(BUCKET_CFG).map(([key,bc]) => {
-          const amt = key==='current'?summary.current:
-                      key==='1_30'?summary.d1_30:
-                      key==='31_60'?summary.d31_60:
-                      key==='61_90'?summary.d61_90:summary.over90
+          const amt = key==='current'?summary.current?.amount:
+                      key==='1_30'?summary['1_30']?.amount:
+                      key==='31_60'?summary['31_60']?.amount:
+                      key==='61_90'?summary['61_90']?.amount:summary.over_90?.amount
           return (
             <div key={key} onClick={()=>setBucket(bucket===key?'all':key)}
               style={{background: bucket===key ? bc.bg : '#fff',
@@ -93,16 +94,16 @@ export default function ARaging() {
       </div>
 
       {/* Overdue bar */}
-      {totalOS > 0 && (
+      {total > 0 && (
         <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:'12px 16px',marginBottom:14}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:12}}>
-            <span style={{fontWeight:700,color:'#714B67'}}>Total Receivables: {INR(totalOS)} | Overdue: {INR(overdueTot)}</span>
-            <span style={{color:'#6C757D'}}>{summary.count} invoices pending</span>
+            <span style={{fontWeight:700,color:'#714B67'}}>Total Receivables: {INR(total)} | Overdue: {INR(overdueTot)}</span>
+            <span style={{color:'#6C757D'}}>{Object.values(summary).reduce((s,b)=>s+(b?.count||0),0)} invoices pending</span>
           </div>
           <div style={{display:'flex',height:10,borderRadius:4,overflow:'hidden',gap:2}}>
             {Object.entries(BUCKET_CFG).map(([key,bc])=>{
-              const amt = key==='current'?summary.current:key==='1_30'?summary.d1_30:key==='31_60'?summary.d31_60:key==='61_90'?summary.d61_90:summary.over90
-              const pct = totalOS > 0 ? (amt||0)/totalOS*100 : 0
+              const amt = key==='current'?summary.current?.amount:key==='1_30'?summary['1_30']?.amount:key==='31_60'?summary['31_60']?.amount:key==='61_90'?summary['61_90']?.amount:summary.over_90?.amount
+              const pct = total > 0 ? (amt||0)/total*100 : 0
               return pct > 0 ? (
                 <div key={key} title={`${bc.label}: ${INR(amt)}`}
                   style={{width:`${pct}%`,background:bc.color,transition:'width .3s',
@@ -167,7 +168,7 @@ export default function ARaging() {
           <tbody>
             {filtered.map((r, i) => {
               const bc = BUCKET_CFG[r.bucket] || BUCKET_CFG.current
-              const isOverdue = r.agingDays > 0
+              const isOverdue = r.daysOverdue > 0
               return (
                 <tr key={i} onClick={()=>setSelected(selected?.invoiceNo===r.invoiceNo?null:r)}
                   style={{cursor:'pointer',background:selected?.invoiceNo===r.invoiceNo?'#F8F4F8':'transparent'}}>
@@ -176,12 +177,12 @@ export default function ARaging() {
                   </td>
                   <td style={{fontWeight:600,fontSize:12}}>{r.customerName}</td>
                   <td style={{fontSize:11}}>
-                    {r.invoiceDate ? new Date(r.invoiceDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—'}
+                    {r.invDate ? new Date(r.invDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—'}
                   </td>
                   <td style={{fontSize:11,color: isOverdue ? '#DC3545' : '#333',fontWeight: isOverdue?700:400}}>
                     {r.dueDate ? new Date(r.dueDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : 'Not set'}
                   </td>
-                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>{INR(r.totalAmt)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>{INR(r.grandTotal)}</td>
                   <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12,color:'#155724'}}>
                     {r.paidAmt > 0 ? INR(r.paidAmt) : '—'}
                   </td>
@@ -189,10 +190,10 @@ export default function ARaging() {
                     {INR(r.balance)}
                   </td>
                   <td style={{textAlign:'center'}}>
-                    {r.agingDays > 0 ? (
+                    {r.daysOverdue > 0 ? (
                       <span style={{fontFamily:'DM Mono,monospace',fontWeight:700,
-                        color: r.agingDays > 60 ? '#DC3545' : r.agingDays > 30 ? '#856404' : '#E06F39'}}>
-                        {r.agingDays}d
+                        color: r.daysOverdue > 60 ? '#DC3545' : r.daysOverdue > 30 ? '#856404' : '#E06F39'}}>
+                        {r.daysOverdue}d
                       </span>
                     ) : (
                       <span style={{color:'#155724',fontSize:12}}>Not due</span>
@@ -206,7 +207,7 @@ export default function ARaging() {
                   <td onClick={e=>e.stopPropagation()}>
                     <div style={{display:'flex',gap:3}}>
                       <button className="btn-xs" onClick={()=>nav('/fi/receipts')}>Collect</button>
-                      {r.agingDays > 0 && (
+                      {r.daysOverdue > 0 && (
                         <button className="btn-xs" style={{background:'#FFF3CD',color:'#856404',border:'1px solid #FFEEBA'}}
                           onClick={()=>toast.success(`Reminder drafted for ${r.customerName}`)}>
                           Remind
@@ -224,7 +225,7 @@ export default function ARaging() {
                 TOTAL — {filtered.length} invoices
               </td>
               <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace'}}>
-                {INR(filtered.reduce((a,r)=>a+r.totalAmt,0))}
+                {INR(filtered.reduce((a,r)=>a+r.grandTotal,0))}
               </td>
               <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#155724'}}>
                 {INR(filtered.reduce((a,r)=>a+r.paidAmt,0))}
@@ -246,9 +247,9 @@ export default function ARaging() {
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,fontSize:12}}>
             {[
-              ['Invoice Date', selected.invoiceDate ? new Date(selected.invoiceDate).toLocaleDateString('en-IN') : '—'],
+              ['Invoice Date', selected.invDate ? new Date(selected.invDate).toLocaleDateString('en-IN') : '—'],
               ['Due Date',     selected.dueDate     ? new Date(selected.dueDate).toLocaleDateString('en-IN')     : 'Not set'],
-              ['Days Overdue', selected.agingDays > 0 ? `${selected.agingDays} days` : 'Not overdue'],
+              ['Days Overdue', selected.daysOverdue > 0 ? `${selected.daysOverdue} days` : 'Not overdue'],
               ['Balance Due',  INR(selected.balance)],
             ].map(([l,v])=>(
               <div key={l}>

@@ -105,12 +105,21 @@ const Field = ({ label, children, col }) => (
 export default function InvoiceNew() {
   const nav         = useNavigate()
   const [sp]        = useSearchParams()
-  const soIdParam   = sp.get('soId')
-  const dcIdParam   = sp.get('dcId')
+  const soIdParam      = sp.get('soId')
+  const dcIdParam      = sp.get('dcId')
+  const dcNoParam      = sp.get('dcNo')
+  const soNoParam      = sp.get('soNo')
+  const custIdParam    = sp.get('customerId')
+  const custNameParam  = decodeURIComponent(sp.get('customerName')||'')
+  const custGstinParam = sp.get('customerGstin')||''
+  const supplyTypeParam= sp.get('supplyType')||''
+  const billToParam    = decodeURIComponent(sp.get('billTo')||'')
+  const shipToParam    = decodeURIComponent(sp.get('shipTo')||'')
 
   const [invNo,    setInvNo]    = useState('Auto-generated')
   const [customers,setCustomers]= useState([])
   const [openSOs,  setOpenSOs]  = useState([])
+  const [openDCs,  setOpenDCs]  = useState([])
   const [fgItems,  setFgItems]  = useState([])
   const [shipAddrs,setShipAddrs]= useState([])
   const [lines,    setLines]    = useState([])
@@ -138,34 +147,118 @@ export default function InvoiceNew() {
     Promise.all([
       sdApi.getCustomers().catch(()=>({ data:[] })),
       sdApi.getOrders({ status:'CONFIRMED,PROCESSING,DELIVERED' }).catch(()=>({ data:[] })),
+      fetch(`${BASE}/sd/delivery-challan?pgiPosted=true&invoiced=false`, { headers:hdr2() }).then(r=>r.json()).catch(()=>({ data:[] })),
       fetch(`${BASE}/mdm/items`, { headers:hdr2() }).then(r=>r.json()).catch(()=>({ data:[] })),
       fetch(`${BASE}/sd/invoices/next-no`, { headers:hdr2() }).then(r=>r.json()).catch(()=>({ invNo:'INV-AUTO' })),
-    ]).then(([cR,soR,itR,noR]) => {
-      setCustomers(cR.data||[])
-      setOpenSOs(soR.data||[])
+    ]).then(([cR,soR,dcR,itR,noR]) => {
+      const freshCusts = cR.data||[]
+      const freshSOs   = soR.data||[]
+      setCustomers(freshCusts)
+      setOpenSOs(freshSOs)
+      setOpenDCs(dcR?.data||[])
       setFgItems((itR.data||[]).filter(i=>i.type==='FG'||i.itemType==='FG'||!i.type))
       setInvNo((noR&&(noR.invNo||noR.invoiceNo))||'INV-AUTO')
-    }).catch(e=>console.error('init',e))
 
-    if (dcIdParam)      loadFromDC(dcIdParam)
-    else if (soIdParam) loadFromSO(soIdParam)
+      // Load from DC/SO with fresh customer data (avoids stale state issue)
+      if (dcIdParam) {
+        // Pre-fill from URL params immediately
+        if (custNameParam) {
+          setSource({ type:'dc', ref:dcNoParam||dcIdParam })
+          setForm(f=>({ ...f,
+            customerId:    custIdParam||'',
+            customerName:  custNameParam,
+            customerGstin: custGstinParam,
+            dcId:          dcIdParam,
+            dcRef:         dcNoParam||'',
+            soId:          soIdParam||'',
+            soNo:          soNoParam||'',
+            supplyType:    supplyTypeParam || 'Intrastate',
+            billToAddress: billToParam,
+            shipToAddress: shipToParam || billToParam,
+          }))
+        }
+        loadFromDC(dcIdParam, freshCusts)
+        // Auto-match SO from fresh list using soNo param
+        if (soNoParam) {
+          const matchedSO = freshSOs.find(s => s.soNo === soNoParam)
+          if (matchedSO) {
+            setForm(f => ({ ...f, soId: matchedSO.id, soNo: soNoParam }))
+          }
+        }
+      } else if (soIdParam) {
+        loadFromSO(soIdParam)
+      }
+    }).catch(e=>console.error('init',e))
   }, [])
 
+  // Auto-match customer/SO by name once lists load
+  useEffect(() => {
+    if (!customers.length) return
+    // Use URL param OR form value — whichever is available
+    const nameToMatch = custNameParam || form.customerName
+    const custIdToCheck = custIdParam || form.customerId
+
+    if (nameToMatch && !custIdToCheck) {
+      const match = customers.find(c =>
+        (c.name||c.customerName||'').toLowerCase() === nameToMatch.toLowerCase()
+      )
+      if (match) {
+        setForm(f=>({ ...f,
+          customerId:    match.id||match.customerId,
+          customerName:  nameToMatch,
+          customerGstin: custGstinParam || f.customerGstin || match.gstin || '',
+          customerState: f.customerState || match.state || '',
+          billToAddress: billToParam || f.billToAddress || [match.address,match.city,match.state,match.pincode].filter(Boolean).join(', '),
+          shipToAddress: shipToParam || f.shipToAddress || [match.address,match.city,match.state,match.pincode].filter(Boolean).join(', '),
+        }))
+      }
+    }
+    // Auto-match SO (fallback if not matched in .then())
+    const soToMatch = soNoParam || form.soNo
+    if (soToMatch && !form.soId && openSOs.length) {
+      const so = openSOs.find(s => s.soNo === soToMatch)
+      if (so) setForm(f=>({ ...f, soId: so.id, soNo: soToMatch }))
+    }
+  }, [customers, openSOs])
+
   // ── Load from DC ─────────────────────────────────────────────
-  const loadFromDC = async (id) => {
+  const loadFromDC = async (id, freshCusts) => {
+    const custList = freshCusts || customers
     try {
       const res = await sdApi.getInvoiceFromDC(id)
       if (res.error) { toast.error('DC: '+res.error); return }
       const dc = res.data; if (!dc) return
       setSource({ type:'dc', ref:dc.dcRef })
-      const igst = !(dc.customerGstin||'').startsWith('33')
+      // Use supplyType from DC; fallback: same state = Intrastate
+      const dcSupply = dc.supplyType || supplyTypeParam || 'Intrastate'
+      const igst = dcSupply.toLowerCase().includes('inter')
+
+      // Resolve customerId from loaded customers list
+      const dcCustName = dc.customerName || custNameParam || ''
+      let matchedCust = null
+      if (dcCustName) {
+        matchedCust = custList.find(c =>
+          (c.name||c.customerName||'').toLowerCase() === dcCustName.toLowerCase()
+        )
+      }
+
+      const custId    = dc.customerId || matchedCust?.id || matchedCust?.customerId || ''
+      const custGstin = dc.customerGstin || matchedCust?.gstin || custGstinParam || ''
+      const custState = dc.customerState || matchedCust?.state || ''
+      const billAddr  = dc.billToAddress || billToParam ||
+        (matchedCust ? [matchedCust.address, matchedCust.city, matchedCust.state, matchedCust.pincode].filter(Boolean).join(', ') : '')
+
       setForm(f=>({ ...f,
-        customerId:dc.customerId||'', customerName:dc.customerName||'',
-        customerGstin:dc.customerGstin||'', customerState:dc.customerState||'',
-        billToAddress:dc.billToAddress||'', shipToAddress:dc.shipToAddress||'',
-        soId:dc.soId||'', soNo:dc.soRef||'',
-        dcId:dc.dcId, dcRef:dc.dcRef, ewbNo:dc.ewbNo||'', vehicleNo:dc.vehicleNo||'',
-        supplyType:igst?'Interstate':'Intrastate',
+        customerId:    custId,
+        customerName:  dcCustName,
+        customerGstin: custGstin,
+        customerState: custState,
+        billToAddress: billAddr,
+        shipToAddress: dc.shipToAddress || shipToParam || billAddr,
+        soId:     dc.soId||'', soNo:dc.soRef||soNoParam||'',
+        dcId:     dc.dcId, dcRef:dc.dcRef,
+        ewbNo:    dc.ewbNo||'', vehicleNo:dc.vehicleNo||'',
+        supplyType: igst?'Interstate':'Intrastate',
       }))
       if (dc.lines?.length) {
         setLines(dc.lines.map(l=>calcLine(l,igst)))
@@ -180,7 +273,7 @@ export default function InvoiceNew() {
       const res = await sdApi.getOrderById(id)
       const so = res.data||res; if (!so) return
       setSource({ type:'so', ref:so.soNo })
-      const igst = so.supplyType==='Interstate'
+      const igst = (so.supplyType||'').toLowerCase().includes('inter')
       setForm(f=>({ ...f,
         customerId:so.customerId||'', customerName:so.customerName||'',
         customerGstin:so.customerGstin||'', soId:so.id, soNo:so.soNo,
@@ -315,15 +408,24 @@ export default function InvoiceNew() {
                 ))}
               </select>
             </Field>
-            <Field label={source.type==='dc'?'🚚 Challan Reference':'Against Sales Order'}>
+            <Field label="🚚 From Delivery Challan (Recommended)">
               {source.type==='dc'
                 ? <input style={{ ...inp, background:'#D4EDDA', fontFamily:'DM Mono,monospace', fontWeight:700 }}
                     value={form.dcRef} readOnly />
-                : <select style={inp} value={form.soId} onChange={e=>onSOChange(e.target.value)}>
-                    <option value="">-- Direct Invoice (no SO) --</option>
-                    {openSOs.map(so=><option key={so.id} value={so.id}>{so.soNo} · {so.customerName}</option>)}
+                : <select style={{ ...inp, borderColor: openDCs.length>0?'#28A745':'', background: openDCs.length>0?'#F0FFF4':'#fff' }}
+                    value={form.dcId}
+                    onChange={e=>{ if(e.target.value) loadFromDC(e.target.value) }}>
+                    <option value="">-- Select Delivery Challan --</option>
+                    {openDCs.map(dc=><option key={dc.id} value={dc.id}>{dc.dcNo} · {dc.customerName}</option>)}
+                    {openDCs.length===0 && <option disabled>No pending DCs — create DC first</option>}
                   </select>
               }
+            </Field>
+            <Field label="Against Sales Order (optional)">
+              <select style={inp} value={form.soId} onChange={e=>onSOChange(e.target.value)}>
+                <option value="">-- Direct Invoice (no SO) --</option>
+                {openSOs.map(so=><option key={so.id} value={so.id}>{so.soNo} · {so.customerName}</option>)}
+              </select>
             </Field>
             <Field label="Customer GSTIN">
               <input style={{ ...inp, fontFamily:'DM Mono,monospace', background:'#F8F9FA' }}
@@ -472,6 +574,10 @@ export default function InvoiceNew() {
                       <select style={{ ...inp, marginBottom:l.itemCode?0:3 }} value={l.itemCode}
                         onChange={e=>onItemSelect(i,e.target.value)}>
                         <option value="">-- Select FG Item --</option>
+                        {/* If item loaded from DC/SO but not in fgItems, show it anyway */}
+                        {l.itemCode && !fgItems.find(it=>(it.code||it.itemCode)===l.itemCode) && (
+                          <option value={l.itemCode}>{l.itemCode} — {l.itemName}</option>
+                        )}
                         {fgItems.map(it=>(
                           <option key={it.code||it.itemCode} value={it.code||it.itemCode}>
                             {it.code||it.itemCode} — {it.name||it.itemName}

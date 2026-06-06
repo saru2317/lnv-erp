@@ -6,8 +6,8 @@ export default function ModuleLayout({ navItems = [], sidebarGroups = [], childr
   return (
     <div className={styles.wrap}>
       <nav className={styles.subnav}>
-        {navItems.map(item => (
-          <NavLink key={item.to} to={item.to}
+        {navItems.map((item,idx) => (
+          <NavLink key={`nav-${idx}-${item.to}`} to={item.to}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
             {item.label}
           </NavLink>
@@ -33,8 +33,8 @@ function SidebarGroup({ group }) {
       </div>
       {open && (
         <div className={styles.sitems}>
-          {group.items.map(item => (
-            <NavLink key={item.to} to={item.to}
+          {group.items.map((item,idx) => (
+            <NavLink key={`si-${idx}-${item.to}-${item.label}`} to={item.to}
               className={({ isActive }) => `${styles.si} ${isActive ? styles.active : ''}`}>
               {item.label}
             </NavLink>

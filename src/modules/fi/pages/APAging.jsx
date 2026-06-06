@@ -21,6 +21,7 @@ export default function APAging() {
   const [loading, setLoading] = useState(true)
   const [bucket,  setBucket]  = useState('all')
   const [search,  setSearch]  = useState('')
+  const [total,   setTotal]   = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -29,6 +30,7 @@ export default function APAging() {
       const d = await r.json()
       setRows(d.data    || [])
       setSummary(d.summary || {})
+      setTotal(d.total || 0)
     } catch { toast.error('Failed to load AP Aging') }
     finally { setLoading(false) }
   }, [])
@@ -42,8 +44,8 @@ export default function APAging() {
     return matchSearch && matchBucket
   })
 
-  const totalAP    = summary.total || 0
-  const overdueTot = (summary.d1_30||0)+(summary.d31_60||0)+(summary.d61_90||0)+(summary.over90||0)
+  const totalAP = total
+  const overdueTot = (summary['1_30']?.amount||0)+(summary['31_60']?.amount||0)+(summary['61_90']?.amount||0)+(summary.over_90?.amount||0)
 
   // Group by vendor for payable summary
   const byVendor = filtered.reduce((acc,r) => {
@@ -72,7 +74,7 @@ export default function APAging() {
       {/* KPI Buckets */}
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(5,1fr)',marginBottom:14}}>
         {Object.entries(BUCKET_CFG).map(([key,bc])=>{
-          const amt = key==='current'?summary.current:key==='1_30'?summary.d1_30:key==='31_60'?summary.d31_60:key==='61_90'?summary.d61_90:summary.over90
+          const amt = key==='current'?summary.current?.amount:key==='1_30'?summary['1_30']?.amount:key==='31_60'?summary['31_60']?.amount:key==='61_90'?summary['61_90']?.amount:summary.over_90?.amount
           return (
             <div key={key} onClick={()=>setBucket(bucket===key?'all':key)}
               style={{background:bucket===key?bc.bg:'#fff',
@@ -101,7 +103,7 @@ export default function APAging() {
           {totalAP > 0 && (
             <div style={{display:'flex',height:10,borderRadius:4,overflow:'hidden',gap:1}}>
               {Object.entries(BUCKET_CFG).map(([key,bc])=>{
-                const amt = key==='current'?summary.current:key==='1_30'?summary.d1_30:key==='31_60'?summary.d31_60:key==='61_90'?summary.d61_90:summary.over90
+                const amt = key==='current'?summary.current?.amount:key==='1_30'?summary['1_30']?.amount:key==='31_60'?summary['31_60']?.amount:key==='61_90'?summary['61_90']?.amount:summary.over_90?.amount
                 const pct = (amt||0)/totalAP*100
                 return pct>0?<div key={key} style={{width:`${pct}%`,background:bc.color,
                   borderRadius:key==='current'?'4px 0 0 4px':key==='over_90'?'0 4px 4px 0':'0'}}/>:null
@@ -109,7 +111,7 @@ export default function APAging() {
             </div>
           )}
           <div style={{marginTop:8,fontSize:11,color:'#6C757D'}}>
-            {summary.count||0} outstanding bills · Cash required this week for past-due amounts
+            {Object.values(summary).reduce((s,b)=>s+(b?.count||0),0)} outstanding bills · Cash required this week for past-due amounts
           </div>
         </div>
 
@@ -176,31 +178,31 @@ export default function APAging() {
           <tbody>
             {filtered.map((r,i)=>{
               const bc = BUCKET_CFG[r.bucket]||BUCKET_CFG.current
-              const isOverdue = r.agingDays > 0
+              const isOverdue = r.daysOverdue > 0
               return (
                 <tr key={i}>
                   <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>
-                    {r.grnNo}
+                    {r.invNo || r.grnNo || '—'}
                   </td>
                   <td style={{fontWeight:600,fontSize:12}}>{r.vendorName}</td>
                   <td style={{fontSize:11}}>
-                    {r.grnDate ? new Date(r.grnDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—'}
+                    {r.invDate ? new Date(r.invDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—'}
                   </td>
                   <td style={{fontSize:11,color:isOverdue?'#DC3545':'#333',fontWeight:isOverdue?700:400}}>
                     {r.dueDate ? new Date(r.dueDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : 'Not set'}
                   </td>
-                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>{INR(r.totalAmt)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>{INR(r.totalAmount)}</td>
                   <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12,color:'#155724'}}>
-                    {r.paidAmt > 0 ? INR(r.paidAmt) : '—'}
+                    {r.paidAmount||0 > 0 ? INR(r.paidAmount||0) : '—'}
                   </td>
                   <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:13,color:bc.color}}>
                     {INR(r.balance)}
                   </td>
                   <td style={{textAlign:'center'}}>
-                    {r.agingDays > 0 ? (
+                    {r.daysOverdue > 0 ? (
                       <span style={{fontFamily:'DM Mono,monospace',fontWeight:700,
-                        color:r.agingDays>60?'#DC3545':r.agingDays>30?'#856404':'#E06F39'}}>
-                        {r.agingDays}d
+                        color:r.daysOverdue>60?'#DC3545':r.daysOverdue>30?'#856404':'#E06F39'}}>
+                        {r.daysOverdue}d
                       </span>
                     ) : (
                       <span style={{color:'#155724',fontSize:12}}>Not due</span>
@@ -224,10 +226,10 @@ export default function APAging() {
                 TOTAL — {filtered.length} bills
               </td>
               <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace'}}>
-                {INR(filtered.reduce((a,r)=>a+r.totalAmt,0))}
+                {INR(filtered.reduce((a,r)=>a+r.totalAmount,0))}
               </td>
               <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',color:'#155724'}}>
-                {INR(filtered.reduce((a,r)=>a+r.paidAmt,0))}
+                {INR(filtered.reduce((a,r)=>a+r.paidAmount||0,0))}
               </td>
               <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:15,fontWeight:800,color:'#714B67'}}>
                 {INR(filtered.reduce((a,r)=>a+r.balance,0))}

@@ -11,21 +11,27 @@ export default function CreditLimitDashboard() {
   const [loading,   setLoading]   = useState(true)
   const [search,    setSearch]    = useState('')
   const [filter,    setFilter]    = useState('all')
-  const [holdModal, setHoldModal] = useState(null)  // { id, name, hold }
+  const [holdModal, setHoldModal] = useState(null)
   const [holdReason,setHoldReason]= useState('')
   const [acting,    setActing]    = useState(false)
-  const [checkModal,setCheckModal]= useState(null)  // live credit check
+  const [checkModal,setCheckModal]= useState(null)
   const [checkCust, setCheckCust] = useState('')
   const [checkAmt,  setCheckAmt]  = useState('')
   const [checking,  setChecking]  = useState(false)
   const [checkResult,setCheckResult]=useState(null)
+  const [allCustomers,setAllCustomers]=useState([])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const r = await fetch(`${BASE_URL}/fi/credit-limit/status`, { headers: hdr2() })
-      const d = await r.json()
+      const [r, cr] = await Promise.all([
+        fetch(`${BASE_URL}/fi/credit-limit/status`, { headers: hdr2() }),
+        fetch(`${BASE_URL}/customers`, { headers: hdr2() }),
+      ])
+      const d  = await r.json()
+      const dc = await cr.json()
       setRows(d.data || [])
+      setAllCustomers((dc.data || []).filter(c => c.isActive !== false))
     } catch { toast.error('Failed to load credit status') }
     finally { setLoading(false) }
   }, [])
@@ -87,6 +93,7 @@ export default function CreditLimitDashboard() {
   const statusCfg = {
     over_limit: { label:'Over Limit', bg:'#F8D7DA', color:'#721C24' },
     overdue:    { label:'Overdue',    bg:'#FFF3CD', color:'#856404' },
+    no_limit:   { label:'No Limit Set', bg:'#E2E3E5', color:'#383D41' },
     ok:         { label:'OK',         bg:'#D4EDDA', color:'#155724' },
   }
 
@@ -163,7 +170,7 @@ export default function CreditLimitDashboard() {
       ) : filtered.length === 0 ? (
         <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
           {rows.length === 0
-            ? 'No customers with credit limits set. Go to Customer Master → set Credit Limit.'
+            ? 'No customers with outstanding invoices found. Once invoices are posted, customers appear here automatically.'
             : 'No customers match this filter.'}
         </div>
       ) : (
@@ -183,7 +190,7 @@ export default function CreditLimitDashboard() {
           </thead>
           <tbody>
             {filtered.map(r => {
-              const util = r.creditLimit > 0 ? Math.min(100, Math.round(r.outstanding/r.creditLimit*100)) : 0
+              const util = r.creditLimit > 0 ? Math.min(100, Math.round(r.outstanding/r.creditLimit*100)) : r.outstanding > 0 ? 100 : 0
               const sc   = statusCfg[r.status] || statusCfg.ok
               const barColor = util >= 100 ? '#DC3545' : util >= 80 ? '#FFC107' : '#28A745'
               return (
@@ -192,7 +199,9 @@ export default function CreditLimitDashboard() {
                     <div style={{fontWeight:700,fontSize:12}}>{r.name}</div>
                     <div style={{fontFamily:'DM Mono,monospace',fontSize:10,color:'#6C757D'}}>{r.code}</div>
                   </td>
-                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(r.creditLimit)}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:r.creditLimit>0?'#333':'#856404'}}>
+                    {r.creditLimit > 0 ? INR(r.creditLimit) : <span style={{fontSize:10}}>Not Set</span>}
+                  </td>
                   <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',
                     color: r.outstanding > r.creditLimit ? '#DC3545' : '#333',
                     fontWeight: r.outstanding > r.creditLimit ? 800 : 400
@@ -298,7 +307,7 @@ export default function CreditLimitDashboard() {
                 <select style={{...inp,cursor:'pointer'}} value={checkCust}
                   onChange={e=>{ setCheckCust(e.target.value); setCheckResult(null) }}>
                   <option value="">Select customer...</option>
-                  {rows.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+                  {allCustomers.map(r=><option key={r.id} value={r.id}>{r.name} {r.code ? `(${r.code})` : ''}</option>)}
                 </select>
               </div>
               <div>

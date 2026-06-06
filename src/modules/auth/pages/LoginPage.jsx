@@ -19,6 +19,12 @@ const DEMO_USERS = [
   { email:'operations@lnverp.com', password:'lnv@2025',  label:'Operations' },
   { email:'hr@lnverp.com',         password:'lnv@2025',  label:'HR Manager' },
   { email:'sales@lnverp.com',      password:'lnv@2025',  label:'Sales Rep' },
+  { email:'production@lnverp.com', password:'lnv@2025',  label:'Production' },
+  { email:'purchase@lnverp.com',   password:'lnv@2025',  label:'Purchase' },
+  { email:'warehouse@lnverp.com',  password:'lnv@2025',  label:'Warehouse' },
+  { email:'transport@lnverp.com',  password:'lnv@2025',  label:'Transport' },
+  { email:'civil@lnverp.com',      password:'lnv@2025',  label:'Civil' },
+  { email:'viewer@lnverp.com',     password:'lnv@2025',  label:'Viewer' },
 ]
 
 const INDUSTRIES = ['Select Industry','Manufacturing','Trading','Textile','Retail','Service','Construction']

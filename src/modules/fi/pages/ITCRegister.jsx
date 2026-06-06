@@ -72,7 +72,7 @@ export default function ITCRegister() {
       {loading ? <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading ITC Register...</div> : (
         <table className="fi-data-table">
           <thead><tr>
-            <th>GRN / Bill No.</th><th>Vendor</th><th>Item</th><th>Date</th>
+            <th>Ref No.</th><th>Source</th><th>Vendor</th><th>Item</th><th>Date</th>
             <th style={{textAlign:'right'}}>Taxable</th>
             <th style={{textAlign:'right'}}>CGST</th>
             <th style={{textAlign:'right'}}>SGST</th>
@@ -81,13 +81,20 @@ export default function ITCRegister() {
           </tr></thead>
           <tbody>
             {rows.length===0 ? (
-              <tr><td colSpan={9} style={{padding:40,textAlign:'center',color:'#6C757D'}}>No ITC for {MONTHS[month]} {year}</td></tr>
+              <tr><td colSpan={10} style={{padding:40,textAlign:'center',color:'#6C757D'}}>No ITC for {MONTHS[month]} {year}</td></tr>
             ) : rows.map((r,i)=>(
               <tr key={i}>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-purple)'}}>{r.grn?.grnNo||r.id}</td>
-                <td style={{fontSize:12}}>{r.grn?.vendorName||'—'}</td>
-                <td style={{fontSize:12,maxWidth:180}}>{r.itemName||r.description||'—'}</td>
-                <td style={{fontSize:11}}>{r.grn?.grnDate?new Date(r.grn.grnDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-purple)'}}>{r.refNo||r.grn?.grnNo||r.id}</td>
+                <td>
+                  <span style={{
+                    background: r.source==='GRN' ? '#D4EDDA' : '#CCE5FF',
+                    color:      r.source==='GRN' ? '#155724' : '#004085',
+                    padding:'2px 7px', borderRadius:4, fontSize:10, fontWeight:700
+                  }}>{r.source||'GRN'}</span>
+                </td>
+                <td style={{fontSize:12}}>{r.vendorName||r.grn?.vendorName||'—'}</td>
+                <td style={{fontSize:12,maxWidth:180}}>{r.itemDesc||r.itemName||r.description||'—'}</td>
+                <td style={{fontSize:11}}>{(r.date||r.grn?.grnDate)?new Date(r.date||r.grn?.grnDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(r.taxableAmt||r.amount||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.cgst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.sgst||0)}</td>

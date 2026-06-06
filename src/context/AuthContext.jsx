@@ -53,19 +53,32 @@ export function AuthProvider({ children }) {
   }
 
   // ── hasAccess helper ─────────────────────────────────────
+  const ALL_MODS = ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','admin','config','tm','am','civil','vm','cn','reports','kpi','mdm']
+
   const MODULE_ACCESS = {
-    ADMIN:      ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','admin','config','tm','am','civil','vm','cn','reports','kpi','mdm'],
-    MANAGER:    ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','reports','kpi'],
-    ACCOUNTS:   ['home','fi','sd','mm','am','reports'],
-    PRODUCTION: ['home','pp','qm','pm','wm','mm','tm','reports'],
-    HR:         ['home','hcm','cn','vm','reports'],
-    SALES:      ['home','sd','crm','reports'],
+    SUPER_ADMIN: ALL_MODS,
+    ADMIN:       ALL_MODS,
+    MANAGER:     ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','tm','am','civil','reports','kpi'],
+    ACCOUNTS:    ['home','fi','mm','sd','am','reports','kpi'],
+    PRODUCTION:  ['home','pp','qm','pm','wm','mm','tm','reports'],
+    OPERATIONS:  ['home','pp','qm','pm','wm','mm','tm','reports'],
+    HR:          ['home','hcm','cn','vm','reports'],
+    SALES:       ['home','sd','crm','reports','kpi'],
+    TRANSPORT:   ['home','tm','wm','reports'],
+    CIVIL:       ['home','civil','reports'],
+    PURCHASE:    ['home','mm','wm','reports'],
+    WAREHOUSE:   ['home','wm','mm','reports'],
+    VIEWER:      ['home','reports'],
   }
 
   const hasAccess = (moduleKey) => {
     if (!user) return false
-    const role = user.role?.toUpperCase()
-    return MODULE_ACCESS[role]?.includes(moduleKey) ?? false
+    const role = (user.role || '').toString().toUpperCase().trim()
+    // Admin always has full access
+    if (role === 'ADMIN' || role === 'SUPER_ADMIN') return true
+    const allowed = MODULE_ACCESS[role]
+    if (!allowed) return false   // Unknown role → no access
+    return allowed.includes(moduleKey)
   }
 
   return (

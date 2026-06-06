@@ -5,33 +5,33 @@ import { useAuth } from '@hooks/useAuth'
 // ── SIDEBAR DATA ──────────────────────────────────────────
 const SIDEBAR_GROUPS = [
   { key:'operations', label:'Operations', color:'#017E84', items:[
-    { label:'Sales (SD)',        icon:'🛒', path:'/sd',  desc:'Orders · Invoices' },
-    { label:'Purchase (MM)',     icon:'📦', path:'/mm',  desc:'POs · Vendors · GRN' },
-    { label:'Warehouse (WM)',    icon:'🏭', path:'/wm',  desc:'Stock · Transfers' },
-    { label:'Production (PP)',   icon:'⚙️', path:'/pp',  desc:'Jobs · Coating' },
-    { label:'Quality (QM)',      icon:'✅', path:'/qm',  desc:'Inspection · NCR' },
-    { label:'Maintenance (PM)',  icon:'🔧', path:'/pm',  desc:'Breakdown · PM' },
+    { label:'Sales (SD)',        icon:'🛒', path:'/sd',    mod:'sd',      desc:'Orders · Invoices' },
+    { label:'Purchase (MM)',     icon:'📦', path:'/mm',    mod:'mm',      desc:'POs · Vendors · GRN' },
+    { label:'Warehouse (WM)',    icon:'🏭', path:'/wm',    mod:'wm',      desc:'Stock · Transfers' },
+    { label:'Production (PP)',   icon:'⚙️', path:'/pp',    mod:'pp',      desc:'Jobs · Coating' },
+    { label:'Quality (QM)',      icon:'✅', path:'/qm',    mod:'qm',      desc:'Inspection · NCR' },
+    { label:'Maintenance (PM)',  icon:'🔧', path:'/pm',    mod:'pm',      desc:'Breakdown · PM' },
   ]},
   { key:'people', label:'People', color:'#6C3483', items:[
-    { label:'HR (HCM)',          icon:'👥', path:'/hcm', desc:'Payroll · Leave' },
-    { label:'CRM',               icon:'🤝', path:'/crm', desc:'Leads · Deals' },
-    { label:'KPI / KRA',         icon:'🎯', path:'/kpi', desc:'Performance' },
+    { label:'HR (HCM)',          icon:'👥', path:'/hcm',   mod:'hcm',     desc:'Payroll · Leave' },
+    { label:'CRM',               icon:'🤝', path:'/crm',   mod:'crm',     desc:'Leads · Deals' },
+    { label:'KPI / KRA',         icon:'🎯', path:'/kpi',   mod:'kpi',     desc:'Performance' },
   ]},
   { key:'finance', label:'Finance', color:'#196F3D', items:[
-    { label:'Finance (FI)',      icon:'💰', path:'/fi',      desc:'GST · P&L' },
-    { label:'Reports',           icon:'📊', path:'/reports', desc:'Analytics' },
+    { label:'Finance (FI)',      icon:'💰', path:'/fi',     mod:'fi',      desc:'GST · P&L' },
+    { label:'Reports',           icon:'📊', path:'/reports',mod:'reports', desc:'Analytics' },
   ]},
   { key:'support', label:'Support', color:'#E06F39', items:[
-    { label:'Transport',         icon:'🚛', path:'/tm',    desc:'Trips · Fleet' },
-    { label:'Assets',            icon:'🏗️', path:'/am',    desc:'Fixed Assets' },
-    { label:'Civil',             icon:'👷', path:'/civil', desc:'Projects' },
-    { label:'Visitor',           icon:'🪪', path:'/vm',    desc:'Gate Entry' },
-    { label:'Canteen',           icon:'🍽️', path:'/cn',    desc:'Meals' },
+    { label:'Transport',         icon:'🚛', path:'/tm',    mod:'tm',      desc:'Trips · Fleet' },
+    { label:'Assets',            icon:'🏗️', path:'/am',    mod:'am',      desc:'Fixed Assets' },
+    { label:'Civil',             icon:'👷', path:'/civil', mod:'civil',   desc:'Projects' },
+    { label:'Visitor',           icon:'🪪', path:'/vm',    mod:'vm',      desc:'Gate Entry' },
+    { label:'Canteen',           icon:'🍽️', path:'/cn',    mod:'cn',      desc:'Meals' },
   ]},
   { key:'system', label:'System', color:'#714B67', items:[
-    { label:'Admin',             icon:'🛡️', path:'/admin',  desc:'Users · Roles' },
-    { label:'Config',            icon:'⚙️', path:'/config', desc:'Settings' },
-    { label:'MDM',               icon:'🗄️', path:'/mdm',   desc:'Master Data' },
+    { label:'Admin',             icon:'🛡️', path:'/admin', mod:'admin',   desc:'Users · Roles' },
+    { label:'Config',            icon:'⚙️', path:'/config',mod:'config',  desc:'Settings' },
+    { label:'MDM',               icon:'🗄️', path:'/mdm',   mod:'mdm',     desc:'Master Data' },
   ]},
 ]
 
@@ -77,29 +77,29 @@ const RECENT_TXN = [
 ]
 
 const QUICK = [
-  { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new'   },
-  { icon:'📦', label:'New Purchase Order', path:'/mm/po/new'      },
-  { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new'},
-  { icon:'✅', label:'Goods Receipt',      path:'/mm/grn/new'     },
-  { icon:'👤', label:'Add Customer',       path:'/sd/customers'   },
-  { icon:'📊', label:'Sales Report',       path:'/sd/reports'     },
-  { icon:'⚙️', label:'Production Order',   path:'/pp/wo/new'      },
-  { icon:'📈', label:'Analytics',          path:'/reports'        },
+  { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new',    mod:'sd' },
+  { icon:'📦', label:'New Purchase Order', path:'/mm/po/new',       mod:'mm' },
+  { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new', mod:'sd' },
+  { icon:'✅', label:'Goods Receipt',      path:'/mm/grn/new',      mod:'mm' },
+  { icon:'👤', label:'Add Customer',       path:'/sd/customers',    mod:'sd' },
+  { icon:'📊', label:'Sales Report',       path:'/sd/reports',      mod:'sd' },
+  { icon:'⚙️', label:'Production Order',   path:'/pp/wo/new',       mod:'pp' },
+  { icon:'📈', label:'Analytics',          path:'/reports',         mod:'reports' },
 ]
 
-const FAVS = [
-  { icon:'🏠', label:'Dashboard',      path:'/home'         },
-  { icon:'📋', label:'Sales Order',    path:'/sd/sales'     },
-  { icon:'📦', label:'Purchase Order', path:'/mm/po'        },
-  { icon:'📊', label:'Stock Overview', path:'/mm/materials' },
-  { icon:'👥', label:'Customer Master',path:'/sd/customers' },
-  { icon:'📊', label:'Sales Report',   path:'/sd/reports'   },
-]
+
 
 // ── Sidebar Component ─────────────────────────────────────
-function Sidebar({ open, onClose, navigate }) {
+function Sidebar({ open, onClose, navigate, hasAccess }) {
   const [expanded, setExpanded] = useState({ operations:true, finance:true })
   const toggle = (k) => setExpanded(s => ({...s, [k]: !s[k]}))
+
+  if (!open) return null
+
+  // Filter groups and items by role
+  const visibleGroups = SIDEBAR_GROUPS
+    .map(grp => ({ ...grp, items: grp.items.filter(item => hasAccess(item.mod)) }))
+    .filter(grp => grp.items.length > 0)
 
   if (!open) return null
 
@@ -122,7 +122,7 @@ function Sidebar({ open, onClose, navigate }) {
       </div>
 
       {/* Groups */}
-      {SIDEBAR_GROUPS.map(grp => (
+      {visibleGroups.map(grp => (
         <div key={grp.key} style={{ borderBottom:'1px solid #F0EEEB' }}>
           <div onClick={() => toggle(grp.key)}
             style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 14px',
@@ -188,7 +188,7 @@ function BarChart() {
 
 // ── Main Component ────────────────────────────────────────
 export default function HomeDashboard() {
-  const { user }  = useAuth()
+  const { user, hasAccess } = useAuth()
   const navigate  = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const now = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'})
@@ -197,38 +197,10 @@ export default function HomeDashboard() {
     <div style={{ display:'flex', height:'100%', background:'#F0EEEB' }}>
 
       {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navigate={navigate} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navigate={navigate} hasAccess={hasAccess} />
 
       {/* Main content */}
       <div style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column' }}>
-
-        {/* Favorites bar */}
-        <div style={{ height:32, background:'#fff', borderBottom:'1px solid #E0D5E0',
-          display:'flex', alignItems:'center', padding:'0 14px', gap:4,
-          overflowX:'auto', flexShrink:0 }}>
-          {!sidebarOpen && (
-            <button onClick={() => setSidebarOpen(true)}
-              style={{ padding:'3px 10px', borderRadius:4, fontSize:11, fontWeight:600,
-                color:'#714B67', background:'none', border:'1px solid #E0D5E0',
-                cursor:'pointer', marginRight:8, flexShrink:0 }}>
-              Nav
-            </button>
-          )}
-          <span style={{ fontSize:11, fontWeight:700, color:'#6C757D',
-            marginRight:8, whiteSpace:'nowrap', letterSpacing:.5 }}>
-            Favorites
-          </span>
-          {FAVS.map(f => (
-            <div key={f.label} onClick={() => navigate(f.path)}
-              style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px',
-                borderRadius:3, cursor:'pointer', whiteSpace:'nowrap', fontSize:12,
-                color:'#6C757D', flexShrink:0 }}
-              onMouseEnter={e => { e.currentTarget.style.background='#EDE0EA'; e.currentTarget.style.color='#714B67' }}
-              onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#6C757D' }}>
-              {f.icon} {f.label}
-            </div>
-          ))}
-        </div>
 
         {/* Breadcrumb */}
         <div style={{ padding:'8px 20px', fontSize:12, color:'#6C757D',
@@ -417,7 +389,7 @@ export default function HomeDashboard() {
               </div>
               <div style={{ padding:'14px 18px' }}>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                  {QUICK.map(qa => (
+                  {QUICK.filter(qa => hasAccess(qa.mod)).map(qa => (
                     <div key={qa.label} onClick={() => navigate(qa.path)}
                       style={{ display:'flex', alignItems:'center', gap:8,
                         padding:'10px 12px', background:'#F8F9FA',

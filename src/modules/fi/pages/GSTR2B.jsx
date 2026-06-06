@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken = () => localStorage.getItem('lnv_token')
 const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
-const hdr  = () => ({ 'Content-Type':'application/json', Authorization: `Bearer ${getToken()}` })
-const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const INR  = v => '₹' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
 const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function MonthYearPicker({ month, year, onChange }) {
@@ -45,10 +43,12 @@ export default function GSTR2B() {
     try {
       const res  = await fetch(`${BASE_URL}/fi/gst/gstr2b?month=${month}&year=${year}`, { headers: hdr2() })
       const d    = await res.json()
+      if (d.error) throw new Error(d.error)
       setRows(d.data||[])
       setSummary({ totalITC:d.totalITC||0, totalCGST:d.totalCGST||0, totalSGST:d.totalSGST||0, totalIGST:d.totalIGST||0 })
-    } catch {} finally { setLoading(false) }
+    } catch(e) { toast.error(e.message) } finally { setLoading(false) }
   }, [month, year])
+
   useEffect(() => { load() }, [load])
 
   return (
@@ -63,7 +63,7 @@ export default function GSTR2B() {
       </div>
 
       <div className="fi-alert info">
-        GSTR-2B shows ITC from GRN (Purchase receipts). Verify with supplier filings before claiming.
+        GSTR-2B shows ITC from GRNs and Vendor Invoices for the selected period. Verify with supplier filings before claiming.
       </div>
 
       <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
@@ -76,38 +76,57 @@ export default function GSTR2B() {
       {loading ? <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>Loading...</div> : (
         <table className="fi-data-table">
           <thead><tr>
-            <th>GRN No.</th><th>Vendor</th><th>GSTIN</th><th>Date</th>
+            <th>Ref No.</th>
+            <th>Source</th>
+            <th>Vendor</th>
+            <th>GSTIN</th>
+            <th>Date</th>
             <th style={{textAlign:'right'}}>Taxable</th>
             <th style={{textAlign:'right'}}>CGST</th>
             <th style={{textAlign:'right'}}>SGST</th>
             <th style={{textAlign:'right'}}>IGST</th>
             <th style={{textAlign:'right'}}>ITC</th>
-            <th>Status</th>
           </tr></thead>
           <tbody>
             {rows.length===0 ? (
-              <tr><td colSpan={10} style={{padding:40,textAlign:'center',color:'#6C757D'}}>No GRNs for {MONTHS[month]} {year}</td></tr>
+              <tr><td colSpan={10} style={{padding:40,textAlign:'center',color:'#6C757D'}}>
+                No purchase data for {MONTHS[month]} {year}
+              </td></tr>
             ) : rows.map((r,i)=>(
               <tr key={i}>
-                <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-purple)'}}>{r.grnNo}</td>
+                <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-purple)'}}>{r.refNo}</td>
+                <td>
+                  <span style={{
+                    background: r.source==='GRN' ? '#D4EDDA' : '#CCE5FF',
+                    color:      r.source==='GRN' ? '#155724' : '#004085',
+                    padding:'2px 7px', borderRadius:4, fontSize:10, fontWeight:700
+                  }}>{r.source}</span>
+                </td>
                 <td style={{fontWeight:600,fontSize:12}}>{r.vendorName}</td>
                 <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{r.vendorGstin||'—'}</td>
-                <td style={{fontSize:11}}>{r.grnDate?new Date(r.grnDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td>
+                <td style={{fontSize:11}}>{r.date ? new Date(r.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—'}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace'}}>{INR(r.taxableAmt||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.cgst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(r.sgst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',color:'#0C5460'}}>{INR(r.igst||0)}</td>
                 <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#155724'}}>{INR((r.cgst||0)+(r.sgst||0)+(r.igst||0))}</td>
-                <td><span className="badge badge-posted">Matched</span></td>
               </tr>
             ))}
           </tbody>
+          {rows.length > 0 && (
+            <tfoot>
+              <tr style={{background:'#EDE0EA',fontWeight:700}}>
+                <td colSpan={5} style={{padding:'10px 12px'}}>Total ({rows.length} records)</td>
+                <td style={{textAlign:'right',padding:'10px 12px',fontFamily:'DM Mono,monospace'}}>{INR(rows.reduce((a,r)=>a+(r.taxableAmt||0),0))}</td>
+                <td style={{textAlign:'right',padding:'10px 12px',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(summary.totalCGST)}</td>
+                <td style={{textAlign:'right',padding:'10px 12px',fontFamily:'DM Mono,monospace',color:'#714B67'}}>{INR(summary.totalSGST)}</td>
+                <td style={{textAlign:'right',padding:'10px 12px',fontFamily:'DM Mono,monospace',color:'#0C5460'}}>{INR(summary.totalIGST)}</td>
+                <td style={{textAlign:'right',padding:'10px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#155724'}}>{INR(summary.totalITC)}</td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       )}
     </div>
   )
 }
-
-// ══════════════════════════════════════
-// SAVE AS: GSTR3B.jsx
-// ══════════════════════════════════════

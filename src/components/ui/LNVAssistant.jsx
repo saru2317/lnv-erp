@@ -140,9 +140,10 @@ export default function LNVAssistant({ config }) {
       const r = await fetch(`${BASE}/ai/chat`, {
         method:'POST', headers:hdr(),
         body: JSON.stringify({
-          message: msg,
-          module:  currentModule,
-          history: history.filter(h=>!h.typing).slice(-6),
+          message:     msg,
+          module:      currentModule,
+          currentPath: location.pathname,
+          history:     history.filter(h=>!h.typing).slice(-6),
         })
       })
       const d = await r.json()

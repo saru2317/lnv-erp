@@ -54,15 +54,21 @@ export default function BalanceSheet() {
               <div className="fin-report-hdr"><h2>ASSETS</h2><span>As on {asOf}</span></div>
               <div className="fin-section">
                 <div className="fin-sec-title" onClick={()=>tog('ca')}>{open.ca?'▾':'►'} CURRENT ASSETS</div>
-                {open.ca && bs.assets.filter(a=>a.subType==='Current Asset').map(a=>(
-                  <div key={a.code} className="fin-row"><span className="fn">{a.name}</span><span className="fv">{INR(a.balance)}</span></div>
+                {open.ca && bs.assets.filter(a=>!['Fixed Asset','Tangible Asset','Intangible Asset'].includes(a.subType)).map(a=>(
+                  <div key={a.code} className="fin-row">
+                    <span className="fn">{a.name} <small style={{color:'#999',fontSize:10}}>({a.subType})</small></span>
+                    <span className="fv" style={{color:a.balance>=0?undefined:'#DC3545'}}>{INR(Math.abs(a.balance))}{a.balance<0?' (Cr)':''}</span>
+                  </div>
                 ))}
               </div>
               <div className="fin-section">
                 <div className="fin-sec-title" onClick={()=>tog('fa')}>{open.fa?'▾':'►'} FIXED ASSETS</div>
-                {open.fa && bs.assets.filter(a=>a.subType==='Fixed Asset').map(a=>(
+                {open.fa && bs.assets.filter(a=>['Fixed Asset','Tangible Asset','Intangible Asset'].includes(a.subType)).map(a=>(
                   <div key={a.code} className="fin-row"><span className="fn">{a.name}</span><span className="fv">{INR(a.balance)}</span></div>
                 ))}
+                {open.fa && bs.assets.filter(a=>['Fixed Asset','Tangible Asset','Intangible Asset'].includes(a.subType)).length===0 && (
+                  <div style={{padding:'8px 16px',fontSize:12,color:'#999'}}>No fixed assets posted</div>
+                )}
               </div>
               <div className="fin-row total"><span className="fn">TOTAL ASSETS</span><span className="fv pos">{INR(bs.totalAssets)}</span></div>
             </div>
@@ -72,15 +78,21 @@ export default function BalanceSheet() {
               <div className="fin-report-hdr"><h2>LIABILITIES &amp; EQUITY</h2><span>As on {asOf}</span></div>
               <div className="fin-section">
                 <div className="fin-sec-title" onClick={()=>tog('cl')}>{open.cl?'▾':'►'} CURRENT LIABILITIES</div>
-                {open.cl && bs.liabilities.filter(a=>a.subType==='Current Liability').map(a=>(
-                  <div key={a.code} className="fin-row"><span className="fn">{a.name}</span><span className="fv">{INR(a.balance)}</span></div>
+                {open.cl && bs.liabilities.filter(a=>!['Long Term','Non-Current'].includes(a.subType)).map(a=>(
+                  <div key={a.code} className="fin-row">
+                    <span className="fn">{a.name} <small style={{color:'#999',fontSize:10}}>({a.subType})</small></span>
+                    <span className="fv">{INR(a.balance)}</span>
+                  </div>
                 ))}
               </div>
               <div className="fin-section">
                 <div className="fin-sec-title" onClick={()=>tog('lt')}>{open.lt?'▾':'►'} LONG TERM LIABILITIES</div>
-                {open.lt && bs.liabilities.filter(a=>a.subType==='Long Term').map(a=>(
+                {open.lt && bs.liabilities.filter(a=>['Long Term','Non-Current'].includes(a.subType)).map(a=>(
                   <div key={a.code} className="fin-row"><span className="fn">{a.name}</span><span className="fv">{INR(a.balance)}</span></div>
                 ))}
+                {open.lt && bs.liabilities.filter(a=>['Long Term','Non-Current'].includes(a.subType)).length===0 && (
+                  <div style={{padding:'8px 16px',fontSize:12,color:'#999'}}>No long term liabilities</div>
+                )}
               </div>
               <div className="fin-section">
                 <div className="fin-sec-title" onClick={()=>tog('eq')}>{open.eq?'▾':'►'} EQUITY</div>

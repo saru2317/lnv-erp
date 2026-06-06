@@ -57,21 +57,23 @@ export default function ITCReconciliation() {
       setGstr2bRows(g2b)
 
       const rows = (dITC.data || []).map(l => {
-        const cat     = l.itemCategory || l.description || 'Raw Material'
-        const blocked = isBlocked(cat)
-        const inGSTR2B = g2b.some(g => g.grnNo === l.grn?.grnNo)
-        const recon   = blocked ? 'blocked' : inGSTR2B ? 'matched' : 'unmatched'
+        const cat      = l.itemCategory || l.itemDesc || l.description || 'Raw Material'
+        const blocked  = isBlocked(cat)
+        // Match against GSTR2B using refNo (works for both GRN and Invoice source)
+        const inGSTR2B = g2b.some(g => g.refNo === l.refNo || g.grnNo === l.refNo)
+        const recon    = blocked ? 'blocked' : inGSTR2B ? 'matched' : 'unmatched'
         return {
-          id:        l.grn?.grnNo || `GRN-${l.id}`,
-          vendor:    l.grn?.vendorName || '\u2014',
-          gstin:     l.grn?.vendorGstin || '\u2014',
-          date:      l.grn?.grnDate,
-          txbl:      parseFloat(l.taxableAmt || l.amount || 0),
-          cgst:      parseFloat(l.cgst || 0),
-          sgst:      parseFloat(l.sgst || 0),
-          igst:      parseFloat(l.igst || 0),
-          total:     parseFloat(l.cgst||0)+parseFloat(l.sgst||0)+parseFloat(l.igst||0),
-          cat, eligible: blocked?'blocked':'full',
+          id:       l.refNo || l.grn?.grnNo || `REF-${l.id}`,
+          vendor:   l.vendorName || l.grn?.vendorName || '—',
+          gstin:    l.vendorGstin || l.grn?.vendorGstin || '—',
+          date:     l.date || l.grn?.grnDate,
+          source:   l.source || 'GRN',
+          txbl:     parseFloat(l.taxableAmt || l.amount || 0),
+          cgst:     parseFloat(l.cgst || 0),
+          sgst:     parseFloat(l.sgst || 0),
+          igst:     parseFloat(l.igst || 0),
+          total:    parseFloat(l.cgst||0)+parseFloat(l.sgst||0)+parseFloat(l.igst||0),
+          cat, eligible: blocked ? 'blocked' : 'full',
           recon, suppFiled: inGSTR2B,
         }
       })
@@ -94,7 +96,7 @@ export default function ITCReconciliation() {
 
   // Dynamic prefiling checks
   const prefilingChecks = [
-    { ok: grns.every(i=>i.gstin&&i.gstin!=='\u2014'),     label:'GSTIN validated for all vendors' },
+    { ok: grns.every(i=>i.gstin&&i.gstin!=='—'),     label:'GSTIN validated for all vendors' },
     { ok: gstr2bRows.length > 0,                           label:'GSTR-2B downloaded and matched' },
     { ok: unmatchedInvoices.length===0,                    label: unmatchedInvoices.length>0 ? `${unmatchedInvoices.length} invoices unmatched \u2014 follow up with suppliers` : 'All invoices matched with GSTR-2B' },
     { ok: true,                                            label:'Blocked credits (Sec 17(5)) identified and excluded' },
@@ -102,7 +104,7 @@ export default function ITCReconciliation() {
     { ok: true,                                            label:'Capital goods ITC spread correctly (if applicable)' },
     { ok: true,                                            label:'RCM liability computed and paid' },
     { ok: true,                                            label:'Credit notes reconciled' },
-    { ok: grns.every(i=>!i.gstin||i.gstin.length===15||i.gstin==='\u2014'), label:'All GSTIN format valid (15 characters)' },
+    { ok: grns.every(i=>!i.gstin||i.gstin.length===15||i.gstin==='—'), label:'All GSTIN format valid (15 characters)' },
     { ok: true,                                            label:'Opening ITC balance from last period verified' },
   ]
 
@@ -207,7 +209,16 @@ export default function ITCReconciliation() {
                   const rc = STATUS_CONFIG[inv.recon]
                   return (
                     <tr key={inv.id} style={{opacity:inv.recon==='blocked'?0.7:1}}>
-                      <td><strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{inv.id}</strong></td>
+                      <td>
+                        <strong style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)'}}>{inv.id}</strong>
+                        <div>
+                          <span style={{
+                            background: inv.source==='Invoice' ? '#CCE5FF' : '#D4EDDA',
+                            color:      inv.source==='Invoice' ? '#004085' : '#155724',
+                            padding:'1px 5px', borderRadius:3, fontSize:9, fontWeight:700
+                          }}>{inv.source||'GRN'}</span>
+                        </div>
+                      </td>
                       <td>
                         <div style={{fontSize:12,fontWeight:600}}>{inv.vendor}</div>
                         <div style={{fontSize:10,color:'var(--odoo-gray)',fontFamily:'DM Mono,monospace'}}>{inv.gstin}</div>

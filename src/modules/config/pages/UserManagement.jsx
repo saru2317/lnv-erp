@@ -136,6 +136,37 @@ function useToast() {
 
 // ── MAIN ──────────────────────────────────────────────
 export default function UserManagement() {
+  // Load real users from DB
+  const loadUsers = useCallback(async () => {
+    try {
+      const r = await fetch(`${BASE}/auth/users`, { headers:hdr2() })
+      const d = await r.json()
+      const mapped = (d.data||[]).map(u => ({
+        id:       u.id,
+        fname:    u.name.split(' ')[0],
+        lname:    u.name.split(' ').slice(1).join(' '),
+        email:    u.email,
+        mobile:   u.mobile||'',
+        dept:     u.department||'',
+        desig:    u.designation||'',
+        uname:    u.username||u.email.split('@')[0],
+        role:     ROLE_MAP[u.role]||'viewer',
+        dbRole:   u.role,
+        status:   u.isActive?'active':'inactive',
+        online:   false,
+        color:    ROLE_CLR[ROLE_MAP[u.role]||'viewer']||'#6C757D',
+        lastLogin:u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-IN'):'Never',
+        modules:  ROLE_MOD[ROLE_MAP[u.role]||'viewer']||[],
+        perms:    ROLE_PERM[ROLE_MAP[u.role]||'viewer']||[],
+        notes:    '',
+        empCode:  u.empCode||'',
+      }))
+      setUsers(mapped)
+    } catch(e) { toast.error('Failed to load users') }
+  }, [])
+
+  useEffect(() => { loadUsers() }, [loadUsers])
+
   const [users,      setUsers]      = useState(INIT_USERS)
 
   // ── Backend API load ─────────────────────────────────────────────
@@ -226,6 +257,28 @@ export default function UserManagement() {
       const d = await r.json()
       if (!r.ok) throw new Error(d.error||'Failed')
       toast(`${form.fname} ${form.lname} ${editId?'updated':'created'}!`,'s')
+      // Save to real DB
+      try {
+        const payload = {
+          name: `${form.fname} ${form.lname}`.trim(),
+          email: form.email,
+          username: form.uname,
+          role: DB_ROLE_MAP[form.role]||'PRODUCTION',
+          department: form.dept,
+          designation: form.desig,
+          mobile: form.mobile,
+          empCode: form.empCode||null,
+          ...(form.password ? { password: form.password } : {}),
+        }
+        if (editId) {
+          await fetch(`${BASE}/auth/users/${editId}`, { method:'PATCH', headers:hdr(), body:JSON.stringify(payload) })
+        } else {
+          if (!form.password) { toast.error('Password required for new user'); return }
+          await fetch(`${BASE}/auth/users`, { method:'POST', headers:hdr(), body:JSON.stringify(payload) })
+        }
+        await loadUsers()
+        toast.success(editId?'User updated!':'User created!')
+      } catch(ex) { toast.error(ex.message) }
       addAudit(editId?'edit':'add',`${editId?'Updated':'New'}: ${form.fname} ${form.lname}`,`Role: ${ROLE_LABELS[form.role]}`)
       loadUsers(); closeDrawer(); return
     } catch(err) { console.warn('Backend:', err.message) }

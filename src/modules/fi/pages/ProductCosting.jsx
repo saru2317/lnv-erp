@@ -12,29 +12,61 @@ const inp = { width:'100%', padding:'7px 10px', fontSize:12, border:'1px solid #
 const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
 
 export default function ProductCosting() {
-  const now = new Date()
-  const [month,     setMonth]     = useState(now.getMonth()+1)
-  const [year,      setYear]      = useState(now.getFullYear())
+  const now   = new Date()
+  const today = now.toISOString().split('T')[0]
+  const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+
+  const [dateFrom,  setDateFrom]  = useState(first)
+  const [dateTo,    setDateTo]    = useState(today)
   const [data,      setData]      = useState(null)
   const [loading,   setLoading]   = useState(true)
-  const [filter,    setFilter]    = useState('all') // all | over | under | ok
-  const [sel,       setSel]       = useState(null)  // selected item for breakdown
+  const [filter,    setFilter]    = useState('all')
+  const [sel,       setSel]       = useState(null)
   const [breakdown, setBreakdown] = useState(null)
   const [bdLoading, setBdLoading] = useState(false)
-  const [stdModal,  setStdModal]  = useState(null)  // { code, name, stdCost }
+  const [stdModal,  setStdModal]  = useState(null)
   const [newStd,    setNewStd]    = useState('')
   const [stdReason, setStdReason] = useState('')
   const [saving,    setSaving]    = useState(false)
 
+  // Quick range presets — set dates and immediately load
+  const applyPreset = (preset) => {
+    const t = new Date()
+    const fmt = d => d.toISOString().split('T')[0]
+    let from, to
+    if (preset === 'today') {
+      from = fmt(t); to = fmt(t)
+    } else if (preset === 'yesterday') {
+      const y = new Date(t); y.setDate(t.getDate()-1)
+      from = fmt(y); to = fmt(y)
+    } else if (preset === 'week') {
+      const w = new Date(t); w.setDate(t.getDate()-6)
+      from = fmt(w); to = fmt(t)
+    } else if (preset === 'month') {
+      from = fmt(new Date(t.getFullYear(), t.getMonth(), 1)); to = fmt(t)
+    } else if (preset === 'quarter') {
+      const q = Math.floor(t.getMonth()/3)
+      from = fmt(new Date(t.getFullYear(), q*3, 1)); to = fmt(t)
+    }
+    setDateFrom(from)
+    setDateTo(to)
+    // Directly fetch with new dates (don't wait for state update)
+    setLoading(true)
+    fetch(`${BASE_URL}/fi/product-costing?dateFrom=${from}&dateTo=${to}`, { headers: hdr2() })
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false) })
+      .catch(() => { toast.error('Failed to load'); setLoading(false) })
+  }
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const r = await fetch(`${BASE_URL}/fi/product-costing?month=${month}&year=${year}`, { headers: hdr2() })
+      const r = await fetch(`${BASE_URL}/fi/product-costing?dateFrom=${dateFrom}&dateTo=${dateTo}`, { headers: hdr2() })
       const d = await r.json()
       setData(d)
     } catch { toast.error('Failed to load') }
     finally { setLoading(false) }
-  }, [month, year])
+  }, [dateFrom, dateTo])
 
   useEffect(() => { load() }, [load])
 
@@ -65,21 +97,29 @@ export default function ProductCosting() {
 
   const rows = data?.data || []
   const filtered = rows.filter(r => filter==='all' || r.status===filter)
+  const debugMsg = data?.debug
+  const noProd   = data?.noProductionInPeriod
 
   return (
     <div>
       {/* Header */}
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">Product Costing
-          <small> Standard Cost vs Actual · Variance Analysis · {MONTHS[month]} {year}</small>
+          <small> Standard Cost vs Actual · Variance Analysis · {dateFrom} to {dateTo}</small>
         </div>
-        <div className="fi-lv-actions">
-          <select className="sd-search" value={month} onChange={e=>setMonth(parseInt(e.target.value))} style={{width:80}}>
-            {MONTHS.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
-          </select>
-          <select className="sd-search" value={year} onChange={e=>setYear(parseInt(e.target.value))} style={{width:80}}>
-            {[2024,2025,2026].map(y=><option key={y}>{y}</option>)}
-          </select>
+        <div className="fi-lv-actions" style={{flexWrap:'wrap',gap:6}}>
+          {/* Quick presets */}
+          {[['Today','today'],['Yesterday','yesterday'],['This Week','week'],['This Month','month'],['Quarter','quarter']].map(([label,key])=>(
+            <button key={key} className="btn btn-s sd-bsm"
+              style={{ fontSize:10, padding:'3px 8px' }}
+              onClick={()=>applyPreset(key)}>{label}</button>
+          ))}
+          <span style={{color:'#CCC',fontSize:12}}>|</span>
+          <input type="date" className="sd-search" value={dateFrom}
+            onChange={e=>setDateFrom(e.target.value)} style={{width:130,fontSize:12}}/>
+          <span style={{fontSize:12,color:'#6C757D'}}>to</span>
+          <input type="date" className="sd-search" value={dateTo}
+            onChange={e=>setDateTo(e.target.value)} style={{width:130,fontSize:12}}/>
           <button className="btn btn-s sd-bsm" onClick={load}>Load</button>
           <button className="btn btn-s sd-bsm">Export</button>
         </div>
@@ -138,6 +178,26 @@ export default function ProductCosting() {
           }}>{l} ({k==='all'?rows.length:rows.filter(r=>r.status===k).length})</button>
         ))}
       </div>
+
+      {/* No production in period banner */}
+      {noProd && !loading && (
+        <div style={{ background:'#FFF3CD', border:'1px solid #FFEAA7', borderRadius:6,
+          padding:'10px 14px', marginBottom:12, fontSize:12, color:'#856404',
+          display:'flex', alignItems:'center', gap:8 }}>
+          ℹ️ <strong>No production activity in this period.</strong>
+          &nbsp;Showing standard costs only. Production was on{' '}
+          <strong>{data?.allWOs} WO(s)</strong> outside this date range.
+          Click <strong>This Month</strong> or <strong>Quarter</strong> to see actual costs.
+        </div>
+      )}
+
+      {/* Debug / info banner */}
+      {debugMsg && (
+        <div style={{ background:'#FFF3CD', border:'1px solid #FFEAA7', borderRadius:6,
+          padding:'10px 14px', marginBottom:12, fontSize:12, color:'#856404' }}>
+          ⚠️ {debugMsg}
+        </div>
+      )}
 
       {/* Main table */}
       {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading product costing...</div> : (

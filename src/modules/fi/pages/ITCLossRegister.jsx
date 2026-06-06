@@ -48,71 +48,46 @@ export default function ITCLossRegister() {
         const totalTax = cgst + sgst + igst
         if (totalTax <= 0) return
 
-        const cat  = l.itemCategory || l.description || ''
-        const inG2B = g2b.some(g => g.grnNo === l.grn?.grnNo)
-        const regType = l.grn?.vendorGstRegType || 'registered'
+        // Use normalized fields from updated ITC API
+        const refNo    = l.refNo || l.grn?.grnNo || l.id
+        const vendor   = l.vendorName || l.grn?.vendorName || '—'
+        const gstin    = l.vendorGstin || l.grn?.vendorGstin || '—'
+        const date     = l.date || l.grn?.grnDate
+        const itemDesc = l.itemDesc || l.itemName || l.description || '—'
+        const cat      = l.itemCategory || itemDesc || ''
+        const regType  = l.grn?.vendorGstRegType || 'registered'
+        const inG2B    = g2b.some(g => g.refNo === l.refNo || g.grnNo === refNo)
 
         // Sec 17(5) blocked
         if (l.itcEligibility === 'blocked' || isBlocked(cat)) {
-          lossRows.push({
-            id:     l.grn?.grnNo || l.id,
-            date:   l.grn?.grnDate,
-            vendor: l.grn?.vendorName || '—',
-            gstin:  l.grn?.vendorGstin || '—',
-            item:   l.itemName || cat || '—',
-            cgst, sgst, igst,
-            lossAmt:  totalTax,
-            reason:   'blocked_17_5',
-            action:   'Reverse from ITC claim — absorb as expense',
-          })
+          lossRows.push({ id:refNo, date, vendor, gstin, item:itemDesc,
+            cgst, sgst, igst, lossAmt:totalTax, reason:'blocked_17_5',
+            action:'Reverse from ITC claim — absorb as expense' })
           return
         }
 
         // Composition dealer
         if (regType === 'composition') {
-          lossRows.push({
-            id:     l.grn?.grnNo || l.id,
-            date:   l.grn?.grnDate,
-            vendor: l.grn?.vendorName || '—',
-            gstin:  l.grn?.vendorGstin || 'COMPOSITION',
-            item:   l.itemName || '—',
-            cgst: 0, sgst: 0, igst: 0,
-            lossAmt:  parseFloat(l.taxableAmt||l.amount||0) * 0.01,
-            reason:   'composition',
-            action:   'No ITC. Supplier cannot charge GST. Verify invoice.',
-          })
+          lossRows.push({ id:refNo, date, vendor, gstin:'COMPOSITION', item:itemDesc,
+            cgst:0, sgst:0, igst:0,
+            lossAmt: parseFloat(l.taxableAmt||l.amount||0) * 0.01,
+            reason:'composition', action:'No ITC. Supplier cannot charge GST. Verify invoice.' })
           return
         }
 
         // Non-GST supply
         if (regType === 'non_gst') {
-          lossRows.push({
-            id:     l.grn?.grnNo || l.id,
-            date:   l.grn?.grnDate,
-            vendor: l.grn?.vendorName || '—',
-            gstin:  'NON-GST',
-            item:   l.itemName || '—',
-            cgst: 0, sgst: 0, igst: 0,
-            lossAmt:  0,
-            reason:   'non_gst',
-            action:   'Outside GST scope. No ITC. Full cost to expense.',
-          })
+          lossRows.push({ id:refNo, date, vendor, gstin:'NON-GST', item:itemDesc,
+            cgst:0, sgst:0, igst:0, lossAmt:0,
+            reason:'non_gst', action:'Outside GST scope. No ITC. Full cost to expense.' })
           return
         }
 
-        // Unmatched in GSTR-2B (eligible item but supplier not filed)
+        // Unmatched in GSTR-2B
         if (!inG2B && l.itcEligibility !== 'blocked') {
-          lossRows.push({
-            id:     l.grn?.grnNo || l.id,
-            date:   l.grn?.grnDate,
-            vendor: l.grn?.vendorName || '—',
-            gstin:  l.grn?.vendorGstin || '—',
-            item:   l.itemName || '—',
-            cgst, sgst, igst,
-            lossAmt:  totalTax,
-            reason:   'unmatched_2b',
-            action:   'Follow up with supplier. Claim next month once matched.',
-          })
+          lossRows.push({ id:refNo, date, vendor, gstin, item:itemDesc,
+            cgst, sgst, igst, lossAmt:totalTax, reason:'unmatched_2b',
+            action:'Follow up with supplier. Claim next month once matched.' })
         }
       })
 

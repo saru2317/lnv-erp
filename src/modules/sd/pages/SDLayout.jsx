@@ -27,6 +27,7 @@ const FTADocuments       = lazy(() => import('./FTADocuments'))
 const DeliveryChallan    = lazy(() => import('./DeliveryChallan'))
 const DCPrint            = lazy(() => import('./DCPrint'))
 const LabourInvoice      = lazy(() => import('./LabourInvoice'))
+const SDApprovals        = lazy(() => import('@components/ui/MyApprovals'))
 
 const NAV = [
   { to: '/sd',             label: ' Home' },
@@ -92,6 +93,7 @@ export default function SDLayout() {
           <Route path="returns"         element={<ReturnList />} />
           <Route path="returns/new"     element={<ReturnNew />} />
           <Route path="item-ledger"     element={<ItemLedger />} />
+          <Route path="approvals"       element={<SDApprovals module="SD" />} />
           <Route path="pricing"         element={<PricingConditions />} />
           <Route path="pricebook"          element={<PriceBook />} />
           <Route path="fta-documents"      element={<FTADocuments />} />

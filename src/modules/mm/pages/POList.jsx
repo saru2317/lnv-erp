@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@hooks/useAuth'
 import { useListView } from '@hooks/useListView'
 import ListViewToggle from '@components/ui/ListViewToggle'
 import toast from 'react-hot-toast'
@@ -18,17 +19,49 @@ const fmtC = n => '₹'+Number(n||0).toLocaleString('en-IN')
 
 export default function POList() {
   const nav = useNavigate()
+  const { user } = useAuth()
+
+  const raiseAdvanceRequest = (p) => {
+    const params = new URLSearchParams({
+      vendorCode:  p.vendorCode  || '',
+      vendorName:  p.vendorName  || '',
+      vendorGstin: p.vendorGstin || '',
+      invoiceRef:  p.poNo        || '',
+      invoiceAmt:  p.totalAmount || 0,
+      requestAmt:  p.totalAmount || 0,
+      isAdvance:   'true',
+      purpose:     `Advance Payment for PO ${p.poNo}`,
+      notes:       `PO Reference: ${p.poNo}`,
+    })
+    nav(`/mm/payment-requests?${params.toString()}`)
+  }
   const { viewMode, toggleView } = useListView('MM-POList')
-  const [pos,    setPOs]   = useState([])
-  const [loading,setLoad]  = useState(true)
-  const [chip,   setChip]  = useState('all')
-  const [search, setSearch]= useState('')
+  const [pos,        setPOs]       = useState([])
+  const [advancedPOs, setAdvancedPOs] = useState(new Set()) // PO nos that already have a payment request
+  const [loading,    setLoad]      = useState(true)
+  const [chip,       setChip]      = useState('all')
+  const [search,     setSearch]    = useState('')
+
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  const tok = () => localStorage.getItem('lnv_token')
 
   const fetchPOs = useCallback(async () => {
     setLoad(true)
     try {
-      const data = await mmApi.getPOList()
-      setPOs(data.data||[])
+      const [poData, prData] = await Promise.all([
+        mmApi.getPOList(),
+        fetch(`${BASE_URL}/mm/payment-requests`, {
+          headers:{ Authorization:`Bearer ${tok()}` }
+        }).then(r=>r.json()).catch(()=>({ data:[] }))
+      ])
+      setPOs(poData.data||[])
+      // Build a set of PO nos that already have a PENDING or APPROVED advance request
+      const advSet = new Set(
+        (prData.data||[])
+          .filter(r => r.isAdvance && ['PENDING','APPROVED'].includes(r.status))
+          .map(r => r.invoiceRef) // invoiceRef stores PO number for advance requests
+      )
+      setAdvancedPOs(advSet)
     } catch(e){ toast.error(e.message) } finally { setLoad(false) }
   }, [])
 
@@ -171,6 +204,24 @@ export default function POList() {
                         <button className="btn-xs pri"
                           onClick={()=>nav(`/mm/grn/new?po=${p.id}`)}>GRN</button>
                       )}
+                      {['APPROVED','PARTIAL','CLOSED'].includes(p.status) && (() => {
+                        const alreadyRaised = advancedPOs.has(p.poNo)
+                        return (
+                          <button className="btn-xs"
+                            disabled={alreadyRaised}
+                            title={alreadyRaised ? 'Advance request already raised' : 'Raise advance payment request'}
+                            style={{
+                              background: alreadyRaised ? '#E9ECEF' : '#CCE5FF',
+                              color:      alreadyRaised ? '#6C757D' : '#004085',
+                              border:     `1px solid ${alreadyRaised ? '#CED4DA' : '#B8DAFF'}`,
+                              cursor:     alreadyRaised ? 'not-allowed' : 'pointer',
+                              opacity:    alreadyRaised ? 0.7 : 1,
+                            }}
+                            onClick={() => !alreadyRaised && raiseAdvanceRequest(p)}>
+                            {alreadyRaised ? '✓ Adv. Raised' : '💰 Adv. Request'}
+                          </button>
+                        )
+                      })()}
                       {['DRAFT','APPROVED'].includes(p.status) && (
                         <button className="btn-xs"
                           style={{background:'#856404',color:'#fff',border:'none'}}

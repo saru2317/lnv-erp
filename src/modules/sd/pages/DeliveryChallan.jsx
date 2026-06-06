@@ -17,7 +17,7 @@ const ST = {
 }
 
 const inp = { width:'100%', padding:'7px 10px', fontSize:12, border:'1px solid #E0D5E0',
-  borderRadius:5, outline:'none', boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
+  borderRadius:5, outline:'none', boxSizing:'border-box', fontFamily:'Tahoma,Verdana,sans-serif' }
 const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
 
 const BLANK_LINE = { itemCode:'', itemName:'', qty:'', unit:'Nos', description:'' }
@@ -392,7 +392,19 @@ This will reverse the PGI and restore FG stock.`)) return
   }
 
   const createInvoice = (dc) => {
-    nav(`/sd/invoices/new?dcId=${dc.id}&dcNo=${dc.dcNo}&soId=${dc.soId||''}&soNo=${dc.soRef||''}&customerId=${dc.customerId||''}&customerName=${encodeURIComponent(dc.customerName||'')}`)
+    const params = new URLSearchParams({
+      dcId:         dc.id,
+      dcNo:         dc.dcNo||'',
+      soId:         dc.soId||'',
+      soNo:         dc.soRef||'',
+      customerId:   dc.customerId||'',
+      customerName: dc.customerName||'',
+      customerGstin:dc.customerGstin||'',
+      supplyType:   dc.supplyType||'Intrastate',
+      billTo:       dc.billToAddress||'',
+      shipTo:       dc.shipToAddress||'',
+    })
+    nav(`/sd/invoices/new?${params.toString()}`)
   }
 
   const filtered = challans.filter(dc =>
@@ -427,7 +439,7 @@ This will reverse the PGI and restore FG stock.`)) return
         ].map(([l,v,c,bg]) => (
           <div key={l} style={{ background:bg, borderRadius:8,
             padding:'10px 14px', textAlign:'center' }}>
-            <div style={{ fontSize:22, fontWeight:800, color:c, fontFamily:'DM Mono,monospace' }}>{v}</div>
+            <div style={{ fontSize:22, fontWeight:800, color:c, fontFamily:'Tahoma,monospace' }}>{v}</div>
             <div style={{ fontSize:10, fontWeight:700, color:c, opacity:.8 }}>{l}</div>
           </div>
         ))}
@@ -467,20 +479,20 @@ This will reverse the PGI and restore FG stock.`)) return
                 <tr key={dc.id} style={{ cursor:'pointer' }}
                   onClick={() => { setSelected(dc); setView('detail') }}>
                   <td>
-                    <strong style={{ color:'#714B67', fontFamily:'DM Mono,monospace', fontSize:11 }}>
+                    <strong style={{ color:'#714B67', fontFamily:'Tahoma,monospace', fontSize:11 }}>
                       {dc.dcNo}
                     </strong>
                   </td>
                   <td style={{ fontSize:11, color:'#6C757D' }}>{fmtD(dc.dcDate||dc.createdAt)}</td>
                   <td><strong style={{ fontSize:12 }}>{dc.customerName}</strong></td>
-                  <td style={{ fontSize:11, color:'#6C757D', fontFamily:'DM Mono,monospace' }}>
+                  <td style={{ fontSize:11, color:'#6C757D', fontFamily:'Tahoma,monospace' }}>
                     {dc.soRef || '—'}
                   </td>
                   <td style={{ fontSize:11 }}>{dc.vehicleNo || '—'}</td>
                   <td style={{ fontSize:11, color:'#6C757D' }}>{dc.payTerms || '—'}</td>
                   <td style={{ fontSize:11 }}>
                     {dc.ewbNo
-                      ? <span style={{ color:'#155724', fontWeight:700, fontFamily:'DM Mono,monospace', fontSize:10 }}>{dc.ewbNo}</span>
+                      ? <span style={{ color:'#155724', fontWeight:700, fontFamily:'Tahoma,monospace', fontSize:10 }}>{dc.ewbNo}</span>
                       : <span style={{ color:'#6C757D', fontSize:10 }}>—</span>
                     }
                   </td>
@@ -501,13 +513,17 @@ This will reverse the PGI and restore FG stock.`)) return
                         onClick={() => { setSelected(dc); setView('detail') }}>View</button>
                       <button className="btn-xs"
                         onClick={() => nav(`/sd/delivery-challan/${dc.id}/print`)}>🖨️</button>
-                      {!dc.pgiPosted && dc.status !== 'CANCELLED' && (
+                      {dc.status !== 'CANCELLED' && (
                         <button className="btn-xs"
-                          onClick={e=>{e.stopPropagation();editDC(dc)}}>✏️</button>
+                          title={dc.pgiPosted ? 'Edit (PGI posted — stock adjustments may be needed)' : 'Edit'}
+                          onClick={e=>{e.stopPropagation();
+                            if(dc.pgiPosted && !window.confirm('PGI already posted. Edit anyway? Stock may need manual adjustment.')) return
+                            editDC(dc)}}>✏️</button>
                       )}
-                      {!dc.pgiPosted && dc.status !== 'CANCELLED' && (
+                      {dc.status !== 'CANCELLED' && !dc.invoiceRef && (
                         <button className="btn-xs"
                           style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
+                          title={dc.pgiPosted ? 'Delete (PGI will be reversed)' : 'Delete'}
                           onClick={e=>{e.stopPropagation();deleteDC(dc)}}>🗑</button>
                       )}
                       {dc.pgiPosted && dc.status !== 'CANCELLED' && (
@@ -660,10 +676,10 @@ This will reverse the PGI and restore FG stock.`)) return
             {(Array.isArray(selected.lines)?selected.lines:JSON.parse(selected.lines||'[]')).map((l,i) => (
               <tr key={i} style={{ borderBottom:'1px solid #F0F0F0' }}>
                 <td style={{ padding:'8px 12px', color:'#6C757D' }}>{i+1}</td>
-                <td style={{ padding:'8px 12px', fontFamily:'DM Mono,monospace',
+                <td style={{ padding:'8px 12px', fontFamily:'Tahoma,monospace',
                   color:'#714B67', fontSize:11 }}>{l.itemCode||'—'}</td>
                 <td style={{ padding:'8px 12px', fontWeight:600 }}>{l.itemName}</td>
-                <td style={{ padding:'8px 12px', fontFamily:'DM Mono,monospace',
+                <td style={{ padding:'8px 12px', fontFamily:'Tahoma,monospace',
                   fontWeight:700 }}>{parseFloat(l.qty||0).toFixed(2)}</td>
                 <td style={{ padding:'8px 12px', color:'#6C757D' }}>{l.unit}</td>
               </tr>
@@ -773,7 +789,7 @@ This will reverse the PGI and restore FG stock.`)) return
             </div>
             <div>
               <label style={lbl}>Customer GSTIN</label>
-              <input style={{ ...inp, background:'#F8F9FA', fontFamily:'DM Mono,monospace', fontSize:11 }}
+              <input style={{ ...inp, background:'#F8F9FA', fontFamily:'Tahoma,monospace', fontSize:11 }}
                 value={form.customerGstin || customers.find(cx =>
                   cx.name === form.customerName || String(cx.id) === String(form.customerId)
                 )?.gstin || ''}
