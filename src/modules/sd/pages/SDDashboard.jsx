@@ -56,8 +56,8 @@ export default function SDDashboard() {
               { label:'Overdue',          value:fmt(o.amount),         trend:(o.count||0)+' bills',   trendCls:'tdn', bg:'#F8D7DA', onClick:'invoices'  },
               { label:'Collected',        value:fmt(m.received),       trend:'Receipts',              trendCls:'tup', bg:'#D4EDDA', onClick:'receipts'  },
             ],
-            recentOrders:   STATIC.recentOrders,
-            recentInvoices: STATIC.recentInvoices,
+            recentOrders:   Array.isArray(d.recentOrders)   ? d.recentOrders   : STATIC.recentOrders,
+            recentInvoices: Array.isArray(d.recentInvoices) ? d.recentInvoices : STATIC.recentInvoices,
             topCustomers:   Array.isArray(d.topCustomers) ? d.topCustomers : [],
           })
         } else if (Array.isArray(d.kpis)) {

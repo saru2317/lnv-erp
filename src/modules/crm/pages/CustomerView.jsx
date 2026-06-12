@@ -1,53 +1,115 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CUSTOMERS, QUOTATIONS, OPPORTUNITIES, CONTACTS, fmtFull, fmt } from './_crmData'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const fmt  = n => n ? `₹${parseFloat(n).toLocaleString('en-IN',{maximumFractionDigits:0})}` : '₹0'
+const fmtD = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'
+
+const STAGE_CLR = {
+  Won:'#D4EDDA', Lost:'#F8D7DA', New:'#E3F2FD',
+  'Requirement Understanding':'#FFF3E0','Proposal Sent':'#E8F5E9','Negotiation':'#F3E5F5'
+}
+const STAGE_TXT = {
+  Won:'#155724', Lost:'#721C24', New:'#1565C0',
+  'Requirement Understanding':'#E65100','Proposal Sent':'#2E7D32','Negotiation':'#6A1B9A'
+}
 
 export default function CustomerView() {
   const nav = useNavigate()
   const { id } = useParams()
-  const cust = CUSTOMERS.find(c=>c.id===id) || CUSTOMERS[0]
-  const [tab, setTab] = useState('overview')
+  const [cust,   setCust]   = useState(null)
+  const [opps,   setOpps]   = useState([])
+  const [quotes, setQuotes] = useState([])
+  const [invoices,setInvoices]=useState([])
+  const [loading, setLoading]= useState(true)
+  const [tab,    setTab]    = useState('overview')
 
-  const oppHistory = OPPORTUNITIES.filter(o=>o.company===cust.name)
-  const qtHistory  = QUOTATIONS.filter(q=>q.company===cust.name)
-  const contacts   = CONTACTS.filter(c=>c.company===cust.name)
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    // Load customer detail (includes invoices from SD)
+    fetch(`${BASE_URL}/sd/customers/${id}`, { headers:hdr2() })
+      .then(r=>r.json())
+      .then(d=>{
+        setCust(d.data||d)
+        setInvoices(d.invoices||[])
+      }).catch(()=>toast.error('Failed to load customer'))
 
-  const wonVal  = oppHistory.filter(o=>o.stage==='Won').reduce((s,o)=>s+o.value,0)
-  const lostVal = oppHistory.filter(o=>o.stage==='Lost').reduce((s,o)=>s+o.value,0)
+    // Load opportunities for this specific customer
+    fetch(`${BASE_URL}/crm/opportunities?customerId=${id}&limit=50`, { headers:hdr2() })
+      .then(r=>r.json()).then(d=>setOpps(d.data||[])).catch(()=>{})
 
-  const TABS = ['overview','opportunities','quotations','contacts']
+    // Load ALL quotations for this customer (both CRM and SD)
+    fetch(`${BASE_URL}/sd/quotations?customerId=${id}&limit=50`, { headers:hdr2() })
+      .then(r=>r.json()).then(d=>{
+        const sdQuotes = d.data||[]
+        // Also load CRM quotations
+        fetch(`${BASE_URL}/crm/quotations?customerId=${id}&limit=50`, { headers:hdr2() })
+          .then(r=>r.json()).then(d2=>{
+            const crmQuotes = (d2.data||[]).map(q=>({...q, _source:'CRM'}))
+            setQuotes([...sdQuotes, ...crmQuotes].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)))
+          }).catch(()=>setQuotes(sdQuotes))
+      }).catch(()=>{})
+
+    setLoading(false)
+  }, [id])
+
+  if (loading || !cust) return <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading customer…</div>
+
+  const contacts    = Array.isArray(cust.contacts) ? cust.contacts : []
+  const totalBiz    = invoices.reduce((s,i)=>s+parseFloat(i.grandTotal||0),0)
+  const outstanding = invoices.filter(i=>i.status!=='PAID').reduce((s,i)=>s+parseFloat(i.grandTotal||0),0)
+  const wonOpps     = opps.filter(o=>o.stage==='Won').reduce((s,o)=>s+parseFloat(o.dealValue||0),0)
 
   return (
     <div>
       <div className="fi-lv-hdr">
         <div className="fi-lv-title">
-          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--odoo-purple)',marginRight:'6px'}} onClick={()=>nav('/crm/customers')}>← Customers</button>
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'#714B67',marginRight:6}}
+            onClick={()=>nav('/crm/customers')}>← Customers</button>
           {cust.name}
+          <span style={{marginLeft:8,fontSize:11,background:'#EDE0EA',color:'#714B67',
+            padding:'2px 8px',borderRadius:6,fontWeight:700}}>{cust.code}</span>
         </div>
         <div className="fi-lv-actions">
-          <span className={cust.status==='Active'?'crm-stage-won':'crm-badge-notq'} style={{padding:'4px 12px',fontSize:'12px'}}>{cust.status}</span>
-          <button className="btn btn-p btn-s" onClick={()=>nav('/crm/leads/new')}>+ New Lead</button>
-          <button className="btn btn-s sd-bsm" onClick={()=>nav('/crm/quotations/new')}>New Quotation</button>
+          <button className="btn btn-s sd-bsm"
+            onClick={()=>nav(`/crm/opportunities/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+            + New Opportunity
+          </button>
+          <button className="btn btn-p btn-s"
+            onClick={()=>nav(`/crm/quotations/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+            + New Quotation
+          </button>
         </div>
       </div>
 
       {/* Profile Header */}
-      <div className="fi-panel" style={{marginBottom:'14px'}}>
+      <div className="fi-panel" style={{marginBottom:14}}>
         <div className="fi-panel-body">
-          <div style={{display:'flex',gap:'16px',alignItems:'center'}}>
-            <div style={{width:'60px',height:'60px',borderRadius:'50%',background:'var(--odoo-purple)',
-              display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'20px',fontWeight:'800',flexShrink:0}}>
+          <div style={{display:'flex',gap:16,alignItems:'center'}}>
+            <div style={{width:60,height:60,borderRadius:'50%',background:'#714B67',flexShrink:0,
+              display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:20,fontWeight:800}}>
               {cust.name.split(' ').map(w=>w[0]).slice(0,2).join('')}
             </div>
             <div style={{flex:1}}>
-              <div style={{fontSize:'20px',fontWeight:'800',fontFamily:'Syne,sans-serif',color:'var(--odoo-purple)'}}>{cust.name}</div>
-              <div style={{fontSize:'13px',color:'var(--odoo-gray)'}}>{cust.industry} ·  {cust.city}, {cust.state} · Customer since {cust.since}</div>
+              <div style={{fontSize:20,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#714B67'}}>{cust.name}</div>
+              <div style={{fontSize:12,color:'#6C757D',marginTop:2}}>
+                {cust.city||''}{cust.state?`, ${cust.state}`:''} · {cust.phone||''} · {cust.email||''}
+              </div>
+              {cust.gstin&&<div style={{fontSize:11,fontFamily:'DM Mono,monospace',color:'#1A5276',marginTop:2}}>GSTIN: {cust.gstin}</div>}
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',textAlign:'center'}}>
-              {[['Annual Value',fmt(cust.annualValue),'var(--odoo-purple)'],['Won Deals',fmt(wonVal),'var(--odoo-green)'],['Lost Deals',fmt(lostVal),'var(--odoo-red)']].map(([l,v,c])=>(
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,textAlign:'center'}}>
+              {[
+                ['Total Business',  fmt(totalBiz),    '#2E7D32'],
+                ['Outstanding',     fmt(outstanding),  '#C62828'],
+                ['Won Deals',       fmt(wonOpps),      '#714B67'],
+                ['Credit Limit',    fmt(cust.creditLimit),'#1565C0'],
+              ].map(([l,v,c])=>(
                 <div key={l}>
-                  <div style={{fontSize:'18px',fontWeight:'800',fontFamily:'Syne,sans-serif',color:c}}>{v}</div>
-                  <div style={{fontSize:'10px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase'}}>{l}</div>
+                  <div style={{fontSize:16,fontWeight:800,fontFamily:'Syne,sans-serif',color:c}}>{v}</div>
+                  <div style={{fontSize:10,color:'#6C757D',fontWeight:700,textTransform:'uppercase'}}>{l}</div>
                 </div>
               ))}
             </div>
@@ -56,133 +118,258 @@ export default function CustomerView() {
       </div>
 
       {/* Tabs */}
-      <div style={{display:'flex',gap:'4px',marginBottom:'14px',borderBottom:'2px solid var(--odoo-border)'}}>
-        {TABS.map(t=>(
-          <button key={t} onClick={()=>setTab(t)}
-            style={{padding:'8px 16px',border:'none',borderBottom:tab===t?'2px solid var(--odoo-purple)':'2px solid transparent',
-              background:'none',color:tab===t?'var(--odoo-purple)':'var(--odoo-gray)',
-              fontWeight:tab===t?'700':'400',textTransform:'capitalize',cursor:'pointer',fontSize:'13px',marginBottom:'-2px'}}>
-            {t.charAt(0).toUpperCase()+t.slice(1)}
+      <div style={{display:'flex',gap:0,marginBottom:14,borderBottom:'2px solid var(--odoo-border)'}}>
+        {[['overview','Overview'],['opportunities',`Opportunities (${opps.length})`],
+          ['quotations',`Quotations (${quotes.length})`],['contacts',`Contacts (${contacts.length})`],
+          ['invoices',`Invoices (${invoices.length})`]].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)}
+            style={{padding:'8px 16px',border:'none',cursor:'pointer',fontSize:12,fontWeight:700,
+              borderBottom:tab===k?'2px solid #714B67':'2px solid transparent',
+              background:'none',color:tab===k?'#714B67':'#6C757D',marginBottom:-2}}>
+            {l}
           </button>
         ))}
       </div>
 
-      {tab==='overview'&&(
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'16px'}}>
+      {/* ── OVERVIEW ── */}
+      {tab==='overview' && (
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:14}}>
           <div className="fi-panel">
-            <div className="fi-panel-hdr"><h3> Company Details</h3></div>
+            <div className="fi-panel-hdr"><h3>Company Details</h3></div>
             <div className="fi-panel-body">
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'10px'}}>
-                {[['Customer ID',cust.id],['Industry',cust.industry],['City',cust.city],['State',cust.state],
-                  ['Primary Contact',cust.contact],['Phone',cust.phone],['Email',cust.email],['Customer Since',cust.since]
+              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>
+                {[
+                  ['Customer Code', cust.code],
+                  ['Type',          `Type ${cust.type||'B'}`],
+                  ['City',          cust.city||'—'],
+                  ['State',         cust.state||'—'],
+                  ['Pincode',       cust.pincode||'—'],
+                  ['Phone',         cust.phone||'—'],
+                  ['Email',         cust.email||'—'],
+                  ['GSTIN',         cust.gstin||'—'],
+                  ['Credit Limit',  fmt(cust.creditLimit)],
+                  ['Address',       cust.address||'—'],
                 ].map(([k,v])=>(
-                  <div key={k} style={{padding:'8px 10px',background:'#F8F9FA',borderRadius:'6px'}}>
-                    <div style={{fontSize:'10px',color:'var(--odoo-gray)',fontWeight:'700',textTransform:'uppercase',marginBottom:'3px'}}>{k}</div>
-                    <div style={{fontSize:'13px',fontWeight:'600'}}>{v||'—'}</div>
+                  <div key={k} style={{padding:'8px 10px',background:'#F8F9FA',borderRadius:6}}>
+                    <div style={{fontSize:10,color:'#6C757D',fontWeight:700,textTransform:'uppercase',marginBottom:2}}>{k}</div>
+                    <div style={{fontSize:12,fontWeight:600}}>{v}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           <div>
-            <div className="fi-panel" style={{marginBottom:'14px'}}>
-              <div className="fi-panel-hdr"><h3>Purchase Pattern</h3></div>
+            {/* Recent invoices summary */}
+            <div className="fi-panel" style={{marginBottom:14}}>
+              <div className="fi-panel-hdr"><h3>Recent Invoices</h3></div>
               <div className="fi-panel-body">
-                {['Jan','Feb','Mar'].map((m,i)=>{
-                  const val=[320000,450000,280000][i]
-                  return (
-                    <div key={m} style={{marginBottom:'8px'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'2px'}}>
-                        <span>{m} 2025</span><strong style={{color:'var(--odoo-purple)'}}>{fmtFull(val)}</strong>
-                      </div>
-                      <div style={{background:'#F0EEEB',borderRadius:'3px',height:'6px'}}>
-                        <div style={{width:`${val/500000*100}%`,height:'100%',borderRadius:'3px',background:'var(--odoo-purple)'}}></div>
-                      </div>
+                {invoices.slice(0,5).length===0?(
+                  <div style={{fontSize:12,color:'#6C757D',textAlign:'center',padding:16}}>No invoices yet</div>
+                ):invoices.slice(0,5).map(inv=>(
+                  <div key={inv.invoiceNo} style={{display:'flex',justifyContent:'space-between',
+                    padding:'6px 0',borderBottom:'1px solid #F0EEEB',fontSize:12}}>
+                    <div>
+                      <div style={{fontWeight:700,color:'#714B67'}}>{inv.invoiceNo}</div>
+                      <div style={{fontSize:10,color:'#6C757D'}}>{fmtD(inv.date)}</div>
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="fi-panel">
-              <div className="fi-panel-hdr"><h3> AI Insights</h3></div>
-              <div className="fi-panel-body">
-                <div style={{background:'#EDE0EA',borderRadius:'6px',padding:'10px',fontSize:'12px',lineHeight:'1.7'}}>
-                  <div style={{fontWeight:'700',color:'var(--odoo-purple)',marginBottom:'4px'}}>Customer Health: <strong style={{color:'var(--odoo-green)'}}>Good</strong></div>
-                  <div>Retention probability: <strong>85%</strong></div>
-                  <div>Next purchase prediction: <strong>Apr 2025</strong></div>
-                  <div style={{marginTop:'4px',color:'var(--odoo-orange)'}}> Upsell opportunity: Annual maintenance contract</div>
-                </div>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontWeight:700}}>{fmt(inv.grandTotal)}</div>
+                      <span style={{fontSize:10,padding:'1px 6px',borderRadius:4,
+                        background:inv.status==='PAID'?'#D4EDDA':'#FFF3CD',
+                        color:inv.status==='PAID'?'#155724':'#856404'}}>{inv.status}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {tab==='opportunities'&&(
-        <div className="sd-table-wrap">
-          <table className="sd-table">
-            <thead><tr><th>Opp ID</th><th>Product</th><th>Value</th><th>Stage</th><th>Owner</th><th>Close Date</th></tr></thead>
-            <tbody>
-              {oppHistory.length===0
-                ? <tr><td colSpan={6} style={{textAlign:'center',padding:'32px',color:'var(--odoo-gray)'}}>No opportunities</td></tr>
-                : oppHistory.map(o=>(
-                  <tr key={o.id} className="sd-tr-hover" onClick={()=>nav(`/crm/opportunities/${o.id}`)}>
-                    <td><span style={{fontFamily:'DM Mono,monospace',fontWeight:'700',color:'var(--odoo-purple)'}}>{o.id}</span></td>
-                    <td><strong style={{fontSize:'12px'}}>{o.product}</strong></td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontWeight:'700'}}>{fmt(o.value)}</td>
-                    <td><span className={`crm-badge ${o.stage==='Won'?'crm-stage-won':o.stage==='Lost'?'crm-stage-lost':'crm-badge-contacted'}`}>{o.stage}</span></td>
-                    <td>{o.owner}</td>
-                    <td style={{fontSize:'12px'}}>{o.closeDate}</td>
+      {/* ── OPPORTUNITIES ── */}
+      {tab==='opportunities' && (
+        <div>
+          <div style={{marginBottom:10,display:'flex',justifyContent:'flex-end'}}>
+            <button className="btn btn-p btn-s"
+              onClick={()=>nav(`/crm/opportunities/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+              + New Opportunity
+            </button>
+          </div>
+          <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr style={{background:'#714B67'}}>
+                  {['Lead No','Company','Requirements','Deal Value','Stage','Assigned To','Expected Close'].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {opps.length===0?(
+                  <tr><td colSpan={7} style={{padding:30,textAlign:'center',color:'#6C757D'}}>
+                    No opportunities yet — <span style={{color:'#714B67',cursor:'pointer',fontWeight:700}}
+                      onClick={()=>nav(`/crm/opportunities/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+                      + Create one
+                    </span>
+                  </td></tr>
+                ):opps.map((o,i)=>(
+                  <tr key={o.id} onClick={()=>nav(`/crm/leads/${o.id}`)}
+                    style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                    onMouseEnter={e=>e.currentTarget.style.background='#EDE0EA'}
+                    onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
+                    <td style={{padding:'10px 12px'}}>
+                      <code style={{fontWeight:700,color:'#714B67',fontSize:11}}>{o.leadNo}</code>
+                    </td>
+                    <td style={{padding:'10px 12px',fontSize:12,fontWeight:600}}>{o.companyName}</td>
+                    <td style={{padding:'10px 12px',fontSize:11,color:'#6C757D',maxWidth:200}}>{(o.requirements||'—').slice(0,60)}</td>
+                    <td style={{padding:'10px 12px',fontWeight:700,color:'#2E7D32',fontSize:12}}>{fmt(o.dealValue)}</td>
+                    <td style={{padding:'10px 12px'}}>
+                      <span style={{padding:'2px 8px',borderRadius:6,fontSize:11,fontWeight:700,
+                        background:STAGE_CLR[o.stage]||'#F0EEEB',color:STAGE_TXT[o.stage]||'#1C1C1C'}}>
+                        {o.stage}
+                      </span>
+                    </td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>{o.assignedTo||'—'}</td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>{fmtD(o.expectedCloseDate)}</td>
                   </tr>
-                ))
-              }
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── QUOTATIONS ── */}
+      {tab==='quotations' && (
+        <div>
+          <div style={{marginBottom:10,display:'flex',justifyContent:'flex-end'}}>
+            <button className="btn btn-p btn-s"
+              onClick={()=>nav(`/crm/quotations/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+              + New Quotation
+            </button>
+          </div>
+          <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr style={{background:'#714B67'}}>
+                  {['Quotation No','Customer','Amount','Valid Till','Status','Date',''].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {quotes.length===0?(
+                  <tr><td colSpan={7} style={{padding:30,textAlign:'center',color:'#6C757D'}}>
+                    No quotations yet — <span style={{color:'#714B67',cursor:'pointer',fontWeight:700}}
+                      onClick={()=>nav(`/crm/quotations/new?customerId=${cust.id}&customerName=${encodeURIComponent(cust.name)}`)}>
+                      + Create one
+                    </span>
+                  </td></tr>
+                ):quotes.map((q,i)=>(
+                  <tr key={q.id} onClick={()=>nav(q.source==='SD' ? `/sd/quotations/${q.id}` : `/crm/quotations/${q.id}`)}
+                    style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                    onMouseEnter={e=>e.currentTarget.style.background='#EDE0EA'}
+                    onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
+                    <td style={{padding:'10px 12px'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <code style={{fontWeight:700,color:'#714B67',fontSize:11}}>{q.quotNo||q.quotationNo}</code>
+                        <span style={{fontSize:9,padding:'1px 5px',borderRadius:3,fontWeight:700,
+                          background:q.source==='SD'?'#E3F2FD':'#EDE0EA',
+                          color:q.source==='SD'?'#1565C0':'#714B67'}}>
+                          {q.source||'CRM'}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{padding:'10px 12px',fontSize:12,fontWeight:600}}>{q.customerName}</td>
+                    <td style={{padding:'10px 12px',fontWeight:700,fontSize:12}}>{fmt(q.totalAmount||q.grandTotal)}</td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>{fmtD(q.validTill)}</td>
+                    <td style={{padding:'10px 12px'}}>
+                      <span style={{padding:'2px 8px',borderRadius:6,fontSize:11,fontWeight:700,
+                        background:q.status==='APPROVED'?'#D4EDDA':q.status==='REJECTED'?'#F8D7DA':'#FFF3CD',
+                        color:q.status==='APPROVED'?'#155724':q.status==='REJECTED'?'#721C24':'#856404'}}>
+                        {q.status}
+                      </span>
+                    </td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>{fmtD(q.date||q.createdAt)}</td>
+                    <td style={{padding:'10px 12px'}}>
+                      <button onClick={e=>{e.stopPropagation();nav(q.source==='SD'?`/sd/quotations/${q.id}`:`/crm/quotations/${q.id}`)}}
+                        style={{padding:'3px 10px',borderRadius:5,border:'1px solid var(--odoo-border)',background:'#fff',fontSize:11,cursor:'pointer'}}>
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── CONTACTS ── */}
+      {tab==='contacts' && (
+        <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead>
+              <tr style={{background:'#714B67'}}>
+                {['Name','Designation','Phone','Mobile','Email','Department'].map(h=>(
+                  <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.length===0?(
+                <tr><td colSpan={6} style={{padding:30,textAlign:'center',color:'#6C757D'}}>
+                  No contacts — add them in MDM → Customer Master
+                </td></tr>
+              ):contacts.map((c,i)=>(
+                <tr key={i} style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA'}}>
+                  <td style={{padding:'10px 12px',fontWeight:700,fontSize:12}}>{c.name||c.contactName||'—'}</td>
+                  <td style={{padding:'10px 12px',fontSize:11,color:'#6C757D'}}>{c.designation||'—'}</td>
+                  <td style={{padding:'10px 12px',fontSize:11,fontFamily:'DM Mono,monospace'}}>{c.phone||'—'}</td>
+                  <td style={{padding:'10px 12px',fontSize:11,fontFamily:'DM Mono,monospace'}}>{c.mobile||'—'}</td>
+                  <td style={{padding:'10px 12px',fontSize:11}}>{c.email||'—'}</td>
+                  <td style={{padding:'10px 12px',fontSize:11,color:'#6C757D'}}>{c.department||'—'}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {tab==='quotations'&&(
-        <div className="sd-table-wrap">
-          <table className="sd-table">
-            <thead><tr><th>Quotation</th><th>Product</th><th>Amount</th><th>Discount</th><th>Final</th><th>Status</th><th>Date</th></tr></thead>
+      {/* ── INVOICES ── */}
+      {tab==='invoices' && (
+        <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead>
+              <tr style={{background:'#714B67'}}>
+                {['Invoice No','Date','Amount','Due Date','Status'].map(h=>(
+                  <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
             <tbody>
-              {qtHistory.length===0
-                ? <tr><td colSpan={7} style={{textAlign:'center',padding:'32px',color:'var(--odoo-gray)'}}>No quotations</td></tr>
-                : qtHistory.map(q=>(
-                  <tr key={q.id} className="sd-tr-hover" onClick={()=>nav(`/crm/quotations/${q.id}`)}>
-                    <td><span style={{fontFamily:'DM Mono,monospace',fontWeight:'700',color:'var(--odoo-purple)'}}>{q.id}</span></td>
-                    <td><strong style={{fontSize:'12px'}}>{q.product}</strong></td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px'}}>{fmtFull(q.amount)}</td>
-                    <td style={{color:'var(--odoo-orange)',fontSize:'12px'}}>{q.discount}%</td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontWeight:'700',fontSize:'12px'}}>{fmtFull(q.finalAmount)}</td>
-                    <td><span className={`crm-badge ${q.status==='Won'?'crm-stage-won':q.status==='Lost'?'crm-stage-lost':'crm-badge-contacted'}`}>{q.status}</span></td>
-                    <td style={{fontSize:'12px'}}>{q.date}</td>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {tab==='contacts'&&(
-        <div className="sd-table-wrap">
-          <table className="sd-table">
-            <thead><tr><th>Name</th><th>Designation</th><th>Phone</th><th>Email</th><th>Last Contact</th><th>Status</th></tr></thead>
-            <tbody>
-              {contacts.length===0
-                ? <tr><td colSpan={6} style={{textAlign:'center',padding:'32px',color:'var(--odoo-gray)'}}>No contacts</td></tr>
-                : contacts.map(c=>(
-                  <tr key={c.id} className="sd-tr-hover">
-                    <td><strong style={{fontSize:'12px'}}>{c.name}</strong></td>
-                    <td style={{fontSize:'12px'}}>{c.designation}</td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px'}}>{c.phone}</td>
-                    <td style={{fontSize:'12px'}}>{c.email}</td>
-                    <td style={{fontSize:'12px'}}>{c.lastContact}</td>
-                    <td><span className={c.status==='Active'?'crm-stage-won':'crm-badge-notq'}>{c.status}</span></td>
-                  </tr>
-                ))
-              }
+              {invoices.length===0?(
+                <tr><td colSpan={5} style={{padding:30,textAlign:'center',color:'#6C757D'}}>No invoices found</td></tr>
+              ):invoices.map((inv,i)=>(
+                <tr key={inv.invoiceNo} onClick={()=>nav(`/sd/invoices/${inv.id||inv.invoiceNo}`)}
+                  style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                  onMouseEnter={e=>e.currentTarget.style.background='#EDE0EA'}
+                  onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
+                  <td style={{padding:'10px 12px'}}>
+                    <code style={{fontWeight:700,color:'#714B67',fontSize:11}}>{inv.invoiceNo}</code>
+                  </td>
+                  <td style={{padding:'10px 12px',fontSize:11}}>{fmtD(inv.date)}</td>
+                  <td style={{padding:'10px 12px',fontWeight:700,fontSize:12}}>{fmt(inv.grandTotal)}</td>
+                  <td style={{padding:'10px 12px',fontSize:11}}>{fmtD(inv.dueDate)}</td>
+                  <td style={{padding:'10px 12px'}}>
+                    <span style={{padding:'2px 8px',borderRadius:6,fontSize:11,fontWeight:700,
+                      background:inv.status==='PAID'?'#D4EDDA':inv.status==='OVERDUE'?'#F8D7DA':'#FFF3CD',
+                      color:inv.status==='PAID'?'#155724':inv.status==='OVERDUE'?'#721C24':'#856404'}}>
+                      {inv.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

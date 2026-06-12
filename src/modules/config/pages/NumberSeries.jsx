@@ -78,13 +78,49 @@ export default function NumberSeries() {
     } catch { toast.error('Seed failed') }
   }
 
-  // Group by module
-  const groups = {
-    'Sales (SD)':      ['QUOTATION','SALES_ORDER','SALES_INVOICE','LABOUR_INVOICE','PAYMENT','SALES_RETURN'],
-    'Purchase (MM)':   ['PURCHASE_REQ','PURCHASE_ORDER','PURCHASE_INVOICE','PURCHASE_RETURN','PAYMENT_VOUCHER'],
-    'Operations':      ['WORK_ORDER','DELIVERY_CHALLAN','INWARD_CHALLAN'],
-    'Finance (FI)':    ['JOURNAL_ENTRY'],
+  // Group by module — maps group label → docTypes
+  const MODULE_GROUPS = {
+    'SALES (SD)':      ['QUOTATION','SALES_ORDER','SALES_INVOICE','LABOUR_INVOICE','PAYMENT','SALES_RETURN','DELIVERY_CHALLAN'],
+    'PURCHASE (MM)':   ['PURCHASE_REQ','COMP_STATEMENT','PURCHASE_ORDER','VENDOR_INVOICE','PURCHASE_RETURN','INWARD_CHALLAN'],
+    'WAREHOUSE (WM)':  ['GRN','GOODS_ISSUE','GOODS_RECEIPT','STOCK_TRANSFER'],
+    'PRODUCTION (PP)': ['WORK_ORDER','PROD_PLAN','MAT_ISSUE','JOB_CARD','PROD_BATCH'],
+    'QUALITY (QM)':    ['INSPECTION','NCR','CAPA','COMPLAINT'],
+    'FINANCE (FI)':    ['JOURNAL_ENTRY','PAYMENT_VOUCHER','RECEIPT_VOUCHER'],
     'CRM':             ['CRM_LEAD'],
+  }
+  // Build reverse map docType → group
+  const docTypeToGroup = {}
+  Object.entries(MODULE_GROUPS).forEach(([grp, types]) => types.forEach(t => docTypeToGroup[t] = grp))
+
+  // Group series — known groups first, then custom
+  const grouped = {}
+  series.forEach(s => {
+    const grp = docTypeToGroup[s.docType] || 'CUSTOM'
+    if (!grouped[grp]) grouped[grp] = []
+    grouped[grp].push(s)
+  })
+  // Order: known groups first, custom last
+  const groupOrder = [...Object.keys(MODULE_GROUPS), 'CUSTOM']
+  const groups = {}
+  groupOrder.forEach(g => { if (grouped[g]?.length) groups[g] = grouped[g] })
+
+  const [showNew, setShowNew] = useState(false)
+  const [newForm, setNewForm] = useState({ docType:'', docLabel:'', module:'CUSTOM', prefix:'', separator:'-', yearFormat:'YYYY', padding:4, resetType:'YEARLY' })
+  const setNF = (k,v) => setNewForm(f=>({...f,[k]:v}))
+
+  const createNew = async () => {
+    if (!newForm.docType || !newForm.docLabel || !newForm.prefix) { toast.error('docType, label and prefix are required'); return }
+    setSaving(true)
+    try {
+      const r = await fetch(`${BASE_URL}/number-series`, { method:'POST', headers: hdr(), body: JSON.stringify(newForm) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      toast.success(d.message)
+      setShowNew(false)
+      setNewForm({ docType:'', docLabel:'', module:'CUSTOM', prefix:'', separator:'-', yearFormat:'YYYY', padding:4, resetType:'YEARLY' })
+      load()
+    } catch(e) { toast.error(e.message) }
+    finally { setSaving(false) }
   }
 
   return (
@@ -100,11 +136,91 @@ export default function NumberSeries() {
             Configure document numbering format for all modules — prefix, year format, sequence
           </div>
         </div>
-        <button onClick={seed}
-          style={{padding:'7px 14px',background:'#fff',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>
-          Seed Defaults
-        </button>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={seed}
+            style={{padding:'7px 14px',background:'#fff',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>
+            🔄 Seed Defaults
+          </button>
+          <button onClick={()=>setShowNew(true)}
+            style={{padding:'7px 14px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+            + New Series
+          </button>
+        </div>
       </div>
+
+      {/* Create New Series Modal */}
+      {showNew && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.4)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#fff',borderRadius:10,padding:24,width:520,boxShadow:'0 8px 32px rgba(0,0,0,.2)'}}>
+            <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:16,marginBottom:18,color:'#714B67'}}>
+              + Create New Number Series
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+              {[
+                {k:'docType',  l:'Doc Type Key *',   ph:'e.g. MY_DOCUMENT (UPPERCASE)',  full:true},
+                {k:'docLabel', l:'Display Label *',  ph:'e.g. My Document',              full:true},
+                {k:'prefix',   l:'Prefix *',         ph:'e.g. MD',                       full:false},
+                {k:'separator',l:'Separator',         ph:'- or /',                         full:false},
+              ].map(f=>(
+                <div key={f.k} style={{gridColumn:f.full?'1/-1':'auto'}}>
+                  <label style={{fontSize:11,fontWeight:700,color:'#6C757D',textTransform:'uppercase',letterSpacing:.5,display:'block',marginBottom:4}}>{f.l}</label>
+                  <input value={newForm[f.k]} onChange={e=>setNF(f.k, f.k==='docType'?e.target.value.toUpperCase():e.target.value)}
+                    placeholder={f.ph} style={{...inp, width:'100%', boxSizing:'border-box'}} />
+                </div>
+              ))}
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:'#6C757D',textTransform:'uppercase',letterSpacing:.5,display:'block',marginBottom:4}}>Module Group</label>
+                <select value={newForm.module} onChange={e=>setNF('module',e.target.value)} style={{...inp,width:'100%'}}>
+                  {[
+                    {v:'SD',     l:'SD · Sales'},
+                    {v:'MM',     l:'MM · Purchase'},
+                    {v:'WM',     l:'WM · Warehouse'},
+                    {v:'FI',     l:'FI · Finance'},
+                    {v:'PP',     l:'PP · Production'},
+                    {v:'QM',     l:'QM · Quality'},
+                    {v:'PM',     l:'PM · Maintenance'},
+                    {v:'HCM',    l:'HCM · HR'},
+                    {v:'CRM',    l:'CRM'},
+                    {v:'TM',     l:'TM · Transport'},
+                    {v:'AM',     l:'AM · Assets'},
+                    {v:'CUSTOM', l:'Custom / Other'},
+                  ].map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:'#6C757D',textTransform:'uppercase',letterSpacing:.5,display:'block',marginBottom:4}}>Year Format</label>
+                <select value={newForm.yearFormat} onChange={e=>setNF('yearFormat',e.target.value)} style={{...inp,width:'100%'}}>
+                  {YEAR_FORMATS.map(y=><option key={y.value} value={y.value}>{y.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:'#6C757D',textTransform:'uppercase',letterSpacing:.5,display:'block',marginBottom:4}}>Reset Type</label>
+                <select value={newForm.resetType} onChange={e=>setNF('resetType',e.target.value)} style={{...inp,width:'100%'}}>
+                  {RESET_TYPES.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:'#6C757D',textTransform:'uppercase',letterSpacing:.5,display:'block',marginBottom:4}}>Padding (digits)</label>
+                <input type="number" min={3} max={8} value={newForm.padding} onChange={e=>setNF('padding',parseInt(e.target.value)||4)} style={{...inp,width:'100%'}} />
+              </div>
+              <div style={{display:'flex',alignItems:'flex-end'}}>
+                <div style={{background:'#F0EEEB',padding:'8px 12px',borderRadius:6,fontSize:12,fontFamily:'monospace',width:'100%'}}>
+                  Preview: <strong style={{color:'#714B67'}}>
+                    {newForm.prefix||'PREFIX'}{newForm.separator||'-'}{new Date().getFullYear()}{newForm.separator||'-'}{'1'.padStart(newForm.padding||4,'0')}
+                  </strong>
+                </div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',borderTop:'1px solid #E0D5E0',paddingTop:14}}>
+              <button onClick={()=>setShowNew(false)} style={{padding:'7px 16px',background:'#fff',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>Cancel</button>
+              <button onClick={createNew} disabled={saving}
+                style={{padding:'7px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+                {saving?'Creating…':'✓ Create Series'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       <div style={{background:'#F8F4F8',border:'1px solid #E0D5E0',borderRadius:8,padding:'10px 16px',
@@ -116,12 +232,16 @@ export default function NumberSeries() {
 
       {loading ? <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading series...</div> : (
         <div>
-          {Object.entries(groups).map(([groupName, docTypes]) => {
-            const groupSeries = series.filter(s => docTypes.includes(s.docType))
+          {Object.entries(groups).map(([groupName, groupSeries]) => {
             if (!groupSeries.length) return null
+            const grpColor = {
+              'SALES (SD)':'#714B67','PURCHASE (MM)':'#00A09D','WAREHOUSE (WM)':'#1F618D',
+              'PRODUCTION (PP)':'#E06F39','QUALITY (QM)':'#117864','FINANCE (FI)':'#1A5276',
+              'CRM':'#8E44AD','CUSTOM':'#6C757D'
+            }[groupName] || '#714B67'
             return (
               <div key={groupName} style={{marginBottom:16}}>
-                <div style={{fontWeight:700,fontSize:12,color:'#714B67',textTransform:'uppercase',
+                <div style={{fontWeight:700,fontSize:12,color:grpColor,textTransform:'uppercase',
                   letterSpacing:'.05em',marginBottom:8,padding:'0 4px'}}>{groupName}</div>
                 <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>

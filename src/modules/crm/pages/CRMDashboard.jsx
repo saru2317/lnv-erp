@@ -6,13 +6,14 @@ const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}
 const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
 
 const STAGES = [
-  { key:'NEW',         label:'New Leads',     color:'#6C757D', icon:'\uD83D\uDCCC' },
-  { key:'CONTACTED',   label:'Contacted',     color:'#004085', icon:'\uD83D\uDCDE' },
-  { key:'QUALIFIED',   label:'Qualified',     color:'#856404', icon:'\u2714\uFE0F'  },
-  { key:'PROPOSAL',    label:'Proposal Sent', color:'#4B2E83', icon:'\uD83D\uDCCB' },
-  { key:'NEGOTIATION', label:'Negotiation',   color:'#0C5460', icon:'\uD83E\uDD1D' },
-  { key:'WON',         label:'Won',           color:'#155724', icon:'\uD83C\uDFC6' },
-  { key:'LOST',        label:'Lost',          color:'#721C24', icon:'\u274C'        },
+  { key:'Requirement Understanding', label:'Requirement', color:'#6C757D', icon:'📌' },
+  { key:'Solution Discussion',       label:'Discussion',  color:'#004085', icon:'💬' },
+  { key:'Demo / Presentation',       label:'Demo',        color:'#856404', icon:'🖥️' },
+  { key:'Proposal Submitted',        label:'Proposal',    color:'#4B2E83', icon:'📋' },
+  { key:'Negotiation',               label:'Negotiation', color:'#0C5460', icon:'🤝' },
+  { key:'Decision Pending',          label:'Decision',    color:'#E06F39', icon:'⏳' },
+  { key:'Won',                       label:'Won',         color:'#155724', icon:'🏆' },
+  { key:'Lost',                      label:'Lost',        color:'#721C24', icon:'❌' },
 ]
 
 export default function CRMDashboard() {
@@ -27,11 +28,11 @@ export default function CRMDashboard() {
   }, [])
 
   const leads  = data?.leads  || []
-  const stages = STAGES.map(s => ({ ...s, count: leads.filter(l=>l.stage===s.key).length, value: leads.filter(l=>l.stage===s.key).reduce((a,l)=>a+parseFloat(l.dealValue||0),0) }))
+  const stages = STAGES.map(s => ({ ...s, count: leads.filter(l=>(l.stage||'').toLowerCase()===s.key.toLowerCase()).length, value: leads.filter(l=>(l.stage||'').toLowerCase()===s.key.toLowerCase()).reduce((a,l)=>a+parseFloat(l.dealValue||0),0) }))
   const total  = leads.length
-  const wonVal = stages.find(s=>s.key==='WON')?.value||0
-  const pipeline = stages.filter(s=>!['WON','LOST'].includes(s.key)).reduce((a,s)=>a+s.value,0)
-  const winRate  = total>0 ? Math.round((stages.find(s=>s.key==='WON')?.count||0)/total*100) : 0
+  const wonVal = stages.find(s=>s.key==='Won')?.value||0
+  const pipeline = stages.filter(s=>!['Won','Lost'].includes(s.key)).reduce((a,s)=>a+s.value,0)
+  const winRate  = total>0 ? Math.round((stages.find(s=>s.key==='Won')?.count||0)/total*100) : 0
 
   return (
     <div>
@@ -51,7 +52,7 @@ export default function CRMDashboard() {
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
         {[
           {label:'Total Leads',    val:total,        sub:'All time',          color:'#714B67', bg:'#EDE0EA'},
-          {label:'Pipeline Value', val:INR(pipeline),sub:'Active deals',      color:'#0C5460', bg:'#D1ECF1'},
+          {label:'Pipeline Value', val:INR(pipeline),sub:'Quoted value (incl. quotations)', color:'#0C5460', bg:'#D1ECF1'},
           {label:'Won Value',      val:INR(wonVal),  sub:'Closed deals',      color:'#155724', bg:'#D4EDDA'},
           {label:'Win Rate',       val:winRate+'%',  sub:`${total} total leads`,color:'#856404',bg:'#FFF3CD'},
         ].map(k=>(
@@ -78,7 +79,7 @@ export default function CRMDashboard() {
                 <div style={{fontSize:11,fontWeight:700,color:s.color,marginBottom:6}}>{s.count}</div>
                 <div style={{display:'flex',alignItems:'flex-end',justifyContent:'center',height:130}}>
                   <div style={{width:'80%',height,background:s.color,borderRadius:'4px 4px 0 0',
-                    transition:'height .3s', opacity:s.key==='LOST'?0.4:1}}/>
+                    transition:'height .3s', opacity:s.key==='Lost'?0.4:1}}/>
                 </div>
                 <div style={{fontSize:11,color:'#6C757D',marginTop:6,fontWeight:600}}>{s.label}</div>
                 {s.value>0&&<div style={{fontSize:10,color:s.color,fontFamily:'DM Mono,monospace',fontWeight:700}}>{INR(s.value)}</div>}
@@ -105,12 +106,15 @@ export default function CRMDashboard() {
                 onMouseOver={e=>e.currentTarget.style.background='#F8F4F8'}
                 onMouseOut={e=>e.currentTarget.style.background='transparent'}>
                 <div>
-                  <div style={{fontWeight:600,fontSize:12}}>{l.company||l.name}</div>
+                  <div style={{fontWeight:600,fontSize:12}}>{l.companyName||l.company||l.name}</div>
                   <div style={{fontSize:11,color:'#6C757D'}}>{l.contactName} · {l.source}</div>
                 </div>
                 <div style={{textAlign:'right'}}>
                   <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:s.color+'22',color:s.color}}>{s.label}</span>
-                  {l.dealValue>0&&<div style={{fontSize:11,fontFamily:'DM Mono,monospace',fontWeight:700,color:'#155724',marginTop:2}}>{INR(l.dealValue)}</div>}
+                  {l.dealValue>0&&<div style={{fontSize:11,fontFamily:'DM Mono,monospace',fontWeight:700,color:'#155724',marginTop:2}}>
+                    {INR(l.dealValue)}
+                    {l.hasQuotation&&<span style={{fontSize:9,marginLeft:4,background:'#D4EDDA',color:'#155724',padding:'1px 4px',borderRadius:3,fontWeight:700,fontFamily:'DM Sans,sans-serif'}}>QT</span>}
+                  </div>}
                 </div>
               </div>
             )

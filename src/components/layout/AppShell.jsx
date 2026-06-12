@@ -8,26 +8,26 @@ import styles from './AppShell.module.css'
 import LNVAssistant from '@components/ui/LNVAssistant'
 
 const ALL_MODULES = [
-  { key:'home',    label:'Home',        icon:'' },
-  { key:'sd',      label:'Sales',       icon:'' },
-  { key:'mm',      label:'Purchase',    icon:'' },
-  { key:'wm',      label:'Warehouse',   icon:'' },
-  { key:'fi',      label:'Finance',     icon:'' },
-  { key:'pp',      label:'Production',  icon:'' },
-  { key:'qm',      label:'Quality',     icon:'' },
-  { key:'pm',      label:'Maintenance', icon:'' },
-  { key:'hcm',     label:'HR',          icon:'' },
-  { key:'crm',     label:'CRM',         icon:'' },
-  { key:'admin',   label:'Admin',       icon:'' },
-  { key:'config',  label:'Config',      icon:'' },
-  { key:'tm',      label:'Transport',   icon:'' },
-  { key:'am',      label:'Assets',      icon:'' },
-  { key:'civil',   label:'Civil',       icon:'' },
+  { key:'home',    label:'Home',        icon:'🏠' },
+  { key:'sd',      label:'Sales',       icon:'🛒' },
+  { key:'mm',      label:'Purchase',    icon:'📦' },
+  { key:'wm',      label:'Warehouse',   icon:'🏭' },
+  { key:'fi',      label:'Finance',     icon:'💰' },
+  { key:'pp',      label:'Production',  icon:'⚙️'  },
+  { key:'qm',      label:'Quality',     icon:'✅' },
+  { key:'pm',      label:'Maintenance', icon:'🔧' },
+  { key:'hcm',     label:'HR',          icon:'👥' },
+  { key:'crm',     label:'CRM',         icon:'🤝' },
+  { key:'admin',   label:'Admin',       icon:'👤' },
+  { key:'config',  label:'Config',      icon:'⚙️'  },
+  { key:'tm',      label:'Transport',   icon:'🚛' },
+  { key:'am',      label:'Assets',      icon:'🏗️'  },
+  { key:'civil',   label:'Civil',       icon:'👷' },
   { key:'vm',      label:'Visitor',     icon:'🪪' },
-  { key:'cn',      label:'Canteen',     icon:'' },
-  { key:'reports', label:'Reports',     icon:'' },
-  { key:'kpi',     label:'KPI / KRA',   icon:'' },
-  { key:'mdm',     label:'MDM',         icon:'' },
+  { key:'cn',      label:'Canteen',     icon:'🍽️'  },
+  { key:'reports', label:'Reports',     icon:'📊' },
+  { key:'kpi',     label:'KPI / KRA',   icon:'🎯' },
+  { key:'mdm',     label:'MDM',         icon:'🗄️'  },
 ]
 
 // Route → human label map for recent tracking
@@ -71,7 +71,7 @@ const ROLE_COLORS = {
 }
 
 export default function AppShell() {
-  const { user, logout, hasAccess } = useAuth()
+  const { user, logout, hasAccess, isModuleEnabled } = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   const currentMod = location.pathname.split('/')[1] || 'home'
@@ -158,10 +158,16 @@ export default function AppShell() {
       <header className={styles.topbar}>
         <div className={styles.topLeft}>
           <div className={styles.logoWrap}>
-            <div className={styles.logoIcon}>LNV</div>
+            <div className={styles.logoIcon} style={{
+              background:'linear-gradient(135deg,#E06F39,#F5A623)',
+              boxShadow:'0 2px 8px rgba(224,111,57,.4)'
+            }}>LNV</div>
             <div>
-              <span className={styles.logoName}>LNV ERP</span>
-              <span className={styles.logoSub}>v2.0</span>
+              <span className={styles.logoName} style={{letterSpacing:'.5px'}}>LNV ERP</span>
+              <span className={styles.logoSub} style={{
+                background:'rgba(255,255,255,.2)',padding:'1px 5px',
+                borderRadius:3,fontSize:9,marginLeft:4,fontWeight:700
+              }}>v2.0</span>
             </div>
           </div>
         </div>
@@ -185,7 +191,9 @@ export default function AppShell() {
             </div>
             <div>
               <div className={styles.userTextName}>{user?.name}</div>
-              <div className={styles.userTextRole}>LNV Manufacturing</div>
+              <div className={styles.userTextRole}>
+                {(() => { try { return JSON.parse(localStorage.getItem('lnv_company')||'{}')?.name || 'LNV Manufacturing' } catch { return 'LNV Manufacturing' } })()}
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +203,7 @@ export default function AppShell() {
       <nav className={styles.modNav}>
         {ALL_MODULES.map(m => {
           if (!hasAccess(m.key)) return null
+          if (!isModuleEnabled(m.key)) return null  // hidden if disabled in Company Profile
           return (
             <div key={m.key}
               className={`${styles.navItem} ${currentMod === m.key ? styles.active : ''}`}

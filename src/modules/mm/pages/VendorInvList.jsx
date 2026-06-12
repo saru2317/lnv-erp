@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 import toast from 'react-hot-toast'
 
@@ -100,10 +100,11 @@ function PayModal({ inv, onSave, onCancel }) {
 }
 
 export default function VendorInvList() {
-  const nav = useNavigate()
+  const nav      = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
-  const canPay = ['ACCOUNTS','FINANCE','MANAGER','ADMIN','SUPER_ADMIN'].includes(user?.role)
-  const canRequestPayment = !canPay
+  const canPay            = false  // Direct pay hidden — use Payment Request workflow
+  const canRequestPayment = true   // All roles can raise payment request
 
   const raisePaymentRequest = (inv) => {
     const params = new URLSearchParams({
@@ -121,6 +122,7 @@ export default function VendorInvList() {
 
   const [invs,            setInvs]           = useState([])
   const [requestedInvNos, setRequestedInvNos] = useState(new Set()) // invoice nos already requested
+  const [advancedPONos,   setAdvancedPONos]   = useState(new Set()) // PO nos that already have advance
   const [loading,         setLoad]           = useState(true)
   const [chip,            setChip]           = useState('all')
   const [payInv,          setPayInv]         = useState(null)
@@ -137,17 +139,25 @@ export default function VendorInvList() {
       const invData = await invRes.json()
       const prData  = await prRes.json().catch(()=>({ data:[] }))
       setInvs(invData.data||[])
+      const allPRs = prData.data||[]
       // Build set of invoice nos that already have a PENDING/APPROVED payment request
       const reqSet = new Set(
-        (prData.data||[])
+        allPRs
           .filter(r => !r.isAdvance && ['PENDING','APPROVED'].includes(r.status))
           .map(r => r.invoiceRef)
       )
       setRequestedInvNos(reqSet)
+      // Build set of PO nos that already have a PENDING/APPROVED ADVANCE request
+      const advSet = new Set(
+        allPRs
+          .filter(r => r.isAdvance && ['PENDING','APPROVED'].includes(r.status))
+          .map(r => r.invoiceRef) // invoiceRef stores PO number for advance requests
+      )
+      setAdvancedPONos(advSet)
     } catch(e){ toast.error(e.message) } finally { setLoad(false) }
   }, [])
 
-  useEffect(()=>{ fetchInvs() }, [])
+  useEffect(()=>{ fetchInvs() }, [location.key])
 
   // Auto flag overdue
   const enriched = invs.map(inv => ({
@@ -268,19 +278,27 @@ export default function VendorInvList() {
                       )}
                       {inv.status!=='PAID' && canRequestPayment && (() => {
                         const alreadyRequested = requestedInvNos.has(inv.invNo)
+                        const advanceOnPO      = inv.poNo && advancedPONos.has(inv.poNo)
+                        const isBlocked        = alreadyRequested || advanceOnPO
                         return (
                           <button className="btn-xs"
-                            disabled={alreadyRequested}
-                            title={alreadyRequested ? 'Payment request already raised' : 'Raise payment request to Finance'}
+                            disabled={isBlocked}
+                            title={
+                              alreadyRequested ? 'Payment request already raised' :
+                              advanceOnPO      ? `Advance already raised for PO ${inv.poNo}` :
+                              'Raise payment request to Finance'
+                            }
                             style={{
-                              background: alreadyRequested ? '#E9ECEF' : '#CCE5FF',
-                              color:      alreadyRequested ? '#6C757D' : '#004085',
-                              border:     `1px solid ${alreadyRequested ? '#CED4DA' : '#B8DAFF'}`,
-                              cursor:     alreadyRequested ? 'not-allowed' : 'pointer',
-                              opacity:    alreadyRequested ? 0.7 : 1,
+                              background: isBlocked ? '#E9ECEF' : '#CCE5FF',
+                              color:      isBlocked ? '#6C757D' : '#004085',
+                              border:     `1px solid ${isBlocked ? '#CED4DA' : '#B8DAFF'}`,
+                              cursor:     isBlocked ? 'not-allowed' : 'pointer',
+                              opacity:    isBlocked ? 0.7 : 1,
                             }}
-                            onClick={() => !alreadyRequested && raisePaymentRequest(inv)}>
-                            {alreadyRequested ? '✓ Req. Raised' : '📋 Request Payment'}
+                            onClick={() => !isBlocked && raisePaymentRequest(inv)}>
+                            {alreadyRequested ? '✓ Req. Raised' :
+                             advanceOnPO      ? '✓ Adv. Raised' :
+                             '📋 Request Payment'}
                           </button>
                         )
                       })()}
@@ -378,17 +396,26 @@ export default function VendorInvList() {
               )}
               {canRequestPayment && viewInv.status!=='PAID' && (() => {
                 const alreadyRequested = requestedInvNos.has(viewInv.invNo)
+                const advanceOnPO      = viewInv.poNo && advancedPONos.has(viewInv.poNo)
+                const isBlocked        = alreadyRequested || advanceOnPO
                 return (
                   <button
-                    disabled={alreadyRequested}
-                    onClick={() => { if(!alreadyRequested){ raisePaymentRequest(viewInv); setViewInv(null) } }}
+                    disabled={isBlocked}
+                    onClick={() => { if(!isBlocked){ raisePaymentRequest(viewInv); setViewInv(null) } }}
+                    title={
+                      alreadyRequested ? 'Payment request already raised' :
+                      advanceOnPO      ? `Advance already raised for PO ${viewInv.poNo}` :
+                      'Raise payment request to Finance'
+                    }
                     style={{ padding:'8px 20px',
-                      background: alreadyRequested ? '#E9ECEF' : '#004085',
-                      color:      alreadyRequested ? '#6C757D' : '#fff',
+                      background: isBlocked ? '#E9ECEF' : '#004085',
+                      color:      isBlocked ? '#6C757D' : '#fff',
                       border:'none', borderRadius:6, fontSize:13,
-                      cursor: alreadyRequested ? 'not-allowed' : 'pointer',
-                      fontWeight:700, opacity: alreadyRequested ? 0.7 : 1 }}>
-                    {alreadyRequested ? '✓ Request Already Raised' : '📋 Request Payment'}
+                      cursor: isBlocked ? 'not-allowed' : 'pointer',
+                      fontWeight:700, opacity: isBlocked ? 0.7 : 1 }}>
+                    {alreadyRequested ? '✓ Request Already Raised' :
+                     advanceOnPO      ? `✓ Advance Raised (${viewInv.poNo})` :
+                     '📋 Request Payment'}
                   </button>
                 )
               })()}

@@ -176,44 +176,68 @@ export default function LNVAssistant({ config }) {
   }
   const modColor = modColors[currentModule] || '#714B67'
 
+  const [pos,       setPos]       = React.useState({ bottom:24, right:24 })
+  const [minimized, setMinimized] = React.useState(false)
+
+  const startDrag = React.useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX, startY = e.clientY
+    const sr = pos.right, sb = pos.bottom
+    const onMove = (ev) => setPos({
+      right:  Math.max(8, Math.min(window.innerWidth-70,  sr + (startX - ev.clientX))),
+      bottom: Math.max(8, Math.min(window.innerHeight-70, sb + (startY - ev.clientY))),
+    })
+    const onUp = () => { window.removeEventListener('mousemove',onMove); window.removeEventListener('mouseup',onUp) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup',   onUp)
+  }, [pos])
+
   return (
     <>
       {/* ── Floating Button ── */}
       {!open && (
-        <div onClick={() => setOpen(true)}
-          style={{ position:'fixed', bottom:24, right:24, zIndex:9999,
-            display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
-          {/* Tooltip */}
-          <div style={{ background:'#1C1C1C', color:'#fff', padding:'5px 12px',
-            borderRadius:16, fontSize:11, fontWeight:700, whiteSpace:'nowrap',
-            opacity: pulse ? 1 : 0, transition:'opacity .3s',
-            boxShadow:'0 2px 8px rgba(0,0,0,.2)' }}>
-            Ask {name}
-          </div>
+        <div style={{ position:'fixed', bottom:pos.bottom, right:pos.right, zIndex:9999,
+          display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+          {/* Drag handle — hold and drag to move */}
+          <div onMouseDown={startDrag}
+            style={{ width:20, height:6, borderRadius:3, background:'rgba(113,75,103,0.3)',
+              cursor:'grab', marginBottom:2, userSelect:'none' }}
+            title="Drag to move"/>
+          {/* Minimize toggle */}
+          {!minimized && (
+            <div style={{ background:'#1C1C1C', color:'#fff', padding:'3px 10px',
+              borderRadius:10, fontSize:10, fontWeight:700, whiteSpace:'nowrap',
+              display:'flex', gap:6, alignItems:'center' }}>
+              <span style={{cursor:'pointer'}} onClick={() => setOpen(true)}>Ask {name}</span>
+              <span style={{cursor:'pointer', opacity:.7, fontSize:12}}
+                onClick={() => setMinimized(true)} title="Minimize">−</span>
+            </div>
+          )}
           {/* Button */}
-          <div style={{ width:54, height:54, borderRadius:'50%', cursor:'pointer',
-            background:`linear-gradient(135deg,#714B67,#9B59B6)`,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            userSelect:'none',
-            boxShadow: pulse
-              ? '0 0 0 8px rgba(113,75,103,0.2), 0 4px 20px rgba(113,75,103,0.5)'
-              : '0 4px 16px rgba(113,75,103,0.4)',
-            animation: pulse ? 'lnvPulse 2s ease-in-out infinite' : 'none',
-            transition:'box-shadow .3s',
-            display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <LNVLogo size={40} />
+          <div onClick={() => { if (!minimized) setOpen(true); else setMinimized(false) }}
+            style={{ width: minimized?36:54, height:minimized?36:54, borderRadius:'50%',
+              cursor:'pointer', background:`linear-gradient(135deg,#714B67,#9B59B6)`,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow: pulse
+                ? '0 0 0 8px rgba(113,75,103,0.2), 0 4px 20px rgba(113,75,103,0.5)'
+                : '0 4px 16px rgba(113,75,103,0.4)',
+              animation: pulse ? 'lnvPulse 2s ease-in-out infinite' : 'none',
+              transition:'all .3s', userSelect:'none' }}>
+            <LNVLogo size={minimized?24:40} />
           </div>
-          {/* Module badge */}
-          <div style={{ background:modColor, color:'#fff', padding:'2px 8px',
-            borderRadius:8, fontSize:9, fontWeight:800, letterSpacing:'0.5px' }}>
-            {currentModule}
-          </div>
+          {!minimized && (
+            <div style={{ background:modColor, color:'#fff', padding:'2px 8px',
+              borderRadius:8, fontSize:9, fontWeight:800, letterSpacing:'0.5px' }}>
+              {currentModule}
+            </div>
+          )}
         </div>
       )}
 
       {/* ── Chat Drawer ── */}
       {open && (
-        <div style={{ position:'fixed', bottom:24, right:24, zIndex:9999,
+        <div style={{ position:'fixed', bottom:pos.bottom, right:pos.right, zIndex:9999,
           width:360, height:520, borderRadius:16, overflow:'hidden',
           boxShadow:'0 20px 60px rgba(0,0,0,0.25)',
           display:'flex', flexDirection:'column',
@@ -235,12 +259,25 @@ export default function LNVAssistant({ config }) {
                 {currentModule} module · Ready
               </div>
             </div>
-            <button onClick={() => setOpen(false)}
-              style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff',
-                width:28, height:28, borderRadius:'50%', cursor:'pointer',
-                fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              ✕
-            </button>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              {/* Drag handle on chat panel */}
+              <div onMouseDown={startDrag}
+                style={{ width:16, height:16, borderRadius:3,
+                  background:'rgba(255,255,255,0.2)', cursor:'grab',
+                  display:'flex', flexDirection:'column', justifyContent:'center',
+                  alignItems:'center', gap:2 }}
+                title="Drag to move">
+                <div style={{width:10,height:1.5,background:'rgba(255,255,255,0.6)',borderRadius:1}}/>
+                <div style={{width:10,height:1.5,background:'rgba(255,255,255,0.6)',borderRadius:1}}/>
+                <div style={{width:10,height:1.5,background:'rgba(255,255,255,0.6)',borderRadius:1}}/>
+              </div>
+              <button onClick={() => setOpen(false)}
+                style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff',
+                  width:28, height:28, borderRadius:'50%', cursor:'pointer',
+                  fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

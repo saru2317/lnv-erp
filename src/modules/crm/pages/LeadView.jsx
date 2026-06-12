@@ -9,13 +9,14 @@ const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}
 const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
 
 const STAGES = [
-  { key:'NEW',         label:'New',          color:'#6C757D' },
-  { key:'CONTACTED',   label:'Contacted',    color:'#004085' },
-  { key:'QUALIFIED',   label:'Qualified',    color:'#856404' },
-  { key:'PROPOSAL',    label:'Proposal Sent',color:'#4B2E83' },
-  { key:'NEGOTIATION', label:'Negotiation',  color:'#0C5460' },
-  { key:'WON',         label:'Won',          color:'#155724' },
-  { key:'LOST',        label:'Lost',         color:'#721C24' },
+  { key:'Requirement Understanding', label:'Requirement', color:'#6C757D' },
+  { key:'Solution Discussion',       label:'Discussion',  color:'#004085' },
+  { key:'Demo / Presentation',       label:'Demo',        color:'#856404' },
+  { key:'Proposal Submitted',        label:'Proposal',    color:'#4B2E83' },
+  { key:'Negotiation',               label:'Negotiation', color:'#0C5460' },
+  { key:'Decision Pending',          label:'Decision',    color:'#E06F39' },
+  { key:'Won',                       label:'Won',         color:'#155724' },
+  { key:'Lost',                      label:'Lost',        color:'#721C24' },
 ]
 
 const ACTIVITY_TYPES = [
@@ -34,7 +35,11 @@ export default function LeadView() {
   const { id }   = useParams()
   const navigate = useNavigate()
   const [lead,        setLead]        = useState(null)
-  const [activities,  setActivities]  = useState([])
+  const [activities,    setActivities]    = useState([])
+  const [negotiations,  setNegotiations]  = useState([])
+  const [showNegForm,   setShowNegForm]   = useState(false)
+  const [negForm,       setNegForm]       = useState({ ourPrice:'', theirPrice:'', counterPrice:'', discount:'0', notes:'', status:'OPEN' })
+  const setNF = (k,v) => setNegForm(f=>({...f,[k]:v}))
   const [loading,     setLoading]     = useState(true)
   const [showActivity,setShowActivity]= useState(false)
   const [actForm,     setActForm]     = useState({ type:'call', subject:'', notes:'', scheduledAt:'' })
@@ -44,12 +49,14 @@ export default function LeadView() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [lr, ar] = await Promise.all([
+      const [lr, ar, nr] = await Promise.all([
         fetch(`${BASE_URL}/crm/leads/${id}`, { headers: hdr2() }).then(r=>r.json()),
         fetch(`${BASE_URL}/crm/leads/${id}/activities`, { headers: hdr2() }).then(r=>r.json()),
+        fetch(`${BASE_URL}/crm/leads/${id}/negotiations`, { headers: hdr2() }).then(r=>r.json()).catch(()=>({data:[]})),
       ])
       setLead(lr.data||lr)
       setActivities(Array.isArray(ar.data) ? ar.data : Array.isArray(ar) ? ar : [])
+      setNegotiations(Array.isArray(nr.data) ? nr.data : [])
     } catch {}
     finally { setLoading(false) }
   }, [id])
@@ -63,8 +70,19 @@ export default function LeadView() {
         method:'PATCH', headers: hdr(),
         body: JSON.stringify({ stage: newStage })
       })
+      // Auto-log stage change to timeline
+      await fetch(`${BASE_URL}/crm/leads/${id}/activities`, {
+        method:'POST', headers:hdr(),
+        body:JSON.stringify({
+          type:'stage_change',
+          subject:`Stage → ${newStage}`,
+          notes:`${lead.stage} → ${newStage}`,
+          leadName: lead.companyName||lead.company,
+        })
+      }).catch(()=>{})
       setLead(l=>({...l, stage:newStage}))
       toast.success(`Stage updated to ${newStage}`)
+      load()
     } catch { toast.error('Failed to update stage') }
   }
 
@@ -118,7 +136,7 @@ export default function LeadView() {
             </button>
             <span style={{color:'#6C757D'}}>/</span>
             <span style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:18,color:'#714B67'}}>
-              {lead.company||lead.name}
+              {lead.companyName||lead.company||lead.name}
             </span>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -134,18 +152,57 @@ export default function LeadView() {
             style={{padding:'7px 14px',background:'#fff',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>
             + Log Activity
           </button>
-          {/* CREATE QUOTATION — main CRM→SD link */}
+          {/* CONVERT TO CUSTOMER */}
+          {!lead.customerId && (
+            <button onClick={async ()=>{
+              if (!window.confirm(`Add "${lead.companyName||lead.company}" to Customer Master?`)) return
+              try {
+                const r = await fetch(`${BASE_URL}/sd/customers`, {
+                  method:'POST', headers:hdr(),
+                  body: JSON.stringify({
+                    name:    lead.companyName||lead.company,
+                    phone:   lead.phone||lead.mobile||null,
+                    email:   lead.email||null,
+                    city:    lead.city||null,
+                    state:   lead.state||null,
+                    country: lead.country||'India',
+                    type:    'B',
+                  })
+                })
+                const d = await r.json()
+                if (!r.ok) throw new Error(d.error)
+                // Link lead to new customer
+                await fetch(`${BASE_URL}/crm/leads/${lead.id}`, {
+                  method:'PATCH', headers:hdr(),
+                  body: JSON.stringify({ customerId: d.data?.id })
+                })
+                toast.success(`${lead.companyName||lead.company} added to Customer Master!`)
+                // Refresh lead data
+                const lr = await fetch(`${BASE_URL}/crm/leads/${lead.id}`, { headers:hdr2() }).then(r=>r.json())
+                setLead(lr.data||lr)
+              } catch(e) { toast.error(e.message) }
+            }}
+              style={{padding:'7px 14px',background:'#E8F5E9',color:'#155724',border:'1px solid #A5D6A7',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+              👤 Convert to Customer
+            </button>
+          )}
+          {lead.customerId && (
+            <button onClick={()=>navigate(`/crm/customers/${lead.customerId}`)}
+              style={{padding:'7px 14px',background:'#EDE0EA',color:'#714B67',border:'1px solid #D4B8CE',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+              👤 View Customer
+            </button>
+          )}
           <button onClick={createQuotation}
             style={{padding:'7px 16px',background:'#0C5460',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
             📋 Create Quotation
           </button>
-          {lead.stage!=='WON'&&lead.stage!=='LOST'&&(
+          {lead.stage!=='Won'&&lead.stage!=='Lost'&&(
             <>
-              <button onClick={()=>updateStage('WON')}
+              <button onClick={()=>updateStage('Won')}
                 style={{padding:'7px 14px',background:'#D4EDDA',color:'#155724',border:'1px solid #C3E6CB',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
                 🏆 Mark Won
               </button>
-              <button onClick={()=>updateStage('LOST')}
+              <button onClick={()=>updateStage('Lost')}
                 style={{padding:'7px 14px',background:'#F8D7DA',color:'#721C24',border:'1px solid #F5C6CB',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
                 ✗ Mark Lost
               </button>
@@ -157,7 +214,7 @@ export default function LeadView() {
       {/* Stage progress bar */}
       <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:14,marginBottom:14}}>
         <div style={{display:'flex',gap:0}}>
-          {STAGES.filter(s=>!['WON','LOST'].includes(s.key)).map((s,i,arr)=>{
+          {STAGES.filter(s=>!['Won','Lost'].includes(s.key)).map((s,i,arr)=>{
             const active = lead.stage===s.key
             const done   = stgIdx > i
             return (
@@ -178,13 +235,13 @@ export default function LeadView() {
             )
           })}
         </div>
-        {lead.stage==='WON'&&<div style={{marginTop:8,textAlign:'center',fontWeight:700,color:'#155724',fontSize:13}}>🏆 Lead Won!</div>}
-        {lead.stage==='LOST'&&<div style={{marginTop:8,textAlign:'center',fontWeight:700,color:'#721C24',fontSize:13}}>✗ Lead Lost</div>}
+        {lead.stage==='Won'&&<div style={{marginTop:8,textAlign:'center',fontWeight:700,color:'#155724',fontSize:13}}>🏆 Lead Won!</div>}
+        {lead.stage==='Lost'&&<div style={{marginTop:8,textAlign:'center',fontWeight:700,color:'#721C24',fontSize:13}}>✗ Lead Lost</div>}
       </div>
 
       {/* Tabs */}
-      <div style={{display:'flex',gap:4,marginBottom:14,padding:'5px 8px',background:'#F0EEEB',borderRadius:8}}>
-        {[['info','\uD83D\uDCCB Info'],['activities','\uD83D\uDCC5 Activities'],['quotations','\uD83D\uDCCB Quotations'],['competitors','\uD83C\uDFAF Competitors']].map(([k,l])=>(
+      <div style={{display:'flex',gap:4,marginBottom:14,padding:'5px 8px',background:'#F0EEEB',borderRadius:8,flexWrap:'wrap'}}>
+        {[['info','📋 Info'],['timeline','🕐 Timeline'],['negotiation','💰 Negotiation'],['quotations','📄 Quotations'],['activities','📅 Activities'],['competitors','🎯 Competitors']].map(([k,l])=>(
           <button key={k} onClick={()=>setActiveTab(k)} style={{
             padding:'6px 16px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',
             background:activeTab===k?'#714B67':'transparent',
@@ -332,6 +389,195 @@ export default function LeadView() {
       {/* Tab: Competitors */}
       {activeTab==='competitors'&&(
         <DealCompetitor leadId={id} leadName={lead.company||lead.name} />
+      )}
+
+      {/* ── TIMELINE TAB ── */}
+      {activeTab==='timeline'&&(
+        <div style={{display:'flex',flexDirection:'column',gap:0}}>
+          {[...activities].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).length===0 ? (
+            <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>No timeline events yet</div>
+          ) : [...activities].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map((a,i)=>{
+            const typeIcon = { call:'📞', email:'📧', meeting:'🤝', note:'📝', task:'✅', stage_change:'🔄', quotation:'📄', negotiation:'💰', po_received:'📦' }
+            const typeClr  = { call:'#004085', email:'#856404', meeting:'#4B2E83', note:'#6C757D', negotiation:'#117A65', quotation:'#714B67', po_received:'#155724', stage_change:'#1565C0' }
+            return (
+              <div key={a.id} style={{display:'flex',gap:12,paddingBottom:16,position:'relative'}}>
+                {/* Timeline line */}
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background:(typeClr[a.type]||'#6C757D')+'22',
+                    display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0,
+                    border:`2px solid ${typeClr[a.type]||'#6C757D'}44`}}>
+                    {typeIcon[a.type]||'📋'}
+                  </div>
+                  {i < activities.length-1 && <div style={{width:2,flex:1,background:'#E0D5E0',marginTop:4,minHeight:20}}/>}
+                </div>
+                {/* Content */}
+                <div style={{flex:1,paddingBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div style={{fontWeight:700,fontSize:13,color:'#1C1C1C'}}>{a.subject}</div>
+                    <div style={{fontSize:10,color:'#6C757D',whiteSpace:'nowrap',marginLeft:8}}>
+                      {new Date(a.createdAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,color:typeClr[a.type]||'#6C757D',fontWeight:600,marginBottom:2,textTransform:'uppercase',letterSpacing:.3}}>
+                    {a.type?.replace('_',' ')} {a.createdBy ? `· ${a.createdBy}` : ''}
+                  </div>
+                  {a.notes && <div style={{fontSize:12,color:'#495057',padding:'6px 10px',background:'#F8F9FA',borderRadius:5,marginTop:4}}>{a.notes}</div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── NEGOTIATION TAB ── */}
+      {activeTab==='negotiation'&&(
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#1C1C1C'}}>
+              Price Negotiation Rounds
+            </div>
+            <button onClick={()=>setShowNegForm(!showNegForm)}
+              style={{padding:'6px 14px',background:'#714B67',color:'#fff',border:'none',
+                borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+              + New Round
+            </button>
+          </div>
+
+          {/* Negotiation Form */}
+          {showNegForm && (
+            <div style={{background:'#fff',border:'2px solid #714B67',borderRadius:8,padding:16,marginBottom:14}}>
+              <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>
+                Round {negotiations.length+1} — Price Negotiation
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+                {[
+                  {k:'ourPrice',    l:'Our Price (₹) *',       ph:'278500'},
+                  {k:'theirPrice',  l:"Customer's Price (₹)",  ph:'250000'},
+                  {k:'counterPrice',l:'Counter Offer (₹)',      ph:'265000'},
+                ].map(f=>(
+                  <div key={f.k}>
+                    <label style={{fontSize:11,fontWeight:700,color:'#6C757D',display:'block',marginBottom:3}}>{f.l}</label>
+                    <input type="number" value={negForm[f.k]} onChange={e=>setNF(f.k,e.target.value)}
+                      placeholder={f.ph}
+                      style={{width:'100%',padding:'7px 8px',border:'1px solid #ddd',borderRadius:5,fontSize:12,outline:'none',boxSizing:'border-box'}} />
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                <div>
+                  <label style={{fontSize:11,fontWeight:700,color:'#6C757D',display:'block',marginBottom:3}}>Discount Offered (%)</label>
+                  <input type="number" value={negForm.discount} onChange={e=>setNF('discount',e.target.value)}
+                    placeholder="0"
+                    style={{width:'100%',padding:'7px 8px',border:'1px solid #ddd',borderRadius:5,fontSize:12,outline:'none',boxSizing:'border-box'}} />
+                </div>
+                <div>
+                  <label style={{fontSize:11,fontWeight:700,color:'#6C757D',display:'block',marginBottom:3}}>Status</label>
+                  <select value={negForm.status} onChange={e=>setNF('status',e.target.value)}
+                    style={{width:'100%',padding:'7px 8px',border:'1px solid #ddd',borderRadius:5,fontSize:12,outline:'none'}}>
+                    <option value="OPEN">Open</option>
+                    <option value="COUNTERED">Countered</option>
+                    <option value="ACCEPTED">Accepted</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{marginBottom:10}}>
+                <label style={{fontSize:11,fontWeight:700,color:'#6C757D',display:'block',marginBottom:3}}>Notes</label>
+                <textarea rows={2} value={negForm.notes} onChange={e=>setNF('notes',e.target.value)}
+                  placeholder="Customer concerns, our justification, next steps…"
+                  style={{width:'100%',padding:'7px 8px',border:'1px solid #ddd',borderRadius:5,fontSize:12,outline:'none',resize:'vertical',boxSizing:'border-box'}} />
+              </div>
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                <button onClick={()=>setShowNegForm(false)}
+                  style={{padding:'6px 14px',borderRadius:5,border:'1px solid #ddd',background:'#fff',fontSize:12,cursor:'pointer'}}>Cancel</button>
+                <button disabled={saving} onClick={async()=>{
+                  if (!negForm.ourPrice) { toast.error('Our price required'); return }
+                  setSaving(true)
+                  try {
+                    const r = await fetch(`${BASE_URL}/crm/leads/${id}/negotiations`, {
+                      method:'POST', headers:hdr(),
+                      body:JSON.stringify(negForm)
+                    })
+                    const d = await r.json()
+                    if (!r.ok) throw new Error(d.error)
+                    toast.success(d.message)
+                    setNegForm({ ourPrice:'', theirPrice:'', counterPrice:'', discount:'0', notes:'', status:'OPEN' })
+                    setShowNegForm(false)
+                    load()
+                  } catch(e) { toast.error(e.message) }
+                  finally { setSaving(false) }
+                }} style={{padding:'6px 16px',borderRadius:5,border:'none',
+                  background:'#714B67',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>
+                  {saving?'Saving…':'✓ Save Round'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Negotiation History */}
+          {negotiations.length===0 ? (
+            <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+              <div style={{fontSize:28,marginBottom:8}}>💰</div>
+              <div style={{fontWeight:700}}>No negotiation rounds yet</div>
+              <div style={{fontSize:12,marginTop:4}}>Click "New Round" to start tracking price negotiation</div>
+            </div>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {negotiations.map((n,i)=>{
+                const stClr = {OPEN:'#1565C0',COUNTERED:'#E65100',ACCEPTED:'#155724',REJECTED:'#C62828'}
+                const stBg  = {OPEN:'#E3F2FD',COUNTERED:'#FFF3E0',ACCEPTED:'#D4EDDA',REJECTED:'#FFEBEE'}
+                return (
+                  <div key={n.id} style={{background:'#fff',borderRadius:8,border:'1px solid #E0D5E0',
+                    borderLeft:`4px solid ${stClr[n.status]||'#714B67'}`,overflow:'hidden'}}>
+                    <div style={{padding:'10px 16px',background:'#F8F9FA',display:'flex',
+                      justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #E0D5E0'}}>
+                      <div style={{fontWeight:700,fontSize:13}}>Round {n.round}</div>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <span style={{padding:'2px 10px',borderRadius:10,fontSize:11,fontWeight:700,
+                          background:stBg[n.status]||'#F0EEEB',color:stClr[n.status]||'#714B67'}}>
+                          {n.status}
+                        </span>
+                        <span style={{fontSize:11,color:'#6C757D'}}>
+                          {new Date(n.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{padding:'12px 16px',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                      <div style={{textAlign:'center',padding:'8px',background:'#EDE0EA',borderRadius:6}}>
+                        <div style={{fontSize:10,color:'#714B67',fontWeight:700,marginBottom:2}}>OUR PRICE</div>
+                        <div style={{fontSize:16,fontWeight:800,color:'#714B67',fontFamily:'Syne,sans-serif'}}>
+                          ₹{parseFloat(n.ourPrice||0).toLocaleString('en-IN')}
+                        </div>
+                        {n.discount>0&&<div style={{fontSize:10,color:'#E65100'}}>{n.discount}% disc offered</div>}
+                      </div>
+                      {n.theirPrice && (
+                        <div style={{textAlign:'center',padding:'8px',background:'#FFEBEE',borderRadius:6}}>
+                          <div style={{fontSize:10,color:'#C62828',fontWeight:700,marginBottom:2}}>CUSTOMER PRICE</div>
+                          <div style={{fontSize:16,fontWeight:800,color:'#C62828',fontFamily:'Syne,sans-serif'}}>
+                            ₹{parseFloat(n.theirPrice).toLocaleString('en-IN')}
+                          </div>
+                          <div style={{fontSize:10,color:'#6C757D'}}>
+                            Gap: ₹{(parseFloat(n.ourPrice)-parseFloat(n.theirPrice)).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      )}
+                      {n.counterPrice && (
+                        <div style={{textAlign:'center',padding:'8px',background:'#E8F5E9',borderRadius:6}}>
+                          <div style={{fontSize:10,color:'#2E7D32',fontWeight:700,marginBottom:2}}>COUNTER OFFER</div>
+                          <div style={{fontSize:16,fontWeight:800,color:'#2E7D32',fontFamily:'Syne,sans-serif'}}>
+                            ₹{parseFloat(n.counterPrice).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {n.notes&&<div style={{padding:'8px 16px',fontSize:12,color:'#495057',
+                      borderTop:'1px solid #F0EEEB',background:'#FAFAFA'}}>📝 {n.notes}</div>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Log Activity Modal */}

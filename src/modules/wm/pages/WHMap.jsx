@@ -1,189 +1,225 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-const BINS = [
-  // Row A
-  {id:'A-01',cls:'mid', pct:'78%'},{id:'A-02',cls:'mid', pct:'92%'},{id:'A-03',cls:'high',pct:'45%'},
-  {id:'A-04',cls:'full',pct:'100%'},{id:'A-05',cls:'mid',pct:'62%'},{id:'A-06',cls:'empty',pct:'—'},
-  // Row B
-  {id:'B-01',cls:'full',pct:'98%'},{id:'B-02',cls:'high',pct:'40%'},{id:'B-03',cls:'mid', pct:'71%'},
-  {id:'B-04',cls:'high',pct:'35%'},{id:'B-05',cls:'mid', pct:'55%'},{id:'B-06',cls:'empty',pct:'—'},
-  // Row C
-  {id:'C-01',cls:'mid', pct:'68%'},{id:'C-02',cls:'mid', pct:'80%'},{id:'C-03',cls:'high',pct:'30%'},
-  {id:'C-04',cls:'high',pct:'42%'},{id:'C-05',cls:'mid', pct:'65%'},{id:'C-06',cls:'empty',pct:'—'},
-  // Row D
-  {id:'D-01',cls:'empty',pct:'—'},{id:'D-02',cls:'mid', pct:'55%'},{id:'D-03',cls:'full',pct:'100%'},
-  {id:'D-04',cls:'mid', pct:'74%'},{id:'D-05',cls:'high',pct:'28%'},{id:'D-06',cls:'empty',pct:'—'},
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
+const hdr  = () => ({ Authorization: `Bearer ${tok()}` })
+const INR  = v => '₹' + parseFloat(v||0).toLocaleString('en-IN', { minimumFractionDigits:0 })
+
+const ZONES = [
+  { key:'RM-STORE',   label:'RM Store',        icon:'📦', color:'#CCE5FF', border:'#004085', desc:'Raw Materials & Components' },
+  { key:'SHOP-FLOOR', label:'Shop Floor / WIP', icon:'⚙️', color:'#FFF3CD', border:'#856404', desc:'Work In Progress' },
+  { key:'FG-STORE',   label:'FG Store',         icon:'✅', color:'#D4EDDA', border:'#155724', desc:'Finished Goods' },
+  { key:'QC-HOLD',    label:'QC Inspection',    icon:'🔍', color:'#F8D7DA', border:'#721C24', desc:'Pending QC Clearance' },
 ]
-
-// Stock data per bin
-const BIN_STOCK = {
-  'A-01': [{ mat:'Compact Cotton Sliver',code:'MAT-001',qty:480,uom:'Kg',   batch:'BTH-2025-01',expiry:'Jan 2026',b:'badge-ok',bl:'OK'}],
-  'A-02': [{ mat:'Open End Yarn (12s)',  code:'MAT-006',qty:320,uom:'Kg',   batch:'BTH-2025-02',expiry:'Mar 2026',b:'badge-ok',bl:'OK'}],
-  'A-03': [{ mat:'Ring Yarn (30s)',      code:'MAT-002',qty:80, uom:'Kg',   batch:'BTH-2024-12',expiry:'Dec 2025',b:'badge-critical',bl:'Critical'}],
-  'A-04': [{ mat:'Cotton Sliver Grade B',code:'MAT-008',qty:600,uom:'Kg',   batch:'BTH-2025-03',expiry:'N/A',    b:'badge-ok',bl:'OK'}],
-  'A-05': [{ mat:'Polyester Yarn',       code:'MAT-009',qty:240,uom:'Kg',   batch:'BTH-2025-04',expiry:'Jun 2026',b:'badge-ok',bl:'OK'}],
-  'A-06': [],
-  'B-01': [{ mat:'Ring Yarn Stock B',    code:'MAT-002',qty:290,uom:'Kg',   batch:'BTH-2024-11',expiry:'Nov 2025',b:'badge-low',bl:'Low'}],
-  'B-02': [{ mat:'Lattice Aprons',       code:'MAT-003',qty:35, uom:'Nos',  batch:'BTH-2025-02',expiry:'N/A',    b:'badge-low',bl:'Low'}],
-  'B-03': [{ mat:'Lubricant Oil',        code:'MAT-007',qty:25, uom:'Litre',batch:'BTH-2024-91',expiry:'Mar 2025',b:'badge-ok',bl:'OK'}],
-  'B-04': [{ mat:'Ring Yarn (30s)',       code:'MAT-002',qty:80, uom:'Kg',   batch:'BTH-2024-12',expiry:'Dec 2025',b:'badge-critical',bl:'Critical'}],
-  'B-05': [{ mat:'Spare Bearings',       code:'MAT-010',qty:18, uom:'Nos',  batch:'BTH-2025-01',expiry:'N/A',    b:'badge-ok',bl:'OK'}],
-  'B-06': [],
-  'C-01': [{ mat:'Packing Tape',         code:'MAT-011',qty:500,uom:'Roll', batch:'BTH-2025-01',expiry:'N/A',    b:'badge-ok',bl:'OK'}],
-  'C-02': [{ mat:'Packing Boxes DW',     code:'MAT-004',qty:850,uom:'Nos',  batch:'BTH-2025-01',expiry:'N/A',    b:'badge-ok',bl:'OK'}],
-  'C-03': [{ mat:'Stretch Film',         code:'MAT-012',qty:40, uom:'Roll', batch:'BTH-2025-02',expiry:'N/A',    b:'badge-low',bl:'Low'}],
-  'C-04': [{ mat:'Bubble Wrap',          code:'MAT-013',qty:30, uom:'Roll', batch:'BTH-2025-01',expiry:'N/A',    b:'badge-low',bl:'Low'}],
-  'C-05': [{ mat:'Lattice Aprons',       code:'MAT-003',qty:35, uom:'Nos',  batch:'BTH-2025-02',expiry:'N/A',    b:'badge-low',bl:'Low'}],
-  'C-06': [],
-  'D-01': [],
-  'D-02': [{ mat:'Lattice Aprons (Transferred)',code:'MAT-003',qty:20,uom:'Nos',batch:'BTH-2025-01',expiry:'N/A',b:'badge-ok',bl:'OK'}],
-  'D-03': [
-    { mat:'Solvent Chemical 30%', code:'MAT-005',qty:10, uom:'Litre',batch:'BTH-2024-88',expiry:'01 Mar 2025',b:'badge-critical',bl:'Expiring!'},
-    { mat:'Phosphating Chemical', code:'MAT-014',qty:45, uom:'Litre',batch:'BTH-2025-01',expiry:'Jun 2026',  b:'badge-ok',bl:'OK'},
-  ],
-  'D-04': [{ mat:'Solvent Chemical 30%', code:'MAT-005',qty:15, uom:'Litre',batch:'BTH-2025-05',expiry:'Sep 2025',b:'badge-ok',bl:'OK'}],
-  'D-05': [{ mat:'Lubricant Oil Bulk',   code:'MAT-007',qty:8,  uom:'Litre',batch:'BTH-2024-91',expiry:'Mar 2025',b:'badge-low',bl:'Expiring Soon'}],
-  'D-06': [],
-}
 
 export default function WHMap() {
   const nav = useNavigate()
-  const [selected, setSelected] = useState(null)
+  const [stock,    setStock]    = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [selected, setSelected] = useState(null) // selected zone key
+  const [search,   setSearch]   = useState('')
 
-  const handleBinClick = (binId) => {
-    setSelected(binId)
-  }
+  useEffect(() => {
+    setLoading(true)
+    fetch(`${BASE_URL}/wm/stock`, { headers: hdr() })
+      .then(r => r.json())
+      .then(d => { setStock(d.data || []) })
+      .catch(() => toast.error('Failed to load stock'))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const stockRows = selected ? (BIN_STOCK[selected] || []) : []
-  const isEmpty = stockRows.length === 0
+  // Group stock by zone
+  const zoneStock = {}
+  ZONES.forEach(z => { zoneStock[z.key] = [] })
+  stock.forEach(s => {
+    const byLoc = s.byLocation || {}
+    ZONES.forEach(z => {
+      const qty = parseFloat(byLoc[z.key] || 0)
+      if (qty > 0) {
+        zoneStock[z.key].push({ ...s, zoneQty: qty, zoneValue: qty * parseFloat(s.stdCost||0) })
+      }
+    })
+  })
+
+  // Zone summary
+  const zoneSummary = ZONES.map(z => ({
+    ...z,
+    itemCount: zoneStock[z.key].length,
+    totalQty:  zoneStock[z.key].reduce((a,s)=>a+s.zoneQty,0),
+    totalValue:zoneStock[z.key].reduce((a,s)=>a+s.zoneValue,0),
+    utilPct:   Math.min(100, Math.round(zoneStock[z.key].length / Math.max(1, stock.length) * 100)),
+  }))
+
+  const selectedItems = selected
+    ? (zoneStock[selected] || []).filter(s =>
+        !search || s.itemName?.toLowerCase().includes(search.toLowerCase()) ||
+        s.itemCode?.toLowerCase().includes(search.toLowerCase()))
+    : []
+
+  const selectedZone = ZONES.find(z => z.key === selected)
 
   return (
     <div>
-      <div className="wm-lv-hdr">
-        <div className="wm-lv-title">Warehouse Map <small>Visual Layout — Coimbatore Main Store</small></div>
-        <div className="wm-lv-actions">
-          <select className="wm-filter-select">
-            <option>Coimbatore Main Store</option>
-            <option>Warehouse B</option>
-            <option>Production Floor</option>
-          </select>
+      {/* Header */}
+      <div className="fi-lv-hdr">
+        <div className="fi-lv-title">Warehouse Map <small>Zone-wise Stock — LNV Manufacturing</small></div>
+        <div className="fi-lv-actions">
+          <button className="btn btn-s sd-bsm" onClick={() => { setLoading(true); fetch(`${BASE_URL}/wm/stock`,{headers:hdr()}).then(r=>r.json()).then(d=>{setStock(d.data||[]);setLoading(false)}) }}>
+            ↻ Refresh
+          </button>
         </div>
       </div>
 
-      {/* Map */}
-      <div className="wh-map-wrap">
-        <div className="wh-map-title">
-          <span> Storage Layout — Click a bin to view stock</span>
-          <div style={{display:'flex',gap:'8px'}}>
-            <span className="badge badge-ok">Healthy: 28</span>
-            <span className="badge badge-low"> Low: 8</span>
-            <span className="badge badge-critical"> Critical: 4</span>
-            <span className="badge badge-draft">Empty: 12</span>
-          </div>
-        </div>
-        <div className="wh-layout">
-          {BINS.map(b => (
-            <div
-              key={b.id}
-              className={`bin-cell ${b.cls}${selected===b.id?' selected':''}`}
-              onClick={() => handleBinClick(b.id)}
-            >
-              <div className="bin-label">{b.id}</div>
-              <div className="bin-pct">{b.pct}</div>
-            </div>
-          ))}
-        </div>
-        <div className="wh-legend">
-          <div className="wh-leg-item"><div className="wh-leg-dot" style={{background:'#FDEDEC',border:'1px solid #F5B7B1'}}></div>Full (90–100%)</div>
-          <div className="wh-leg-item"><div className="wh-leg-dot" style={{background:'#FEF5E7',border:'1px solid #FAD7A0'}}></div>Medium (30–89%)</div>
-          <div className="wh-leg-item"><div className="wh-leg-dot" style={{background:'#EAF9F6',border:'1px solid #A2DED0'}}></div>Good (&gt;60%)</div>
-          <div className="wh-leg-item"><div className="wh-leg-dot" style={{background:'#F8F9FA',border:'1px solid var(--odoo-border)'}}></div>Empty</div>
-        </div>
-      </div>
-
-      {/* Bin Detail Panel */}
-      {selected === null ? (
-        <div className="wm-alert info" style={{textAlign:'center',justifyContent:'center'}}>
-           Click any bin above to view its stock details
-        </div>
+      {loading ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading warehouse map...</div>
       ) : (
-        <div className="wm-panel">
-          <div className="wm-panel-hdr">
-            <h3>BIN {selected} — Stock Details</h3>
-            <div style={{display:'flex',gap:'8px'}}>
-              {isEmpty
-                ? <span className="badge badge-draft">Empty Bin</span>
-                : <span className="badge badge-ok">{stockRows.length} Material{stockRows.length>1?'s':''}</span>
-              }
-              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/transfer')}> Transfer</button>
-              <button className="btn btn-s sd-bsm" onClick={() => nav('/wm/goods-issue')}>Issue</button>
-              <button className="btn btn-s sd-bsm" onClick={() => setSelected(null)}> Close</button>
-            </div>
+        <>
+          {/* Zone Cards — Visual Map */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16, marginBottom:20 }}>
+            {zoneSummary.map(z => (
+              <div key={z.key}
+                onClick={() => setSelected(selected === z.key ? null : z.key)}
+                style={{
+                  background:  selected===z.key ? z.color : '#fff',
+                  border:      `2px solid ${selected===z.key ? z.border : '#E0D5E0'}`,
+                  borderRadius: 12, padding:'18px 20px', cursor:'pointer',
+                  transition:'all .2s', boxShadow: selected===z.key ? `0 4px 16px ${z.border}30` : 'none'
+                }}>
+                {/* Zone header */}
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                  <div>
+                    <span style={{fontSize:20,marginRight:8}}>{z.icon}</span>
+                    <span style={{fontSize:14,fontWeight:800,color:selected===z.key?z.border:'#333'}}>{z.label}</span>
+                  </div>
+                  <span style={{fontSize:11,color:'#6C757D'}}>{z.desc}</span>
+                </div>
+
+                {/* Stats */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                  <div style={{background:'rgba(255,255,255,.7)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
+                    <div style={{fontSize:20,fontWeight:800,color:z.border}}>{z.itemCount}</div>
+                    <div style={{fontSize:10,color:'#6C757D',textTransform:'uppercase'}}>SKUs</div>
+                  </div>
+                  <div style={{background:'rgba(255,255,255,.7)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
+                    <div style={{fontSize:16,fontWeight:800,color:z.border}}>{parseFloat(z.totalQty).toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+                    <div style={{fontSize:10,color:'#6C757D',textTransform:'uppercase'}}>Total Qty</div>
+                  </div>
+                  <div style={{background:'rgba(255,255,255,.7)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
+                    <div style={{fontSize:14,fontWeight:800,color:z.border}}>{INR(z.totalValue)}</div>
+                    <div style={{fontSize:10,color:'#6C757D',textTransform:'uppercase'}}>Value</div>
+                  </div>
+                </div>
+
+                {/* Utilization bar */}
+                <div style={{marginTop:10}}>
+                  <div style={{height:6,background:'#E0D5E0',borderRadius:3}}>
+                    <div style={{height:'100%',width:`${z.utilPct}%`,background:z.border,borderRadius:3,transition:'width .5s'}}/>
+                  </div>
+                  <div style={{fontSize:10,color:'#6C757D',marginTop:3}}>{z.utilPct}% of total SKUs in this zone</div>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{display:'flex',gap:6,marginTop:10}}>
+                  {z.key === 'RM-STORE' && (
+                    <button className="btn btn-s sd-bsm" style={{fontSize:10,padding:'3px 8px'}}
+                      onClick={e=>{e.stopPropagation();nav('/wm/grn/new')}}>+ GRN</button>
+                  )}
+                  {z.key === 'SHOP-FLOOR' && (
+                    <button className="btn btn-s sd-bsm" style={{fontSize:10,padding:'3px 8px'}}
+                      onClick={e=>{e.stopPropagation();nav('/wm/goods-issue')}}>Issue Material</button>
+                  )}
+                  {z.key === 'FG-STORE' && (
+                    <button className="btn btn-s sd-bsm" style={{fontSize:10,padding:'3px 8px'}}
+                      onClick={e=>{e.stopPropagation();nav('/sd/invoices/new')}}>Create Invoice</button>
+                  )}
+                  {z.key === 'QC-HOLD' && (
+                    <button className="btn btn-s sd-bsm" style={{fontSize:10,padding:'3px 8px'}}
+                      onClick={e=>{e.stopPropagation();nav('/wm/qc')}}>QC Inspection</button>
+                  )}
+                  <button className="btn btn-s sd-bsm" style={{fontSize:10,padding:'3px 8px'}}
+                    onClick={e=>{e.stopPropagation();nav(`/wm/transfer`)}}>Transfer</button>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {isEmpty ? (
-            <div className="wm-panel-body" style={{textAlign:'center',padding:'28px',color:'var(--odoo-gray)'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}></div>
-              <div style={{fontSize:'13px',fontWeight:'600'}}>BIN {selected} is currently empty</div>
-              <div style={{fontSize:'11px',marginTop:'4px'}}>No stock stored in this location</div>
-              <button className="btn btn-p sd-bsm" style={{marginTop:'12px'}} onClick={() => nav('/wm/goods-receipt')}>
-                 Receive Stock Here
-              </button>
-            </div>
-          ) : (
-            <div className="wm-panel-body" style={{padding:'0'}}>
-              <table className="wm-data-table" style={{borderRadius:'0',boxShadow:'none'}}>
-                <thead>
-                  <tr>
-                    <th>Material Code</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>UOM</th>
-                    <th>Batch No.</th>
-                    <th>Expiry</th>
+          {/* Zone Detail Panel */}
+          {selected && selectedZone && (
+            <div style={{background:'#fff',border:`2px solid ${selectedZone.border}`,borderRadius:12,padding:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{fontSize:14,fontWeight:800,color:selectedZone.border}}>
+                  {selectedZone.icon} {selectedZone.label} — Stock Details
+                </div>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                  <input className="sd-search" placeholder="Search item..." value={search}
+                    onChange={e=>setSearch(e.target.value)} style={{width:180,fontSize:12}}/>
+                  <button className="btn btn-s sd-bsm" onClick={()=>{setSelected(null);setSearch('')}}>✕ Close</button>
+                </div>
+              </div>
+
+              {selectedItems.length === 0 ? (
+                <div style={{padding:30,textAlign:'center',color:'#6C757D'}}>
+                  {search ? 'No items match search' : `No stock in ${selectedZone.label}`}
+                </div>
+              ) : (
+                <table className="fi-data-table">
+                  <thead><tr>
+                    <th>Item Code</th><th>Item Name</th><th>Category</th><th>UOM</th>
+                    <th style={{textAlign:'right'}}>Qty in Zone</th>
+                    <th style={{textAlign:'right'}}>Unit Cost</th>
+                    <th style={{textAlign:'right'}}>Zone Value</th>
                     <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockRows.map((r, i) => (
-                    <tr key={i}>
-                      <td>
-                        <strong style={{fontFamily:'DM Mono,monospace',fontSize:'12px',color:'var(--odoo-purple)'}}>
-                          {r.code}
-                        </strong>
+                  </tr></thead>
+                  <tbody>
+                    {selectedItems.map((s,i) => {
+                      const low = s.reorderQty > 0 && s.zoneQty <= s.reorderQty
+                      return (
+                        <tr key={i}>
+                          <td style={{fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:700,color:'var(--odoo-purple)'}}>{s.itemCode||'—'}</td>
+                          <td style={{fontWeight:600,fontSize:12}}>{s.itemName}</td>
+                          <td style={{fontSize:11,color:'#6C757D'}}>{s.category||'—'}</td>
+                          <td style={{fontSize:11}}>{s.uom}</td>
+                          <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,
+                            color:low?'#DC3545':'#333'}}>{parseFloat(s.zoneQty).toLocaleString('en-IN',{maximumFractionDigits:3})}</td>
+                          <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:11}}>{INR(s.stdCost)}</td>
+                          <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67'}}>{INR(s.zoneValue)}</td>
+                          <td>
+                            <span style={{
+                              background:low?'#F8D7DA':s.zoneQty===0?'#E2E3E5':'#D4EDDA',
+                              color:low?'#721C24':s.zoneQty===0?'#6C757D':'#155724',
+                              padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:700
+                            }}>{low?'Low Stock':s.zoneQty===0?'Empty':'OK'}</span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{background:selectedZone.color,fontWeight:700}}>
+                      <td colSpan={4} style={{padding:'8px 12px'}}>Total ({selectedItems.length} items)</td>
+                      <td style={{textAlign:'right',padding:'8px 12px',fontFamily:'DM Mono,monospace'}}>
+                        {selectedItems.reduce((a,s)=>a+s.zoneQty,0).toLocaleString('en-IN',{maximumFractionDigits:0})}
                       </td>
-                      <td><strong>{r.mat}</strong></td>
-                      <td>
-                        <strong style={{fontFamily:'Syne,sans-serif',fontSize:'15px'}}>
-                          {r.qty}
-                        </strong>
+                      <td/>
+                      <td style={{textAlign:'right',padding:'8px 12px',fontFamily:'DM Mono,monospace'}}>
+                        {INR(selectedItems.reduce((a,s)=>a+s.zoneValue,0))}
                       </td>
-                      <td>{r.uom}</td>
-                      <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{r.batch}</td>
-                      <td style={{
-                        fontSize:'12px',
-                        color: r.expiry==='N/A' ? 'var(--odoo-gray)'
-                             : r.bl==='Expiring!' ? 'var(--odoo-red)'
-                             : r.bl==='Expiring Soon' ? 'var(--odoo-orange)'
-                             : 'var(--odoo-dark)',
-                        fontWeight: r.bl.includes('Expir') ? '700' : '400'
-                      }}>
-                        {r.expiry}
-                      </td>
-                      <td><span className={`badge ${r.b}`}>{r.bl}</span></td>
-                      <td onClick={e=>e.stopPropagation()} style={{display:'flex',gap:'4px'}}>
-                        <button className="btn-xs" onClick={() => nav('/wm/goods-issue')}>Issue</button>
-                        <button className="btn-xs" onClick={() => nav('/wm/transfer')}> Move</button>
-                      </td>
+                      <td/>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </tfoot>
+                </table>
+              )}
             </div>
           )}
-        </div>
+
+          {!selected && (
+            <div style={{textAlign:'center',padding:'20px',color:'#6C757D',fontSize:12}}>
+              👆 Click any zone above to see detailed stock list
+            </div>
+          )}
+        </>
       )}
     </div>
   )

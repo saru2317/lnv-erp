@@ -1,6 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const tok  = () => localStorage.getItem('lnv_token')
+const hdr  = () => ({ Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' })
+const INR  = n => '₹' + parseFloat(n||0).toLocaleString('en-IN', { maximumFractionDigits:0 })
+const CR   = n => { const v=parseFloat(n||0); return v>=10000000?`₹${(v/10000000).toFixed(2)}Cr`:v>=100000?`₹${(v/100000).toFixed(1)}L`:INR(v) }
 
 // ── SIDEBAR DATA ──────────────────────────────────────────
 const SIDEBAR_GROUPS = [
@@ -35,57 +41,100 @@ const SIDEBAR_GROUPS = [
   ]},
 ]
 
-const KPI_DATA = [
-  { icon:'💰', bg:'#EDE0EA', label:'Total Revenue',    val:'21.59Cr', trend:'18.2% vs LY',  up:true },
-  { icon:'📦', bg:'#D4EDDA', label:'Open Orders',      val:'1,248',   trend:'67 Pending',   up:true },
-  { icon:'👥', bg:'#D1ECF1', label:'Active Customers', val:'342',     trend:'28 New',        up:true },
-  { icon:'⚠️', bg:'#F8D7DA', label:'Stock Alerts',     val:'14',      trend:'Needs Reorder', up:false },
-]
-
-const BAR_DATA = [
-  {m:'Apr',v:0},{m:'May',v:662100},{m:'Jun',v:0},{m:'Jul',v:4622757},
-  {m:'Aug',v:3133025},{m:'Sep',v:8121600},{m:'Oct',v:36000},{m:'Nov',v:297923},
-  {m:'Dec',v:86950},{m:'Jan',v:4635610},
-]
-
-const TILES = [
-  { color:'#714B67', label:'SD · Sales', items:[
-    { icon:'📋', name:'Sales Orders',    count:'67',  sub:'Open orders',     badge:'3 Due',    bc:'#E06F39', path:'/sd/sales'     },
-    { icon:'🧾', name:'Invoices',        count:'12',  sub:'Pending payment', badge:'2 Overdue',bc:'#D9534F', path:'/sd/invoices'  },
-    { icon:'👥', name:'Customer Master', count:'342', sub:'Active',          badge:null,       bc:null,      path:'/sd/customers' },
-    { icon:'🚚', name:'Deliveries',      count:'8',   sub:'Pending dispatch', badge:null,      bc:null,      path:'/sd/deliveries'},
+// ── All possible tiles per module ──────────────────────────
+const ALL_TILES = [
+  { mod:'sd',      color:'#714B67', label:'SD · Sales', items:[
+    { icon:'📋', name:'Sales Orders',    sub:'Open orders',      path:'/sd/sales',     ck:'salesOrders'   },
+    { icon:'🧾', name:'Invoices',        sub:'Pending payment',  path:'/sd/invoices',  ck:'invoices'      },
+    { icon:'👥', name:'Customer Master', sub:'Active',           path:'/sd/customers', ck:'customers'     },
+    { icon:'🚚', name:'Deliveries',      sub:'Pending dispatch', path:'/sd/deliveries',ck:'deliveries'    },
   ]},
-  { color:'#00A09D', label:'MM · Materials', items:[
-    { icon:'📦', name:'Purchase Orders', count:'23',  sub:'Open POs',        badge:null,      bc:null,      path:'/mm/po'        },
-    { icon:'📊', name:'Stock Overview',  count:'186', sub:'Material items',  badge:'14 Low',  bc:'#D9534F', path:'/mm/materials' },
-    { icon:'🏢', name:'Vendors',         count:'48',  sub:'Active vendors',  badge:null,      bc:null,      path:'/mm/vendors'   },
-    { icon:'✅', name:'Goods Receipt',   count:'5',   sub:'Pending GRN',     badge:null,      bc:null,      path:'/mm/grn'       },
+  { mod:'mm',      color:'#00A09D', label:'MM · Purchase', items:[
+    { icon:'📦', name:'Purchase Orders', sub:'Open POs',         path:'/mm/po',        ck:'purchaseOrders'},
+    { icon:'📊', name:'Stock Overview',  sub:'Material items',   path:'/wm/stock',     ck:'stockItems'    },
+    { icon:'🏢', name:'Vendors',         sub:'Active vendors',   path:'/mm/vendors',   ck:'vendors'       },
+    { icon:'✅', name:'Goods Receipt',   sub:'This month',       path:'/mm/grn',       ck:'grns'          },
   ]},
-  { color:'#E06F39', label:'PP · Production', items:[
-    { icon:'⚙️', name:'Production Orders', count:'9',  sub:'In progress',    badge:null,      bc:null,      path:'/pp/wo'        },
-    { icon:'📋', name:'Bill of Materials', count:'34', sub:'Active BOMs',    badge:null,      bc:null,      path:'/pp/bom'       },
-    { icon:'🔧', name:'Work Orders',       count:'15', sub:'Open',           badge:'4 Done',  bc:'#00A09D', path:'/pp/wo'        },
+  { mod:'pp',      color:'#E06F39', label:'PP · Production', items:[
+    { icon:'⚙️', name:'Work Orders',       sub:'Open',           path:'/pp/wo',        ck:'workOrders'    },
+    { icon:'📋', name:'Bill of Materials', sub:'Active BOMs',    path:'/pp/bom',       ck:'boms'          },
+    { icon:'🔧', name:'Production Orders', sub:'In progress',    path:'/pp/wo',        ck:'prodOrders'    },
+  ]},
+  { mod:'fi',      color:'#1A5276', label:'FI · Finance', items:[
+    { icon:'📒', name:'Journal Entries',  sub:'Posted today',    path:'/fi/journals',  ck:'invoices'      },
+    { icon:'💳', name:'AR / AP',          sub:'Outstanding',     path:'/fi/ar-ap',     ck:'salesOrders'   },
+    { icon:'📊', name:'P&L Report',       sub:'This period',     path:'/fi/reports',   ck:'customers'     },
+    { icon:'🏦', name:'Bank & Cash',      sub:'Accounts',        path:'/fi/day-book',  ck:'grns'          },
+  ]},
+  { mod:'wm',      color:'#1F618D', label:'WM · Warehouse', items:[
+    { icon:'📦', name:'Stock List',       sub:'Material items',  path:'/wm/stock',     ck:'stockItems'    },
+    { icon:'🏭', name:'WH Map',           sub:'Live zones',      path:'/wm/map',       ck:'grns'          },
+    { icon:'🔍', name:'Gate Entry',       sub:'Vehicles inside', path:'/wm/gate',      ck:'purchaseOrders'},
+  ]},
+  { mod:'qm',      color:'#117864', label:'QM · Quality', items:[
+    { icon:'✅', name:'Inspections',      sub:'Pending',         path:'/qm/inspection',ck:'workOrders'    },
+    { icon:'⚠️', name:'NCR',              sub:'Open issues',     path:'/qm/ncr',       ck:'boms'          },
+  ]},
+  { mod:'pm',      color:'#6C3483', label:'PM · Maintenance', items:[
+    { icon:'🔧', name:'Breakdown',        sub:'Open jobs',       path:'/pm/breakdown', ck:'workOrders'    },
+    { icon:'📅', name:'PM Schedule',      sub:'Planned',         path:'/pm/schedule',  ck:'boms'          },
+  ]},
+  { mod:'hcm',     color:'#2E86C1', label:'HR · HCM', items:[
+    { icon:'👥', name:'Employees',        sub:'Active',          path:'/hcm/employees',ck:'customers'     },
+    { icon:'📅', name:'Leave',            sub:'Pending approval',path:'/hcm/leave',    ck:'salesOrders'   },
+    { icon:'💰', name:'Payroll',          sub:'This month',      path:'/hcm/payroll',  ck:'invoices'      },
+  ]},
+  { mod:'crm',     color:'#1A5276', label:'CRM', items:[
+    { icon:'🤝', name:'Leads',            sub:'Active pipeline', path:'/crm/leads',    ck:'salesOrders'   },
+    { icon:'📞', name:'Follow-ups',       sub:'Due today',       path:'/crm/followups',ck:'invoices'      },
+  ]},
+  { mod:'tm',      color:'#784212', label:'TM · Transport', items:[
+    { icon:'🚛', name:'Trips',            sub:'In transit',      path:'/tm/trips',     ck:'workOrders'    },
+    { icon:'🚗', name:'Vehicles',         sub:'Fleet',           path:'/tm/vehicles',  ck:'boms'          },
   ]},
 ]
 
-const RECENT_TXN = [
-  { doc:'INV-0124', cust:'Sri Lakshmi Mills',   amt:'3,91,680',  status:'Paid',       sc:'#155724', sb:'#D4EDDA' },
-  { doc:'INV-0123', cust:'Coimbatore Spinners', amt:'8,12,160',  status:'Pending',    sc:'#856404', sb:'#FFF3CD' },
-  { doc:'INV-0122', cust:'Rajesh Textiles',     amt:'1,42,800',  status:'Paid',       sc:'#155724', sb:'#D4EDDA' },
-  { doc:'INV-0121', cust:'ARS Cotton Mills',    amt:'4,63,510',  status:'Overdue',    sc:'#721C24', sb:'#F8D7DA' },
-  { doc:'SO-0124',  cust:'Vijay Fabrics',       amt:'2,82,068',  status:'Processing', sc:'#0C5460', sb:'#D1ECF1' },
-]
-
-const QUICK = [
-  { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new',    mod:'sd' },
-  { icon:'📦', label:'New Purchase Order', path:'/mm/po/new',       mod:'mm' },
-  { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new', mod:'sd' },
-  { icon:'✅', label:'Goods Receipt',      path:'/mm/grn/new',      mod:'mm' },
-  { icon:'👤', label:'Add Customer',       path:'/sd/customers',    mod:'sd' },
-  { icon:'📊', label:'Sales Report',       path:'/sd/reports',      mod:'sd' },
-  { icon:'⚙️', label:'Production Order',   path:'/pp/wo/new',       mod:'pp' },
+const ALL_QUICK = [
+  { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new',    mod:'sd'      },
+  { icon:'📦', label:'New Purchase Order', path:'/mm/po/new',       mod:'mm'      },
+  { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new', mod:'sd'      },
+  { icon:'✅', label:'Goods Receipt',      path:'/mm/grn/new',      mod:'mm'      },
+  { icon:'👤', label:'Add Customer',       path:'/sd/customers',    mod:'sd'      },
+  { icon:'📒', label:'New Journal Entry',  path:'/fi/journals',     mod:'fi'      },
+  { icon:'⚙️', label:'Production Order',   path:'/pp/wo/new',       mod:'pp'      },
   { icon:'📈', label:'Analytics',          path:'/reports',         mod:'reports' },
+  { icon:'👥', label:'New Employee',       path:'/hcm/employees',   mod:'hcm'     },
+  { icon:'🔧', label:'Log Breakdown',      path:'/pm/breakdown',    mod:'pm'      },
 ]
+
+// ── KPI configs per role ─────────────────────────────────────
+const ROLE_KPIS = {
+  SALES:      ['monthRevenue','openOrders','activeCust','totalAR'],
+  ACCOUNTS:   ['monthRevenue','totalAR','openOrders','activeCust'],
+  PURCHASE:   ['purchaseOrders','stockItems','vendors','grns'],
+  PRODUCTION: ['workOrders','boms','prodOrders','stockItems'],
+  WAREHOUSE:  ['stockItems','grns','purchaseOrders','workOrders'],
+  HR:         ['customers','salesOrders','invoices','grns'],
+  MANAGER:    ['monthRevenue','openOrders','activeCust','totalAR'],
+  ADMIN:      ['monthRevenue','openOrders','activeCust','totalAR'],
+  SUPER_ADMIN:['monthRevenue','openOrders','activeCust','totalAR'],
+}
+
+const KPI_META = {
+  monthRevenue:  { icon:'💰', bg:'#EDE0EA', label:'This Month Revenue',  sub:'Live',               up:true,  fmt:'cr' },
+  openOrders:    { icon:'📦', bg:'#D4EDDA', label:'Open Orders',         sub:'Pending dispatch',   up:true,  fmt:'num'},
+  activeCust:    { icon:'👥', bg:'#D1ECF1', label:'Active Customers',    sub:'In customer master', up:true,  fmt:'num'},
+  totalAR:       { icon:'🏦', bg:'#FFF3CD', label:'Total Receivable',    sub:'Outstanding AR',     up:false, fmt:'cr' },
+  purchaseOrders:{ icon:'📦', bg:'#D4EDDA', label:'Open Purchase Orders',sub:'Pending',            up:true,  fmt:'num'},
+  stockItems:    { icon:'📊', bg:'#D1ECF1', label:'Stock Items',         sub:'Active materials',   up:true,  fmt:'num'},
+  vendors:       { icon:'🏢', bg:'#FFF3CD', label:'Active Vendors',      sub:'Registered',         up:true,  fmt:'num'},
+  grns:          { icon:'✅', bg:'#D4EDDA', label:'GRNs This Month',     sub:'Received',           up:true,  fmt:'num'},
+  workOrders:    { icon:'⚙️', bg:'#EDE0EA', label:'Open Work Orders',    sub:'In progress',        up:true,  fmt:'num'},
+  boms:          { icon:'📋', bg:'#D1ECF1', label:'Active BOMs',         sub:'Bill of materials',  up:true,  fmt:'num'},
+  prodOrders:    { icon:'🔧', bg:'#FFF3CD', label:'Production Orders',   sub:'Released',           up:true,  fmt:'num'},
+}
+
+
 
 
 
@@ -165,33 +214,57 @@ function Sidebar({ open, onClose, navigate, hasAccess }) {
 }
 
 // ── Bar Chart ──────────────────────────────────────────────
-function BarChart() {
-  const max = Math.max(...BAR_DATA.map(d => d.v))
-  return (
-    <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:150 }}>
-      {BAR_DATA.map((d, i) => {
-        const pct = max > 0 ? (d.v / max * 100) : 0
-        const label = d.v > 0 ? (d.v >= 1e6 ? (d.v/1e6).toFixed(1)+'M' : (d.v/1e3).toFixed(0)+'K') : '-'
-        return (
-          <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-            <span style={{ fontSize:9, fontWeight:700, color:'#1C1C1C' }}>{label}</span>
-            <div style={{ width:'100%', borderRadius:'3px 3px 0 0', minHeight:3,
-              height: Math.max(pct, 2) + '%',
-              background: pct > 60 ? '#714B67' : pct > 30 ? '#00A09D' : '#E0D5E0' }} />
-            <span style={{ fontSize:10, color:'#6C757D' }}>{d.m}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 // ── Main Component ────────────────────────────────────────
 export default function HomeDashboard() {
   const { user, hasAccess } = useAuth()
   const navigate  = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const now = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'})
+
+  const [exec,    setExec]    = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let attempts = 0
+    const tryLoad = () => {
+      const t = localStorage.getItem('lnv_token')
+      if (!t && attempts < 5) { attempts++; setTimeout(tryLoad, 500); return }
+      if (!t) { setLoading(false); return }
+      fetch(`${BASE_URL}/sd/executive-dashboard`, {
+        headers: { Authorization: `Bearer ${t}` }
+      })
+        .then(r => r.ok ? r.json() : Promise.reject(`${r.status}`))
+        .then(d => { if (!d.error) setExec(d) })
+        .catch(e => console.warn('Dashboard load:', e))
+        .finally(() => setLoading(false))
+    }
+    tryLoad()
+  }, [])
+
+  // ── Role-based filtering ──────────────────────────────────
+  const role = (user?.role || '').toUpperCase()
+  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'MANAGER'
+
+  // Filter tiles to only modules this role can access
+  const TILES = ALL_TILES.filter(sec => hasAccess(sec.mod))
+  const QUICK = ALL_QUICK.filter(q => hasAccess(q.mod))
+
+  // KPI strip — role specific
+  const kpiKeys = ROLE_KPIS[role] || ROLE_KPIS['ADMIN']
+  const tc = exec?.tileCounts || {}
+  const kpiValues = {
+    monthRevenue:   exec?.kpis?.monthRevenue,
+    openOrders:     tc.salesOrders,
+    activeCust:     tc.customers,
+    totalAR:        exec?.kpis?.totalAR,
+    purchaseOrders: tc.purchaseOrders,
+    stockItems:     tc.stockItems,
+    vendors:        tc.vendors,
+    grns:           tc.grns,
+    workOrders:     tc.workOrders,
+    boms:           tc.boms,
+    prodOrders:     tc.prodOrders,
+  }
 
   return (
     <div style={{ display:'flex', height:'100%', background:'#F0EEEB' }}>
@@ -224,158 +297,275 @@ export default function HomeDashboard() {
             </p>
           </div>
 
-          {/* KPI Strip */}
+          {/* KPI Strip — Role Based Live Data */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:22 }}>
-            {KPI_DATA.map((k, i) => (
-              <div key={i} style={{ background:'#fff', borderRadius:8, padding:'16px 18px',
-                border:'1px solid #E0D5E0', boxShadow:'0 1px 4px rgba(0,0,0,.06)',
-                display:'flex', alignItems:'center', gap:14 }}>
-                <div style={{ width:42, height:42, borderRadius:8, background:k.bg,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:20, flexShrink:0 }}>{k.icon}</div>
-                <div>
-                  <div style={{ fontSize:10, fontWeight:700, color:'#6C757D',
-                    textTransform:'uppercase', letterSpacing:.5 }}>{k.label}</div>
-                  <div style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:700,
-                    color:'#1C1C1C', lineHeight:1.2 }}>{k.val}</div>
-                  <div style={{ fontSize:11, color: k.up ? '#00A09D' : '#D9534F' }}>
-                    {k.up ? '+' : ''}{k.trend}
+            {kpiKeys.map((key, i) => {
+              const meta = KPI_META[key] || {}
+              const val  = kpiValues[key]
+              const disp = val === undefined ? '…'
+                : meta.fmt === 'cr' ? CR(val)
+                : val?.toLocaleString('en-IN')
+              return (
+                <div key={i} style={{ background:'#fff', borderRadius:8, padding:'16px 18px',
+                  border:'1px solid #E0D5E0', boxShadow:'0 1px 4px rgba(0,0,0,.06)',
+                  display:'flex', alignItems:'center', gap:14 }}>
+                  <div style={{ width:42, height:42, borderRadius:8, background:meta.bg,
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{meta.icon}</div>
+                  <div>
+                    <div style={{ fontSize:10, fontWeight:700, color:'#6C757D', textTransform:'uppercase', letterSpacing:.5 }}>{meta.label}</div>
+                    <div style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:700, color:'#1C1C1C', lineHeight:1.2 }}>
+                      {loading ? '…' : disp}
+                    </div>
+                    <div style={{ fontSize:11, color: meta.up ? '#00A09D' : '#D9534F' }}>{meta.sub}</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
-          {/* Fiori Tiles */}
+          {/* Executive Charts — Admin/Manager only */}
+          {isAdmin && exec && !loading && (<>
+
+          {/* Row 1: Sales Trend + Purchase Trend */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+
+            {/* Sales Trend */}
+            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📈 Sales Trend — Last 6 Months</div>
+              {(() => {
+                const data  = exec.salesTrend || []
+                const max   = Math.max(...data.map(d=>d.sales), 1)
+                return (
+                  <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
+                    {data.map((d,i) => {
+                      const h = Math.round((d.sales/max)*100)
+                      return (
+                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                          <div style={{ fontSize:9, color:'#714B67', fontWeight:700 }}>{d.sales>0?CR(d.sales):''}</div>
+                          <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#714B67':'#EDE0EA',
+                            borderRadius:'4px 4px 0 0', minHeight:4, transition:'height .3s',
+                            position:'relative' }}/>
+                          <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Purchase Trend */}
+            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📦 Purchase Trend — Last 6 Months</div>
+              {(() => {
+                const data = exec.purchaseTrend || []
+                const max  = Math.max(...data.map(d=>d.purchase), 1)
+                return (
+                  <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
+                    {data.map((d,i) => {
+                      const h = Math.round((d.purchase/max)*100)
+                      return (
+                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                          <div style={{ fontSize:9, color:'#1A5276', fontWeight:700 }}>{d.purchase>0?CR(d.purchase):''}</div>
+                          <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#1A5276':'#CCE5FF',
+                            borderRadius:'4px 4px 0 0', minHeight:4 }}/>
+                          <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+
+          {/* Row 2: Top Customers + Top Products */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+
+            {/* Top Customers */}
+            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:12 }}>🏆 Top Customers — This Year</div>
+              {exec.topCustomers?.length === 0 ? (
+                <div style={{ padding:20, textAlign:'center', color:'#6C757D', fontSize:12 }}>No sales data yet</div>
+              ) : (exec.topCustomers||[]).map((c,i) => {
+                const max = exec.topCustomers[0]?.value || 1
+                const pct = Math.round(c.value/max*100)
+                return (
+                  <div key={i} style={{ marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                      <span style={{ fontSize:12, fontWeight:600, color:'#1C1C1C' }}>
+                        <span style={{ color:'#714B67', fontWeight:800, marginRight:6 }}>#{i+1}</span>{c.name}
+                      </span>
+                      <span style={{ fontSize:12, fontWeight:700, color:'#714B67', fontFamily:'DM Mono,monospace' }}>{CR(c.value)}</span>
+                    </div>
+                    <div style={{ height:6, background:'#F0EEF0', borderRadius:3 }}>
+                      <div style={{ height:'100%', width:`${pct}%`, borderRadius:3,
+                        background: i===0?'#714B67':i===1?'#9B59B6':'#C39BD3' }}/>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Top Products */}
+            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:12 }}>📊 Top Products — This Year</div>
+              {exec.topProducts?.length === 0 ? (
+                <div style={{ padding:20, textAlign:'center', color:'#6C757D', fontSize:12 }}>No invoice line data yet</div>
+              ) : (exec.topProducts||[]).map((p,i) => {
+                const max = exec.topProducts[0]?.value || 1
+                const pct = Math.round(p.value/max*100)
+                return (
+                  <div key={i} style={{ marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                      <span style={{ fontSize:12, fontWeight:600, color:'#1C1C1C' }}>
+                        <span style={{ color:'#017E84', fontWeight:800, marginRight:6 }}>#{i+1}</span>
+                        <span style={{ maxWidth:160, display:'inline-block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', verticalAlign:'bottom' }}>{p.name}</span>
+                      </span>
+                      <span style={{ fontSize:12, fontWeight:700, color:'#017E84', fontFamily:'DM Mono,monospace' }}>{CR(p.value)}</span>
+                    </div>
+                    <div style={{ height:6, background:'#F0EEF0', borderRadius:3 }}>
+                      <div style={{ height:'100%', width:`${pct}%`, borderRadius:3,
+                        background: i===0?'#017E84':i===1?'#1ABC9C':'#A3D9D1' }}/>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Row 3: Receivable vs Payable */}
+          {(() => {
+            const rv  = exec.receivableVsPayable || {}
+            const max = Math.max(rv.totalAR||0, rv.totalAP||0, 1)
+            return (
+              <div style={{ background:'#fff', borderRadius:10, padding:'16px 20px', border:'1px solid #E0D5E0', marginBottom:16 }}>
+                <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>⚖️ Receivable vs Payable</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                  {[
+                    { label:'Accounts Receivable (AR)', total:rv.totalAR||0, overdue:rv.overdueAR||0, color:'#155724', bg:'#D4EDDA', icon:'📥' },
+                    { label:'Accounts Payable (AP)',    total:rv.totalAP||0, overdue:rv.overdueAP||0, color:'#721C24', bg:'#F8D7DA', icon:'📤' },
+                  ].map(item => (
+                    <div key={item.label}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:item.color }}>{item.icon} {item.label}</span>
+                        <span style={{ fontSize:16, fontWeight:800, color:item.color, fontFamily:'DM Mono,monospace' }}>{CR(item.total)}</span>
+                      </div>
+                      <div style={{ height:12, background:'#F0EEF0', borderRadius:6, marginBottom:6, overflow:'hidden' }}>
+                        <div style={{ height:'100%', width:`${Math.round(item.total/max*100)}%`,
+                          background:item.color, borderRadius:6, transition:'width .5s' }}/>
+                      </div>
+                      {item.overdue > 0 && (
+                        <div style={{ fontSize:11, color:'#DC3545', fontWeight:600 }}>
+                          ⚠️ Overdue: {CR(item.overdue)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {/* Net position */}
+                <div style={{ marginTop:12, paddingTop:10, borderTop:'1px solid #E0D5E0',
+                  display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:12, color:'#6C757D' }}>Net Working Capital Position</span>
+                  <span style={{ fontSize:14, fontWeight:800,
+                    color: (rv.totalAR||0) > (rv.totalAP||0) ? '#155724' : '#721C24',
+                    fontFamily:'DM Mono,monospace' }}>
+                    {(rv.totalAR||0) >= (rv.totalAP||0) ? '+' : ''}{CR((rv.totalAR||0) - (rv.totalAP||0))}
+                    <span style={{ fontSize:10, fontWeight:400, color:'#6C757D', marginLeft:6 }}>
+                      ({(rv.totalAR||0) >= (rv.totalAP||0) ? 'Surplus' : 'Deficit'})
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )
+          })()}
+
+          </>)}
+
+          {/* ── Module Tiles ─────────────────────────────────────── */}
           {TILES.map(sec => (
             <div key={sec.label} style={{ marginBottom:24 }}>
               <div style={{ fontSize:14, fontWeight:700, color:'#1C1C1C',
-                marginBottom:12, paddingBottom:8,
-                borderBottom:'2px solid #E0D5E0',
+                marginBottom:12, paddingBottom:8, borderBottom:`2px solid ${sec.color}`,
                 display:'flex', alignItems:'center', gap:8 }}>
-                <div style={{ width:10, height:10, borderRadius:3, background:sec.color }} />
+                <div style={{ width:10, height:10, borderRadius:3, background:sec.color }}/>
                 {sec.label}
               </div>
-              <div style={{ display:'grid',
-                gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:12 }}>
-                {sec.items.map(tile => (
-                  <div key={tile.name} onClick={() => navigate(tile.path)}
-                    style={{ background:'#fff', borderRadius:8, padding:16, cursor:'pointer',
-                      border:'1px solid #E0D5E0', position:'relative',
-                      minHeight:110, display:'flex', flexDirection:'column',
-                      justifyContent:'space-between',
-                      boxShadow:'0 1px 4px rgba(0,0,0,.06)',
-                      borderTop:'3px solid ' + sec.color }}
-                    onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,.12)' }}
-                    onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.06)' }}>
-                    {tile.badge && (
-                      <span style={{ position:'absolute', top:10, right:10,
-                        background:tile.bc, color:'#fff', fontSize:10,
-                        fontWeight:700, padding:'2px 6px', borderRadius:10 }}>
-                        {tile.badge}
-                      </span>
-                    )}
-                    <div>
-                      <div style={{ fontSize:28, marginBottom:8 }}>{tile.icon}</div>
-                      <div style={{ fontSize:12, fontWeight:700, color:'#1C1C1C' }}>{tile.name}</div>
+              <div style={{ display:'grid', gridTemplateColumns:`repeat(${sec.items.length},1fr)`, gap:12 }}>
+                {sec.items.filter(t => !t.mod || hasAccess(t.mod)).map((t, j) => {
+                  const count = exec?.tileCounts?.[t.ck]
+                  return (
+                    <div key={j} onClick={() => navigate(t.path)}
+                      style={{ background:'#fff', borderRadius:8, padding:'16px 18px',
+                        border:`1px solid #E0D5E0`, boxShadow:'0 1px 4px rgba(0,0,0,.06)',
+                        cursor:'pointer', display:'flex', alignItems:'center', gap:14,
+                        transition:'all .15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor=sec.color; e.currentTarget.style.boxShadow=`0 2px 12px ${sec.color}30` }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor='#E0D5E0'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.06)' }}>
+                      <div style={{ width:42, height:42, borderRadius:8,
+                        background: sec.color + '18',
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        fontSize:20, flexShrink:0 }}>{t.icon}</div>
+                      <div>
+                        <div style={{ fontSize:10, fontWeight:700, color:'#6C757D',
+                          textTransform:'uppercase', letterSpacing:.5 }}>{t.name}</div>
+                        <div style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:700,
+                          color: sec.color, lineHeight:1.2 }}>
+                          {count !== undefined ? count : '—'}
+                        </div>
+                        <div style={{ fontSize:11, color:'#6C757D' }}>{t.sub}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontFamily:'Syne,sans-serif', fontSize:22,
-                        fontWeight:800, color:sec.color, marginTop:4 }}>{tile.count}</div>
-                      <div style={{ fontSize:10, color:'#6C757D' }}>{tile.sub}</div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}
 
-          {/* Charts Row */}
-          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:22 }}>
-            <div style={{ background:'#fff', borderRadius:8, padding:18,
-              border:'1px solid #E0D5E0', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:16 }}>
-                <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:14,
-                  fontWeight:700, color:'#1C1C1C' }}>Monthly Sales Revenue</h4>
-                <span style={{ fontSize:11, color:'#6C757D' }}>APR–JAN</span>
-              </div>
-              <BarChart />
-            </div>
-            <div style={{ background:'#fff', borderRadius:8, padding:18,
-              border:'1px solid #E0D5E0', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-              <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:14,
-                fontWeight:700, color:'#1C1C1C', marginBottom:16 }}>Revenue Mix</h4>
-              <div style={{ display:'flex', justifyContent:'center', marginBottom:16 }}>
-                <div style={{ width:120, height:120, borderRadius:'50%',
-                  background:'conic-gradient(#714B67 0deg 195deg, #00A09D 195deg 280deg, #E06F39 280deg 335deg, #F5C518 335deg 360deg)',
-                  display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <div style={{ width:78, height:78, background:'#fff', borderRadius:'50%',
-                    display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                    <strong style={{ fontFamily:'Syne,sans-serif', fontSize:14,
-                      fontWeight:700, color:'#1C1C1C' }}>21.6Cr</strong>
-                    <small style={{ fontSize:9, color:'#6C757D' }}>Total</small>
-                  </div>
-                </div>
-              </div>
-              {[['#714B67','SD Systems','54%'],['#00A09D','WM Lattice','24%'],
-                ['#E06F39','MM Spares','14%'],['#F5C518','Others','8%']].map(([c,l,p])=>(
-                <div key={l} style={{ display:'flex', alignItems:'center', padding:'3px 0' }}>
-                  <div style={{ width:9, height:9, borderRadius:2,
-                    background:c, flexShrink:0 }} />
-                  <span style={{ flex:1, marginLeft:7, fontSize:12, color:'#6C757D' }}>{l}</span>
-                  <span style={{ fontSize:12, fontWeight:700, color:'#1C1C1C' }}>{p}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Bottom Row — Recent Sales (live) + Quick Actions */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:22 }}>
 
-          {/* Bottom Row */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-            {/* Recent Transactions */}
-            <div style={{ background:'#fff', borderRadius:8, border:'1px solid #E0D5E0',
-              overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-              <div style={{ display:'flex', justifyContent:'space-between',
-                alignItems:'center', padding:'14px 18px',
-                borderBottom:'1px solid #E0D5E0' }}>
-                <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:14,
-                  fontWeight:700, color:'#1C1C1C' }}>Recent Sales</h4>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={() => navigate('/sd/sales/new')}
-                    style={{ padding:'5px 12px', borderRadius:4, fontSize:12,
-                      fontWeight:600, cursor:'pointer',
-                      background:'#714B67', color:'#fff', border:'none' }}>
-                    + New Order
-                  </button>
-                </div>
+            {/* Recent Sales — Live */}
+            <div style={{ background:'#fff', borderRadius:8, border:'1px solid #E0D5E0', overflow:'hidden' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+                padding:'14px 18px', borderBottom:'1px solid #E0D5E0' }}>
+                <h4 style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, color:'#1C1C1C' }}>Recent Sales</h4>
+                <button onClick={() => navigate('/sd/sales/new')}
+                  style={{ padding:'5px 12px', borderRadius:4, fontSize:12, fontWeight:600,
+                    cursor:'pointer', background:'#714B67', color:'#fff', border:'none' }}>+ New Order</button>
               </div>
               <table style={{ width:'100%', borderCollapse:'collapse' }}>
                 <thead>
                   <tr style={{ background:'#F8F9FA', borderBottom:'1px solid #E0D5E0' }}>
-                    {['Doc No.','Customer','Amount','Status'].map(h => (
-                      <th key={h} style={{ padding:'8px 14px', fontSize:11,
-                        fontWeight:700, color:'#6C757D', textAlign:'left',
-                        textTransform:'uppercase', letterSpacing:.5 }}>{h}</th>
+                    {['Doc No.','Customer','Amount','Status'].map(h=>(
+                      <th key={h} style={{ padding:'8px 14px', fontSize:11, fontWeight:700,
+                        color:'#6C757D', textAlign:'left', textTransform:'uppercase', letterSpacing:.5 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {RECENT_TXN.map((r, i) => (
-                    <tr key={i} style={{ borderBottom:'1px solid #F0EEEB' }}
-                      onMouseEnter={e => e.currentTarget.style.background='#FDF8FC'}
-                      onMouseLeave={e => e.currentTarget.style.background=''}>
-                      <td style={{ padding:'10px 14px', fontSize:12,
-                        color:'#714B67', fontWeight:600,
-                        fontFamily:'DM Mono,monospace' }}>{r.doc}</td>
-                      <td style={{ padding:'10px 14px', fontSize:12 }}>{r.cust}</td>
-                      <td style={{ padding:'10px 14px', fontSize:12,
-                        fontFamily:'DM Mono,monospace' }}>Rs {r.amt}</td>
-                      <td style={{ padding:'10px 14px' }}>
-                        <span style={{ padding:'3px 9px', borderRadius:10,
-                          fontSize:11, fontWeight:600,
-                          background:r.sb, color:r.sc }}>{r.status}</span>
-                      </td>
-                    </tr>
-                  ))}
+                  {exec?.recentInvoices?.length > 0 ? exec.recentInvoices.map((r,i) => {
+                    const ST = { PAID:{c:'#155724',b:'#D4EDDA'}, POSTED:{c:'#004085',b:'#CCE5FF'},
+                      PENDING_APPROVAL:{c:'#856404',b:'#FFF3CD'}, OVERDUE:{c:'#721C24',b:'#F8D7DA'} }
+                    const st = ST[r.status] || {c:'#0C5460',b:'#D1ECF1'}
+                    return (
+                      <tr key={i} style={{ borderBottom:'1px solid #F0EEEB', cursor:'pointer' }}
+                        onMouseEnter={e=>e.currentTarget.style.background='#FDF8FC'}
+                        onMouseLeave={e=>e.currentTarget.style.background=''}
+                        onClick={()=>navigate('/sd/invoices')}>
+                        <td style={{ padding:'10px 14px', fontSize:12, color:'#714B67', fontWeight:600, fontFamily:'DM Mono,monospace' }}>{r.invoiceNo}</td>
+                        <td style={{ padding:'10px 14px', fontSize:12 }}>{r.customerName}</td>
+                        <td style={{ padding:'10px 14px', fontSize:12, fontFamily:'DM Mono,monospace' }}>{CR(r.grandTotal)}</td>
+                        <td style={{ padding:'10px 14px' }}>
+                          <span style={{ padding:'3px 9px', borderRadius:10, fontSize:11, fontWeight:600, background:st.b, color:st.c }}>{r.status}</span>
+                        </td>
+                      </tr>
+                    )
+                  }) : (
+                    <tr><td colSpan={4} style={{ padding:24, textAlign:'center', color:'#6C757D', fontSize:12 }}>
+                      {loading ? 'Loading…' : 'No invoices yet — create your first invoice'}
+                    </td></tr>
+                  )}
                 </tbody>
               </table>
             </div>

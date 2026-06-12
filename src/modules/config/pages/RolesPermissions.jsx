@@ -1,18 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ROLES, ALL_MODULES } from './_configData'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization: `Bearer ${localStorage.getItem('lnv_token')}` })
 
 const PERMISSIONS = [
-  { k:'view',     icon:'▸',  label:'View',     sub:'Read records' },
+  { k:'view',     icon:'👁️',  label:'View',     sub:'Read records' },
   { k:'create',   icon:'➕',  label:'Create',   sub:'Add new entries' },
   { k:'edit',     icon:'✏️',  label:'Edit',     sub:'Modify existing' },
   { k:'delete',   icon:'🗑️',  label:'Delete',   sub:'Remove entries' },
-  { k:'approve',  icon:'▸',  label:'Approve',  sub:'Workflow approval' },
-  { k:'export',   icon:'⬇',  label:'Export',   sub:'Download data' },
+  { k:'approve',  icon:'✅',  label:'Approve',  sub:'Workflow approval' },
+  { k:'export',   icon:'⬇️',  label:'Export',   sub:'Download data' },
   { k:'reports',  icon:'📊',  label:'Reports',  sub:'View reports' },
   { k:'settings', icon:'⚙️',  label:'Settings', sub:'Config access' },
 ]
 
-// Default permission set per role
+// DB role → display role key
+const DB_TO_KEY = {
+  ADMIN:'admin', SUPER_ADMIN:'admin', MANAGER:'manager',
+  ACCOUNTS:'accounts', PRODUCTION:'operations', OPERATIONS:'operations',
+  HR:'hr', SALES:'sales', PURCHASE:'operations',
+  WAREHOUSE:'operations', TRANSPORT:'transport',
+  CIVIL:'civil', VIEWER:'viewer',
+}
+
 const DEFAULT_PERMS = {
   admin:     {view:true, create:true, edit:true, delete:true, approve:true, export:true, reports:true, settings:true},
   manager:   {view:true, create:true, edit:true, delete:false,approve:true, export:true, reports:true, settings:false},
@@ -26,39 +38,49 @@ const DEFAULT_PERMS = {
 }
 
 const GROUP_COLORS = {
-  Core:       '#714B67',
-  Operations: '#017E84',
-  Finance:    '#196F3D',
-  People:     '#6C3483',
-  Support:    '#E06F39',
-  System:     '#1A5276',
+  Core:'#714B67', Operations:'#017E84', Finance:'#196F3D',
+  People:'#6C3483', Support:'#E06F39', System:'#1A5276',
 }
 
 export default function RolesPermissions() {
-  const [roles,   setRoles]   = useState(ROLES)
-  const [perms,   setPerms]   = useState(DEFAULT_PERMS)
-  const [tab,     setTab]     = useState('matrix')    // matrix | permissions | new
-  const [selRole, setSelRole] = useState('admin')
-  const [saved,   setSaved]   = useState(false)
+  const [roles,    setRoles]    = useState(ROLES)
+  const [perms,    setPerms]    = useState(DEFAULT_PERMS)
+  const [tab,      setTab]      = useState('matrix')
+  const [selRole,  setSelRole]  = useState('admin')
+  const [saving,   setSaving]   = useState(false)
+  const [userCounts, setUserCounts] = useState({})
 
   const [newRole, setNewRole] = useState({
     name:'', label:'', desc:'', color:'#714B67', modules:[]
   })
 
+  // ── Load live user counts per role ────────────────────────
+  useEffect(() => {
+    fetch(`${BASE_URL}/auth/users`, { headers: hdr2() })
+      .then(r => r.json())
+      .then(d => {
+        const counts = {}
+        ;(d.data || []).forEach(u => {
+          if (!u.isActive) return
+          const key = DB_TO_KEY[u.role] || 'viewer'
+          counts[key] = (counts[key] || 0) + 1
+        })
+        setUserCounts(counts)
+      })
+      .catch(() => {})
+  }, [])
+
   const userCnt = (roleId) => {
-    const counts = {
-      'ROLE-001':1,'ROLE-002':1,'ROLE-003':1,'ROLE-004':2,'ROLE-005':1,'ROLE-006':1,
-      'ROLE-007':0,'ROLE-008':0,'ROLE-009':0,
-    }
-    return counts[roleId] || 0
+    const role = roles.find(r => r.id === roleId)
+    return role ? (userCounts[role.name] || 0) : 0
   }
 
   const toggleMod = (roleId, mod) => {
-    if (roleId === 'ROLE-001') return // admin always full
+    if (roleId === 'ROLE-001') return
     setRoles(rs => rs.map(r => r.id === roleId
-      ? {...r, modules: r.modules.includes(mod)
+      ? { ...r, modules: r.modules.includes(mod)
           ? r.modules.filter(m => m !== mod)
-          : [...r.modules, mod]}
+          : [...r.modules, mod] }
       : r
     ))
   }
@@ -71,9 +93,21 @@ export default function RolesPermissions() {
     }))
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  // ── Save — persists role→module mapping to localStorage ──
+  // (Backend role-module mapping is controlled by AuthContext MODULE_ACCESS)
+  // Here we save custom overrides that can be read by AuthContext
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Save role permissions to localStorage for AuthContext to read
+      const roleConfig = {}
+      roles.forEach(r => { roleConfig[r.name] = { modules: r.modules, perms: perms[r.name] || {} } })
+      localStorage.setItem('lnv_role_config', JSON.stringify(roleConfig))
+
+      // Update each user's role if needed (no bulk role update API — just notify)
+      toast.success('Role configuration saved! Changes apply on next login.')
+    } catch(e) { toast.error('Save failed: ' + e.message) }
+    setSaving(false)
   }
 
   const addRole = () => {
@@ -82,13 +116,15 @@ export default function RolesPermissions() {
       id: `ROLE-${String(r.length+1).padStart(3,'0')}`,
       name: newRole.name, label: newRole.label,
       desc: newRole.desc, color: newRole.color,
+      bg: newRole.color + '22',
       modules: ['home', ...newRole.modules]
     }])
     setNewRole({ name:'', label:'', desc:'', color:'#714B67', modules:[] })
     setTab('matrix')
+    toast.success(`Role "${newRole.label}" created`)
   }
 
-  const modGroups = [...new Set(ALL_MODULES.map(m => m.group))]
+  const modGroups  = [...new Set(ALL_MODULES.map(m => m.group))]
   const currentRole = roles.find(r => r.name === selRole)
 
   return (
@@ -101,9 +137,8 @@ export default function RolesPermissions() {
         </div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={() => setTab('new')}>+ New Role</button>
-          <button className="btn btn-p sd-bsm" onClick={handleSave}
-            style={saved ? {background:'#155724',color:'#fff'} : {}}>
-            {saved ? ' Saved!' : ' Save Changes'}
+          <button className="btn btn-p sd-bsm" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : '💾 Save Changes'}
           </button>
         </div>
       </div>

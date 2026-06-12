@@ -74,15 +74,29 @@ export function AuthProvider({ children }) {
   const hasAccess = (moduleKey) => {
     if (!user) return false
     const role = (user.role || '').toString().toUpperCase().trim()
-    // Admin always has full access
     if (role === 'ADMIN' || role === 'SUPER_ADMIN') return true
     const allowed = MODULE_ACCESS[role]
-    if (!allowed) return false   // Unknown role → no access
+    if (!allowed) return false
     return allowed.includes(moduleKey)
   }
 
+  // Super Admin — LNV system owner only (full system config access)
+  const isSuperAdmin = user?.email === 'admin@lnverp.com' ||
+                       (user?.role || '').toUpperCase() === 'SUPER_ADMIN'
+
+  // ── Module activation — reads from CompanyProfile config ──
+  const ALWAYS_ON = ['home', 'config', 'admin', 'reports', 'mdm'] // core — never hidden
+  const isModuleEnabled = (moduleKey) => {
+    if (ALWAYS_ON.includes(moduleKey?.toLowerCase())) return true // always visible
+    try {
+      const active = JSON.parse(localStorage.getItem('lnv_active_modules') || 'null')
+      if (!active) return true // default all enabled if not configured
+      return active.includes(moduleKey?.toLowerCase())
+    } catch { return true }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, demoLogin, logout, hasAccess }}>
+    <AuthContext.Provider value={{ user, loading, login, demoLogin, logout, hasAccess, isSuperAdmin, isModuleEnabled }}>
       {children}
     </AuthContext.Provider>
   )

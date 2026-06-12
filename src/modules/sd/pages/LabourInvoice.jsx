@@ -20,20 +20,23 @@ const inp = { width:'100%', padding:'7px 10px', fontSize:12, border:'1px solid #
 const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
 const BLANK_LINE = { processName:'', description:'', qty:'', unit:'SQFT', rate:'', dcRef:'' }
 
-const STATIC = [
-  { id:1, invNo:'LINV/26-27/0003', customer:'ARS Cotton Mills',    date:'10 May 2026', total:42000,  status:'POSTED'  },
-  { id:2, invNo:'LINV/26-27/0002', customer:'Vijay Industries',    date:'08 May 2026', total:63500,  status:'PAID'    },
-  { id:3, invNo:'LINV/26-27/0001', customer:'Sri Lakshmi Traders', date:'02 May 2026', total:28750,  status:'POSTED'  },
-]
+const STATIC = []
 
 export default function LabourInvoice() {
   const navigate  = useNavigate()
   const [tab,       setTab]       = useState('list')
   const [invoices,  setInvoices]  = useState(STATIC)
-  const [processes, setProcesses] = useState([])
+  const [processes,       setProcesses]      = useState([])
+  const [priceBook,       setPriceBook]       = useState([])
+  const [enabledProcs,    setEnabledProcs]    = useState([])
   const [customers, setCustomers] = useState([])
   const [loading,   setLoading]   = useState(false)
   const [saving,    setSaving]    = useState(false)
+  const [search,    setSearch]    = useState('')
+  const [statusF,   setStatusF]   = useState('')
+  const [matF,      setMatF]      = useState('')
+  const [dateFrom,  setDateFrom]  = useState('')
+  const [dateTo,    setDateTo]    = useState('')
   const [matType,   setMatType]   = useState('without')
   const [custSearch,setCustSearch]= useState('')
   const [showDrop,  setShowDrop]  = useState(false)
@@ -46,15 +49,28 @@ export default function LabourInvoice() {
   })
 
   useEffect(() => {
-    // Load processes
+    // Load processes from ProcessMaster
     fetch(`${BASE_URL}/process`, { headers: hdr2() })
       .then(r=>r.json()).then(d=>setProcesses(d.data||d||[])).catch(()=>{})
+    // Load labour price book
+    fetch(`${BASE_URL}/sd/labour-pricebook`, { headers: hdr2() })
+      .then(r=>r.json()).then(d=>setPriceBook(d.data||[])).catch(()=>{})
+    // Load enabled processes from company config
+    fetch(`${BASE_URL}/sd/labour-my-processes`, { headers: hdr2() })
+      .then(r=>r.json()).then(d=>setEnabledProcs(d.data||[]))
+      .catch(()=>{
+        // Fallback to localStorage
+        try {
+          const saved = JSON.parse(localStorage.getItem('lnv_labour_processes')||'null')
+          setEnabledProcs(saved?.enabled || ['PC','CED','LP','IM','LW','SC','WS','OT'])
+        } catch { setEnabledProcs(['PC','CED','LP','IM','LW','SC','WS','OT']) }
+      })
     // Load customers
     fetch(`${BASE_URL}/sd/customers`, { headers: hdr2() })
       .then(r=>r.json()).then(d=>setCustomers(d.data||d||[])).catch(()=>{})
     // Load labour invoices
     fetch(`${BASE_URL}/sd/labour-invoice`, { headers: hdr2() })
-      .then(r=>r.json()).then(d=>{ const a=d.data||d; if(Array.isArray(a)&&a.length) setInvoices(a) })
+      .then(r=>r.json()).then(d=>setInvoices(d.data||[]))
       .catch(()=>{})
   }, [])
 
@@ -86,6 +102,19 @@ export default function LabourInvoice() {
       grand:   acc.grand + taxable + gst,
     }
   }, {taxable:0, cgst:0, sgst:0, igst:0, grand:0})
+
+  const filtered = invoices.filter(inv => {
+    const matchSearch = !search ||
+      (inv.invNo||inv.invoiceNo||'').toLowerCase().includes(search.toLowerCase()) ||
+      (inv.customerName||inv.customer||'').toLowerCase().includes(search.toLowerCase()) ||
+      (inv.dcRef||'').toLowerCase().includes(search.toLowerCase())
+    const matchStatus = !statusF || inv.status === statusF
+    const matchMat    = !matF    || inv.materialType === matF
+    const invDate     = inv.date||inv.invoiceDate ? new Date(inv.date||inv.invoiceDate) : null
+    const matchFrom   = !dateFrom || (invDate && invDate >= new Date(dateFrom))
+    const matchTo     = !dateTo   || (invDate && invDate <= new Date(dateTo+'T23:59:59'))
+    return matchSearch && matchStatus && matchMat && matchFrom && matchTo
+  })
 
   const save = async () => {
     if (!form.customerName) return toast.error('Customer name required')
@@ -148,43 +177,125 @@ export default function LabourInvoice() {
 
       {/* LIST TAB */}
       {tab==='list'&&(
-        invoices.length===0 ? (
-          <div style={{padding:60,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
-            <div style={{fontSize:28,marginBottom:8}}>\uD83D\uDCCB</div>
-            <div style={{fontWeight:700}}>No labour invoices yet</div>
-            <div style={{fontSize:12,marginTop:4}}>Create job work invoices for coating services</div>
+        <div>
+          {/* KPI Strip */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:12}}>
+            {[
+              { l:'Total Invoices', v:invoices.length,                                               c:'#714B67', bg:'#EDE0EA' },
+              { l:'Total Value',    v:INR(invoices.reduce((s,i)=>s+parseFloat(i.grandTotal||0),0)),  c:'#1565C0', bg:'#E3F2FD' },
+              { l:'Posted',         v:invoices.filter(i=>i.status==='POSTED').length,                c:'#0C5460', bg:'#D1ECF1' },
+              { l:'Paid',           v:invoices.filter(i=>i.status==='PAID').length,                  c:'#155724', bg:'#D4EDDA' },
+            ].map(k=>(
+              <div key={k.l} style={{background:'#fff',borderRadius:8,padding:'10px 14px',
+                border:'1px solid #E0D5E0',borderLeft:`4px solid ${k.c}`}}>
+                <div style={{fontSize:15,fontWeight:800,color:k.c,fontFamily:'Syne,sans-serif'}}>{k.v}</div>
+                <div style={{fontSize:10,color:'#6C757D',marginTop:2}}>{k.l}</div>
+              </div>
+            ))}
           </div>
-        ) : (
-          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-              <thead><tr style={{background:'#F8F4F8',borderBottom:'2px solid #E0D5E0'}}>
-                {['Invoice #','Customer','HSN','Date','Total','Status',''].map(h=>(
-                  <th key={h} style={{padding:'10px 12px',textAlign:h==='Total'?'right':'left',fontWeight:700,fontSize:11,color:'#714B67'}}>{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {invoices.map((inv,i)=>{
-                  const sc = SC[inv.status||'POSTED']||SC.POSTED
-                  return (
-                    <tr key={inv.id||i} style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA'}}>
-                      <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67',fontSize:11}}>{inv.invNo||inv.invoiceNo}</td>
-                      <td style={{padding:'9px 12px',fontWeight:600}}>{inv.customer||inv.customerName}</td>
-                      <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{HSN_CODE}</td>
-                      <td style={{padding:'9px 12px',fontSize:11,color:'#6C757D'}}>{inv.date||inv.invoiceDate}</td>
-                      <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13}}>{INR(inv.total||inv.grandTotal||0)}</td>
-                      <td style={{padding:'9px 12px'}}>
-                        <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:sc.bg,color:sc.c}}>{inv.status||'POSTED'}</span>
-                      </td>
-                      <td style={{padding:'9px 12px'}}>
-                        <button style={{padding:'3px 10px',background:'#EDE0EA',color:'#714B67',border:'none',borderRadius:5,fontSize:11,cursor:'pointer',fontWeight:600}}>View</button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+
+          {/* Filter Bar */}
+          <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder="Search invoice, customer, DC ref..."
+              style={{padding:'7px 12px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none',width:220}} />
+            <select value={statusF} onChange={e=>setStatusF(e.target.value)}
+              style={{padding:'7px 10px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}}>
+              <option value="">All Status</option>
+              <option value="POSTED">Posted</option>
+              <option value="PAID">Paid</option>
+              <option value="DRAFT">Draft</option>
+            </select>
+            <select value={matF} onChange={e=>setMatF(e.target.value)}
+              style={{padding:'7px 10px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}}>
+              <option value="">All Types</option>
+              <option value="without">Without Material</option>
+              <option value="with">With Material</option>
+            </select>
+            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+              style={{padding:'7px 8px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}} />
+            <span style={{fontSize:11,color:'#6C757D'}}>to</span>
+            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+              style={{padding:'7px 8px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}} />
+            {(search||statusF||matF||dateFrom||dateTo) && (
+              <button onClick={()=>{setSearch('');setStatusF('');setMatF('');setDateFrom('');setDateTo('')}}
+                style={{padding:'6px 12px',background:'#F8D7DA',color:'#721C24',border:'none',
+                  borderRadius:6,fontSize:11,cursor:'pointer',fontWeight:700}}>
+                X Clear
+              </button>
+            )}
+            <span style={{marginLeft:'auto',fontSize:11,color:'#6C757D'}}>
+              {filtered.length} of {invoices.length} records
+            </span>
           </div>
-        )
+
+          {filtered.length===0 ? (
+            <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+              <div style={{fontSize:24,marginBottom:8}}>No records</div>
+              <div style={{fontWeight:700}}>{invoices.length===0?'No labour invoices yet':'No records match filter'}</div>
+              {invoices.length===0 && <div style={{fontSize:12,marginTop:4}}>Create job work invoices for coating services</div>}
+            </div>
+          ) : (
+            <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <thead><tr style={{background:'#F8F4F8',borderBottom:'2px solid #E0D5E0'}}>
+                  {['Invoice #','Customer','Type','DC Ref','Date','Taxable','GST','Total','Status',''].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:['Taxable','GST','Total'].includes(h)?'right':'left',fontWeight:700,fontSize:11,color:'#714B67'}}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {filtered.map((inv,i)=>{
+                    const sc  = SC[inv.status||'POSTED']||SC.POSTED
+                    const gst = parseFloat(inv.cgst||0)+parseFloat(inv.sgst||0)+parseFloat(inv.igst||0)
+                    return (
+                      <tr key={inv.id||i} style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                        onMouseEnter={e=>e.currentTarget.style.background='#F8F4F8'}
+                        onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
+                        <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67',fontSize:11}}>{inv.invNo}</td>
+                        <td style={{padding:'9px 12px',fontWeight:600}}>{inv.customerName}</td>
+                        <td style={{padding:'9px 12px'}}>
+                          <span style={{padding:'2px 7px',borderRadius:4,fontSize:10,fontWeight:700,
+                            background:inv.materialType==='with'?'#FFF3CD':'#E3F2FD',
+                            color:inv.materialType==='with'?'#856404':'#1565C0'}}>
+                            {inv.materialType==='with'?'W/ Mat':'W/O Mat'}
+                          </span>
+                        </td>
+                        <td style={{padding:'9px 12px',fontSize:11,color:'#6C757D'}}>{inv.dcRef||'—'}</td>
+                        <td style={{padding:'9px 12px',fontSize:11,color:'#6C757D'}}>
+                          {inv.date ? new Date(inv.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'}
+                        </td>
+                        <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>{INR(inv.taxableAmt||0)}</td>
+                        <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12,color:'#1565C0'}}>{INR(gst)}</td>
+                        <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13,color:'#2E7D32'}}>{INR(inv.grandTotal||0)}</td>
+                        <td style={{padding:'9px 12px'}}>
+                          <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:sc.bg,color:sc.c}}>{inv.status||'POSTED'}</span>
+                        </td>
+                        <td style={{padding:'9px 12px'}}>
+                          <button style={{padding:'3px 10px',background:'#EDE0EA',color:'#714B67',border:'none',borderRadius:5,fontSize:11,cursor:'pointer',fontWeight:600}}>View</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{background:'#F0EEEB',fontWeight:700}}>
+                    <td colSpan={5} style={{padding:'8px 12px',fontSize:11,color:'#6C757D',textAlign:'right'}}>Totals ({filtered.length})</td>
+                    <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12}}>
+                      {INR(filtered.reduce((s,i)=>s+parseFloat(i.taxableAmt||0),0))}
+                    </td>
+                    <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:12,color:'#1565C0'}}>
+                      {INR(filtered.reduce((s,i)=>s+parseFloat(i.cgst||0)+parseFloat(i.sgst||0)+parseFloat(i.igst||0),0))}
+                    </td>
+                    <td style={{padding:'8px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',fontSize:13,color:'#2E7D32',fontWeight:800}}>
+                      {INR(filtered.reduce((s,i)=>s+parseFloat(i.grandTotal||0),0))}
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {/* NEW INVOICE TAB */}

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@context/AuthContext'
 import { ThemeProvider } from '@context/ThemeContext'
 import ProtectedRoute from '@components/layout/ProtectedRoute'
+import ModuleRoute from '@components/layout/ModuleRoute'
 import AppShell from '@components/layout/AppShell'
 import PageLoader from '@components/ui/PageLoader'
 import DemoGate from '@components/DemoGate'
@@ -34,11 +35,11 @@ const MDMModule       = lazy(() => import('@modules/mdm/pages/MDMLayout'))
 const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
 
-
+const MR = ({ mod, el }) => <ModuleRoute moduleKey={mod}>{el}</ModuleRoute>
 
 export default function App() {
   return (
-    <DemoGate> 
+    <DemoGate>
       <AuthProvider>
       <ThemeProvider>
         <Suspense fallback={<PageLoader />}>
@@ -49,33 +50,31 @@ export default function App() {
 
             {/* Protected — all inside AppShell */}
             <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-              <Route path="/home"       element={<HomeDashboard />} />
-              <Route path="/sd/*"       element={<SDModule />} />
-              <Route path="/mm/*"       element={<MMModule />} />
-              <Route path="/pp/*"       element={<PPModule />} />
-              <Route path="/fi/*"       element={<FIModule />} />
-              <Route path="/qm/*"       element={<QMModule />} />
-              <Route path="/pm/*"       element={<PMModule />} />
-              <Route path="/hcm/*"      element={<HCMModule />} />
-              <Route path="/admin/*"    element={<AdminModule />} />
-              <Route path="/wm/*"       element={<WMModule />} />
-              <Route path="/crm/*"      element={<CRMModule />} />
-              <Route path="/config/*"   element={<ConfigModule />} />
-              <Route path="/tm/*"       element={<TMModule />} />
-              <Route path="/am/*"       element={<AMModule />} />
-              <Route path="/civil/*"    element={<CivilModule />} />
-              <Route path="/vm/*"       element={<VMModule />} />
-              <Route path="/cn/*"       element={<CNModule />} />
-              <Route path="/reports/*"  element={<ReportsModule />} />
-              <Route path="/mdm/*"      element={<MDMModule />} />
-              <Route path="/kpi/*"      element={<KPIModule />} />
-              <Route path="/crm/*"      element={<CRMModule />} />
-
+              <Route path="/home"      element={<HomeDashboard />} />
+              <Route path="/sd/*"      element={<MR mod="sd"      el={<SDModule />} />} />
+              <Route path="/mm/*"      element={<MR mod="mm"      el={<MMModule />} />} />
+              <Route path="/pp/*"      element={<MR mod="pp"      el={<PPModule />} />} />
+              <Route path="/fi/*"      element={<MR mod="fi"      el={<FIModule />} />} />
+              <Route path="/qm/*"      element={<MR mod="qm"      el={<QMModule />} />} />
+              <Route path="/pm/*"      element={<MR mod="pm"      el={<PMModule />} />} />
+              <Route path="/hcm/*"     element={<MR mod="hcm"     el={<HCMModule />} />} />
+              <Route path="/admin/*"   element={<MR mod="admin"   el={<AdminModule />} />} />
+              <Route path="/wm/*"      element={<MR mod="wm"      el={<WMModule />} />} />
+              <Route path="/crm/*"     element={<MR mod="crm"     el={<CRMModule />} />} />
+              <Route path="/config/*"  element={<MR mod="config"  el={<ConfigModule />} />} />
+              <Route path="/tm/*"      element={<MR mod="tm"      el={<TMModule />} />} />
+              <Route path="/am/*"      element={<MR mod="am"      el={<AMModule />} />} />
+              <Route path="/civil/*"   element={<MR mod="civil"   el={<CivilModule />} />} />
+              <Route path="/vm/*"      element={<MR mod="vm"      el={<VMModule />} />} />
+              <Route path="/cn/*"      element={<MR mod="cn"      el={<CNModule />} />} />
+              <Route path="/reports/*" element={<MR mod="reports" el={<ReportsModule />} />} />
+              <Route path="/mdm/*"     element={<MR mod="mdm"     el={<MDMModule />} />} />
+              <Route path="/kpi/*"     element={<MR mod="kpi"     el={<KPIModule />} />} />
             </Route>
 
             {/* Fallback */}
             <Route path="/print/:type/:id" element={<PrintPreview />} />
-            <Route path="/print/:type"    element={<PrintPreview />} />
+            <Route path="/print/:type"     element={<PrintPreview />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Suspense>

@@ -78,8 +78,9 @@ export default function StockList() {
               {[
                 {k:'ALL',        l:'All Locations'},
                 {k:'RM-STORE',   l:'RM Store'},
-                {k:'SHOP-FLOOR', l:'Shop Floor'},
+                {k:'SHOP-FLOOR', l:'WIP / Shop Floor'},
                 {k:'FG-STORE',   l:'FG Store'},
+                {k:'QC-HOLD',    l:'🔍 QC Pending'},
               ].map(t => (
                 <button key={t.k} onClick={() => { setLocation(t.k); fetchStock(t.k) }}
                   style={{ padding:'5px 10px', fontSize:11, fontWeight:700,
@@ -235,7 +236,12 @@ export default function StockList() {
                           {parseFloat(s.outQty||0).toFixed(2)}
                           {s.byLocation?.['SHOP-FLOOR'] > 0 && (
                             <div style={{fontSize:9,color:'#856404',marginTop:1}}>
-                              SF: {parseFloat(s.byLocation['SHOP-FLOOR']).toFixed(2)}
+                              WIP: {parseFloat(s.byLocation['SHOP-FLOOR']).toFixed(2)}
+                            </div>
+                          )}
+                          {s.byLocation?.['QC-HOLD'] > 0 && (
+                            <div style={{fontSize:9,color:'#721C24',marginTop:1}}>
+                              🔍 QC Hold: {parseFloat(s.byLocation['QC-HOLD']).toFixed(2)}
                             </div>
                           )}
                         </td>
@@ -244,7 +250,7 @@ export default function StockList() {
                           {s.byLocation && Object.keys(s.byLocation).filter(l=>s.byLocation[l]>0).length > 1 && (
                             <div style={{fontSize:9,fontWeight:400,color:'#6C757D',marginTop:2}}>
                               {Object.entries(s.byLocation).filter(([,q])=>q>0)
-                                .map(([l,q])=>`${l.replace('RM-STORE','Store').replace('SHOP-FLOOR','SF').replace('FG-STORE','FG')}: ${parseFloat(q).toFixed(2)}`)
+                                .map(([l,q])=>`${l.replace('RM-STORE','Store').replace('SHOP-FLOOR','WIP').replace('FG-STORE','FG').replace('QC-HOLD','QC Hold')}: ${parseFloat(q).toFixed(2)}`)
                                 .join(' · ')}
                             </div>
                           )}

@@ -1,458 +1,393 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
-// ── Master Items ─────────────────────────────────────────
-const ITEMS = [
-  { code:'SV-PC-001', name:'Powder Coating — RAL 9005 Black',  cat:'Surface Treatment', uom:'Kg',  hsn:'9999 99 00' },
-  { code:'SV-PC-002', name:'Powder Coating — RAL 9010 White',  cat:'Surface Treatment', uom:'Kg',  hsn:'9999 99 00' },
-  { code:'SV-ST-001', name:'Surface Treatment — Phosphating',  cat:'Surface Treatment', uom:'Kg',  hsn:'9999 99 01' },
-  { code:'PR-001',    name:'ARISER COMFACT SYSTEM',            cat:'Product',           uom:'Nos', hsn:'8448 59 90' },
-  { code:'PR-002',    name:'COMPACT SPARES — SET',             cat:'Product',           uom:'Set', hsn:'8448 49 00' },
-  { code:'PR-003',    name:'LATTICE APRONS C121',              cat:'Product',           uom:'Nos', hsn:'8448 49 10' },
-  { code:'JW-001',    name:'Job Work — Labour Charge (Powder)',cat:'Job Work',          uom:'Kg',  hsn:'9988 10 00' },
-  { code:'RM-001',    name:'Powder Coat Raw Material',         cat:'Raw Material',      uom:'Kg',  hsn:'3208 10 00' },
-  { code:'RM-002',    name:'Phosphating Chemical',             cat:'Raw Material',      uom:'Ltr', hsn:'2812 10 00' },
-]
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => `₹${parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`
+const fmtD = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'
 
-// ── Item-wise data ───────────────────────────────────────
-const ITEM_DATA = {
-  'SV-PC-001': {
-    stock: { current:1240, reserved:800, available:440, reorderLevel:500, unit:'Kg' },
-    salesOrders: [
-      { soNo:'SO-0124', date:'27 Jan 26', customer:'Sri Lakshmi Mills',  qty:500, rate:850, amount:425000, status:'confirmed' },
-      { soNo:'SO-0123', date:'25 Jan 26', customer:'Coimbatore Spinners',qty:800, rate:850, amount:680000, status:'pending'   },
-      { soNo:'SO-0121', date:'20 Jan 26', customer:'ARS Cotton Mills',   qty:300, rate:870, amount:261000, status:'overdue'   },
-      { soNo:'SO-0119', date:'10 Jan 26', customer:'Vijay Fabrics',      qty:200, rate:850, amount:170000, status:'paid'      },
-      { soNo:'SO-0118', date:'05 Jan 26', customer:'Rajesh Textiles',    qty:150, rate:840, amount:126000, status:'paid'      },
-    ],
-    purchaseOrders: [
-      { poNo:'PO-0089', date:'15 Mar 26', vendor:'Lakshmi Textile Mills', qty:500, rate:1600, amount:800000, status:'grn_done'  },
-      { poNo:'PO-0085', date:'01 Mar 26', vendor:'Coimbatore Spares Co.', qty:300, rate:1550, amount:465000, status:'pending'   },
-      { poNo:'PO-0079', date:'10 Feb 26', vendor:'Sri Murugan Traders',   qty:400, rate:1620, amount:648000, status:'grn_done'  },
-    ],
-    production: [
-      { woNo:'WO-0047', date:'18 Mar 26', product:'Powder Coated Brackets', qty:500, consumed:45, unit:'Kg', status:'in_progress' },
-      { woNo:'WO-0045', date:'10 Mar 26', product:'Surface Treated Flanges', qty:300, consumed:28, unit:'Kg', status:'completed'  },
-      { woNo:'WO-0043', date:'01 Mar 26', product:'OE Components — Batch',  qty:800, consumed:72, unit:'Kg', status:'completed'  },
-    ],
-  },
-  'PR-001': {
-    stock: { current:48, reserved:30, available:18, reorderLevel:20, unit:'Nos' },
-    salesOrders: [
-      { soNo:'SO-0124', date:'27 Jan 26', customer:'Sri Lakshmi Mills',  qty:200, rate:1200, amount:240000, status:'confirmed' },
-      { soNo:'SO-0122', date:'22 Jan 26', customer:'Rajesh Textiles',    qty:100, rate:1200, amount:120000, status:'delivered' },
-      { soNo:'SO-0120', date:'18 Jan 26', customer:'Vijay Fabrics',      qty:50,  rate:1200, amount:60000,  status:'paid'      },
-    ],
-    purchaseOrders: [
-      { poNo:'PO-0082', date:'20 Feb 26', vendor:'Direct Import',        qty:200, rate:800,  amount:160000, status:'pending'   },
-    ],
-    production: [
-      { woNo:'WO-0046', date:'15 Mar 26', product:'ARISER COMFACT SYSTEM Assembly', qty:200, consumed:200, unit:'Nos', status:'in_progress' },
-    ],
-  },
+const STATUS_CLR = {
+  confirmed:{ bg:'#D1ECF1', c:'#0C5460' }, pending:{ bg:'#FFF3CD', c:'#856404' },
+  overdue:  { bg:'#F8D7DA', c:'#721C24' }, paid:   { bg:'#D4EDDA', c:'#155724' },
+  POSTED:   { bg:'#D4EDDA', c:'#155724' }, DRAFT:  { bg:'#F5F5F5', c:'#6C757D' },
+  PAID:     { bg:'#D4EDDA', c:'#155724' }, CANCELLED:{ bg:'#F8D7DA', c:'#721C24' },
+  IN:       { bg:'#D4EDDA', c:'#155724' }, OUT:    { bg:'#F8D7DA', c:'#721C24' },
 }
-
-// Default data for items without specific data
-const DEFAULT_DATA = {
-  stock: { current:0, reserved:0, available:0, reorderLevel:0, unit:'Nos' },
-  salesOrders: [], purchaseOrders: [], production: [],
-}
-
-const STATUS_COLORS = {
-  confirmed:   {bg:'#D4EDDA',c:'#155724'},
-  pending:     {bg:'#FFF3CD',c:'#856404'},
-  delivered:   {bg:'#D1ECF1',c:'#0C5460'},
-  overdue:     {bg:'#F8D7DA',c:'#721C24'},
-  paid:        {bg:'#D4EDDA',c:'#155724'},
-  grn_done:    {bg:'#D4EDDA',c:'#155724'},
-  in_progress: {bg:'#FFF3CD',c:'#856404'},
-  completed:   {bg:'#D1ECF1',c:'#0C5460'},
-}
-
-const fmt = n => '₹'+Number(n||0).toLocaleString('en-IN')
-const CAT_COLORS = {
-  'Surface Treatment':{bg:'#EBF2F8',c:'#1A5276'},
-  'Product':          {bg:'#EDE0EA',c:'#714B67'},
-  'Job Work':         {bg:'#FFF3CD',c:'#856404'},
-  'Raw Material':     {bg:'#D4EDDA',c:'#155724'},
-}
+const sc = (s) => STATUS_CLR[s] || { bg:'#F5F5F5', c:'#6C757D' }
 
 export default function ItemLedger() {
-  const navigate  = useNavigate()
-  const [selItem, setSelItem] = useState(ITEMS[0].code)
-  const [tab,     setTab]     = useState('so')
-  const [search,  setSearch]  = useState('')
-  const [catFilter, setCat]   = useState('All')
+  const nav = useNavigate()
+  const [items,      setItems]      = useState([])
+  const [selItem,    setSelItem]    = useState(null)
+  const [ledger,     setLedger]     = useState(null)
+  const [loading,    setLoading]    = useState(false)
+  const [search,     setSearch]     = useState('')
+  const [itemOpen,   setItemOpen]   = useState(false)
+  const [activeTab,  setActiveTab]  = useState('sales')
+  const itemRef = useRef(null)
 
-  const item  = ITEMS.find(i => i.code === selItem)
-  const data  = ITEM_DATA[selItem] || DEFAULT_DATA
-  const cats  = ['All', ...new Set(ITEMS.map(i => i.cat))]
+  // Load item master
+  useEffect(() => {
+    fetch(`${BASE}/mdm/items?limit=500`, { headers:hdr2() })
+      .then(r=>r.json())
+      .then(d=>setItems((d.data||[]).filter(i=>['FG','SFG'].includes(i.itemType))))
+      .catch(()=>{})
+  }, [])
 
-  const filteredItems = ITEMS.filter(i =>
-    (catFilter === 'All' || i.cat === catFilter) &&
-    (i.name.toLowerCase().includes(search.toLowerCase()) ||
-     i.code.toLowerCase().includes(search.toLowerCase()))
-  )
+  // Close dropdown on outside click
+  useEffect(() => {
+    const fn = e => { if (itemRef.current && !itemRef.current.contains(e.target)) setItemOpen(false) }
+    document.addEventListener('mousedown', fn)
+    return () => document.removeEventListener('mousedown', fn)
+  }, [])
 
-  const totalSO  = data.salesOrders.reduce((s,r) => s+r.amount, 0)
-  const totalPO  = data.purchaseOrders.reduce((s,r) => s+r.amount, 0)
-  const totalProd= data.production.reduce((s,r) => s+r.consumed, 0)
+  const loadLedger = async (item) => {
+    setSelItem(item)
+    setItemOpen(false)
+    setSearch(item.name)
+    setLedger(null)
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE}/sd/item-ledger/${encodeURIComponent(item.code)}`, { headers:hdr2() })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setLedger(d.data)
+    } catch(e) { toast.error('Failed to load ledger') }
+    finally { setLoading(false) }
+  }
+
+  const filteredItems = search
+    ? items.filter(i =>
+        i.name?.toLowerCase().includes(search.toLowerCase()) ||
+        i.code?.toLowerCase().includes(search.toLowerCase())
+      ).slice(0,12)
+    : items.slice(0,12)
+
+  const salesOrders = ledger?.salesOrders || []
+  const invoices    = ledger?.invoices    || []
+  const stockLines  = ledger?.stockLines  || []
+  const item        = ledger?.item        || selItem
+
+  // Derived totals
+  const totalSoQty  = salesOrders.reduce((s,l)=>s+parseFloat(l.qty||0),0)
+  const totalSoAmt  = salesOrders.reduce((s,l)=>s+parseFloat(l.amount||l.totalAmt||0),0)
+  const totalInvAmt = invoices.reduce((s,i)=>s+parseFloat(i.grandTotal||0),0)
+  const stockIn     = stockLines.filter(l=>parseFloat(l.qtyIn||0)>0).reduce((s,l)=>s+parseFloat(l.qty||0),0)
+  const stockOut    = stockLines.filter(l=>parseFloat(l.qtyOut||0)>0).reduce((s,l)=>s+parseFloat(l.qty||0),0)
+  const currentStock= stockIn - stockOut
 
   return (
     <div>
-      <div className="lv-hdr">
-        <div className="lv-ttl">Item Ledger <small>Item-wise SO · PO · Stock · Production</small></div>
-        <div className="lv-acts">
-          <button className="btn btn-s sd-bsm" onClick={() => navigate('/sd/orders')}>
-            Back to SO List
-          </button>
-          <button className="btn btn-s sd-bsm">Export</button>
+      {/* Header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
+        <div>
+          <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:18,color:'#714B67'}}>
+            Item Ledger
+            <small style={{fontSize:11,fontWeight:400,color:'#6C757D',marginLeft:8}}>360° item view</small>
+          </div>
+          <div style={{fontSize:11,color:'#6C757D',marginTop:2}}>
+            Sales Orders · Invoices · Stock movements · Pricing
+          </div>
         </div>
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'280px 1fr', gap:16, alignItems:'start'}}>
-
-        {/* ── LEFT: Item selector ── */}
-        <div style={{background:'#fff', border:'1px solid var(--odoo-border)',
-          borderRadius:8, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'10px 14px', background:'var(--odoo-purple)',
-            color:'#fff', fontSize:12, fontWeight:700}}>
-            Items ({filteredItems.length})
-          </div>
-
-          {/* Search + Category filter */}
-          <div style={{padding:'8px 10px', borderBottom:'1px solid var(--odoo-border)'}}>
-            <input placeholder="Search item code or name..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              style={{width:'100%', padding:'6px 10px', border:'1px solid var(--odoo-border)',
-                borderRadius:5, fontSize:11, outline:'none', marginBottom:6}}/>
-            <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
-              {cats.map(c => (
-                <button key={c} onClick={() => setCat(c)}
-                  style={{padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:600,
-                    cursor:'pointer', border:'1px solid var(--odoo-border)',
-                    background: catFilter===c ? 'var(--odoo-dark)' : '#fff',
-                    color: catFilter===c ? '#fff' : 'var(--odoo-gray)'}}>
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Item list */}
-          {filteredItems.map(i => {
-            const cc = CAT_COLORS[i.cat] || {bg:'#eee',c:'#555'}
-            const d  = ITEM_DATA[i.code]
-            return (
-              <div key={i.code} onClick={() => { setSelItem(i.code); setTab('so') }}
-                style={{padding:'10px 14px', cursor:'pointer',
-                  background: selItem===i.code ? 'var(--odoo-purple-lt)' : '#fff',
-                  borderLeft: selItem===i.code ? '3px solid var(--odoo-purple)' : '3px solid transparent',
-                  borderBottom:'1px solid var(--odoo-border)', transition:'all .15s'}}>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:12, fontWeight:700,
-                      color: selItem===i.code ? 'var(--odoo-purple)' : 'var(--odoo-dark)',
-                      marginBottom:3, lineHeight:1.3}}>
-                      {i.name}
-                    </div>
-                    <div style={{display:'flex', gap:5, alignItems:'center'}}>
-                      <span style={{fontFamily:'DM Mono,monospace', fontSize:10,
-                        color:'var(--odoo-gray)'}}>{i.code}</span>
-                      <span style={{padding:'1px 5px', borderRadius:5, fontSize:9,
-                        fontWeight:700, background:cc.bg, color:cc.c}}>{i.cat}</span>
-                    </div>
-                  </div>
-                  {/* Mini stock indicator */}
-                  {d && (
-                    <div style={{textAlign:'right', fontSize:10}}>
-                      <div style={{fontWeight:700, color: d.stock.available < d.stock.reorderLevel ?
-                        'var(--odoo-red)' : 'var(--odoo-green)'}}>
-                        {d.stock.available}
-                      </div>
-                      <div style={{color:'var(--odoo-gray)'}}>{i.uom}</div>
-                    </div>
-                  )}
+      {/* Item Search */}
+      <div ref={itemRef} style={{position:'relative',marginBottom:16}}>
+        <input value={search}
+          onChange={e=>{ setSearch(e.target.value); setItemOpen(true) }}
+          onFocus={()=>setItemOpen(true)}
+          placeholder="Search item code or name..."
+          style={{width:'100%',padding:'10px 14px',fontSize:13,border:'2px solid #714B67',
+            borderRadius:8,outline:'none',boxSizing:'border-box',fontFamily:'DM Sans,sans-serif'}} />
+        {search && <div style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',
+          fontSize:11,color:'#6C757D'}}>{filteredItems.length} items</div>}
+        {itemOpen && filteredItems.length>0 && (
+          <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:999,
+            background:'#fff',border:'2px solid #714B67',borderTop:'none',borderRadius:'0 0 8px 8px',
+            boxShadow:'0 6px 20px rgba(0,0,0,.12)',maxHeight:280,overflowY:'auto'}}>
+            {filteredItems.map(i=>(
+              <div key={i.id} onClick={()=>loadLedger(i)}
+                style={{padding:'9px 14px',cursor:'pointer',borderBottom:'1px solid #F0EEEB',
+                  display:'flex',justifyContent:'space-between',alignItems:'center'}}
+                onMouseEnter={e=>e.currentTarget.style.background='#F8F4F8'}
+                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:12}}>{i.name}</div>
+                  <div style={{fontSize:10,color:'#6C757D'}}>{i.itemGroup||i.itemType} · HSN: {i.hsnCode||'—'}</div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* ── RIGHT: Item details ── */}
-        <div>
-          {/* Item header */}
-          <div style={{background:'var(--odoo-purple)', borderRadius:8, padding:'14px 18px',
-            marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <div>
-              <div style={{fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800,
-                color:'#fff'}}>{item?.name}</div>
-              <div style={{fontSize:11, color:'rgba(255,255,255,.65)', marginTop:3}}>
-                {item?.code} &nbsp;·&nbsp; HSN: {item?.hsn} &nbsp;·&nbsp; UOM: {item?.uom}
-              </div>
-            </div>
-            <div style={{display:'flex', gap:12}}>
-              {[
-                ['SO Orders',   data.salesOrders.length,  '#F5C518'],
-                ['PO Orders',   data.purchaseOrders.length,'#00A09D'],
-                ['Work Orders', data.production.length,   '#E06F39'],
-              ].map(([l,v,c]) => (
-                <div key={l} style={{textAlign:'center', background:'rgba(255,255,255,.12)',
-                  borderRadius:8, padding:'8px 14px'}}>
-                  <div style={{fontFamily:'Syne,sans-serif', fontSize:22,
-                    fontWeight:800, color:c}}>{v}</div>
-                  <div style={{fontSize:10, color:'rgba(255,255,255,.65)'}}>{l}</div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <code style={{fontSize:10,color:'#714B67',background:'#EDE0EA',padding:'2px 6px',borderRadius:3}}>{i.code}</code>
+                  <span style={{fontSize:10,color:'#6C757D'}}>{i.uom}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Stock KPIs */}
-          <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:14}}>
-            {[
-              {l:'Current Stock',   v:data.stock.current+' '+data.stock.unit,  cls:'blue'  },
-              {l:'Reserved (Open Orders)', v:data.stock.reserved+' '+data.stock.unit, cls:'orange'},
-              {l:'Available Stock', v:data.stock.available+' '+data.stock.unit,
-                cls: data.stock.available < data.stock.reorderLevel ? 'red' : 'green' },
-              {l:'Reorder Level',   v:data.stock.reorderLevel+' '+data.stock.unit, cls:'purple'},
-            ].map(k => (
-              <div key={k.l} className={`fi-kpi-card ${k.cls}`}>
-                <div className="fi-kpi-label">{k.l}</div>
-                <div className="fi-kpi-value">{k.v}</div>
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div style={{padding:60,textAlign:'center',color:'#6C757D'}}>
+          <div style={{fontSize:24,marginBottom:8}}>⏳</div>
+          <div>Loading item ledger…</div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && !ledger && (
+        <div style={{padding:60,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+          <div style={{fontSize:32,marginBottom:8}}>🔍</div>
+          <div style={{fontWeight:700}}>Search and select an item above</div>
+          <div style={{fontSize:12,marginTop:4}}>View sales orders, invoices, stock movements</div>
+        </div>
+      )}
+
+      {/* Ledger content */}
+      {!loading && ledger && (
+        <div>
+          {/* Item header card */}
+          <div style={{background:'linear-gradient(135deg,#714B67,#8B5E7E)',borderRadius:10,
+            padding:'16px 20px',marginBottom:14,color:'#fff'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:20}}>{item?.name||selItem?.name}</div>
+                <div style={{fontSize:12,opacity:.8,marginTop:2}}>
+                  <code style={{background:'rgba(255,255,255,.2)',padding:'2px 8px',borderRadius:4}}>
+                    {item?.code||selItem?.code}
+                  </code>
+                  <span style={{marginLeft:8}}>{item?.itemType||item?.itemGroup||'—'}</span>
+                  <span style={{marginLeft:8}}>HSN: {item?.hsnCode||'—'}</span>
+                  <span style={{marginLeft:8}}>UOM: {item?.uom||selItem?.uom||'—'}</span>
+                </div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:11,opacity:.7}}>Sale Price</div>
+                <div style={{fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:22}}>
+                  {INR(item?.salePrice||item?.mrp||0)}
+                </div>
+              </div>
+            </div>
+            {/* KPI strip */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:14}}>
+              {[
+                { l:'Open SO Qty',  v:`${totalSoQty.toLocaleString('en-IN')} ${item?.uom||''}`, c:'#FFF3CD' },
+                { l:'SO Value',     v:INR(totalSoAmt),                                           c:'#D1ECF1' },
+                { l:'Invoice Value',v:INR(totalInvAmt),                                          c:'#D4EDDA' },
+                { l:'Current Stock',v:`${currentStock.toLocaleString('en-IN')} ${item?.uom||''}`,c:'#F8D7DA' },
+              ].map(k=>(
+                <div key={k.l} style={{background:'rgba(255,255,255,.15)',borderRadius:6,padding:'8px 12px',
+                  border:'1px solid rgba(255,255,255,.2)'}}>
+                  <div style={{fontSize:10,opacity:.7,marginBottom:2}}>{k.l}</div>
+                  <div style={{fontWeight:800,fontSize:14,fontFamily:'Syne,sans-serif'}}>{k.v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Tabs */}
-          <div style={{display:'flex', gap:0, borderBottom:'2px solid var(--odoo-border)',
-            marginBottom:14, background:'#fff', borderRadius:'8px 8px 0 0',
-            border:'1px solid var(--odoo-border)', borderBottomWidth:0}}>
+          <div style={{display:'flex',gap:4,marginBottom:14,padding:'4px 6px',
+            background:'#F0EEEB',borderRadius:8,width:'fit-content'}}>
             {[
-              ['so',   `Sales Orders (${data.salesOrders.length})`,    fmt(totalSO)  ],
-              ['po',   `Purchase Orders (${data.purchaseOrders.length})`, fmt(totalPO)],
-              ['prod', `Production (${data.production.length})`,        totalProd+' '+data.stock.unit+' consumed'],
-            ].map(([k,l,sub]) => (
-              <button key={k} onClick={() => setTab(k)}
-                style={{padding:'10px 20px', fontSize:12, fontWeight:600, cursor:'pointer',
-                  border:'none', background:'transparent',
-                  borderBottom: tab===k ? '2px solid var(--odoo-purple)' : '2px solid transparent',
-                  color: tab===k ? 'var(--odoo-purple)' : 'var(--odoo-gray)',
-                  marginBottom:-1, display:'flex', flexDirection:'column', alignItems:'flex-start'}}>
-                <span>{l}</span>
-                <span style={{fontSize:10, fontWeight:400, color:'var(--odoo-gray)', marginTop:1}}>{sub}</span>
+              ['sales',   `📋 Sales Orders (${salesOrders.length})`],
+              ['invoices',`🧾 Invoices (${invoices.length})`],
+              ['stock',   `📦 Stock (${stockLines.length})`],
+            ].map(([k,l])=>(
+              <button key={k} onClick={()=>setActiveTab(k)}
+                style={{padding:'6px 16px',borderRadius:6,fontSize:12,fontWeight:600,
+                  cursor:'pointer',border:'none',
+                  background:activeTab===k?'#714B67':'transparent',
+                  color:activeTab===k?'#fff':'#6C757D'}}>
+                {l}
               </button>
             ))}
           </div>
 
-          {/* ── SALES ORDERS TAB ── */}
-          {tab === 'so' && (
-            <div style={{background:'#fff', border:'1px solid var(--odoo-border)',
-              borderRadius:'0 0 8px 8px', overflow:'hidden'}}>
-              {data.salesOrders.length === 0 ? (
-                <div style={{padding:30, textAlign:'center', color:'var(--odoo-gray)', fontSize:13}}>
-                  No sales orders found for this item.
-                </div>
-              ) : (
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
+          {/* Sales Orders tab */}
+          {activeTab==='sales' && (
+            salesOrders.length===0 ? (
+              <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+                No sales orders found for this item
+              </div>
+            ) : (
+              <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                   <thead>
                     <tr style={{background:'var(--odoo-purple)'}}>
-                      {['SO Number','Date','Customer','Qty Ordered','Rate','Amount','Status','Action'].map(h=>(
-                        <th key={h} style={{padding:'9px 12px', color:'#fff', fontSize:11,
-                          fontWeight:700, textAlign:'left', borderRight:'1px solid rgba(255,255,255,.1)'}}>{h}</th>
+                      {['SO No.','Customer','Date','Qty','Rate','Amount','Status',''].map(h=>(
+                        <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:10,fontWeight:700,
+                          color:'#fff',textTransform:'uppercase'}}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {data.salesOrders.map((r,i) => {
-                      const sc = STATUS_COLORS[r.status] || {bg:'#eee',c:'#555'}
+                    {salesOrders.map((l,i)=>{
+                      const s = sc(l.order?.status||l.status)
                       return (
-                        <tr key={r.soNo} style={{background:i%2===0?'#fff':'#FAFAFA',
-                          borderBottom:'1px solid var(--odoo-border)'}}>
-                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,color:'var(--odoo-purple)',fontSize:12}}>{r.soNo}</td>
-                          <td style={{padding:'9px 12px',fontSize:12}}>{r.date}</td>
-                          <td style={{padding:'9px 12px',fontWeight:600,fontSize:12}}>{r.customer}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,fontSize:13}}>{r.qty} <span style={{fontSize:10,color:'var(--odoo-gray)'}}>{item?.uom}</span></td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace'}}>{fmt(r.rate)}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,color:'var(--odoo-purple)',fontSize:13}}>{fmt(r.amount)}</td>
+                        <tr key={i} style={{borderBottom:'1px solid #F0EEEB',
+                          background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                          onClick={()=>nav(`/sd/orders/${l.orderId||l.soId||''}`)}
+                          onMouseEnter={e=>e.currentTarget.style.background='#F8F4F8'}
+                          onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
                           <td style={{padding:'9px 12px'}}>
-                            <span style={{padding:'3px 9px',borderRadius:10,fontSize:11,
-                              fontWeight:700,background:sc.bg,color:sc.c}}>{r.status.toUpperCase()}</span>
+                            <code style={{color:'#714B67',fontWeight:700,fontSize:11}}>{l.order?.soNo||l.soNo}</code>
+                          </td>
+                          <td style={{padding:'9px 12px',fontWeight:600}}>{l.order?.customerName||l.customerName}</td>
+                          <td style={{padding:'9px 12px',color:'#6C757D'}}>{fmtD(l.order?.createdAt||l.date)}</td>
+                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontWeight:700}}>
+                            {parseFloat(l.qty||0).toLocaleString('en-IN')} {item?.uom}
+                          </td>
+                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace'}}>
+                            {INR(l.unitPrice||l.rate)}
+                          </td>
+                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#2E7D32'}}>
+                            {INR(l.totalAmt||l.amount||parseFloat(l.qty||0)*parseFloat(l.unitPrice||l.rate||0))}
                           </td>
                           <td style={{padding:'9px 12px'}}>
-                            <button onClick={() => navigate(`/sd/orders/${r.soNo}`)}
-                              style={{padding:'3px 10px',fontSize:11,fontWeight:600,
-                                borderRadius:5,border:'1px solid var(--odoo-purple)',
-                                background:'var(--odoo-purple-lt)',color:'var(--odoo-purple)',
-                                cursor:'pointer'}}>View SO</button>
+                            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,
+                              background:s.bg,color:s.c}}>{l.order?.status||l.status}</span>
+                          </td>
+                          <td style={{padding:'9px 12px'}}>
+                            <button style={{padding:'3px 8px',background:'#EDE0EA',color:'#714B67',
+                              border:'none',borderRadius:4,fontSize:10,cursor:'pointer'}}>View</button>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
                   <tfoot>
-                    <tr style={{background:'var(--odoo-purple-lt)'}}>
-                      <td colSpan={3} style={{padding:'10px 12px',fontWeight:700,
-                        color:'var(--odoo-purple)',fontFamily:'Syne,sans-serif'}}>
-                        TOTAL — {data.salesOrders.length} Orders
+                    <tr style={{background:'#F0EEEB',fontWeight:700}}>
+                      <td colSpan={3} style={{padding:'8px 12px',fontSize:11,color:'#6C757D',textAlign:'right'}}>Total</td>
+                      <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace'}}>
+                        {totalSoQty.toLocaleString('en-IN')} {item?.uom}
                       </td>
-                      <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                        fontWeight:800,fontSize:13,color:'var(--odoo-purple)'}}>
-                        {data.salesOrders.reduce((s,r)=>s+r.qty,0)} {item?.uom}
+                      <td></td>
+                      <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',color:'#2E7D32',fontSize:13}}>
+                        {INR(totalSoAmt)}
                       </td>
-                      <td/>
-                      <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                        fontWeight:800,fontSize:14,color:'var(--odoo-purple)'}}>
-                        {fmt(totalSO)}
-                      </td>
-                      <td colSpan={2}/>
+                      <td colSpan={2}></td>
                     </tr>
                   </tfoot>
                 </table>
-              )}
-            </div>
+              </div>
+            )
           )}
 
-          {/* ── PURCHASE ORDERS TAB ── */}
-          {tab === 'po' && (
-            <div style={{background:'#fff', border:'1px solid var(--odoo-border)',
-              borderRadius:'0 0 8px 8px', overflow:'hidden'}}>
-              {data.purchaseOrders.length === 0 ? (
-                <div style={{padding:30, textAlign:'center', color:'var(--odoo-gray)', fontSize:13}}>
-                  No purchase orders found for this item.
-                </div>
-              ) : (
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
+          {/* Invoices tab */}
+          {activeTab==='invoices' && (
+            invoices.length===0 ? (
+              <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+                No invoices found for this item
+              </div>
+            ) : (
+              <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                   <thead>
-                    <tr style={{background:'#1A5276'}}>
-                      {['PO Number','Date','Vendor','Qty Ordered','Rate','Amount','Status','Action'].map(h=>(
-                        <th key={h} style={{padding:'9px 12px',color:'#fff',fontSize:11,
-                          fontWeight:700,textAlign:'left',borderRight:'1px solid rgba(255,255,255,.1)'}}>{h}</th>
+                    <tr style={{background:'var(--odoo-purple)'}}>
+                      {['Invoice No.','Customer','Date','Amount','Status',''].map(h=>(
+                        <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:10,fontWeight:700,
+                          color:'#fff',textTransform:'uppercase'}}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {data.purchaseOrders.map((r,i) => {
-                      const sc = STATUS_COLORS[r.status] || {bg:'#eee',c:'#555'}
+                    {invoices.map((inv,i)=>{
+                      const s = sc(inv.status)
                       return (
-                        <tr key={r.poNo} style={{background:i%2===0?'#fff':'#F0F5FB',
-                          borderBottom:'1px solid var(--odoo-border)'}}>
-                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,color:'#1A5276',fontSize:12}}>{r.poNo}</td>
-                          <td style={{padding:'9px 12px',fontSize:12}}>{r.date}</td>
-                          <td style={{padding:'9px 12px',fontWeight:600,fontSize:12}}>{r.vendor}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,fontSize:13}}>{r.qty} <span style={{fontSize:10,color:'var(--odoo-gray)'}}>{item?.uom}</span></td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace'}}>{fmt(r.rate)}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,color:'#1A5276',fontSize:13}}>{fmt(r.amount)}</td>
+                        <tr key={i} style={{borderBottom:'1px solid #F0EEEB',
+                          background:i%2===0?'#fff':'#FAFAFA',cursor:'pointer'}}
+                          onClick={()=>nav(`/sd/invoices/${inv.id}`)}
+                          onMouseEnter={e=>e.currentTarget.style.background='#F8F4F8'}
+                          onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
                           <td style={{padding:'9px 12px'}}>
-                            <span style={{padding:'3px 9px',borderRadius:10,fontSize:11,
-                              fontWeight:700,background:sc.bg,color:sc.c}}>{r.status.toUpperCase().replace('_',' ')}</span>
+                            <code style={{color:'#714B67',fontWeight:700,fontSize:11}}>{inv.invNo}</code>
+                          </td>
+                          <td style={{padding:'9px 12px',fontWeight:600}}>{inv.customerName}</td>
+                          <td style={{padding:'9px 12px',color:'#6C757D'}}>{fmtD(inv.date)}</td>
+                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#2E7D32'}}>
+                            {INR(inv.grandTotal)}
                           </td>
                           <td style={{padding:'9px 12px'}}>
-                            <button onClick={() => navigate('/mm/po')}
-                              style={{padding:'3px 10px',fontSize:11,fontWeight:600,
-                                borderRadius:5,border:'1px solid #1A5276',
-                                background:'#EBF2F8',color:'#1A5276',cursor:'pointer'}}>View PO</button>
+                            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,
+                              background:s.bg,color:s.c}}>{inv.status}</span>
+                          </td>
+                          <td style={{padding:'9px 12px'}}>
+                            <button style={{padding:'3px 8px',background:'#EDE0EA',color:'#714B67',
+                              border:'none',borderRadius:4,fontSize:10,cursor:'pointer'}}>View</button>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
-                  <tfoot>
-                    <tr style={{background:'#EBF2F8'}}>
-                      <td colSpan={3} style={{padding:'10px 12px',fontWeight:700,
-                        color:'#1A5276',fontFamily:'Syne,sans-serif'}}>
-                        TOTAL — {data.purchaseOrders.length} Orders
-                      </td>
-                      <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                        fontWeight:800,fontSize:13,color:'#1A5276'}}>
-                        {data.purchaseOrders.reduce((s,r)=>s+r.qty,0)} {item?.uom}
-                      </td>
-                      <td/>
-                      <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                        fontWeight:800,fontSize:14,color:'#1A5276'}}>
-                        {fmt(totalPO)}
-                      </td>
-                      <td colSpan={2}/>
-                    </tr>
-                  </tfoot>
                 </table>
-              )}
-            </div>
+              </div>
+            )
           )}
 
-          {/* ── PRODUCTION TAB ── */}
-          {tab === 'prod' && (
-            <div style={{background:'#fff', border:'1px solid var(--odoo-border)',
-              borderRadius:'0 0 8px 8px', overflow:'hidden'}}>
-              {data.production.length === 0 ? (
-                <div style={{padding:30, textAlign:'center', color:'var(--odoo-gray)', fontSize:13}}>
-                  No production work orders found for this item.
+          {/* Stock tab */}
+          {activeTab==='stock' && (
+            <div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:12}}>
+                {[
+                  { l:'Stock In',     v:`${stockIn.toLocaleString('en-IN')} ${item?.uom}`,      c:'#155724', bg:'#D4EDDA' },
+                  { l:'Stock Out',    v:`${stockOut.toLocaleString('en-IN')} ${item?.uom}`,     c:'#721C24', bg:'#F8D7DA' },
+                  { l:'Balance',      v:`${currentStock.toLocaleString('en-IN')} ${item?.uom}`, c:'#714B67', bg:'#EDE0EA' },
+                ].map(k=>(
+                  <div key={k.l} style={{background:k.bg,borderRadius:8,padding:'12px 16px',border:`1px solid ${k.c}33`}}>
+                    <div style={{fontSize:10,color:k.c,fontWeight:700,textTransform:'uppercase',marginBottom:4}}>{k.l}</div>
+                    <div style={{fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:18,color:k.c}}>{k.v}</div>
+                  </div>
+                ))}
+              </div>
+              {stockLines.length===0 ? (
+                <div style={{padding:40,textAlign:'center',color:'#6C757D',border:'2px dashed #E0D5E0',borderRadius:8}}>
+                  No stock movements found
                 </div>
               ) : (
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr style={{background:'#784212'}}>
-                      {['WO Number','Date','Product / Job','Planned Qty','Consumed','Unit','Status','Action'].map(h=>(
-                        <th key={h} style={{padding:'9px 12px',color:'#fff',fontSize:11,
-                          fontWeight:700,textAlign:'left',borderRight:'1px solid rgba(255,255,255,.1)'}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.production.map((r,i) => {
-                      const sc = STATUS_COLORS[r.status] || {bg:'#eee',c:'#555'}
-                      return (
-                        <tr key={r.woNo} style={{background:i%2===0?'#fff':'#FBF5EE',
-                          borderBottom:'1px solid var(--odoo-border)'}}>
-                          <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',
-                            fontWeight:700,color:'#784212',fontSize:12}}>{r.woNo}</td>
-                          <td style={{padding:'9px 12px',fontSize:12}}>{r.date}</td>
-                          <td style={{padding:'9px 12px',fontWeight:600,fontSize:12}}>{r.product}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:600}}>{r.qty}</td>
-                          <td style={{padding:'9px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                            fontWeight:800,fontSize:13,color:'#784212'}}>{r.consumed}</td>
-                          <td style={{padding:'9px 12px',fontSize:11,color:'var(--odoo-gray)'}}>{r.unit}</td>
-                          <td style={{padding:'9px 12px'}}>
-                            <span style={{padding:'3px 9px',borderRadius:10,fontSize:11,
-                              fontWeight:700,background:sc.bg,color:sc.c}}>
-                              {r.status.toUpperCase().replace('_',' ')}
-                            </span>
-                          </td>
-                          <td style={{padding:'9px 12px'}}>
-                            <button onClick={() => navigate('/pp/wo')}
-                              style={{padding:'3px 10px',fontSize:11,fontWeight:600,
-                                borderRadius:5,border:'1px solid #784212',
-                                background:'#FBF5EE',color:'#784212',cursor:'pointer'}}>View WO</button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr style={{background:'#FBF5EE'}}>
-                      <td colSpan={4} style={{padding:'10px 12px',fontWeight:700,
-                        color:'#784212',fontFamily:'Syne,sans-serif'}}>
-                        TOTAL — {data.production.length} Work Orders
-                      </td>
-                      <td style={{padding:'10px 12px',textAlign:'right',fontFamily:'DM Mono,monospace',
-                        fontWeight:800,fontSize:14,color:'#784212'}}>
-                        {totalProd} {data.stock.unit}
-                      </td>
-                      <td colSpan={3}/>
-                    </tr>
-                  </tfoot>
-                </table>
+                <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                    <thead>
+                      <tr style={{background:'var(--odoo-purple)'}}>
+                        {['Date','Type','Reference','Qty In','Qty Out','Balance','Location',''].map(h=>(
+                          <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:10,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stockLines.map((l,i)=>{
+                        const isIn = parseFloat(l.qtyIn||0)>0
+                        return (
+                          <tr key={i} style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA'}}>
+                            <td style={{padding:'8px 12px',color:'#6C757D'}}>{fmtD(l.createdAt)}</td>
+                            <td style={{padding:'8px 12px'}}>
+                              <span style={{padding:'2px 8px',borderRadius:4,fontSize:10,fontWeight:700,
+                                background:isIn?'#D4EDDA':'#F8D7DA',color:isIn?'#155724':'#721C24'}}>
+                                {l.movType}
+                              </span>
+                            </td>
+                            <td style={{padding:'8px 12px',fontSize:11,color:'#6C757D'}}>{l.refNo||l.docNo||'—'}</td>
+                            <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',color:'#155724',fontWeight:700}}>
+                              {isIn ? parseFloat(l.qty||0).toLocaleString('en-IN') : '—'}
+                            </td>
+                            <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',color:'#721C24',fontWeight:700}}>
+                              {!isIn ? parseFloat(l.qty||0).toLocaleString('en-IN') : '—'}
+                            </td>
+                            <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',fontWeight:700,color:'#714B67'}}>
+                              {parseFloat(l.balance||0).toLocaleString('en-IN')}
+                            </td>
+                            <td style={{padding:'8px 12px',fontSize:11,color:'#6C757D'}}>{l.location||l.storageLoc||'—'}</td>
+                            <td style={{padding:'8px 12px',fontSize:11,color:'#6C757D'}}>{l.narration||'—'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

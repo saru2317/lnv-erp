@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 import { useListView } from '@hooks/useListView'
 import ListViewToggle from '@components/ui/ListViewToggle'
@@ -18,7 +18,8 @@ const STATUS = {
 const fmtC = n => '₹'+Number(n||0).toLocaleString('en-IN')
 
 export default function POList() {
-  const nav = useNavigate()
+  const nav      = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
 
   const raiseAdvanceRequest = (p) => {
@@ -48,24 +49,46 @@ export default function POList() {
   const fetchPOs = useCallback(async () => {
     setLoad(true)
     try {
-      const [poData, prData] = await Promise.all([
+      const [poData, prData, invData] = await Promise.all([
         mmApi.getPOList(),
         fetch(`${BASE_URL}/mm/payment-requests`, {
           headers:{ Authorization:`Bearer ${tok()}` }
-        }).then(r=>r.json()).catch(()=>({ data:[] }))
+        }).then(r=>r.json()).catch(()=>({ data:[] })),
+        fetch(`${BASE_URL}/mm/invoices`, {
+          headers:{ Authorization:`Bearer ${tok()}` }
+        }).then(r=>r.json()).catch(()=>({ data:[] })),
       ])
       setPOs(poData.data||[])
-      // Build a set of PO nos that already have a PENDING or APPROVED advance request
-      const advSet = new Set(
-        (prData.data||[])
-          .filter(r => r.isAdvance && ['PENDING','APPROVED'].includes(r.status))
-          .map(r => r.invoiceRef) // invoiceRef stores PO number for advance requests
-      )
-      setAdvancedPOs(advSet)
+
+      const allPRs  = prData.data||[]
+      const allInvs = invData.data||[]
+
+      // Build invoice no → PO no map
+      const invToPO = {}
+      allInvs.forEach(inv => { if (inv.poNo) invToPO[inv.invNo] = inv.poNo })
+
+      // Build set of BLOCKED PO nos:
+      // 1. Advance request raised directly against PO (isAdvance=true)
+      // 2. Invoice payment request raised for an invoice linked to this PO
+      const blockedPoNos = new Set()
+      allPRs
+        .filter(r => ['PENDING','APPROVED'].includes(r.status))
+        .forEach(r => {
+          if (r.isAdvance) {
+            // invoiceRef stores PO number for advance
+            if (r.invoiceRef) blockedPoNos.add(r.invoiceRef)
+          } else {
+            // invoiceRef stores invoice number — find its linked PO
+            const linkedPO = invToPO[r.invoiceRef]
+            if (linkedPO) blockedPoNos.add(linkedPO)
+          }
+        })
+
+      setAdvancedPOs(blockedPoNos)
     } catch(e){ toast.error(e.message) } finally { setLoad(false) }
   }, [])
 
-  useEffect(()=>{ fetchPOs() }, [])
+  useEffect(()=>{ fetchPOs() }, [location.key])
 
   const cancelPO = async (e, po) => {
     e.stopPropagation()
@@ -204,12 +227,14 @@ export default function POList() {
                         <button className="btn-xs pri"
                           onClick={()=>nav(`/mm/grn/new?po=${p.id}`)}>GRN</button>
                       )}
-                      {['APPROVED','PARTIAL','CLOSED'].includes(p.status) && (() => {
+                      {['APPROVED','GRN_DONE','SENT','PARTIAL_GRN'].includes(p.status) && (() => {
                         const alreadyRaised = advancedPOs.has(p.poNo)
+                        // Check if blocked by invoice payment request or direct advance
+                        const blockReason   = alreadyRaised ? 'Payment request already raised for this PO' : ''
                         return (
                           <button className="btn-xs"
                             disabled={alreadyRaised}
-                            title={alreadyRaised ? 'Advance request already raised' : 'Raise advance payment request'}
+                            title={blockReason || 'Raise advance payment request'}
                             style={{
                               background: alreadyRaised ? '#E9ECEF' : '#CCE5FF',
                               color:      alreadyRaised ? '#6C757D' : '#004085',
@@ -218,7 +243,7 @@ export default function POList() {
                               opacity:    alreadyRaised ? 0.7 : 1,
                             }}
                             onClick={() => !alreadyRaised && raiseAdvanceRequest(p)}>
-                            {alreadyRaised ? '✓ Adv. Raised' : '💰 Adv. Request'}
+                            {alreadyRaised ? '✓ Req. Raised' : '💰 Adv. Request'}
                           </button>
                         )
                       })()}

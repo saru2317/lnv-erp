@@ -62,27 +62,20 @@ const ROLE_CLR    = {admin:'#714B67',manager:'#E06F39',accounts:'#00A09D',operat
 const ROLE_DESC   = {admin:'Full system access — all modules and settings',manager:'Production, quality, maintenance oversight',accounts:'Finance, GST, payables & receivables',operations:'Production execution, QC, maintenance tasks',hr:'Employee management, payroll, leave approval',sales:'Sales orders, CRM leads and follow-ups',viewer:'Read-only access — no edit or approve rights'}
 const DEPTS = ['Production','Quality','Accounts','HR','Sales','Warehouse','Maintenance','Administration','IT']
 
-const INIT_USERS = [
-  {id:1, fname:'Admin',   lname:'Kumar',   email:'admin@lnvinfotech.com',   mobile:'+91 98001 00001', dept:'Administration', desig:'System Administrator', uname:'admin',      role:'admin',      status:'active',   online:true,  color:'#714B67', lastLogin:'Today 09:12 AM',  modules:ROLE_MOD.admin,      perms:ROLE_PERM.admin,      notes:'System super admin'},
-  {id:2, fname:'Ramesh',  lname:'Kumar',   email:'ramesh@lnvinfotech.com',  mobile:'+91 98001 00002', dept:'Production',     desig:'Plant Manager',         uname:'manager',    role:'manager',    status:'active',   online:true,  color:'#E06F39', lastLogin:'Today 08:45 AM',  modules:ROLE_MOD.manager,    perms:ROLE_PERM.manager,    notes:''},
-  {id:3, fname:'Priya',   lname:'Sharma',  email:'priya@lnvinfotech.com',   mobile:'+91 98001 00003', dept:'Accounts',       desig:'Senior Accountant',     uname:'accounts',   role:'accounts',   status:'active',   online:true,  color:'#00A09D', lastLogin:'Today 09:00 AM',  modules:ROLE_MOD.accounts,   perms:ROLE_PERM.accounts,   notes:''},
-  {id:4, fname:'Suresh',  lname:'Kumar',   email:'suresh@lnvinfotech.com',  mobile:'+91 98001 00004', dept:'Production',     desig:'Machine Operator',      uname:'operations', role:'operations', status:'active',   online:false, color:'#017E84', lastLogin:'Yesterday 06:30 PM', modules:ROLE_MOD.operations, perms:ROLE_PERM.operations, notes:''},
-  {id:5, fname:'Kavitha', lname:'Devi',    email:'kavitha@lnvinfotech.com', mobile:'+91 98001 00005', dept:'HR',             desig:'HR Manager',            uname:'hr',         role:'hr',         status:'active',   online:false, color:'#8E44AD', lastLogin:'Today 08:30 AM',  modules:ROLE_MOD.hr,         perms:ROLE_PERM.hr,         notes:''},
-  {id:6, fname:'Raj',     lname:'Kumar',   email:'raj@lnvinfotech.com',     mobile:'+91 98001 00006', dept:'Sales',          desig:'Sales Executive',       uname:'sales',      role:'sales',      status:'active',   online:false, color:'#015E63', lastLogin:'Today 09:15 AM',  modules:ROLE_MOD.sales,      perms:ROLE_PERM.sales,      notes:''},
-  {id:7, fname:'Muthu',   lname:'Krishnan',email:'muthu@lnvinfotech.com',   mobile:'+91 98001 00007', dept:'Quality',        desig:'QC Inspector',          uname:'muthu.qc',   role:'operations', status:'active',   online:false, color:'#196F3D', lastLogin:'Today 07:00 AM',  modules:['qm','pp'],         perms:['view','create','edit'], notes:'QC Team'},
-  {id:8, fname:'Selvi',   lname:'Rajan',   email:'selvi@lnvinfotech.com',   mobile:'+91 98001 00008', dept:'Accounts',       desig:'Junior Accountant',     uname:'selvi.acc',  role:'accounts',   status:'active',   online:false, color:'#007A77', lastLogin:'28 Feb 2026',     modules:['fi'],              perms:['view','create'],    notes:''},
-  {id:9, fname:'Arun',    lname:'Babu',    email:'arun@lnvinfotech.com',    mobile:'+91 98001 00009', dept:'Warehouse',      desig:'Store Keeper',          uname:'arun.wm',    role:'operations', status:'active',   online:false, color:'#1A5276', lastLogin:'28 Feb 2026',     modules:['wm','mm'],         perms:['view','create','edit'], notes:''},
-  {id:10,fname:'Vijay',   lname:'Anand',   email:'vijay@lnvinfotech.com',   mobile:'+91 98001 00010', dept:'Sales',          desig:'Sales Executive',       uname:'vijay.sales',role:'sales',      status:'inactive', online:false, color:'#B85A2E', lastLogin:'15 Feb 2026',     modules:ROLE_MOD.sales,      perms:ROLE_PERM.sales,      notes:'On leave'},
-  {id:11,fname:'Meena',   lname:'Priya',   email:'meena@lnvinfotech.com',   mobile:'+91 98001 00011', dept:'HR',             desig:'HR Executive',          uname:'meena.hr',   role:'hr',         status:'inactive', online:false, color:'#6C3483', lastLogin:'10 Feb 2026',     modules:['hcm'],             perms:['view'],             notes:'Relieved'},
-  {id:12,fname:'Guest',   lname:'User',    email:'guest@lnvinfotech.com',   mobile:'',                dept:'',               desig:'Read-only Viewer',      uname:'guest',      role:'viewer',     status:'inactive', online:false, color:'#6C757D', lastLogin:'Never',           modules:ROLE_MOD.viewer,     perms:ROLE_PERM.viewer,     notes:'Demo guest account'},
-]
+const INIT_USERS = []
+const INIT_AUDIT = []
 
-const INIT_AUDIT = [
-  {type:'add',   msg:'System initialized — Admin Kumar created',  meta:'Super Admin · All modules',          time:'01 Mar 2026 · 08:00 AM'},
-  {type:'login', msg:'Admin Kumar logged in',                     meta:'IP: 192.168.1.10 · Chrome',          time:'01 Mar 2026 · 09:12 AM'},
-  {type:'edit',  msg:'Muthu Krishnan role updated',               meta:'Operations → QC Operator',           time:'28 Feb 2026 · 04:30 PM'},
-  {type:'perm',  msg:'Priya Sharma permissions updated',          meta:'Added: Export Data · Reports',       time:'27 Feb 2026 · 11:00 AM'},
-]
+const ROLE_MAP = {
+  ADMIN:'admin', SUPER_ADMIN:'admin', MANAGER:'manager',
+  ACCOUNTS:'accounts', PRODUCTION:'operations', OPERATIONS:'operations',
+  HR:'hr', SALES:'sales', PURCHASE:'operations',
+  WAREHOUSE:'operations', TRANSPORT:'operations',
+  CIVIL:'operations', VIEWER:'viewer',
+}
+const DB_ROLE_MAP = {
+  admin:'ADMIN', manager:'MANAGER', accounts:'ACCOUNTS',
+  operations:'PRODUCTION', hr:'HR', sales:'SALES', viewer:'VIEWER',
+}
 
 const BLANK_FORM = {
   fname:'', lname:'', email:'', mobile:'', dept:'Production', desig:'',
@@ -136,10 +129,13 @@ function useToast() {
 
 // ── MAIN ──────────────────────────────────────────────
 export default function UserManagement() {
+  const [users,      setUsers]      = useState(INIT_USERS)
+  const [audit,      setAudit]      = useState(INIT_AUDIT)
+
   // Load real users from DB
   const loadUsers = useCallback(async () => {
     try {
-      const r = await fetch(`${BASE}/auth/users`, { headers:hdr2() })
+      const r = await fetch(`${BASE_URL}/auth/users`, { headers:hdr2() })
       const d = await r.json()
       const mapped = (d.data||[]).map(u => ({
         id:       u.id,
@@ -166,22 +162,6 @@ export default function UserManagement() {
   }, [])
 
   useEffect(() => { loadUsers() }, [loadUsers])
-
-  const [users,      setUsers]      = useState(INIT_USERS)
-
-  // ── Backend API load ─────────────────────────────────────────────
-  const loadUsers = useCallback(async () => {
-    try {
-      const r = await fetch(`${BASE_URL}/users`, { headers: hdr2() })
-      if (!r.ok) return // keep static data if API not ready
-      const d = await r.json()
-      const arr = d.data || d
-      if (Array.isArray(arr) && arr.length > 0) setUsers(arr)
-    } catch {} // silent fallback to INIT_USERS
-  }, [])
-
-  useEffect(() => { loadUsers() }, [loadUsers])
-  const [audit,      setAudit]      = useState(INIT_AUDIT)
   const [view,       setView]       = useState('table')
   const [fStatus,    setFStatus]    = useState('all')
   const [search,     setSearch]     = useState('')
@@ -241,71 +221,45 @@ export default function UserManagement() {
     if (!form.lname.trim()) e.lname = true
     if (!form.email.trim()) e.email = true
     if (!form.uname.trim()) e.uname = true
-    if (Object.keys(e).length) { setErrors(e); toast('Please fill all required fields','w'); return }
-    // Try backend first
+    if (!editId && !form.pass) e.pass = true
+    if (Object.keys(e).length) { setErrors(e); toast('Please fill all required fields', 'w'); return }
+
     try {
       const payload = {
-        name:`${form.fname} ${form.lname}`.trim(), email:form.email,
-        username:form.uname, mobile:form.mobile||null, role:form.role,
-        dept:form.dept||null, designation:form.desig||null,
-        moduleAccess:form.modules||[], isActive:form.status!=='inactive',
-        ...(form.pass?{password:form.pass}:{}),
+        name:        `${form.fname} ${form.lname}`.trim(),
+        email:       form.email,
+        username:    form.uname,
+        role:        DB_ROLE_MAP[form.role] || 'PRODUCTION',
+        department:  form.dept  || null,
+        designation: form.desig || null,
+        mobile:      form.mobile || null,
+        empCode:     form.empCode || null,
+        isActive:    form.status !== 'inactive',
+        ...(form.pass ? { password: form.pass } : {}),
       }
-      const url    = editId ? `${BASE_URL}/users/${editId}` : `${BASE_URL}/users`
+
+      const url    = editId ? `${BASE_URL}/auth/users/${editId}` : `${BASE_URL}/auth/users`
       const method = editId ? 'PATCH' : 'POST'
-      const r = await fetch(url, { method, headers:hdr(), body:JSON.stringify(payload) })
+      const r = await fetch(url, { method, headers: hdr(), body: JSON.stringify(payload) })
       const d = await r.json()
-      if (!r.ok) throw new Error(d.error||'Failed')
-      toast(`${form.fname} ${form.lname} ${editId?'updated':'created'}!`,'s')
-      // Save to real DB
-      try {
-        const payload = {
-          name: `${form.fname} ${form.lname}`.trim(),
-          email: form.email,
-          username: form.uname,
-          role: DB_ROLE_MAP[form.role]||'PRODUCTION',
-          department: form.dept,
-          designation: form.desig,
-          mobile: form.mobile,
-          empCode: form.empCode||null,
-          ...(form.password ? { password: form.password } : {}),
-        }
-        if (editId) {
-          await fetch(`${BASE}/auth/users/${editId}`, { method:'PATCH', headers:hdr(), body:JSON.stringify(payload) })
-        } else {
-          if (!form.password) { toast.error('Password required for new user'); return }
-          await fetch(`${BASE}/auth/users`, { method:'POST', headers:hdr(), body:JSON.stringify(payload) })
-        }
-        await loadUsers()
-        toast.success(editId?'User updated!':'User created!')
-      } catch(ex) { toast.error(ex.message) }
-      addAudit(editId?'edit':'add',`${editId?'Updated':'New'}: ${form.fname} ${form.lname}`,`Role: ${ROLE_LABELS[form.role]}`)
-      loadUsers(); closeDrawer(); return
-    } catch(err) { console.warn('Backend:', err.message) }
-    // Fallback local state
-    if (editId) {
-      setUsers(us => us.map(u => u.id===editId ? {...u, ...form, id:editId} : u))
-      toast(`${form.fname} ${form.lname} updated successfully!`, 's')
-      addAudit('edit', `Updated user ${form.fname} ${form.lname}`, `Role: ${ROLE_LABELS[form.role]}`)
-    } else {
-      setUsers(us => [{...form, id:Date.now(), online:false, lastLogin:'Never'}, ...us])
-      toast(`User ${form.fname} ${form.lname} created!`, 's')
-      addAudit('add', `New user: ${form.fname} ${form.lname}`, `Role: ${ROLE_LABELS[form.role]}`)
-    }
-    closeDrawer()
+      if (!r.ok) throw new Error(d.error || 'Save failed')
+
+      toast.success(`${form.fname} ${form.lname} ${editId ? 'updated' : 'created'}!`)
+      addAudit(editId?'edit':'add', `${editId?'Updated':'New'}: ${form.fname} ${form.lname}`, `Role: ${ROLE_LABELS[form.role]||form.role}`)
+      await loadUsers()
+      closeDrawer()
+    } catch(ex) { toast.error('Save failed: ' + ex.message) }
   }
 
   // ── DELETE ──
   const confirmDelete = async () => {
     const u = users.find(x=>x.id===deleteId)
     try {
-      await fetch(`${BASE_URL}/users/${deleteId}`,{method:'DELETE',headers:hdr2()})
-      toast(`${u?.fname} ${u?.lname} deleted`,'w')
+      await fetch(`${BASE_URL}/auth/users/${deleteId}`, { method:'DELETE', headers:hdr2() })
+      addAudit('del', `Deleted ${u?.fname} ${u?.lname}`, `@${u?.uname}`)
+      toast.success(`${u?.fname} ${u?.lname} deleted`)
       loadUsers()
-    } catch {
-      if(u) { setUsers(us=>us.filter(x=>x.id!==deleteId)); toast(`${u.fname} ${u.lname} deleted`,'w') }
-    }
-    addAudit('del',`Deleted ${u?.fname} ${u?.lname}`,`@${u?.uname}`)
+    } catch(e) { toast.error('Delete failed: ' + e.message) }
     setDeleteId(null)
   }
 

@@ -1,121 +1,227 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
 
-const AUDIT_ENTRIES = [
-  { id:'AL-001', ts:'2026-03-11 09:05:12', user:'Saravana Kumar', role:'admin',   module:'Config', action:'LOGIN',  doc:'—',          change:'User logged in from 192.168.1.10',  ip:'192.168.1.10' },
-  { id:'AL-002', ts:'2026-03-11 08:55:03', user:'Ramesh P',       role:'manager', module:'PP',     action:'UPDATE', doc:'JC-0042',    change:'Status changed: Pending → In Progress', ip:'192.168.1.11' },
-  { id:'AL-003', ts:'2026-03-11 08:30:44', user:'Priya S',        role:'accounts',module:'FI',     action:'CREATE', doc:'INV/2217',   change:'Invoice created · Amt ₹48,500',     ip:'192.168.1.13' },
-  { id:'AL-004', ts:'2026-03-10 17:45:22', user:'Saravana Kumar', role:'admin',   module:'Config', action:'UPDATE', doc:'USR-003',    change:'User Priya S role changed: accounts → accounts (no change)', ip:'192.168.1.10' },
-  { id:'AL-005', ts:'2026-03-10 17:20:11', user:'Karthik M',      role:'operations',module:'WM',   action:'CREATE', doc:'GRN/0444',   change:'GRN created · Vendor: Delta Chemicals · Items: 3', ip:'192.168.1.14' },
-  { id:'AL-006', ts:'2026-03-10 16:55:00', user:'Ramesh P',       role:'manager', module:'PP',     action:'DELETE', doc:'WO/0126',    change:'Work Order deleted (reason: Duplicate)',ip:'192.168.1.11' },
-  { id:'AL-007', ts:'2026-03-10 14:10:33', user:'Vijay T',        role:'sales',   module:'SD',     action:'CREATE', doc:'SO/1041',    change:'Sales Order created · Customer: Kovai Auto · ₹92,000', ip:'192.168.1.16' },
-  { id:'AL-008', ts:'2026-03-10 13:22:45', user:'Saravana Kumar', role:'admin',   module:'Config', action:'UPDATE', doc:'NS-006',     change:'Number series JC prefix changed: JC/ → JC-', ip:'192.168.1.10' },
-  { id:'AL-009', ts:'2026-03-10 11:05:17', user:'Kavitha R',      role:'hr',      module:'HCM',    action:'CREATE', doc:'EMP-034',    change:'New employee added: Selvam R · Dept: Production', ip:'192.168.1.15' },
-  { id:'AL-010', ts:'2026-03-10 10:44:00', user:'Priya S',        role:'accounts',module:'FI',     action:'UPDATE', doc:'PV/0333',    change:'Payment voucher updated · Amt: ₹12,000 → ₹15,000', ip:'192.168.1.13' },
-  { id:'AL-011', ts:'2026-03-10 09:30:22', user:'Saravana Kumar', role:'admin',   module:'MM',     action:'APPROVE',doc:'PO/0566',    change:'Purchase Order approved · Vendor: Sri Ram Chemicals · ₹62,400', ip:'192.168.1.10' },
-  { id:'AL-012', ts:'2026-03-09 18:15:00', user:'Karthik M',      role:'operations',module:'QM',   action:'CREATE', doc:'QR/0088',    change:'Quality report filed · Batch: BATCH-007 · Pass', ip:'192.168.1.14' },
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 
-const ACTION_COLORS = {
-  LOGIN:  { bg:'#E3F2FD', c:'#1565C0' },
-  CREATE: { bg:'#E8F5E9', c:'#2E7D32' },
-  UPDATE: { bg:'#FFF3E0', c:'#E65100' },
-  DELETE: { bg:'#FFEBEE', c:'#C62828' },
-  APPROVE:{ bg:'#F3E5F5', c:'#6A1B9A' },
+const ACTION_STYLE = {
+  LOGIN:   { bg:'#E3F2FD', c:'#1565C0', icon:'🔑' },
+  CREATE:  { bg:'#E8F5E9', c:'#2E7D32', icon:'➕' },
+  UPDATE:  { bg:'#FFF3E0', c:'#E65100', icon:'✏️' },
+  DELETE:  { bg:'#FFEBEE', c:'#C62828', icon:'🗑️' },
+  APPROVE: { bg:'#F3E5F5', c:'#6A1B9A', icon:'✅' },
+  PRINT:   { bg:'#E0F2F1', c:'#00695C', icon:'🖨️' },
 }
+const MOD_COLOR = { SD:'#117A65', MM:'#1A5276', PP:'#714B67', FI:'#196F3D', QM:'#C0392B', PM:'#784212', HCM:'#6C3483', WM:'#1F618D', Auth:'#555' }
 
 export default function AuditLog() {
+  const [entries,  setEntries]  = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [moduleF,  setModuleF]  = useState('')
+  const [actionF,  setActionF]  = useState('')
   const [search,   setSearch]   = useState('')
-  const [moduleF,  setModuleF]  = useState('All')
-  const [actionF,  setActionF]  = useState('All')
-  const [entries]              = useState(AUDIT_ENTRIES)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo,   setDateTo]   = useState('')
+  const [page,     setPage]     = useState(1)
+  const PER_PAGE = 20
 
-  const modules = [...new Set(entries.map(e => e.module))]
-  const actions = [...new Set(entries.map(e => e.action))]
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ limit:200 })
+      if (moduleF) params.append('module', moduleF)
+      if (actionF) params.append('action', actionF)
+      if (search)  params.append('search', search)
+      if (dateFrom)params.append('from', dateFrom)
+      if (dateTo)  params.append('to', dateTo)
+      const r = await fetch(`${BASE_URL}/audit?${params}`, { headers: hdr2() })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setEntries(d.data || [])
+      setPage(1)
+    } catch(e) { toast.error('Failed to load audit log: ' + e.message) }
+    finally { setLoading(false) }
+  }, [moduleF, actionF, search, dateFrom, dateTo])
 
-  const filtered = entries.filter(e => {
-    const mM = moduleF==='All' || e.module===moduleF
-    const mA = actionF==='All' || e.action===actionF
-    const mS = !search || e.user.toLowerCase().includes(search.toLowerCase()) ||
-               e.doc.toLowerCase().includes(search.toLowerCase()) ||
-               e.change.toLowerCase().includes(search.toLowerCase())
-    return mM && mA && mS
-  })
+  useEffect(() => { load() }, [load])
 
-  const moduleColor = m => ({ SD:'#117A65', MM:'#1A5276', PP:'#714B67', FI:'#196F3D', QM:'#C0392B', HCM:'#6C3483', CRM:'#784212', WM:'#1F618D', Config:'#4D5656' }[m] || '#555')
+  const modules = ['','SD','MM','FI','PP','QM','WM','Auth']
+  const actions = ['','LOGIN','CREATE','UPDATE','DELETE','APPROVE']
+
+  // Stats
+  const stats = {
+    total:   entries.length,
+    creates: entries.filter(e=>e.action==='CREATE').length,
+    updates: entries.filter(e=>e.action==='UPDATE').length,
+    logins:  entries.filter(e=>e.action==='LOGIN').length,
+    deletes: entries.filter(e=>e.action==='DELETE').length,
+  }
+
+  const paginated = entries.slice((page-1)*PER_PAGE, page*PER_PAGE)
+  const totalPages = Math.ceil(entries.length / PER_PAGE)
+
+  const exportCSV = () => {
+    const header = 'ID,Timestamp,User,Role,Module,Action,Document,Change\n'
+    const rows = entries.map(e =>
+      `${e.id},"${e.ts}","${e.user}","${e.role}","${e.module}","${e.action}","${e.doc}","${e.change?.replace(/"/g,"'")}"`
+    ).join('\n')
+    const blob = new Blob([header+rows], { type:'text/csv' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `audit-log-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    toast.success('Audit log exported')
+  }
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Audit Log <small>All system changes tracked automatically</small></div>
+        <div className="fi-lv-title">
+          Audit Log
+          <small>System activity trail — all modules</small>
+        </div>
         <div className="fi-lv-actions">
-          <input className="sd-search" placeholder=" User / Document / Change…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:'200px'}} />
-          <select className="sd-select" value={moduleF} onChange={e=>setModuleF(e.target.value)}>
-            <option value="All">All Modules</option>
-            {modules.map(m=><option key={m}>{m}</option>)}
-          </select>
-          <select className="sd-select" value={actionF} onChange={e=>setActionF(e.target.value)}>
-            <option value="All">All Actions</option>
-            {actions.map(a=><option key={a}>{a}</option>)}
-          </select>
-          <button className="btn btn-s sd-bsm">Export</button>
+          <button className="btn btn-s sd-bsm" onClick={load}>↻ Refresh</button>
+          <button className="btn btn-s sd-bsm" onClick={exportCSV} disabled={!entries.length}>⬇ Export CSV</button>
         </div>
       </div>
 
-      {/* Summary KPIs */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px',marginBottom:'14px'}}>
+      {/* KPI Strip */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
         {[
-          {l:'Total Entries',v:entries.length,c:'var(--odoo-purple)',i:''},
-          ...Object.entries(ACTION_COLORS).map(([a,col])=>({
-            l:`${a[0]+a.slice(1).toLowerCase()}s`,
-            v:entries.filter(e=>e.action===a).length,
-            c:col.c, i:a==='LOGIN'?'':a==='CREATE'?'':a==='UPDATE'?'':a==='DELETE'?'':''
-          }))
+          {l:'Total Events',  v:stats.total,   c:'#714B67', bg:'#EDE0EA', i:'📋'},
+          {l:'Creates',       v:stats.creates, c:'#2E7D32', bg:'#E8F5E9', i:'➕'},
+          {l:'Updates',       v:stats.updates, c:'#E65100', bg:'#FFF3E0', i:'✏️'},
+          {l:'Logins',        v:stats.logins,  c:'#1565C0', bg:'#E3F2FD', i:'🔑'},
+          {l:'Deletes',       v:stats.deletes, c:'#C62828', bg:'#FFEBEE', i:'🗑️'},
         ].map(k=>(
-          <div key={k.l} className="crm-kpi-card" style={{borderLeftColor:k.c}}>
-            <div className="crm-kpi-icon">{k.i}</div>
-            <div className="crm-kpi-val" style={{color:k.c}}>{k.v}</div>
-            <div className="crm-kpi-lbl">{k.l}</div>
+          <div key={k.l} style={{background:'#fff',borderRadius:8,padding:'12px 14px',
+            border:'1px solid var(--odoo-border)',borderLeft:`4px solid ${k.c}`,
+            display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:20}}>{k.i}</span>
+            <div>
+              <div style={{fontSize:18,fontWeight:800,color:k.c,fontFamily:'Syne,sans-serif'}}>{loading?'…':k.v}</div>
+              <div style={{fontSize:10,color:'#6C757D'}}>{k.l}</div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Timeline */}
-      <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-        {filtered.map((e,i)=>{
-          const ac = ACTION_COLORS[e.action] || {bg:'#F5F5F5',c:'#555'}
-          return (
-            <div key={e.id} style={{display:'flex',gap:'12px',alignItems:'flex-start',
-              padding:'10px 14px',background:'#fff',borderRadius:'8px',border:'1px solid var(--odoo-border)'}}>
-              {/* Action badge */}
-              <span style={{padding:'3px 8px',borderRadius:'6px',fontSize:'10px',fontWeight:'800',
-                background:ac.bg,color:ac.c,flexShrink:0,minWidth:'60px',textAlign:'center',marginTop:'1px'}}>
-                {e.action}
-              </span>
-              {/* Module badge */}
-              <span style={{padding:'3px 7px',borderRadius:'5px',fontSize:'10px',fontWeight:'800',
-                background:moduleColor(e.module)+'22',color:moduleColor(e.module),flexShrink:0,marginTop:'1px'}}>
-                {e.module}
-              </span>
-              {/* Doc */}
-              <span style={{fontFamily:'DM Mono,monospace',fontSize:'11px',fontWeight:'700',color:'var(--odoo-purple)',
-                flexShrink:0,minWidth:'90px',marginTop:'2px'}}>{e.doc}</span>
-              {/* Change description */}
-              <div style={{flex:1}}>
-                <div style={{fontSize:'12px',fontWeight:'600'}}>{e.change}</div>
-                <div style={{fontSize:'10px',color:'var(--odoo-gray)',marginTop:'2px'}}>
-                   {e.user} ({e.role}) &nbsp;·&nbsp;  {e.ip}
-                </div>
-              </div>
-              {/* Timestamp */}
-              <div style={{fontSize:'11px',color:'var(--odoo-gray)',flexShrink:0,textAlign:'right',fontFamily:'DM Mono,monospace'}}>
-                {e.ts.split(' ')[0]}<br/>
-                <strong>{e.ts.split(' ')[1]}</strong>
-              </div>
-            </div>
-          )
-        })}
-        {filtered.length===0&&<div style={{textAlign:'center',padding:'40px',color:'var(--odoo-gray)'}}>No entries match your filters</div>}
+      {/* Filters */}
+      <div style={{background:'#fff',border:'1px solid var(--odoo-border)',borderRadius:8,padding:'12px 16px',marginBottom:14}}>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder="Search user, doc, change…"
+            style={{padding:'6px 12px',border:'1px solid var(--odoo-border)',borderRadius:6,fontSize:12,outline:'none',width:220}} />
+
+          <select value={moduleF} onChange={e=>setModuleF(e.target.value)}
+            style={{padding:'6px 10px',border:'1px solid var(--odoo-border)',borderRadius:6,fontSize:12,outline:'none'}}>
+            {modules.map(m=><option key={m} value={m}>{m||'All Modules'}</option>)}
+          </select>
+
+          <select value={actionF} onChange={e=>setActionF(e.target.value)}
+            style={{padding:'6px 10px',border:'1px solid var(--odoo-border)',borderRadius:6,fontSize:12,outline:'none'}}>
+            {actions.map(a=><option key={a} value={a}>{a||'All Actions'}</option>)}
+          </select>
+
+          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+            style={{padding:'6px 10px',border:'1px solid var(--odoo-border)',borderRadius:6,fontSize:12,outline:'none'}} />
+          <span style={{fontSize:11,color:'#6C757D'}}>to</span>
+          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+            style={{padding:'6px 10px',border:'1px solid var(--odoo-border)',borderRadius:6,fontSize:12,outline:'none'}} />
+
+          {(moduleF||actionF||search||dateFrom||dateTo) && (
+            <button onClick={()=>{setModuleF('');setActionF('');setSearch('');setDateFrom('');setDateTo('')}}
+              style={{padding:'6px 12px',borderRadius:6,border:'1px solid #C62828',background:'#FFEBEE',
+                color:'#C62828',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+              ✕ Clear
+            </button>
+          )}
+
+          <span style={{fontSize:11,color:'#6C757D',marginLeft:'auto'}}>
+            {loading?'Loading…':`${entries.length} events`}
+          </span>
+        </div>
       </div>
+
+      {/* Table */}
+      {loading ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>Loading audit log…</div>
+      ) : entries.length===0 ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D',background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)'}}>
+          No audit entries found
+        </div>
+      ) : (
+        <>
+          <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr style={{background:'var(--odoo-purple)'}}>
+                  {['Timestamp','User','Module','Action','Document','Change'].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:700,
+                      color:'#fff',textTransform:'uppercase',letterSpacing:.5}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((e,i)=>{
+                  const act = ACTION_STYLE[e.action]||ACTION_STYLE.CREATE
+                  const mc  = MOD_COLOR[e.module]||'#714B67'
+                  return (
+                    <tr key={e.id} style={{borderBottom:'1px solid #F0EEEB',background:i%2===0?'#fff':'#FAFAFA'}}>
+                      <td style={{padding:'10px 12px',fontSize:11,color:'#6C757D',fontFamily:'DM Mono,monospace',whiteSpace:'nowrap'}}>
+                        {e.ts}
+                      </td>
+                      <td style={{padding:'10px 12px'}}>
+                        <div style={{fontWeight:600,fontSize:12}}>{e.user||'System'}</div>
+                        {e.role&&e.role!=='—'&&<div style={{fontSize:10,color:'#6C757D'}}>{e.role}</div>}
+                      </td>
+                      <td style={{padding:'10px 12px'}}>
+                        <span style={{background:mc+'22',color:mc,padding:'2px 8px',borderRadius:6,
+                          fontSize:11,fontWeight:700}}>{e.module}</span>
+                      </td>
+                      <td style={{padding:'10px 12px'}}>
+                        <span style={{background:act.bg,color:act.c,padding:'3px 8px',borderRadius:6,
+                          fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:4,width:'fit-content'}}>
+                          {act.icon} {e.action}
+                        </span>
+                      </td>
+                      <td style={{padding:'10px 12px',fontFamily:'DM Mono,monospace',fontSize:12,
+                        fontWeight:700,color:'var(--odoo-purple)'}}>{e.doc}</td>
+                      <td style={{padding:'10px 12px',fontSize:11,color:'#1C1C1C',maxWidth:360}}>
+                        {e.change}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:8,marginTop:14}}>
+              <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                style={{padding:'5px 12px',borderRadius:5,border:'1px solid var(--odoo-border)',
+                  background:page===1?'#F5F5F5':'#fff',cursor:page===1?'not-allowed':'pointer',fontSize:12}}>← Prev</button>
+              {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
+                const p = i+1
+                return (
+                  <button key={p} onClick={()=>setPage(p)}
+                    style={{padding:'5px 10px',borderRadius:5,fontSize:12,cursor:'pointer',
+                      background:page===p?'var(--odoo-purple)':'#fff',
+                      color:page===p?'#fff':'var(--odoo-dark)',
+                      border:`1px solid ${page===p?'var(--odoo-purple)':'var(--odoo-border)'}`}}>{p}</button>
+                )
+              })}
+              <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                style={{padding:'5px 12px',borderRadius:5,border:'1px solid var(--odoo-border)',
+                  background:page===totalPages?'#F5F5F5':'#fff',cursor:page===totalPages?'not-allowed':'pointer',fontSize:12}}>Next →</button>
+              <span style={{fontSize:11,color:'#6C757D'}}>Page {page} of {totalPages} · {entries.length} total</span>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

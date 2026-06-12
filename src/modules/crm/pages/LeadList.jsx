@@ -7,12 +7,14 @@ const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFra
 
 const STAGES = [
   { key:'NEW',         label:'New',          color:'#6C757D', bg:'#F5F5F5' },
-  { key:'CONTACTED',   label:'Contacted',    color:'#004085', bg:'#CCE5FF' },
-  { key:'QUALIFIED',   label:'Qualified',    color:'#856404', bg:'#FFF3CD' },
-  { key:'PROPOSAL',    label:'Proposal',     color:'#4B2E83', bg:'#EDE0EA' },
-  { key:'NEGOTIATION', label:'Negotiation',  color:'#0C5460', bg:'#D1ECF1' },
-  { key:'WON',         label:'Won',          color:'#155724', bg:'#D4EDDA' },
-  { key:'LOST',        label:'Lost',         color:'#721C24', bg:'#F8D7DA' },
+  { key:'Requirement Understanding', label:'Requirement', color:'#6C757D', bg:'#F5F5F5' },
+  { key:'Solution Discussion',       label:'Discussion',  color:'#004085', bg:'#CCE5FF' },
+  { key:'Demo / Presentation',       label:'Demo',        color:'#856404', bg:'#FFF3CD' },
+  { key:'Proposal Submitted',        label:'Proposal',    color:'#4B2E83', bg:'#EDE0EA' },
+  { key:'Negotiation',               label:'Negotiation', color:'#0C5460', bg:'#D1ECF1' },
+  { key:'Decision Pending',          label:'Decision',    color:'#E06F39', bg:'#FFF3E0' },
+  { key:'Won',                       label:'Won',         color:'#155724', bg:'#D4EDDA' },
+  { key:'Lost',                      label:'Lost',        color:'#721C24', bg:'#F8D7DA' },
 ]
 
 const SOURCES = ['Website','Cold Call','Referral','Trade Show','Social Media','Email Campaign','Walk-in','Existing Customer','Other']
@@ -65,7 +67,7 @@ export default function LeadList() {
           All ({leads.length})
         </button>
         {STAGES.map(s=>{
-          const cnt = leads.filter(l=>l.stage===s.key).length
+          const cnt = leads.filter(l=>(l.stage||'').toLowerCase()===s.key.toLowerCase()).length
           return (
             <button key={s.key} onClick={()=>setStage(stage===s.key?'':s.key)} style={{
               padding:'5px 14px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
@@ -122,7 +124,7 @@ export default function LeadList() {
                     onMouseOver={e=>e.currentTarget.style.background='#F8F4F8'}
                     onMouseOut={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
                     <td style={{padding:'10px 12px'}}>
-                      <div style={{fontWeight:700,fontSize:13}}>{l.company||l.name}</div>
+                      <div style={{fontWeight:700,fontSize:13}}>{l.companyName||l.company||l.name}</div>
                       {l.industry&&<div style={{fontSize:10,color:'#6C757D'}}>{l.industry}</div>}
                     </td>
                     <td style={{padding:'10px 12px'}}>

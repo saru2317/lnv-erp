@@ -1,5 +1,11 @@
-// ════════════════════════════════════════════════════════════
-export function ExpiryTracking() {
+import React, { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
+
+export default function ExpiryTracking() {
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter,  setFilter]  = useState('All')
@@ -129,7 +135,4 @@ export function ExpiryTracking() {
   )
 }
 
-// ════════════════════════════════════════════════════════════
-// StockReport.jsx — real aggregated stock analytics
-// ════════════════════════════════════════════════════════════
-export default ExpiryTracking
+

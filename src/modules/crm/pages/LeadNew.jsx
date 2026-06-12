@@ -18,7 +18,7 @@ export default function LeadNew() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     company:'', contactName:'', designation:'', email:'', phone:'', mobile:'',
-    source:'Website', industry:'', stage:'NEW', assignedTo:'',
+    source:'Website', industry:'', stage:'Requirement Understanding', assignedTo:'',
     dealValue:'', expectedCloseDate:'', requirements:'', notes:'',
     address:'', city:'', state:'', country:'India',
   })

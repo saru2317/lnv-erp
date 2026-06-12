@@ -38,7 +38,9 @@ const calcLine = (l, isIGST=false) => {
 export default function SONew() {
   const nav  = useNavigate()
   const [params] = useSearchParams()
-  const quotId   = params.get('quotId')
+  const quotId    = params.get('quotId')
+  const fromQuot  = params.get('fromQuot')   // CRM quotation number
+  const crmQuotId = params.get('crmQuotId') || (fromQuot ? quotId : null)
 
   const today = new Date().toISOString().split('T')[0]
   const [soNo,      setSoNo]      = useState('Auto-generated')
@@ -79,7 +81,37 @@ export default function SONew() {
       setSoNo(noRes.soNo || 'SO-AUTO')
     }).catch(() => {})
 
-    // If converting from quotation
+    // If converting from CRM quotation
+    if (crmQuotId && fromQuot) {
+      fetch(`${BASE}/crm/quotations/${crmQuotId}`, { headers:hdr2() })
+        .then(r=>r.json()).then(res => {
+          const q = res.data || res
+          if (!q) return
+          setForm(f=>({
+            ...f,
+            customerId:   q.customerId || '',
+            customerName: q.customerName || '',
+            customerGstin:q.customerGstin || '',
+            quotRef:      q.quotNo || '',
+            paymentTerms: q.paymentTerms || f.paymentTerms,
+            remarks:      `Converted from CRM Quotation ${q.quotNo}`,
+          }))
+          // Pre-fill lines from CRM quotation lines
+          if (q.lines?.length) {
+            setLines(q.lines.map(l=>({
+              ...newLine(),
+              description: l.description || '',
+              qty:         l.qty || 1,
+              uom:         l.uom || 'Nos',
+              unitPrice:   l.rate || 0,
+              discount:    l.discount || 0,
+              hsnCode:     l.itemCode || '',
+            })))
+          }
+        }).catch(()=>{})
+    }
+
+    // If converting from SD quotation
     if (quotId) {
       sdApi.getQuotationById(quotId).then(res => {
         const q = res.data || res

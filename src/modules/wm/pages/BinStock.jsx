@@ -10,34 +10,32 @@ const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
 
 export function BinStock() {
   const [stock,   setStock]   = useState([])
-  const [whs,     setWhs]     = useState([])
   const [loading, setLoading] = useState(true)
-  const [selWh,   setSelWh]   = useState('All')
   const [search,  setSearch]  = useState('')
+  const [locFilter, setLocFilter] = useState('All')
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [rS, rW] = await Promise.all([
-        fetch(`${BASE_URL}/wm/stock`,      { headers: hdr2() }),
-        fetch(`${BASE_URL}/wm/warehouses`, { headers: hdr2() }),
-      ])
-      const [dS, dW] = await Promise.all([rS.json(), rW.json()])
-      setStock(dS.data || [])
-      setWhs(dW.data   || [])
+      const r = await fetch(`${BASE_URL}/wm/bin-stock`, { headers: hdr2() })
+      const d = await r.json()
+      setStock(d.data || [])
     } catch { toast.error('Failed to load bin stock') }
     finally { setLoading(false) }
   }, [])
   useEffect(() => { load() }, [load])
 
-  const shown = stock.filter(s => {
-    const mw = selWh === 'All' || s.location === selWh || s.warehouse === selWh
-    const ms = !search || s.itemCode?.toLowerCase().includes(search.toLowerCase()) || s.itemName?.toLowerCase().includes(search.toLowerCase()) || s.binLocation?.toLowerCase().includes(search.toLowerCase())
-    return mw && ms && parseFloat(s.balanceQty) > 0
-  })
+  // Unique locations for filter
+  const locations = ['All', ...new Set(stock.map(s => s.binLocation).filter(Boolean))]
 
-  // Capacity pct (mock — use capacity from bin master if available)
-  const capPct = qty => Math.min(100, Math.round((parseFloat(qty) / 600) * 100))
+  const shown = stock.filter(s => {
+    const ml = locFilter === 'All' || s.binLocation === locFilter
+    const ms = !search ||
+      s.itemCode?.toLowerCase().includes(search.toLowerCase()) ||
+      s.itemName?.toLowerCase().includes(search.toLowerCase()) ||
+      s.binLocation?.toLowerCase().includes(search.toLowerCase())
+    return ml && ms
+  })
 
   return (
     <div>
@@ -45,9 +43,8 @@ export function BinStock() {
         <div className="lv-ttl">Bin-wise Stock <small>LS26 · Location Inventory</small></div>
         <div className="lv-acts">
           <input className="sd-search" placeholder="Search item / bin..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:180}}/>
-          <select className="sd-search" value={selWh} onChange={e=>setSelWh(e.target.value)} style={{width:160}}>
-            <option value="All">All Locations</option>
-            {whs.map(w=><option key={w.id} value={w.name||w.code}>{w.name||w.code}</option>)}
+          <select className="sd-search" value={locFilter} onChange={e=>setLocFilter(e.target.value)} style={{width:160}}>
+            {locations.map(l=><option key={l} value={l}>{l}</option>)}
           </select>
           <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
         </div>
@@ -67,14 +64,18 @@ export function BinStock() {
                 No stock in bins. Post GRNs to update stock levels.
               </td></tr>
             : shown.map((s, i) => {
-              const pct = capPct(s.balanceQty)
-              const val = (parseFloat(s.balanceQty) * parseFloat(s.stdCost||0)).toLocaleString('en-IN', {style:'currency',currency:'INR',maximumFractionDigits:0})
+              const pct = Math.min(100, Math.round((parseFloat(s.qty) / 600) * 100))
+              const val = '₹' + parseFloat(s.value||0).toLocaleString('en-IN', {maximumFractionDigits:0})
               return (
-                <tr key={s.itemCode} style={{borderBottom:'1px solid #F0EEF0',background:i%2===0?'#fff':'#FDFBFD'}}>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)',fontWeight:700}}>{s.itemCode}</td>
+                <tr key={`${s.itemCode}_${s.binLocation}_${i}`} style={{borderBottom:'1px solid #F0EEF0',background:i%2===0?'#fff':'#FDFBFD'}}>
+                  <td style={{fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-purple)',fontWeight:700}}>{s.itemCode||'—'}</td>
                   <td style={{fontWeight:600}}>{s.itemName}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{s.binLocation || s.location || '—'}</td>
-                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13}}>{parseFloat(s.balanceQty).toFixed(2)}</td>
+                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>
+                    <span style={{background:'#EDE0EA',color:'#714B67',padding:'2px 6px',borderRadius:4,fontWeight:700}}>
+                      {s.binLocation || '—'}
+                    </span>
+                  </td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono,monospace',fontWeight:700,fontSize:13}}>{parseFloat(s.qty).toFixed(3)}</td>
                   <td style={{textAlign:'center'}}>{s.uom}</td>
                   <td style={{fontFamily:'DM Mono,monospace',fontSize:11,color:'#6C757D'}}>{s.batchNo || '—'}</td>
                   <td style={{minWidth:120}}>

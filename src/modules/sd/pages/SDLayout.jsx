@@ -27,6 +27,8 @@ const FTADocuments       = lazy(() => import('./FTADocuments'))
 const DeliveryChallan    = lazy(() => import('./DeliveryChallan'))
 const DCPrint            = lazy(() => import('./DCPrint'))
 const LabourInvoice      = lazy(() => import('./LabourInvoice'))
+const LabourPriceBook    = lazy(() => import('./LabourPriceBook'))
+const SDReports          = lazy(() => import('./SDReports'))
 const SDApprovals        = lazy(() => import('@components/ui/MyApprovals'))
 
 const NAV = [
@@ -61,6 +63,7 @@ const SIDEBAR = [
     { to: '/sd/fta-documents',      label: 'FTA / COO Documents' },
     { to: '/sd/delivery-challan',   label: 'Delivery Challan' },
     { to: '/sd/labour-invoice',     label: 'Labour Invoice (Job Work)' },
+    { to: '/sd/labour-pricebook',   label: '💰 Labour Price Book'      },
   ]},
   { label: 'Reports', icon: '', items: [
     { to: '/sd/reports/summary',  label: 'Sales Summary' },
@@ -100,6 +103,11 @@ export default function SDLayout() {
           <Route path="delivery-challan"           element={<DeliveryChallan />} />
           <Route path="delivery-challan/:id/print" element={<DCPrint />} />
           <Route path="labour-invoice"     element={<LabourInvoice />} />
+          <Route path="labour-pricebook"   element={<LabourPriceBook />} />
+          <Route path="reports/summary"    element={<SDReports />} />
+          <Route path="reports/ledger"     element={<SDReports />} />
+          <Route path="reports/aging"      element={<SDReports />} />
+          <Route path="reports/revenue"    element={<SDReports />} />
           <Route path="*"               element={<Navigate to="/sd" replace />} />
         </Routes>
       </Suspense>

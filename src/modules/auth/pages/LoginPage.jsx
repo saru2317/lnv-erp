@@ -13,18 +13,19 @@ const MOD_PILLS = ['SD · Sales','MM · Purchase','WM · Inventory','PP · Manuf
 
 // Demo users for quick fill (still useful for demo/trial)
 const DEMO_USERS = [
-  { email:'admin@lnverp.com',      password:'admin123',  label:'Super Admin' },
-  { email:'manager@lnverp.com',    password:'lnv@2025',  label:'Plant Manager' },
-  { email:'accounts@lnverp.com',   password:'lnv@2025',  label:'Accounts' },
-  { email:'operations@lnverp.com', password:'lnv@2025',  label:'Operations' },
-  { email:'hr@lnverp.com',         password:'lnv@2025',  label:'HR Manager' },
-  { email:'sales@lnverp.com',      password:'lnv@2025',  label:'Sales Rep' },
-  { email:'production@lnverp.com', password:'lnv@2025',  label:'Production' },
-  { email:'purchase@lnverp.com',   password:'lnv@2025',  label:'Purchase' },
-  { email:'warehouse@lnverp.com',  password:'lnv@2025',  label:'Warehouse' },
-  { email:'transport@lnverp.com',  password:'lnv@2025',  label:'Transport' },
-  { email:'civil@lnverp.com',      password:'lnv@2025',  label:'Civil' },
-  { email:'viewer@lnverp.com',     password:'lnv@2025',  label:'Viewer' },
+  // ── LNV System ───────────────────────────────────────────────
+  { email:'admin@lnverp.com',       password:'admin123', label:'Super Admin',     role:'System',     color:'#C62828', icon:'🔴' },
+  // ── LNV Manufacturing ────────────────────────────────────────
+  { email:'saravanan@lnvmfg.com',   password:'lnv@2025', label:'Company Admin',   role:'Admin',      color:'#E06F39', icon:'🟠' },
+  { email:'manager@lnvmfg.com',     password:'lnv@2025', label:'Plant Manager',   role:'Manager',    color:'#856404', icon:'🟡' },
+  { email:'accounts@lnvmfg.com',    password:'lnv@2025', label:'Accounts Head',   role:'Accounts',   color:'#1565C0', icon:'🔵' },
+  { email:'sales@lnvmfg.com',       password:'lnv@2025', label:'Sales Executive', role:'Sales',      color:'#2E7D32', icon:'🟢' },
+  { email:'production@lnvmfg.com',  password:'lnv@2025', label:'Production Head', role:'Production', color:'#714B67', icon:'⚙️' },
+  { email:'hr@lnvmfg.com',          password:'lnv@2025', label:'HR Manager',      role:'HR',         color:'#6C3483', icon:'👥' },
+  { email:'purchase@lnvmfg.com',    password:'lnv@2025', label:'Purchase Manager',role:'Purchase',   color:'#1A5276', icon:'📦' },
+  { email:'warehouse@lnvmfg.com',   password:'lnv@2025', label:'Warehouse Keeper',role:'Warehouse',  color:'#1F618D', icon:'🏭' },
+  { email:'quality@lnvmfg.com',     password:'lnv@2025', label:'QC Inspector',    role:'Production', color:'#117A65', icon:'✅' },
+  { email:'viewer@lnvmfg.com',      password:'lnv@2025', label:'Viewer',          role:'Viewer',     color:'#6C757D', icon:'👁️' },
 ]
 
 const INDUSTRIES = ['Select Industry','Manufacturing','Trading','Textile','Retail','Service','Construction']
@@ -272,28 +273,33 @@ export default function LoginPage() {
 
           {/* Demo credentials */}
           <div style={{ marginTop:10, background:'#FDF8FC',
-            border:'1px solid #E8D5E5', borderRadius:6, padding:'12px 14px' }}>
+            border:'1px solid #E8D5E5', borderRadius:8, padding:'12px 14px' }}>
             <div style={{ fontSize:11, fontWeight:700, color:'#714B67',
-              marginBottom:8, textTransform:'uppercase', letterSpacing:.5 }}>
-              🔑 Demo Credentials — click to fill
+              marginBottom:10, textTransform:'uppercase', letterSpacing:.5 }}>
+              🔑 Quick Login — click to fill
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:4, marginBottom:6 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:5, marginBottom:8 }}>
               {DEMO_USERS.map(u => (
                 <div key={u.email}
                   onClick={()=>{ setEmail(u.email); setPass(u.password); setError('') }}
-                  style={{ padding:'6px 9px', borderRadius:5, cursor:'pointer',
-                    fontSize:11, border:'1px solid #E8D5E5', background:'#fff',
-                    transition:'all .15s' }}
-                  onMouseEnter={e=>{ e.currentTarget.style.background='#EDE0EA'; e.currentTarget.style.borderColor='#C8A8C0' }}
-                  onMouseLeave={e=>{ e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#E8D5E5' }}>
-                  <div style={{ fontWeight:700, color:'#714B67' }}>{u.label}</div>
-                  <div style={{ color:'#6C757D', fontSize:10, marginTop:1 }}>{u.email}</div>
+                  style={{ padding:'7px 10px', borderRadius:6, cursor:'pointer',
+                    fontSize:11, border:`1.5px solid ${u.color}33`,
+                    background:'#fff', transition:'all .15s',
+                    borderLeft:`3px solid ${u.color}` }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background=u.color+'11' }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background='#fff' }}>
+                  <div style={{ fontWeight:700, color:u.color, display:'flex', alignItems:'center', gap:4 }}>
+                    <span>{u.icon}</span> {u.label}
+                  </div>
+                  <div style={{ color:'#6C757D', fontSize:10, marginTop:1,
+                    fontFamily:'DM Mono, monospace' }}>{u.email}</div>
                 </div>
               ))}
             </div>
-            <div style={{ fontSize:11, color:'#6C757D' }}>
-              Password: <strong style={{ color:'#714B67' }}>admin123</strong> (admin) &nbsp;·&nbsp;
-              <strong style={{ color:'#714B67' }}>lnv@2025</strong> (others)
+            <div style={{ fontSize:10, color:'#6C757D', padding:'6px 8px',
+              background:'#F0EEEB', borderRadius:5 }}>
+              🔴 <strong style={{color:'#C62828'}}>admin@lnverp.com</strong> → admin123 &nbsp;·&nbsp;
+              🟠 <strong style={{color:'#E06F39'}}>All others</strong> → lnv@2025
             </div>
           </div>
         </>}

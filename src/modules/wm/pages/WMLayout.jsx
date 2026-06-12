@@ -24,6 +24,9 @@ const MovementLog       = lazy(() => import('./MovementLog'))
 const PhysicalInventory = lazy(() => import('./PhysicalInventory'))
 const ReorderList       = lazy(() => import('./ReorderList'))
 const ExpiryTracking    = lazy(() => import('./ExpiryTracking'))
+const FSNAnalysis       = lazy(() => import('./FSNAnalysis'))
+const StockAging        = lazy(() => import('./StockAging'))
+const StockValuation    = lazy(() => import('./StockValuation'))
 
 const NAV_ITEMS = [
   { to:'/wm',              label:'Home'          },
@@ -65,9 +68,12 @@ const SIDEBAR_GROUPS = [
   {
     label:'Reports & Maps', icon:'📋',
     items:[
-      { to:'/wm/movement',     label:'Movement Log'      },
-      { to:'/wm/report',       label:'Stock Report'      },
-      { to:'/wm/map',          label:'Warehouse Map'     },
+      { to:'/wm/movement',    label:'Movement Log'       },
+      { to:'/wm/report',      label:'Stock Report'       },
+      { to:'/wm/fsn',         label:'FSN Analysis'       },
+      { to:'/wm/aging',       label:'Stock Aging'        },
+      { to:'/wm/valuation',   label:'Stock Valuation'    },
+      { to:'/wm/map',         label:'Warehouse Map'      },
     ]
   },
 ]
@@ -94,6 +100,9 @@ export default function WMLayout() {
           <Route path="expiry"         element={<ExpiryTracking />}    />
           <Route path="movement"       element={<MovementLog />}       />
           <Route path="report"         element={<StockReport />}       />
+          <Route path="fsn"            element={<FSNAnalysis />}       />
+          <Route path="aging"          element={<StockAging />}        />
+          <Route path="valuation"      element={<StockValuation />}    />
           <Route path="map"            element={<WHMap />}             />
           <Route path="bin"            element={<BinMaster />}         />
           <Route path="*"              element={<Navigate to="/wm" replace />} />

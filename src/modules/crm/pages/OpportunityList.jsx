@@ -9,12 +9,14 @@ const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}
 const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:0})
 
 const STAGES = [
-  { key:'NEW',         label:'New',           color:'#6C757D', bg:'#F5F5F5' },
-  { key:'CONTACTED',   label:'Contacted',     color:'#004085', bg:'#EBF3FB' },
-  { key:'QUALIFIED',   label:'Qualified',     color:'#856404', bg:'#FFFBF0' },
-  { key:'PROPOSAL',    label:'Proposal Sent', color:'#4B2E83', bg:'#F5F0FA' },
-  { key:'NEGOTIATION', label:'Negotiation',   color:'#0C5460', bg:'#EDF7F8' },
-  { key:'WON',         label:'Won',           color:'#155724', bg:'#F0FAF3' },
+  { key:'Requirement Understanding', label:'Requirement',  color:'#6C757D', bg:'#F5F5F5' },
+  { key:'Solution Discussion',       label:'Discussion',   color:'#004085', bg:'#EBF3FB' },
+  { key:'Demo / Presentation',       label:'Demo',         color:'#856404', bg:'#FFFBF0' },
+  { key:'Proposal Submitted',        label:'Proposal',     color:'#4B2E83', bg:'#F5F0FA' },
+  { key:'Negotiation',               label:'Negotiation',  color:'#0C5460', bg:'#EDF7F8' },
+  { key:'Decision Pending',          label:'Decision',     color:'#E06F39', bg:'#FFF3E0' },
+  { key:'Won',                       label:'Won',          color:'#155724', bg:'#F0FAF3' },
+  { key:'Lost',                      label:'Lost',         color:'#721C24', bg:'#FFF5F5' },
 ]
 
 export default function OpportunityList() {
@@ -23,7 +25,7 @@ export default function OpportunityList() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${BASE_URL}/crm/leads`, { headers: hdr2() })
+    fetch(`${BASE_URL}/crm/opportunities`, { headers: hdr2() })
       .then(r=>r.json()).then(d=>setLeads(Array.isArray(d.data)?d.data:Array.isArray(d)?d:[]))
       .catch(()=>setLeads([])).finally(()=>setLoading(false))
   }, [])
@@ -45,7 +47,7 @@ export default function OpportunityList() {
         display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <div style={{fontWeight:700,color:'#714B67'}}>Total Pipeline Value</div>
         <div style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:20,color:'#714B67'}}>
-          {INR(leads.filter(l=>!['LOST'].includes(l.stage)).reduce((a,l)=>a+parseFloat(l.dealValue||0),0))}
+          {INR(leads.filter(l=>!['Lost','LOST'].includes(l.stage)).reduce((a,l)=>a+parseFloat(l.dealValue||0),0))}
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export default function OpportunityList() {
         /* Kanban columns */
         <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,overflowX:'auto'}}>
           {STAGES.map(s=>{
-            const stageLeads = leads.filter(l=>l.stage===s.key)
+            const stageLeads = leads.filter(l=>(l.stage||'').toLowerCase()===s.key.toLowerCase())
             const stageVal   = stageLeads.reduce((a,l)=>a+parseFloat(l.dealValue||0),0)
             return (
               <div key={s.key} style={{minWidth:180}}>
@@ -72,7 +74,7 @@ export default function OpportunityList() {
                         boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}
                       onMouseOver={e=>e.currentTarget.style.boxShadow='0 3px 12px rgba(0,0,0,.12)'}
                       onMouseOut={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.06)'}>
-                      <div style={{fontWeight:700,fontSize:12,marginBottom:3}}>{l.company||l.name}</div>
+                      <div style={{fontWeight:700,fontSize:12,marginBottom:3}}>{l.companyName||l.company||l.name}</div>
                       <div style={{fontSize:11,color:'#6C757D',marginBottom:4}}>{l.contactName||''}</div>
                       {l.dealValue>0&&(
                         <div style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:13,color:s.color}}>

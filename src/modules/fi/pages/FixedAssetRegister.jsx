@@ -180,6 +180,16 @@ export default function FixedAssetRegister() {
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
           <button className="btn btn-s sd-bsm" onClick={()=>{ setDepModal(true); setDepResults(null) }}>Run Depreciation</button>
+          <button className="btn btn-s sd-bsm" style={{color:'#721C24',background:'#F8D7DA',border:'1px solid #F5C6CB'}}
+            onClick={async ()=>{
+              if (!window.confirm('Clear ALL fixed assets? This cannot be undone. You will need to add your actual assets manually.')) return
+              try {
+                const r = await fetch(`${BASE_URL}/fi/fixed-assets/reset-seed`, { method:'POST', headers:hdr2() })
+                const d = await r.json()
+                toast.success(d.message)
+                load()
+              } catch(e) { toast.error(e.message) }
+            }}>🗑️ Clear All Assets</button>
           <button className="btn btn-s sd-bsm">Export</button>
           <button className="btn btn-p sd-bsm" onClick={openNew}>+ Add Asset</button>
         </div>
