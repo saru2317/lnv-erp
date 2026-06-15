@@ -88,26 +88,12 @@ export default function InspectionNew() {
       .then(d => setChecksheets(d.data || []))
       .catch(() => {})
 
-    // PP Work Orders — for PP source inspection
-    // Fetch WOs and inspection lots together
-    Promise.all([
-      fetch(`${BASE}/pp/wo?_t=${Date.now()}`, { headers: hdr2() }).then(r=>r.json()),
-      fetch(`${BASE}/qm/inspection?_t=${Date.now()}`, { headers: hdr2() }).then(r=>r.json()).catch(()=>({data:[]})),
-    ]).then(([woD, insD]) => {
-      const all  = woD.data  || []
-      const lots = insD.data || []
-      // Get WO nos that have ACCEPTED inspection and full qty inspected
-      const inspectedWOs = new Set(
-        lots
-          .filter(l => l.result === 'PASS' || l.result === 'ACCEPTED')
-          .map(l => l.refNo)
-      )
-      // Show WOs with producedQty > 0 that still need inspection
-      // (can re-inspect partial — show if uninspected qty remains)
-      setWOs(all.filter(w =>
-        parseFloat(w.producedQty||0) > 0
-      ))
-    }).catch(() => {})
+    // PP — fetch uninspected Production Entries (PE) for QC lot creation
+    // Backend computes pendingQty = PE goodQty - already inspected for that logNo
+    fetch(`${BASE}/pp/production-entry/uninspected?_t=${Date.now()}`, { headers: hdr2() })
+      .then(r => r.json())
+      .then(d => setWOs(d.data || []))
+      .catch(() => {})
 
     // If editing existing inspection
     if (id) {
@@ -646,15 +632,14 @@ export default function InspectionNew() {
                   onChange={async e => {
                     const wo = wos.find(w => String(w.id) === e.target.value)
                     if (!wo) return
-                    // lotQty = producedQty (editable — user can adjust for this batch)
-                    const produced = parseFloat(wo.producedQty||0)
+                    // PE selected: refNo = logNo, lotQty = pendingQty for this PE
                     setHdr(p => ({
                       ...p,
                       refId:    String(wo.id),
-                      refNo:    wo.woNo,
+                      refNo:    wo.logNo,      // PE log no e.g. PE-2026-0003
                       itemCode: wo.itemCode || '',
                       itemName: wo.itemName || '',
-                      lotQty:   String(produced),
+                      lotQty:   String(wo.pendingQty || wo.goodQty || ''),
                       unit:     wo.uom || 'Nos',
                     }))
                     // Auto-load Quality Plan for this item
@@ -678,7 +663,7 @@ export default function InspectionNew() {
                   <option value="">-- Select Work Order --</option>
                   {wos.map(w => (
                     <option key={w.id} value={w.id}>
-                      {w.woNo} · {w.itemName} · {parseFloat(w.producedQty||0)} {w.uom} produced
+                      {w.logNo} · {w.woNo} · {w.itemName} · {parseFloat(w.pendingQty||0)} {w.uom} pending
                     </option>
                   ))}
                 </select>

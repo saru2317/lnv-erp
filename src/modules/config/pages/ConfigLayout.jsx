@@ -20,6 +20,7 @@ const PrintTemplates  = lazy(() => import('./PrintTemplates'))
 const SecurityConfig  = lazy(() => import('./SecurityConfig'))
 const AuditLog        = lazy(() => import('./AuditLog'))
 const LabourProcessConfig = lazy(() => import('./LabourProcessConfig'))
+const TallyImport     = lazy(() => import('./TallyImport'))
 
 // Pages restricted to LNV Super Admin only
 const SUPER_ADMIN_ONLY = [
@@ -83,6 +84,9 @@ export default function ConfigLayout() {
       ...(isSuperAdmin ? [{ to:'/config/audit', label:'📋 Audit Log' }] : []),
       ...(isSuperAdmin ? [{ to:'/config/labour-process', label:'⚙️ Labour Process Access' }] : []),
     ]},
+    { label:'Data Migration', items:[
+      { to:'/config/tally-import', label:'📥 Tally Import' },
+    ]},
   ]
 
   return (
@@ -108,6 +112,7 @@ export default function ConfigLayout() {
           <Route path="email"         element={<SuperAdminRoute><EmailConfig /></SuperAdminRoute>} />
           <Route path="audit"          element={<SuperAdminRoute><AuditLog /></SuperAdminRoute>} />
           <Route path="labour-process" element={<SuperAdminRoute><LabourProcessConfig /></SuperAdminRoute>} />
+          <Route path="tally-import"   element={<TallyImport />} />
 
           <Route path="*"             element={<Navigate to="/config" replace />} />
         </Routes>

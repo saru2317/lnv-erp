@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -10,13 +10,15 @@ const fmt  = n => (!n||n===0) ? '—' : INR(n)
 const fmtD = d => new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
 
 const TYPE_COLORS = {
-  SD:  { bg:'#D4EDDA', color:'#155724', label:'Sales'      },
-  MM:  { bg:'#FFF3CD', color:'#856404', label:'Purchase'   },
-  FI:  { bg:'#EDE0EA', color:'#714B67', label:'Journal'    },
-  HCM: { bg:'#F4ECF7', color:'#6C3483', label:'Payroll'    },
-  PP:  { bg:'#D1ECF1', color:'#0C5460', label:'Production' },
-  WM:  { bg:'#CCE5FF', color:'#004085', label:'Warehouse'  },
-  PM:  { bg:'#F8D7DA', color:'#721C24', label:'Maintenance'},
+  SD:       { bg:'#D4EDDA', color:'#155724', label:'Sales'      },
+  MM:       { bg:'#FFF3CD', color:'#856404', label:'Purchase'   },
+  FI:       { bg:'#EDE0EA', color:'#714B67', label:'Journal'    },
+  HCM:      { bg:'#F4ECF7', color:'#6C3483', label:'Payroll'    },
+  PP:       { bg:'#D1ECF1', color:'#0C5460', label:'Production' },
+  PP_ISSUE: { bg:'#D1ECF1', color:'#0C5460', label:'Production' },
+  WM:       { bg:'#CCE5FF', color:'#004085', label:'Warehouse'  },
+  WM_GR:    { bg:'#CCE5FF', color:'#004085', label:'Warehouse'  },
+  PM:       { bg:'#F8D7DA', color:'#721C24', label:'Maintenance'},
 }
 
 // ── Breadcrumb ────────────────────────────────────────────────
@@ -244,9 +246,17 @@ function VoucherDetail({ je, onAccountClick, onBack }) {
 
 // ── LAYER 1: Day Book Main ────────────────────────────────────
 export default function DayBook() {
-  const today = new Date().toISOString().split('T')[0]
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate,   setToDate]   = useState(today)
+  const location = useLocation()
+  const now      = new Date()
+  const today    = now.toISOString().split('T')[0]
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+
+  // Read date from URL query params
+  const urlParams = new URLSearchParams(location.search)
+  const urlDate   = urlParams.get('date')
+
+  const [fromDate, setFromDate] = useState(urlDate || firstDay)
+  const [toDate,   setToDate]   = useState(urlDate || today)
   const [vType,    setVType]    = useState('All')
   const [search,   setSearch]   = useState('')
   const [entries,  setEntries]  = useState([])
@@ -296,7 +306,10 @@ export default function DayBook() {
   // ── LAYER 1: Day Book ──
   const SOURCES = ['All','FI','SD','MM','HCM','PP','WM','PM']
   const shown   = entries.filter(e => {
-    const ms = vType==='All' || e.refType===vType
+    const ms = vType==='All'
+      || (vType==='PP' && (e.refType==='PP'||e.refType==='PP_ISSUE'))
+      || (vType==='WM' && (e.refType==='WM'||e.refType==='WM_GR'))
+      || e.refType===vType
     const mt = !search ||
       e.jeNo?.toLowerCase().includes(search.toLowerCase()) ||
       e.narration?.toLowerCase().includes(search.toLowerCase()) ||
@@ -344,7 +357,10 @@ export default function DayBook() {
         {SOURCES.map(s => (
           <div key={s} className={`pp-chip${vType===s?' on':''}`} onClick={()=>setVType(s)}>
             {TYPE_COLORS[s]?.label||s}
-            <span>{s==='All' ? entries.length : entries.filter(e=>e.refType===s).length}</span>
+            <span>{s==='All' ? entries.length 
+              : s==='PP' ? entries.filter(e=>e.refType==='PP'||e.refType==='PP_ISSUE').length
+              : s==='WM' ? entries.filter(e=>e.refType==='WM'||e.refType==='WM_GR').length
+              : entries.filter(e=>e.refType===s).length}</span>
           </div>
         ))}
       </div>

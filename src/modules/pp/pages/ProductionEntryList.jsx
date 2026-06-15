@@ -218,7 +218,7 @@ export default function ProductionEntryList() {
 
   // ── Fetch machines ─────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch(`${BASE_URL}/pp/wc`, { headers: authHdrs() })
+    fetch(`${BASE_URL}/pp/work-centers`, { headers: authHdrs() })
       .then(r=>r.json()).then(d=>setMachines(d.data||[])).catch(()=>{})
   }, [])
 

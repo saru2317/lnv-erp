@@ -43,19 +43,25 @@ export default function InspectionList() {
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const curYear = new Date().getFullYear()
+  const [fromDate, setFromDate] = useState(`${curYear}-01-01`)
+  const [toDate,   setToDate]   = useState(new Date().toISOString().slice(0,10))
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
     try {
-      const res  = await fetch(`${BASE_URL}/qm/inspection`,
+      const params = new URLSearchParams()
+      if (fromDate) params.set('from', fromDate)
+      if (toDate)   params.set('to',   toDate)
+      const res  = await fetch(`${BASE_URL}/qm/inspection?${params}`,
         { headers:{ Authorization:`Bearer ${getToken()}` }})
       const data = await res.json()
       setLots(data.data||[])
     } catch(e){ toast.error(e.message) }
     finally { setLoading(false) }
-  },[])
+  },[fromDate, toDate])
 
-  useEffect(()=>{ fetch_() },[])
+  useEffect(()=>{ fetch_() },[fromDate, toDate])
 
   const filtered = lots.filter(l => {
     const matchChip = chip==='All' ||
@@ -95,8 +101,8 @@ export default function InspectionList() {
         <select className="fi-filter-select" onChange={e=>setSrc(e.target.value)}>
           {SOURCE.map(s=><option key={s}>{s}</option>)}
         </select>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-01"/>
-        <input type="date" className="fi-filter-select" defaultValue="2025-02-28"/>
+        <input type="date" className="fi-filter-select" value={fromDate} onChange={e=>setFromDate(e.target.value)}/>
+        <input type="date" className="fi-filter-select" value={toDate}   onChange={e=>setToDate(e.target.value)}/>
       </div>
 
       {loading ? (
@@ -149,11 +155,21 @@ export default function InspectionList() {
                   <button className="btn-xs" onClick={()=>nav(`/qm/inspection/${l.id}`)}>View</button>
                   {l.result==='REVIEW'&&<button className="btn-xs pri" onClick={()=>nav('/qm/ncr/new')}>NCR</button>}
                   {l.result==='PASS'&&<button className="btn-xs" onClick={()=>nav('/qm/certificates')}>Cert</button>}
-                  <button className="btn-xs"
-                    style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
-                    onClick={e=>deleteInspection(e,l)}>
-                    🗑 Delete
-                  </button>
+                  {/* Hide Delete if FG stock already received (invoice raised) */}
+                  {l.result !== 'PASS' && (
+                    <button className="btn-xs"
+                      style={{background:'#F8D7DA',color:'#721C24',border:'none'}}
+                      onClick={e=>deleteInspection(e,l)}>
+                      🗑 Delete
+                    </button>
+                  )}
+                  {l.result === 'PASS' && (
+                    <button className="btn-xs" disabled
+                      title="Cannot delete — FG stock received. Reverse invoice first."
+                      style={{background:'#e9ecef',color:'#6c757d',border:'none',cursor:'not-allowed'}}>
+                      🔒 Locked
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

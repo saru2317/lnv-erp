@@ -45,3 +45,40 @@ input, select, textarea {
 .mono { font-family: var(--font-mono); }
 .brand { font-family: var(--font-brand); }
 .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── Print: Hide app shell, show only print content ─── */
+@media print {
+  /* Hide entire app shell */
+  [class*="shell"],
+  [class*="topbar"],
+  [class*="subnav"],
+  [class*="sidebar"],
+  [class*="wrap"] > [class*="body"] > [class*="sidebar"],
+  [class*="ModuleLayout"],
+  [class*="AppShell"],
+  [class*="topLeft"],
+  [class*="topRight"],
+  [class*="logoWrap"],
+  nav, header,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show only print content */
+  body { background: #fff !important; margin: 0 !important; }
+  
+  [class*="content"],
+  [class*="wrap"] > [class*="body"] > [class*="content"] {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Make inv-page and ewb-page full width */
+  .inv-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}

@@ -27,7 +27,7 @@ export default function COGMReport() {
     setLoading(true)
     try {
       const res  = await fetch(
-        `${BASE}/pp/wo?status=COMPLETED,CLOSED`,
+        `${BASE}/pp/wo?status=COMPLETED,CLOSED,IN_PROGRESS,RELEASED`,
         { headers: hdr2() }
       )
       const data = await res.json()
@@ -59,7 +59,7 @@ export default function COGMReport() {
 
   // Filter by date range
   const filtered = wos.filter(w => {
-    const dt   = new Date(w.actualEnd || w.completedAt || w.updatedAt || w.createdAt)
+    const dt   = new Date(w.actualEnd || w.updatedAt || w.createdAt)
     const from = dateFrom ? new Date(dateFrom + 'T00:00:00') : null
     const to   = dateTo   ? new Date(dateTo   + 'T23:59:59') : null
     const matchDate = (!from || dt >= from) && (!to || dt <= to)
@@ -75,15 +75,23 @@ export default function COGMReport() {
     const operations = w.operations     || []
     const produced   = parseFloat(w.producedQty || 0)
 
-    // Material cost: sum from material issues (totalCost field)
-    const matCost = matIssues.reduce((s, m) =>
+    // Material cost: use pre-computed value from backend (issues × stdCost)
+    const matFromIssues = matIssues.reduce((s, m) =>
       s + parseFloat(m.totalCost || (parseFloat(m.issuedQty||0) * parseFloat(m.unitCost||0)) || 0), 0)
-      || parseFloat(w.actualRMCost || 0)
 
-    // MHR cost from operations (runTime in mins × mhr rate)
+    // Fallback chain: issues → _computedMatCost → actualRMCost → plannedRMCost
+    const matCost = matFromIssues > 0
+      ? matFromIssues
+      : parseFloat(w._computedMatCost || 0) > 0
+        ? parseFloat(w._computedMatCost)
+        : parseFloat(w.actualRMCost || 0) > 0
+          ? parseFloat(w.actualRMCost || 0)
+          : parseFloat(w.plannedRMCost || 0)
+
+    // MHR cost from operations (totalTime in mins × labour rate from WO)
     const mhrCost = operations.reduce((s, op) => {
-      const hrs = parseFloat(op.runTime || 0) / 60
-      return s + hrs * parseFloat(op.mhr || op.mhrRate || 0)
+      const hrs = parseFloat(op.totalTime || op.runTime || 0) / 60
+      return s + hrs * 50  // default ₹50/hr — use WO labourCost if available
     }, 0) || parseFloat(w.labourCost || 0)
 
     const overhead     = parseFloat(w.overheadCost || 0)
@@ -154,11 +162,12 @@ export default function COGMReport() {
           <button className="btn btn-s sd-bsm" onClick={load}>↻</button>
           <button className="btn btn-s sd-bsm" onClick={exportExcel}>⬇️ Export</button>
           <button className="btn btn-p sd-bsm" onClick={async () => {
-            if (!window.confirm('Backfill COGM JVs for all completed WOs? This posts auto-journals for WOs that were completed before this feature was added.')) return
+            if (!window.confirm('Recalculate COGM for all WOs? Existing JEs will be updated with correct partial quantities.')) return
             try {
               toast.loading('Processing...', { id:'cogm-bf' })
               const r = await fetch(`${BASE}/pp/wo/backfill-cogm`, {
-                method:'POST', headers:{ ...hdr2(), 'Content-Type':'application/json' }
+                method:'POST', headers:{ ...hdr2(), 'Content-Type':'application/json' },
+                body: JSON.stringify({ force: true })
               })
               const d = await r.json()
               toast.dismiss('cogm-bf')
@@ -283,8 +292,12 @@ export default function COGMReport() {
                   {fmtD(w.actualEnd || w.updatedAt)}
                 </td>
                 <td>
-                  <span className="badge badge-posted">
-                    {w.status}
+                  <span style={{
+                    padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,
+                    background:w.status==='COMPLETED'?'#D4EDDA':w.status==='IN_PROGRESS'?'#FFF3CD':w.status==='CLOSED'?'#D1ECF1':'#F5F5F5',
+                    color:w.status==='COMPLETED'?'#155724':w.status==='IN_PROGRESS'?'#856404':w.status==='CLOSED'?'#0C5460':'#6C757D'
+                  }}>
+                    {w.status==='IN_PROGRESS'?'⚡ In Progress':w.status}
                   </span>
                 </td>
                 <td onClick={e => e.stopPropagation()}>
@@ -380,26 +393,20 @@ export default function COGMReport() {
                                   </span>
                                 )}
                               </td>
-                              <td style={{ textAlign:'right',
-                                fontFamily:'DM Mono,monospace' }}>
+                              <td style={{ textAlign:'right', fontFamily:'DM Mono,monospace' }}>
                                 {m.bomQty || '—'}
                               </td>
-                              <td style={{ textAlign:'right',
-                                fontFamily:'DM Mono,monospace',
-                                fontWeight:700 }}>
-                                {m.issuedQty || m.bomQty || '—'}
+                              <td style={{ textAlign:'right', fontFamily:'DM Mono,monospace', fontWeight:700 }}>
+                                {parseFloat(m.issuedQty||0) > 0 ? parseFloat(m.issuedQty).toLocaleString('en-IN') : m.bomQty||'—'}
                               </td>
                               <td style={{ fontSize:11, color:'#6C757D' }}>
                                 {m.uom}
                               </td>
-                              <td style={{ textAlign:'right',
-                                fontFamily:'DM Mono,monospace' }}>
+                              <td style={{ textAlign:'right', fontFamily:'DM Mono,monospace' }}>
                                 {fmtC(m.unitCost || 0)}
                               </td>
-                              <td style={{ textAlign:'right',
-                                fontFamily:'DM Mono,monospace',
-                                fontWeight:700 }}>
-                                {fmtC((m.issuedQty||m.bomQty||0) * (m.unitCost||0))}
+                              <td style={{ textAlign:'right', fontFamily:'DM Mono,monospace', fontWeight:700 }}>
+                                {fmtC(m.totalCost || 0)}
                               </td>
                             </tr>
                           ))}

@@ -30,6 +30,8 @@ const LabourInvoice      = lazy(() => import('./LabourInvoice'))
 const LabourPriceBook    = lazy(() => import('./LabourPriceBook'))
 const SDReports          = lazy(() => import('./SDReports'))
 const SDApprovals        = lazy(() => import('@components/ui/MyApprovals'))
+const EInvoice           = lazy(() => import('./EInvoice'))
+const EWayBill           = lazy(() => import('./EWayBill'))
 
 const NAV = [
   { to: '/sd',             label: ' Home' },
@@ -64,6 +66,10 @@ const SIDEBAR = [
     { to: '/sd/delivery-challan',   label: 'Delivery Challan' },
     { to: '/sd/labour-invoice',     label: 'Labour Invoice (Job Work)' },
     { to: '/sd/labour-pricebook',   label: '💰 Labour Price Book'      },
+  ]},
+  { label: 'GST Compliance', icon: '🏛️', items: [
+    { to: '/sd/einvoice',         label: '📄 e-Invoice (IRN)' },
+    { to: '/sd/ewaybill',         label: '🚚 e-Way Bill' },
   ]},
   { label: 'Reports', icon: '', items: [
     { to: '/sd/reports/summary',  label: 'Sales Summary' },
@@ -108,6 +114,8 @@ export default function SDLayout() {
           <Route path="reports/ledger"     element={<SDReports />} />
           <Route path="reports/aging"      element={<SDReports />} />
           <Route path="reports/revenue"    element={<SDReports />} />
+          <Route path="einvoice"          element={<EInvoice />} />
+          <Route path="ewaybill"           element={<EWayBill />} />
           <Route path="*"               element={<Navigate to="/sd" replace />} />
         </Routes>
       </Suspense>

@@ -272,6 +272,14 @@ export default function InvoiceList() {
                       onClick={() => nav(`/sd/invoices/${inv.id}`)}>
                       View
                     </button>
+                    {['POSTED','PENDING','PARTIAL','OVERDUE'].includes(inv.status) && (
+                      <button className="btn-xs"
+                        title="Print Invoice"
+                        style={{ background:'#E8F4FD', color:'#0D6EFD', border:'1px solid #B8D4F0' }}
+                        onClick={e => { e.stopPropagation(); nav(`/sd/invoices/${inv.id}/print`) }}>
+                        🖨️
+                      </button>
+                    )}
                     {['DRAFT','PENDING_APPROVAL'].includes(inv.status) && (
                       <button className="btn-xs"
                         style={{ background:'#EDE0EA', color:'#714B67', border:'1px solid #D0C4D8' }}

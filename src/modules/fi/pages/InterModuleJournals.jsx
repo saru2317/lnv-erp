@@ -8,16 +8,16 @@ const hdr2 = () => ({ Authorization: `Bearer ${getToken()}` })
 const INR  = v => '\u20b9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
 
 const SRC_COLORS = {
-  SD:'#D4EDDA', MM:'#FFF3CD', WM:'#D1ECF1',
-  PP:'#EDE0EA', PM:'#F8D7DA', HCM:'#F4ECF7', FI:'#E2E3E5'
+  SD:'#D4EDDA', MM:'#FFF3CD', WM:'#D1ECF1', WM_GR:'#D1ECF1',
+  PP:'#EDE0EA', PP_ISSUE:'#EDE0EA', PM:'#F8D7DA', HCM:'#F4ECF7', FI:'#E2E3E5'
 }
 const SRC_TEXT = {
-  SD:'#155724', MM:'#856404', WM:'#0C5460',
-  PP:'#714B67', PM:'#721C24', HCM:'#6C3483', FI:'#383d41'
+  SD:'#155724', MM:'#856404', WM:'#0C5460', WM_GR:'#0C5460',
+  PP:'#714B67', PP_ISSUE:'#714B67', PM:'#721C24', HCM:'#6C3483', FI:'#383d41'
 }
 const SRC_LABELS = {
-  SD:'Sales', MM:'Purchase', PP:'Production',
-  WM:'Warehouse', HCM:'Payroll', PM:'Maintenance', FI:'Finance'
+  SD:'Sales', MM:'Purchase', PP:'Production', PP_ISSUE:'Production',
+  WM:'Warehouse', WM_GR:'Warehouse', HCM:'Payroll', PM:'Maintenance', FI:'Finance'
 }
 
 export default function InterModuleJournals() {
@@ -27,13 +27,23 @@ export default function InterModuleJournals() {
   const [filter,   setFilter]   = useState('All')
   const [expanded, setExpanded] = useState({})
   const [search,   setSearch]   = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo,   setDateTo]   = useState('')
+
+  // Get current month defaults
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  const today    = now.toISOString().split('T')[0]
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      const params = new URLSearchParams()
+      if (dateFrom) params.set('from', dateFrom)
+      if (dateTo)   params.set('to',   dateTo)
       const results = await Promise.all(
-        ['SD','MM','PP','WM','HCM','PM'].map(t =>
-          fetch(`${BASE_URL}/fi/je?refType=${t}`, { headers: hdr2() })
+        ['SD','MM','PP','PP_ISSUE','WM','WM_GR','HCM','PM'].map(t =>
+          fetch(`${BASE_URL}/fi/je?refType=${t}&${params}`, { headers: hdr2() })
             .then(r => r.json()).catch(() => ({ data: [] }))
         )
       )
@@ -42,14 +52,18 @@ export default function InterModuleJournals() {
       setJes(all)
     } catch { toast.error('Failed to load') }
     finally { setLoading(false) }
-  }, [])
+  }, [dateFrom, dateTo])
   useEffect(() => { load() }, [load])
 
   const toggle = id => setExpanded(e => ({ ...e, [id]: !e[id] }))
 
   const SOURCES = ['All','SD','MM','PP','WM','HCM','PM']
   const shown   = jes.filter(j => {
-    const ms = filter === 'All' || j.refType === filter
+    const src = j.refType
+    const ms = filter === 'All'
+      || (filter === 'PP' && (src==='PP'||src==='PP_ISSUE'))
+      || (filter === 'WM' && (src==='WM'||src==='WM_GR'))
+      || src === filter
     const mt = !search ||
       j.narration?.toLowerCase().includes(search.toLowerCase()) ||
       j.jeNo?.includes(search)
@@ -63,9 +77,15 @@ export default function InterModuleJournals() {
           Inter-Module Journals
           <small> Auto-posted JVs from all modules</small>
         </div>
-        <div className="fi-lv-actions">
+        <div className="fi-lv-actions" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+          <label style={{fontSize:11,fontWeight:700,color:'#6C757D'}}>FROM</label>
+          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+            style={{padding:'5px 8px',border:'1px solid #E0D5E0',borderRadius:5,fontSize:12,outline:'none'}} />
+          <label style={{fontSize:11,fontWeight:700,color:'#6C757D'}}>TO</label>
+          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+            style={{padding:'5px 8px',border:'1px solid #E0D5E0',borderRadius:5,fontSize:12,outline:'none'}} />
           <input className="sd-search" placeholder="Search JV / narration..."
-            value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+            value={search} onChange={e=>setSearch(e.target.value)} style={{width:180}}/>
           <button className="btn btn-s sd-bsm" onClick={load}>Refresh</button>
         </div>
       </div>
@@ -80,7 +100,10 @@ export default function InterModuleJournals() {
         {SOURCES.map(s => (
           <div key={s} className={`pp-chip${filter===s?' on':''}`} onClick={()=>setFilter(s)}>
             {SRC_LABELS[s]||s}
-            <span>{s==='All' ? jes.length : jes.filter(j=>j.refType===s).length}</span>
+            <span>{s==='All' ? jes.length 
+              : s==='PP' ? jes.filter(j=>j.refType==='PP'||j.refType==='PP_ISSUE').length
+              : s==='WM' ? jes.filter(j=>j.refType==='WM'||j.refType==='WM_GR').length
+              : jes.filter(j=>j.refType===s).length}</span>
           </div>
         ))}
       </div>
@@ -149,7 +172,10 @@ export default function InterModuleJournals() {
                   </span>
 
                   <div style={{textAlign:'center'}} onClick={e=>e.stopPropagation()}>
-                    <button className="btn-xs" onClick={()=>nav('/fi/daybook')}>View</button>
+                    <button className="btn-xs" onClick={()=>{
+                      const d = j.date ? new Date(j.date).toISOString().split('T')[0] : ''
+                      nav(`/fi/daybook?date=${d}`)
+                    }}>View</button>
                   </div>
                 </div>
 

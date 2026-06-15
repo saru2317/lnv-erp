@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { sdApi } from '../services/sdApi'
 import toast from 'react-hot-toast'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const BASE = import.meta.env.VITE_API_URL || '/api'
 const tok  = () => localStorage.getItem('lnv_token')
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${tok()}` })
 
@@ -48,6 +48,24 @@ const Row = ({ label, value, mono, bold, color }) => (
 )
 
 export default function InvoiceView() {
+  // Print style injected dynamically
+  React.useEffect(() => {
+    const style = document.createElement('style')
+    style.id = 'inv-print-style'
+    style.innerHTML = `
+      @media print {
+        body > *:not(#inv-print-root) { display: none !important; }
+        .sd-topbar, .sd-sidebar, .sd-nav, nav, header, .module-nav,
+        button, .act-btn-view, .btn, [class*="TopBar"], [class*="Sidebar"],
+        [class*="ModuleNav"], [class*="AppShell"] > *:not([class*="content"]) { display: none !important; }
+        [class*="content"], [class*="main"], .inv-print-area { display: block !important; }
+        @page { margin: 15mm; size: A4; }
+        body { font-family: 'DM Sans', sans-serif; font-size: 12px; }
+      }
+    `
+    document.head.appendChild(style)
+    return () => { const el = document.getElementById('inv-print-style'); if(el) el.remove() }
+  }, [])
   const nav      = useNavigate()
   const { id }   = useParams()
   const [inv,    setInv]    = useState(null)
@@ -388,6 +406,13 @@ export default function InvoiceView() {
               💰 Record Payment
             </button>
           )}
+          {['POSTED','PARTIAL','OVERDUE','PAID'].includes(inv.status) && (
+            <button className="btn btn-s sd-bsm"
+              style={{ background:'#E8F4FD', color:'#0D6EFD', borderColor:'#B8D4F0' }}
+              onClick={() => nav(`/sd/invoices/${id}/print`)}>
+              🖨️ Print Invoice
+            </button>
+          )}
           {['DRAFT','APPROVED'].includes(inv.status) && (
             <button className="btn btn-s sd-bsm" disabled={acting}
               style={{ color:'#DC3545', borderColor:'#DC3545' }} onClick={cancelInvoice}>
@@ -458,6 +483,18 @@ export default function InvoiceView() {
 
       {/* ── Lines ── */}
       <div style={sec}>
+      {/* ── IRN / e-Invoice Block ── */}
+      {inv.irn && (
+        <div style={{ margin:'0 0 16px', padding:'12px 16px', background:'#F0FFF4', border:'1px solid #B2DFDB', borderRadius:8, display:'flex', alignItems:'center', gap:16 }}>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:11, color:'#666', marginBottom:2 }}>🏛️ e-Invoice Reference Number (IRN)</div>
+            <div style={{ fontFamily:'monospace', fontSize:12, fontWeight:700, color:'#155724', wordBreak:'break-all' }}>{inv.irn}</div>
+            {inv.ackNo && <div style={{ fontSize:11, color:'#888', marginTop:4 }}>Ack No: {inv.ackNo} &nbsp;|&nbsp; Ack Date: {inv.ackDate ? new Date(inv.ackDate).toLocaleString('en-IN') : '—'}</div>}
+          </div>
+          {inv.qrCode && <img src={inv.qrCode} alt="QR" style={{ width:72, height:72, border:'1px solid #ddd', borderRadius:4 }} />}
+        </div>
+      )}
+
         <div style={secH}>📦 Invoice Line Items ({lines.length})</div>
         {lines.length===0
           ? <div style={{ padding:24, textAlign:'center', color:'#6C757D' }}>No line items stored.</div>
@@ -576,6 +613,13 @@ export default function InvoiceView() {
           {['POSTED','PARTIAL','OVERDUE'].includes(inv.status) && (
             <button className="btn btn-p sd-bsm" onClick={()=>nav(`/sd/payments/new?invId=${id}`)}>
               💰 Record Payment
+            </button>
+          )}
+          {['POSTED','PARTIAL','OVERDUE','PAID'].includes(inv.status) && (
+            <button className="btn btn-s sd-bsm"
+              style={{ background:'#E8F4FD', color:'#0D6EFD', borderColor:'#B8D4F0' }}
+              onClick={() => nav(`/sd/invoices/${id}/print`)}>
+              🖨️ Print Invoice
             </button>
           )}
         </div>

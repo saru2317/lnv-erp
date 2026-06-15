@@ -63,6 +63,7 @@ export default function CompanyProfile() {
   const TABS = [
     { key:'basic',    label:' Basic Info'   },
     { key:'address',  label:' Address'      },
+    { key:'bank',     label:'🏦 Bank Details' },
     { key:'statutory',label:' Statutory'    },
     { key:'settings', label:' Preferences'  },
     { key:'modules',  label:'⚙️ Modules', superAdminOnly:true },
@@ -201,6 +202,24 @@ export default function CompanyProfile() {
             </div>
           )}
 
+          {tab === 'bank' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, padding:16 }}>
+              <div><label style={{ fontSize:12, color:'#666' }}>Bank Name</label>
+                <input className="config-input" value={form.bankName||''} onChange={e=>set('bankName',e.target.value)} placeholder="e.g. HDFC Bank" /></div>
+              <div><label style={{ fontSize:12, color:'#666' }}>Branch Name</label>
+                <input className="config-input" value={form.bankBranch||''} onChange={e=>set('bankBranch',e.target.value)} placeholder="e.g. Coimbatore Main" /></div>
+              <div><label style={{ fontSize:12, color:'#666' }}>Account Number</label>
+                <input className="config-input" value={form.accountNo||''} onChange={e=>set('accountNo',e.target.value)} placeholder="Account number" /></div>
+              <div><label style={{ fontSize:12, color:'#666' }}>IFSC Code</label>
+                <input className="config-input" value={form.ifsc||''} onChange={e=>set('ifsc',e.target.value)} placeholder="e.g. HDFC0001234" style={{fontFamily:'monospace'}} /></div>
+              <div><label style={{ fontSize:12, color:'#666' }}>Account Type</label>
+                <select className="config-input" value={form.accountType||'Current'} onChange={e=>set('accountType',e.target.value)}>
+                  <option>Current</option><option>Savings</option>
+                </select></div>
+              <div><label style={{ fontSize:12, color:'#666' }}>UPI ID (optional)</label>
+                <input className="config-input" value={form.upiId||''} onChange={e=>set('upiId',e.target.value)} placeholder="e.g. lnvmfg@hdfcbank" /></div>
+            </div>
+          )}
           {tab === 'settings' && (
             <div className="sd-form-grid">
               <div className="sd-field">

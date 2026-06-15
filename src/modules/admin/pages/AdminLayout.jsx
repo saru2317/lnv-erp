@@ -13,6 +13,7 @@ const AuditByModule  = lazy(() => import('./AuditByModule'))
 const AuditByUser    = lazy(() => import('./AuditByUser'))
 const UserManagement       = lazy(() => import('./UserManagement'))
 const ItemCodeConfigMaster = lazy(() => import('./ItemCodeConfigMaster'))
+const ControlsLimits = lazy(() => import('./ControlsLimits'))
 
 const SIDEBAR_GROUPS = [
   { label:'Audit Trail', icon:'▸', items:[
@@ -20,6 +21,10 @@ const SIDEBAR_GROUPS = [
     {to:'/admin/audit/logs',         label:'Full Audit Log'},
     {to:'/admin/audit/module',       label:'Audit by Module'},
     {to:'/admin/audit/user',         label:'Audit by User'},
+  ]},
+  { label:'Controls & Limits', icon:'▸', items:[
+    {to:'/admin/controls',           label:'🔒 Controls & Limits'},
+    {to:'/config/approval-matrix',   label:'✅ Approval Matrix'},
   ]},
   { label:'Administration', icon:'🛡️', items:[
     {to:'/admin/users',              label:'User Management'},
@@ -45,6 +50,7 @@ export default function AdminLayout() {
           <Route index                   element={<AuditDashboard />} />
           <Route path="audit/logs"       element={<AuditLog />} />
           <Route path="audit/module"     element={<AuditByModule />} />
+          <Route path="controls"         element={<ControlsLimits />} />
           <Route path="audit/user"       element={<AuditByUser />} />
           <Route path="users"            element={<UserManagement />} />
           <Route path="item-code-config" element={<ItemCodeConfigMaster />} />

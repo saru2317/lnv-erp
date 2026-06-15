@@ -1,5 +1,7 @@
 import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, lazy } from 'react-router-dom'
+const EInvoice = lazy(() => import('./pages/EInvoice'))
+const EWayBill = lazy(() => import('./pages/EWayBill'))
 import ModuleLayout from '@components/layout/ModuleLayout'
 import styles from '../../mm/pages/Stub.module.css'
 
@@ -23,6 +25,12 @@ const SIDEBAR_GROUPS = [
     items: [
       { to: '/sd/customers', label: 'Customer List' },
       { to: '/sd/customers/new', label: 'New Customer' },
+    ]
+  },
+  { label: 'GST Compliance', icon: '🏛️',
+    items: [
+      { to: '/sd/einvoice',  label: 'e-Invoice (IRN)' },
+      { to: '/sd/ewaybill',  label: 'e-Way Bill' },
     ]
   },
   { label: 'Billing', icon: '🧾',
@@ -49,6 +57,8 @@ export default function SDLayout() {
     <ModuleLayout moduleName="SD" navItems={NAV_ITEMS} sidebarGroups={SIDEBAR_GROUPS}>
       <Routes>
         <Route index element={<SDDashboard />} />
+        <Route path="einvoice"  element={<EInvoice />} />
+        <Route path="ewaybill"  element={<EWayBill />} />
         <Route path="*" element={<Navigate to="/sd" replace />} />
       </Routes>
     </ModuleLayout>

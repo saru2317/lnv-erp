@@ -34,6 +34,8 @@ const ReportsModule   = lazy(() => import('@modules/reports/pages/ReportsLayout'
 const MDMModule       = lazy(() => import('@modules/mdm/pages/MDMLayout'))
 const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
+const InvoicePrint    = lazy(() => import('@modules/sd/pages/InvoicePrint'))
+const EWBPrint        = lazy(() => import('@modules/sd/pages/EWBPrint'))
 
 const MR = ({ mod, el }) => <ModuleRoute moduleKey={mod}>{el}</ModuleRoute>
 
@@ -71,6 +73,10 @@ export default function App() {
               <Route path="/mdm/*"     element={<MR mod="mdm"     el={<MDMModule />} />} />
               <Route path="/kpi/*"     element={<MR mod="kpi"     el={<KPIModule />} />} />
             </Route>
+
+            {/* Print routes — outside AppShell (no sidebar/navbar) */}
+            <Route path="/sd/invoices/:id/print" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />
+            <Route path="/sd/ewaybill/:id/print" element={<ProtectedRoute><EWBPrint /></ProtectedRoute>} />
 
             {/* Fallback */}
             <Route path="/print/:type/:id" element={<PrintPreview />} />
