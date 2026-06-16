@@ -62,6 +62,92 @@ const buildSearchIndex = () => {
     { type:'master', icon:'▸', label:'Property Register',        sub:'AM → Property',   path:'/am/property',           mod:'am',      keywords:['property','building','land','premises'] },
     { type:'master', icon:'👤', label:'User Management',          sub:'Config → Users',  path:'/config/users',          mod:'config',  keywords:['user','user management','user master','login user'] },
     { type:'master', icon:'🔐', label:'Roles & Permissions',      sub:'Config → RBAC',   path:'/config/roles',          mod:'config',  keywords:['role','permission','rbac','access control'] },
+
+    // ── LNV T-CODES (Transaction Codes) ──────────────
+    // SD — Sales & Distribution
+    { type:'tcode', icon:'⚡', label:'New Quotation',          sub:'QT01 · Sales → Quotations → New',          path:'/sd/quotations/new',      mod:'sd',      tcode:'QT01', keywords:['qt01','quotation','new quote'] },
+    { type:'tcode', icon:'⚡', label:'Quotation List',         sub:'QT02 · Sales → Quotations',               path:'/sd/quotations',          mod:'sd',      tcode:'QT02', keywords:['qt02','quotation list','quotes'] },
+    { type:'tcode', icon:'⚡', label:'New Sales Order',        sub:'SO01 · Sales → Sales Orders → New',        path:'/sd/sales/new',           mod:'sd',      tcode:'SO01', keywords:['so01','new sales order','create so'] },
+    { type:'tcode', icon:'⚡', label:'Sales Order List',       sub:'SO02 · Sales → Sales Orders',             path:'/sd/sales',               mod:'sd',      tcode:'SO02', keywords:['so02','sales order list'] },
+    { type:'tcode', icon:'⚡', label:'New Invoice',            sub:'INV01 · Sales → Invoices → New',           path:'/sd/invoices/new',        mod:'sd',      tcode:'INV01',keywords:['inv01','new invoice','create invoice'] },
+    { type:'tcode', icon:'⚡', label:'Invoice List',           sub:'INV02 · Sales → Invoices',                path:'/sd/invoices',            mod:'sd',      tcode:'INV02',keywords:['inv02','invoice list','invoices'] },
+    { type:'tcode', icon:'⚡', label:'Delivery Challan',       sub:'DC01 · Sales → Delivery Challan',          path:'/sd/dc',                  mod:'sd',      tcode:'DC01', keywords:['dc01','delivery challan','dc'] },
+    { type:'tcode', icon:'⚡', label:'Payment Receipts',       sub:'PAY01 · Sales → Payment Receipts',         path:'/sd/payments',            mod:'sd',      tcode:'PAY01',keywords:['pay01','payment receipt','collect payment'] },
+    { type:'tcode', icon:'⚡', label:'e-Invoice (IRN)',         sub:'IRN01 · Sales → GST Compliance → e-Invoice',path:'/sd/einvoice',          mod:'sd',      tcode:'IRN01',keywords:['irn01','e-invoice','irn','gst invoice'] },
+    { type:'tcode', icon:'⚡', label:'e-Way Bill',             sub:'EWB01 · Sales → GST Compliance → e-Way Bill',path:'/sd/ewaybill',         mod:'sd',      tcode:'EWB01',keywords:['ewb01','e-way bill','ewb','eway'] },
+    { type:'tcode', icon:'⚡', label:'Customer Master',        sub:'CM01 · Sales → Customer Master',           path:'/sd/customers',           mod:'sd',      tcode:'CM01', keywords:['cm01','customer master','new customer'] },
+
+    // MM — Materials Management
+    { type:'tcode', icon:'⚡', label:'Purchase Indent',        sub:'PR01 · Purchase → Purchase Indent → New',  path:'/mm/pr/new',              mod:'mm',      tcode:'PR01', keywords:['pr01','purchase indent','purchase request'] },
+    { type:'tcode', icon:'⚡', label:'Comparative Statement',  sub:'CS01 · Purchase → CS → New',               path:'/mm/cs/new',              mod:'mm',      tcode:'CS01', keywords:['cs01','comparative statement','pcs','vendor comparison'] },
+    { type:'tcode', icon:'⚡', label:'CS Register',            sub:'CS02 · Purchase → CS Register',            path:'/mm/cs',                  mod:'mm',      tcode:'CS02', keywords:['cs02','cs register','pcs list'] },
+    { type:'tcode', icon:'⚡', label:'New Purchase Order',     sub:'PO01 · Purchase → Purchase Orders → New',  path:'/mm/po/new',              mod:'mm',      tcode:'PO01', keywords:['po01','new purchase order','create po'] },
+    { type:'tcode', icon:'⚡', label:'Purchase Order List',    sub:'PO02 · Purchase → Purchase Orders',        path:'/mm/po',                  mod:'mm',      tcode:'PO02', keywords:['po02','purchase order list','po list'] },
+    { type:'tcode', icon:'⚡', label:'Record GRN',             sub:'GR01 · Purchase → GRN → Record',           path:'/mm/grn/new',             mod:'mm',      tcode:'GR01', keywords:['gr01','grn','goods receipt','receive material'] },
+    { type:'tcode', icon:'⚡', label:'GRN List',               sub:'GR02 · Purchase → GRN List',               path:'/mm/grn',                 mod:'mm',      tcode:'GR02', keywords:['gr02','grn list','goods receipt list'] },
+    { type:'tcode', icon:'⚡', label:'Vendor Invoice',         sub:'VI01 · Purchase → Vendor Invoice',         path:'/mm/vendor-invoices',     mod:'mm',      tcode:'VI01', keywords:['vi01','vendor invoice','supplier invoice'] },
+    { type:'tcode', icon:'⚡', label:'Vendor Payments',        sub:'VP01 · Purchase → Vendor Payments',        path:'/mm/vendor-payments',     mod:'mm',      tcode:'VP01', keywords:['vp01','vendor payment','pay supplier'] },
+    { type:'tcode', icon:'⚡', label:'Vendor Master',          sub:'VM01 · Purchase → Vendor Master',          path:'/mm/vendors',             mod:'mm',      tcode:'VM01', keywords:['vm01','vendor master','supplier master'] },
+
+    // PP — Production Planning
+    { type:'tcode', icon:'⚡', label:'New Work Order',         sub:'WO01 · Production → Work Orders → New',    path:'/pp/wo/new',              mod:'pp',      tcode:'WO01', keywords:['wo01','new work order','create wo'] },
+    { type:'tcode', icon:'⚡', label:'Work Order List',        sub:'WO02 · Production → Work Orders',          path:'/pp/wo',                  mod:'pp',      tcode:'WO02', keywords:['wo02','work order list','wo list'] },
+    { type:'tcode', icon:'⚡', label:'Production Entry',       sub:'WO03 · Production → Production Entry',     path:'/pp/production-entry',    mod:'pp',      tcode:'WO03', keywords:['wo03','production entry','shift entry'] },
+    { type:'tcode', icon:'⚡', label:'MRP Run',               sub:'MR01 · Production → MRP Run',              path:'/pp/mrp',                 mod:'pp',      tcode:'MR01', keywords:['mr01','mrp run','material planning'] },
+    { type:'tcode', icon:'⚡', label:'BOM Master',            sub:'BM01 · Production → BOM',                  path:'/pp/bom',                 mod:'pp',      tcode:'BM01', keywords:['bm01','bom','bill of materials'] },
+    { type:'tcode', icon:'⚡', label:'Work Center Board',     sub:'WO06 · Production → Work Center Board',    path:'/pp/work-center-board',   mod:'pp',      tcode:'WO06', keywords:['wo06','work center board','machine status'] },
+    { type:'tcode', icon:'⚡', label:'Capacity Planning',     sub:'CP01 · Production → Capacity Planning',    path:'/pp/capacity-planning',   mod:'pp',      tcode:'CP01', keywords:['cp01','capacity planning','machine load'] },
+    { type:'tcode', icon:'⚡', label:'Mould Master',          sub:'MM01 · Production → Mould Master',         path:'/pp/mould-master',        mod:'pp',      tcode:'MM01', keywords:['mm01','mould master','die master'] },
+
+    // QM — Quality Management
+    { type:'tcode', icon:'⚡', label:'New Inspection',        sub:'QA01 · Quality → Inspection → New',        path:'/qm/inspections/new',     mod:'qm',      tcode:'QA01', keywords:['qa01','new inspection','inspection lot'] },
+    { type:'tcode', icon:'⚡', label:'Inspection List',       sub:'QA02 · Quality → Inspection List',         path:'/qm/inspections',         mod:'qm',      tcode:'QA02', keywords:['qa02','inspection list','qc list'] },
+    { type:'tcode', icon:'⚡', label:'Raise NCR',            sub:'NC01 · Quality → NCR → New',               path:'/qm/ncr/new',             mod:'qm',      tcode:'NC01', keywords:['nc01','ncr','non conformance','defect'] },
+    { type:'tcode', icon:'⚡', label:'CAPA',                 sub:'CA01 · Quality → CAPA → New',              path:'/qm/capa/new',            mod:'qm',      tcode:'CA01', keywords:['ca01','capa','corrective action'] },
+    { type:'tcode', icon:'⚡', label:'Customer Complaint',   sub:'CM01 · Quality → Complaints → New',        path:'/qm/complaints/new',      mod:'qm',      tcode:'QC01', keywords:['qc01','complaint','customer complaint'] },
+
+    // FI — Finance
+    { type:'tcode', icon:'⚡', label:'New Journal Entry',    sub:'JV01 · Finance → Journal Entry → New',     path:'/fi/jv/new',              mod:'fi',      tcode:'JV01', keywords:['jv01','journal entry','voucher'] },
+    { type:'tcode', icon:'⚡', label:'Day Book',             sub:'DB01 · Finance → Day Book',                path:'/fi/daybook',             mod:'fi',      tcode:'DB01', keywords:['db01','day book','daily transactions'] },
+    { type:'tcode', icon:'⚡', label:'General Ledger',       sub:'GL01 · Finance → General Ledger',          path:'/fi/ledger',              mod:'fi',      tcode:'GL01', keywords:['gl01','general ledger','account ledger'] },
+    { type:'tcode', icon:'⚡', label:'Trial Balance',        sub:'TB01 · Finance → Trial Balance',           path:'/fi/trial',               mod:'fi',      tcode:'TB01', keywords:['tb01','trial balance','tb'] },
+    { type:'tcode', icon:'⚡', label:'Profit & Loss',        sub:'PL01 · Finance → P&L Report',              path:'/fi/pl',                  mod:'fi',      tcode:'PL01', keywords:['pl01','profit loss','p&l','pnl'] },
+    { type:'tcode', icon:'⚡', label:'Balance Sheet',        sub:'BS01 · Finance → Balance Sheet',           path:'/fi/bs',                  mod:'fi',      tcode:'BS01', keywords:['bs01','balance sheet','assets liabilities'] },
+    { type:'tcode', icon:'⚡', label:'GSTR-1 Data',          sub:'GS01 · Finance → GST → GSTR-1',           path:'/fi/gstr1',               mod:'fi',      tcode:'GS01', keywords:['gs01','gstr1','gst return','outward supply'] },
+    { type:'tcode', icon:'⚡', label:'GSTR-3B Summary',      sub:'GS02 · Finance → GST → GSTR-3B',          path:'/fi/gstr3b',              mod:'fi',      tcode:'GS02', keywords:['gs02','gstr3b','gst summary','itc'] },
+    { type:'tcode', icon:'⚡', label:'Budget vs Actual',     sub:'BA01 · Finance → Budget vs Actual',        path:'/fi/budget',              mod:'fi',      tcode:'BA01', keywords:['ba01','budget','actual','variance'] },
+    { type:'tcode', icon:'⚡', label:'COGM Report',          sub:'CG01 · Finance → COGM Report',             path:'/fi/cogm',                mod:'fi',      tcode:'CG01', keywords:['cg01','cogm','cost of goods','manufacturing cost'] },
+
+    // WM — Warehouse
+    { type:'tcode', icon:'⚡', label:'Stock List',           sub:'SL01 · Warehouse → Stock List',            path:'/wm/stock',               mod:'wm',      tcode:'SL01', keywords:['sl01','stock list','inventory','current stock'] },
+    { type:'tcode', icon:'⚡', label:'Record GRN',           sub:'GE01 · Warehouse → Gate Entry',            path:'/wm/gate-entry',          mod:'wm',      tcode:'GE01', keywords:['ge01','gate entry','inward','vehicle entry'] },
+    { type:'tcode', icon:'⚡', label:'Goods Issue',          sub:'GI01 · Warehouse → Goods Issue',           path:'/wm/goods-issue',         mod:'wm',      tcode:'GI01', keywords:['gi01','goods issue','material issue','shop floor'] },
+    { type:'tcode', icon:'⚡', label:'Stock Transfer',       sub:'ST01 · Warehouse → Stock Transfer',        path:'/wm/transfer',            mod:'wm',      tcode:'ST01', keywords:['st01','stock transfer','location transfer'] },
+    { type:'tcode', icon:'⚡', label:'Physical Inventory',   sub:'PI01 · Warehouse → Physical Inventory',    path:'/wm/pi',                  mod:'wm',      tcode:'PI01', keywords:['pi01','physical inventory','stock count'] },
+    { type:'tcode', icon:'⚡', label:'Movement Log',         sub:'ML01 · Warehouse → Movement Log',          path:'/wm/movements',           mod:'wm',      tcode:'ML01', keywords:['ml01','movement log','stock movements'] },
+    { type:'tcode', icon:'⚡', label:'Reorder List',         sub:'RL01 · Warehouse → Reorder List',          path:'/wm/reorder',             mod:'wm',      tcode:'RL01', keywords:['rl01','reorder list','reorder alert'] },
+    { type:'tcode', icon:'⚡', label:'FSN Analysis',         sub:'FS01 · Warehouse → FSN Analysis',          path:'/wm/fsn',                 mod:'wm',      tcode:'FS01', keywords:['fs01','fsn','fast slow non-moving'] },
+
+    // HCM — HR
+    { type:'tcode', icon:'⚡', label:'New Employee',         sub:'EMP01 · HR → Employee → New',              path:'/hcm/employees/new',      mod:'hcm',     tcode:'EMP01',keywords:['emp01','new employee','onboard employee'] },
+    { type:'tcode', icon:'⚡', label:'Attendance Register',  sub:'ATT01 · HR → Attendance Register',         path:'/hcm/attendance',         mod:'hcm',     tcode:'ATT01',keywords:['att01','attendance','present absent'] },
+    { type:'tcode', icon:'⚡', label:'Leave Management',     sub:'LV01 · HR → Leave Management',             path:'/hcm/leave',              mod:'hcm',     tcode:'LV01', keywords:['lv01','leave','leave register','leave balance'] },
+    { type:'tcode', icon:'⚡', label:'Payroll Processing',   sub:'PAY01 · HR → Payroll Processing',          path:'/hcm/payroll',            mod:'hcm',     tcode:'PAY01',keywords:['pay01','payroll','salary processing','run payroll'] },
+    { type:'tcode', icon:'⚡', label:'PF & ESI Register',    sub:'PF01 · HR → Statutory → PF & ESI',        path:'/hcm/statutory',          mod:'hcm',     tcode:'PF01', keywords:['pf01','pf','esi','statutory','provident fund'] },
+    { type:'tcode', icon:'⚡', label:'Increment Management', sub:'INC01 · HR → Increment Management',        path:'/hcm/increment',          mod:'hcm',     tcode:'INC01',keywords:['inc01','increment','salary increment','appraisal'] },
+
+    // CRM
+    { type:'tcode', icon:'⚡', label:'New Lead',             sub:'LM01 · CRM → Lead Management → New',       path:'/crm/leads/new',          mod:'crm',     tcode:'LM01', keywords:['lm01','new lead','create lead','prospect'] },
+    { type:'tcode', icon:'⚡', label:'Lead List',            sub:'LM02 · CRM → Lead List',                   path:'/crm/leads',              mod:'crm',     tcode:'LM02', keywords:['lm02','lead list','all leads'] },
+    { type:'tcode', icon:'⚡', label:'Opportunity Pipeline', sub:'OP01 · CRM → Opportunities → Pipeline',    path:'/crm/opportunities',      mod:'crm',     tcode:'OP01', keywords:['op01','opportunity','pipeline','deal'] },
+    { type:'tcode', icon:'⚡', label:'Log Activity',         sub:'AC01 · CRM → Activities → Log',            path:'/crm/activities',         mod:'crm',     tcode:'AC01', keywords:['ac01','activity','call log','visit log'] },
+    { type:'tcode', icon:'⚡', label:'CRM Dashboard',        sub:'CR01 · CRM → Dashboard',                   path:'/crm',                    mod:'crm',     tcode:'CR01', keywords:['cr01','crm dashboard','sales dashboard'] },
+
+    // Admin
+    { type:'tcode', icon:'⚡', label:'Support Ticket',       sub:'TKT01 · Admin → Support → New Ticket',     path:'/admin/support',          mod:'admin',   tcode:'TKT01',keywords:['tkt01','support ticket','raise ticket','help'] },
+    { type:'tcode', icon:'⚡', label:'User Management',      sub:'USR01 · Admin → User Management',          path:'/admin/users',            mod:'admin',   tcode:'USR01',keywords:['usr01','users','user management','add user'] },
+    { type:'tcode', icon:'⚡', label:'LNV Billing',          sub:'BIL01 · Admin → LNV Billing',              path:'/admin/billing',          mod:'admin',   tcode:'BIL01',keywords:['bil01','billing','lnv billing','subscription'] },
+    { type:'tcode', icon:'⚡', label:'Company Profile',      sub:'CFG01 · Config → Company Profile',         path:'/config/company',         mod:'config',  tcode:'CFG01',keywords:['cfg01','company profile','company settings'] },
   ]
 
   // Show all items — module access controlled by route guards
@@ -73,6 +159,7 @@ const TYPE_CONFIG = {
   action: { label:'Quick Actions', color:'#00A09D', bg:'#E6F7F7' },
   report: { label:'Reports',       color:'#017E84', bg:'#D1ECF1' },
   master: { label:'Master Data',   color:'#856404', bg:'#FFF3CD' },
+  tcode:  { label:'T-Code',        color:'#1A5276', bg:'#D6EAF8' },
 }
 
 // ── RECENT SEARCHES — localStorage ──────────────────

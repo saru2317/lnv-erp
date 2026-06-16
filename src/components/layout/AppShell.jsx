@@ -51,7 +51,22 @@ const ROUTE_LABELS = {
   '/crm':'CRM', '/crm/leads':'Leads', '/tm':'Transport', '/tm/vehicles':'Vehicles',
   '/am':'Assets', '/civil':'Civil', '/vm':'Visitor', '/cn':'Canteen',
   '/reports':'Reports', '/kpi':'KPI / KRA', '/mdm':'MDM',
-  '/admin':'Admin', '/config':'Config', '/config/users':'User Management',
+  '/admin':'Admin Dashboard', '/config':'Config', '/config/users':'User Management',
+  '/admin/support':'🎫 Support', '/admin/billing':'💰 LNV Billing',
+  '/admin/users':'User Management', '/admin/approvals':'Approval Inbox',
+  '/admin/controls':'Controls & Limits', '/admin/audit/logs':'Audit Log',
+  '/config/company':'Company Profile', '/config/approval-matrix':'Approval Matrix',
+  '/sd/einvoice':'e-Invoice (IRN)', '/sd/ewaybill':'e-Way Bill',
+  '/sd/dc':'Delivery Challan', '/sd/payments':'Payment Receipts',
+  '/mm/vendor-invoices':'Vendor Invoice', '/mm/vendor-payments':'Vendor Payments',
+  '/pp/production-entry':'Production Entry', '/pp/work-center-board':'Work Center Board',
+  '/pp/capacity-planning':'Capacity Planning', '/pp/mould-master':'Mould Master',
+  '/pp/mrp':'MRP Run', '/qm/inspections':'Inspection List',
+  '/qm/capa':'CAPA', '/qm/complaints':'Complaints',
+  '/hcm/statutory':'Statutory Reports', '/hcm/increment':'Increment Management',
+  '/crm/opportunities':'Opportunity Pipeline', '/crm/activities':'Activity Log',
+  '/fi/jv/new':'New Journal Entry', '/fi/daybook':'Day Book',
+  '/fi/ledger':'General Ledger', '/fi/budget':'Budget vs Actual',
 }
 
 const getModKey = (path) => path.split('/').filter(Boolean)[0] || 'home'

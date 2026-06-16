@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const BASE = import.meta.env.VITE_API_URL || '/api'
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 const INR  = n => '₹' + Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})
@@ -77,6 +77,14 @@ export default function BillingAdmin() {
   )
 
   const [tab,        setTab]       = useState('dashboard')
+  const [projects,   setProjects]  = useState([])
+  const [amcs,       setAmcs]      = useState([])
+  const [projModal,  setProjModal] = useState(false)
+  const [amcModal,   setAmcModal]  = useState(false)
+  const [editProj,   setEditProj]  = useState(null)
+  const [editAmc,    setEditAmc]   = useState(null)
+  const [projForm,   setProjForm]  = useState({ clientName:'', industry:'Injection Moulding', package:'Professional', startDate:'', goLiveDate:'', status:'Planning', health:'green', currentPhase:0, pm:'Saravanan', contactPerson:'', contractValue:'', location:'Coimbatore', notes:'' })
+  const [amcForm,    setAmcForm]   = useState({ clientName:'', package:'Professional', startDate:'', endDate:'', amount:'', gstPct:18, notes:'' })
   const [dashboard,  setDashboard] = useState(null)
   const [clients,    setClients]   = useState([])
   const [quotes,     setQuotes]    = useState([])
@@ -85,6 +93,22 @@ export default function BillingAdmin() {
   const [modal,      setModal]     = useState(null)
   const [selClient,  setSelClient] = useState(null)
   const [quoteForm,  setQuoteForm] = useState({ tier:1, users:5, discount:0, gst:18, setup:25000, amc:20, modules:{} })
+
+  const loadProjects = useCallback(async () => {
+    try {
+      const r = await fetch(`${BASE}/billing/projects`, { headers:hdr2() })
+      const d = await r.json()
+      setProjects(d.data || [])
+    } catch {}
+  }, [])
+
+  const loadAmcs = useCallback(async () => {
+    try {
+      const r = await fetch(`${BASE}/billing/amc`, { headers:hdr2() })
+      const d = await r.json()
+      setAmcs(d.data || [])
+    } catch {}
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -221,7 +245,7 @@ export default function BillingAdmin() {
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:0, marginBottom:16, borderBottom:'2px solid #E8E0E8' }}>
-        {[['dashboard','Dashboard'],['clients','Clients'],['quote-builder','Quote Builder'],['quotes','Quotes'],['subscriptions','Subscriptions']].map(([t,l])=>(
+        {[['dashboard','🏠 Dashboard'],['clients','👥 Clients'],['quote-builder','📝 Quote Builder'],['quotes','📋 Quotes'],['subscriptions','🔄 Subscriptions'],['projects','📌 Projects'],['amc','🔒 AMC Tracker']].map(([t,l])=>(
           <button key={t} onClick={()=>setTab(t)}
             style={{ padding:'8px 18px', border:'none', background:'transparent', fontWeight:700, fontSize:13, cursor:'pointer',
               color: tab===t?'#1C1C1C':'#6C757D', borderBottom:tab===t?'2px solid #1C1C1C':'2px solid transparent', marginBottom:-2 }}>
@@ -501,6 +525,271 @@ export default function BillingAdmin() {
               {subs.length===0 && <tr><td colSpan={8} style={{ padding:'32px', textAlign:'center', color:'#CCC' }}>No subscriptions yet. Accept a quote to create one.</td></tr>}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Projects Tab ── */}
+      {tab==='projects' && (
+        <div style={sec}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+            <div style={secH}>📌 Implementation Projects ({projects.length})</div>
+            <button onClick={()=>{ setEditProj(null); setProjForm({ clientName:'', industry:'Injection Moulding', package:'Professional', startDate:new Date().toISOString().slice(0,10), goLiveDate:'', status:'Planning', health:'green', currentPhase:0, pm:'Saravanan', contactPerson:'', contractValue:'', location:'Coimbatore', notes:'' }); setProjModal(true) }}
+              style={{ padding:'6px 16px', background:'#714B67', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600, fontSize:13 }}>+ New Project</button>
+          </div>
+          {/* Stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:16 }}>
+            {[['Total',projects.length,'#714B67'],['Active',projects.filter(p=>p.status==='Active').length,'#1E8449'],['Planning',projects.filter(p=>p.status==='Planning').length,'#1A5276'],['Completed',projects.filter(p=>p.status==='Completed').length,'#27AE60'],['Delayed',projects.filter(p=>p.status==='Delayed').length,'#C0392B']].map(([l,v,c])=>(
+              <div key={l} style={{ background:'#fff', borderRadius:8, padding:'12px 14px', boxShadow:'0 1px 4px rgba(0,0,0,.06)', borderLeft:`3px solid ${c}` }}>
+                <div style={{ fontSize:22, fontWeight:700, color:c }}>{v}</div>
+                <div style={{ fontSize:11, color:'#888' }}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+            <thead>
+              <tr style={{ background:'#714B67', color:'#fff' }}>
+                {['Project Code','Customer','Industry','Package','Start','Go-Live','Phase','Progress','Status','Health','Value','Actions'].map(h=>(
+                  <th key={h} style={{ padding:'9px 12px', textAlign:'left', fontSize:12, fontWeight:600, whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {projects.map((p,i)=>{
+                const phases = typeof p.phases === 'string' ? JSON.parse(p.phases||'[]') : (p.phases||[])
+                let done=0, total=0
+                phases.forEach(ph=>(ph.tasks||[]).forEach(t=>{total++;if(t.done)done++}))
+                const prog = total ? Math.round(done/total*100) : 0
+                const dl = p.goLiveDate ? Math.ceil((new Date(p.goLiveDate)-new Date())/86400000) : null
+                const phaseNames = ['Kickoff','Setup','Data Entry','Training','Go-Live','Hypercare','Done']
+                const phaseColors = ['#714B67','#1A5276','#1E8449','#D35400','#C0392B','#27AE60','#95A5A6']
+                const pi = parseInt(p.currentPhase||0)
+                return (
+                  <tr key={p.id} style={{ background:i%2===0?'#fff':'#F9F6F8', borderBottom:'1px solid #F0E8EC' }}>
+                    <td style={{ padding:'9px 12px', fontFamily:'DM Mono,monospace', fontSize:11, color:'#714B67', fontWeight:700 }}>{p.projectCode}</td>
+                    <td style={{ padding:'9px 12px', fontWeight:600 }}>{p.clientName}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>{p.industry||'—'}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>{p.package||'—'}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>{fmtD(p.startDate)}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>
+                      {fmtD(p.goLiveDate)}
+                      {dl!==null && <div style={{ fontSize:10, color:dl<0?'#C0392B':dl<7?'#B8860B':'#888' }}>{dl<0?Math.abs(dl)+' overdue':dl+' days'}</div>}
+                    </td>
+                    <td style={{ padding:'9px 12px', fontSize:11, fontWeight:600, color:phaseColors[pi] }}>{phaseNames[pi]}</td>
+                    <td style={{ padding:'9px 12px', minWidth:80 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <div style={{ flex:1, height:6, background:'#E8E0EC', borderRadius:3, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:prog+'%', background:prog>=80?'#1E8449':prog>=40?'#B8860B':'#714B67', borderRadius:3 }}/>
+                        </div>
+                        <span style={{ fontSize:11, color:'#888' }}>{prog}%</span>
+                      </div>
+                    </td>
+                    <td style={{ padding:'9px 12px' }}>
+                      <span style={{ padding:'3px 9px', borderRadius:12, fontSize:11, fontWeight:600, background:{Planning:'#EBF5FB',Active:'#E8F5E9','On Hold':'#FEF9E7',Completed:'#F0EBF0',Delayed:'#FDEDEC'}[p.status]||'#f0f0f0', color:{Planning:'#1A5276',Active:'#1E8449','On Hold':'#B8860B',Completed:'#714B67',Delayed:'#C0392B'}[p.status]||'#333' }}>{p.status}</span>
+                    </td>
+                    <td style={{ padding:'9px 12px', textAlign:'center' }}>{{green:'🟢',yellow:'🟡',red:'🔴'}[p.health]||'⚪'}</td>
+                    <td style={{ padding:'9px 12px', fontWeight:600, color:'#1E8449' }}>{p.contractValue?'₹'+parseFloat(p.contractValue).toLocaleString('en-IN'):'—'}</td>
+                    <td style={{ padding:'9px 12px' }}>
+                      <div style={{ display:'flex', gap:4 }}>
+                        <button onClick={()=>{ setEditProj(p); setProjForm({ clientName:p.clientName, industry:p.industry||'', package:p.package||'Professional', startDate:p.startDate?p.startDate.slice(0,10):'', goLiveDate:p.goLiveDate?p.goLiveDate.slice(0,10):'', status:p.status, health:p.health, currentPhase:p.currentPhase||0, pm:p.pm||'', contactPerson:p.contactPerson||'', contractValue:p.contractValue||'', location:p.location||'', notes:p.notes||'' }); setProjModal(true) }}
+                          style={{ padding:'3px 8px', background:'#EBF5FB', color:'#1A5276', border:'none', borderRadius:4, fontSize:11, cursor:'pointer' }}>✏️</button>
+                        <button onClick={async()=>{ if(!confirm('Delete project?')) return; await fetch(`${BASE}/billing/projects/${p.id}`,{method:'DELETE',headers:hdr2()}); loadProjects() }}
+                          style={{ padding:'3px 8px', background:'#FDEDEC', color:'#C0392B', border:'none', borderRadius:4, fontSize:11, cursor:'pointer' }}>🗑</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {projects.length===0 && <tr><td colSpan={12} style={{ padding:32, textAlign:'center', color:'#ccc' }}>No projects yet. Click + New Project to add.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── AMC Tracker Tab ── */}
+      {tab==='amc' && (
+        <div style={sec}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+            <div style={secH}>🔒 AMC Tracker ({amcs.length})</div>
+            <button onClick={()=>{ setEditAmc(null); setAmcForm({ clientName:'', package:'Professional', startDate:new Date().toISOString().slice(0,10), endDate:'', amount:'', gstPct:18, notes:'' }); setAmcModal(true) }}
+              style={{ padding:'6px 16px', background:'#714B67', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600, fontSize:13 }}>+ New AMC</button>
+          </div>
+          {/* AMC Stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:16 }}>
+            {[
+              ['Total AMCs', amcs.length, '#714B67'],
+              ['Active', amcs.filter(a=>a.computedStatus==='ACTIVE').length, '#1E8449'],
+              ['Expiring Soon (30 days)', amcs.filter(a=>a.daysLeft>=0&&a.daysLeft<=30).length, '#B8860B'],
+              ['Expired', amcs.filter(a=>a.computedStatus==='EXPIRED').length, '#C0392B'],
+            ].map(([l,v,c])=>(
+              <div key={l} style={{ background:'#fff', borderRadius:8, padding:'12px 14px', boxShadow:'0 1px 4px rgba(0,0,0,.06)', borderLeft:`3px solid ${c}` }}>
+                <div style={{ fontSize:22, fontWeight:700, color:c }}>{v}</div>
+                <div style={{ fontSize:11, color:'#888' }}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+            <thead>
+              <tr style={{ background:'#714B67', color:'#fff' }}>
+                {['AMC Code','Customer','Package','Start','End Date','Days Left','Amount','GST','Total','Status','Actions'].map(h=>(
+                  <th key={h} style={{ padding:'9px 12px', textAlign:'left', fontSize:12, fontWeight:600, whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {amcs.map((a,i)=>{
+                const dl = a.daysLeft
+                const expired = a.computedStatus==='EXPIRED'
+                const expiring = !expired && dl>=0 && dl<=30
+                return (
+                  <tr key={a.id} style={{ background:expired?'#FFF5F5':expiring?'#FFFDE7':i%2===0?'#fff':'#F9F6F8', borderBottom:'1px solid #F0E8EC' }}>
+                    <td style={{ padding:'9px 12px', fontFamily:'DM Mono,monospace', fontSize:11, color:'#714B67', fontWeight:700 }}>{a.amcCode}</td>
+                    <td style={{ padding:'9px 12px', fontWeight:600 }}>{a.clientName}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>{a.package||'—'}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12 }}>{fmtD(a.startDate)}</td>
+                    <td style={{ padding:'9px 12px', fontSize:12, fontWeight:600, color:expired?'#C0392B':expiring?'#B8860B':'#333' }}>{fmtD(a.endDate)}</td>
+                    <td style={{ padding:'9px 12px', textAlign:'center' }}>
+                      {expired ? <span style={{ color:'#C0392B', fontWeight:700 }}>EXPIRED</span>
+                        : expiring ? <span style={{ color:'#B8860B', fontWeight:700 }}>⚠️ {dl}d</span>
+                        : <span style={{ color:'#1E8449' }}>{dl}d</span>}
+                    </td>
+                    <td style={{ padding:'9px 12px' }}>₹{parseFloat(a.amount||0).toLocaleString('en-IN')}</td>
+                    <td style={{ padding:'9px 12px' }}>₹{parseFloat(a.gstAmt||0).toLocaleString('en-IN')}</td>
+                    <td style={{ padding:'9px 12px', fontWeight:700, color:'#1E8449' }}>₹{parseFloat(a.totalAmount||0).toLocaleString('en-IN')}</td>
+                    <td style={{ padding:'9px 12px' }}>
+                      <span style={{ padding:'3px 9px', borderRadius:12, fontSize:11, fontWeight:600, background:{ACTIVE:'#E8F5E9',EXPIRED:'#FDEDEC',RENEWED:'#EBF5FB',CANCELLED:'#E2E3E5'}[a.computedStatus]||'#f0f0f0', color:{ACTIVE:'#1E8449',EXPIRED:'#C0392B',RENEWED:'#1A5276',CANCELLED:'#6C757D'}[a.computedStatus]||'#333' }}>{a.computedStatus}</span>
+                    </td>
+                    <td style={{ padding:'9px 12px' }}>
+                      <div style={{ display:'flex', gap:4 }}>
+                        {expiring && <button onClick={async()=>{ const newEnd=new Date(a.endDate);newEnd.setFullYear(newEnd.getFullYear()+1);await fetch(`${BASE}/billing/amc/${a.id}`,{method:'PATCH',headers:hdr(),body:JSON.stringify({status:'RENEWED',renewedDate:new Date().toISOString(),endDate:newEnd.toISOString()})});loadAmcs();toast.success('AMC Renewed for 1 year') }}
+                          style={{ padding:'3px 8px', background:'#E8F5E9', color:'#1E8449', border:'none', borderRadius:4, fontSize:11, cursor:'pointer', fontWeight:700 }}>🔄 Renew</button>}
+                        <button onClick={()=>{ setEditAmc(a); setAmcForm({ clientName:a.clientName, package:a.package||'', startDate:a.startDate?a.startDate.slice(0,10):'', endDate:a.endDate?a.endDate.slice(0,10):'', amount:a.amount, gstPct:18, notes:a.notes||'' }); setAmcModal(true) }}
+                          style={{ padding:'3px 8px', background:'#EBF5FB', color:'#1A5276', border:'none', borderRadius:4, fontSize:11, cursor:'pointer' }}>✏️</button>
+                        <button onClick={async()=>{ if(!confirm('Delete AMC?'))return; await fetch(`${BASE}/billing/amc/${a.id}`,{method:'DELETE',headers:hdr2()}); loadAmcs() }}
+                          style={{ padding:'3px 8px', background:'#FDEDEC', color:'#C0392B', border:'none', borderRadius:4, fontSize:11, cursor:'pointer' }}>🗑</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {amcs.length===0 && <tr><td colSpan={11} style={{ padding:32, textAlign:'center', color:'#ccc' }}>No AMC records yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Project Modal ── */}
+      {projModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={()=>setProjModal(false)}>
+          <div style={{ background:'#fff', borderRadius:14, padding:28, width:620, maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
+            <h3 style={{ margin:'0 0 16px', color:'#714B67' }}>{editProj?'✏️ Edit Project':'➕ New Project'}</h3>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              {[
+                ['Customer Name *', 'clientName', 'text', 'e.g. Texmo Industries'],
+                ['Industry', 'industry', 'text', 'Injection Moulding'],
+                ['Package', 'package', 'select', ['Starter','Professional','Enterprise','Custom']],
+                ['Status', 'status', 'select', ['Planning','Active','On Hold','Completed','Delayed']],
+                ['Start Date', 'startDate', 'date', ''],
+                ['Go-Live Date', 'goLiveDate', 'date', ''],
+                ['Health', 'health', 'select', ['green','yellow','red']],
+                ['Current Phase', 'currentPhase', 'select', ['0','1','2','3','4','5','6']],
+                ['Project Manager', 'pm', 'text', 'Saravanan'],
+                ['Customer Contact', 'contactPerson', 'text', 'Name — Phone'],
+                ['Contract Value (₹)', 'contractValue', 'number', '150000'],
+                ['Location', 'location', 'text', 'Coimbatore'],
+              ].map(([label, key, type, extra])=>(
+                <div key={key} style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                  <label style={{ fontSize:12, fontWeight:600, color:'#666' }}>{label}</label>
+                  {type === 'select'
+                    ? <select value={projForm[key]} onChange={e=>setProjForm(f=>({...f,[key]:e.target.value}))}
+                        style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit' }}>
+                        {(Array.isArray(extra)?extra:[]).map(o=><option key={o} value={o}>{key==='currentPhase'?['Kickoff','Setup','Data Entry','Training','Go-Live','Hypercare','Done'][parseInt(o)]:key==='health'?{green:'🟢 On Track',yellow:'🟡 At Risk',red:'🔴 Off Track'}[o]:o}</option>)}
+                      </select>
+                    : <input type={type} value={projForm[key]} placeholder={typeof extra==='string'?extra:''} onChange={e=>setProjForm(f=>({...f,[key]:e.target.value}))}
+                        style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit' }} />
+                  }
+                </div>
+              ))}
+              <div style={{ gridColumn:'1/-1', display:'flex', flexDirection:'column', gap:4 }}>
+                <label style={{ fontSize:12, fontWeight:600, color:'#666' }}>Notes</label>
+                <textarea value={projForm.notes} onChange={e=>setProjForm(f=>({...f,notes:e.target.value}))} rows={2}
+                  style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit', resize:'vertical' }} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:20 }}>
+              <button onClick={()=>setProjModal(false)} style={{ padding:'8px 18px', background:'#f0f0f0', border:'none', borderRadius:6, cursor:'pointer' }}>Cancel</button>
+              <button onClick={async()=>{
+                if(!projForm.clientName.trim()){toast.error('Customer name required');return}
+                const url = editProj ? `${BASE}/billing/projects/${editProj.id}` : `${BASE}/billing/projects`
+                const method = editProj ? 'PATCH' : 'POST'
+                const r = await fetch(url,{method,headers:hdr(),body:JSON.stringify(projForm)})
+                const d = await r.json()
+                if(d.error){toast.error(d.error);return}
+                toast.success(editProj?'Project updated':'Project created')
+                setProjModal(false); loadProjects()
+              }} style={{ padding:'8px 18px', background:'#714B67', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600 }}>
+                💾 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AMC Modal ── */}
+      {amcModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={()=>setAmcModal(false)}>
+          <div style={{ background:'#fff', borderRadius:14, padding:28, width:520 }} onClick={e=>e.stopPropagation()}>
+            <h3 style={{ margin:'0 0 16px', color:'#714B67' }}>{editAmc?'✏️ Edit AMC':'➕ New AMC'}</h3>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              {[
+                ['Customer Name *','clientName','text','e.g. Texmo Industries'],
+                ['Package','package','select',['Starter','Professional','Enterprise']],
+                ['Start Date *','startDate','date',''],
+                ['End Date *','endDate','date',''],
+                ['AMC Amount (₹) *','amount','number','24000'],
+                ['GST %','gstPct','number','18'],
+              ].map(([label,key,type,extra])=>(
+                <div key={key} style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                  <label style={{ fontSize:12, fontWeight:600, color:'#666' }}>{label}</label>
+                  {type==='select'
+                    ? <select value={amcForm[key]} onChange={e=>setAmcForm(f=>({...f,[key]:e.target.value}))} style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit' }}>
+                        {(Array.isArray(extra)?extra:[]).map(o=><option key={o}>{o}</option>)}
+                      </select>
+                    : <input type={type} value={amcForm[key]} placeholder={typeof extra==='string'?extra:''} onChange={e=>setAmcForm(f=>({...f,[key]:e.target.value}))} style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit' }} />
+                  }
+                </div>
+              ))}
+              <div style={{ gridColumn:'1/-1' }}>
+                <div style={{ background:'#F9F6F8', padding:'10px 14px', borderRadius:8, fontSize:13 }}>
+                  <strong>Total Amount (with GST):</strong>
+                  <span style={{ float:'right', fontWeight:700, color:'#1E8449' }}>
+                    ₹{(parseFloat(amcForm.amount||0) * (1 + parseFloat(amcForm.gstPct||18)/100)).toLocaleString('en-IN', {minimumFractionDigits:2})}
+                  </span>
+                </div>
+              </div>
+              <div style={{ gridColumn:'1/-1', display:'flex', flexDirection:'column', gap:4 }}>
+                <label style={{ fontSize:12, fontWeight:600, color:'#666' }}>Notes</label>
+                <textarea value={amcForm.notes} onChange={e=>setAmcForm(f=>({...f,notes:e.target.value}))} rows={2}
+                  style={{ padding:'7px 10px', border:'1px solid #ddd', borderRadius:6, fontSize:13, fontFamily:'inherit' }} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:20 }}>
+              <button onClick={()=>setAmcModal(false)} style={{ padding:'8px 18px', background:'#f0f0f0', border:'none', borderRadius:6, cursor:'pointer' }}>Cancel</button>
+              <button onClick={async()=>{
+                if(!amcForm.clientName.trim()||!amcForm.startDate||!amcForm.endDate||!amcForm.amount){toast.error('Fill all required fields');return}
+                const url = editAmc ? `${BASE}/billing/amc/${editAmc.id}` : `${BASE}/billing/amc`
+                const method = editAmc ? 'PATCH' : 'POST'
+                const r = await fetch(url,{method,headers:hdr(),body:JSON.stringify(amcForm)})
+                const d = await r.json()
+                if(d.error){toast.error(d.error);return}
+                toast.success(editAmc?'AMC updated':'AMC created')
+                setAmcModal(false); loadAmcs()
+              }} style={{ padding:'8px 18px', background:'#714B67', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600 }}>
+                💾 Save
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
