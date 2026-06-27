@@ -5,14 +5,16 @@ import styles from './ModuleLayout.module.css'
 export default function ModuleLayout({ navItems = [], sidebarGroups = [], children }) {
   return (
     <div className={styles.wrap}>
-      <nav className={styles.subnav}>
-        {navItems.map((item,idx) => (
-          <NavLink key={`nav-${idx}-${item.to}`} to={item.to}
-            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      {navItems.length > 0 && (
+        <nav className={styles.subnav}>
+          {navItems.map((item,idx) => (
+            <NavLink key={`nav-${idx}-${item.to}`} to={item.to}
+              className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      )}
       <div className={styles.body}>
         <aside className={styles.sidebar}>
           {sidebarGroups.map(g => <SidebarGroup key={g.label} group={g} />)}

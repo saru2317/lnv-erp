@@ -23,6 +23,7 @@ const ALL_MODULES = [
   { key:'tm',      label:'Transport',   icon:'🚛' },
   { key:'am',      label:'Assets',      icon:'🏗️'  },
   { key:'civil',   label:'Civil',       icon:'👷' },
+  { key:'edu',     label:'Education',   icon:'🎓' },
   { key:'vm',      label:'Visitor',     icon:'🪪' },
   { key:'cn',      label:'Canteen',     icon:'🍽️'  },
   { key:'reports', label:'Reports',     icon:'📊' },

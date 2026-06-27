@@ -4,6 +4,8 @@ import ModuleLayout from '@components/layout/ModuleLayout'
 import PageLoader from '@components/ui/PageLoader'
 
 const SDDashboard  = lazy(() => import('./SDDashboard'))
+const CounterSale  = lazy(() => import('./CounterSale'))
+const POSSales     = lazy(() => import('./POSSales'))
 const CustomerList = lazy(() => import('./CustomerList'))
 const CustomerNew  = lazy(() => import('./CustomerNew'))
 const CustomerView = lazy(() => import('./CustomerView'))
@@ -44,6 +46,10 @@ const NAV = [
 ]
 
 const SIDEBAR = [
+  { label: 'Quick Sale', icon: '', items: [
+    { to: '/sd/counter-sale', label: '🛒 Counter Sale (POS)' },
+    { to: '/sd/pos-sales',    label: '📋 POS Sales History' },
+  ]},
   { label: 'Master Data', icon: '', items: [
     { to: '/sd/customers',        label: 'Customer Master' },
     { to: '/sd/customers/new',    label: 'New Customer' },
@@ -85,6 +91,8 @@ export default function SDLayout() {
       <Suspense fallback={<PageLoader text="Loading SD page…" />}>
         <Routes>
           <Route index                  element={<SDDashboard />} />
+          <Route path="counter-sale" element={<CounterSale />} />
+          <Route path="pos-sales"     element={<POSSales />} />
           <Route path="customers"       element={<CustomerList />} />
           <Route path="customers/new"   element={<CustomerNew />} />
           <Route path="customers/:id"   element={<CustomerView />} />

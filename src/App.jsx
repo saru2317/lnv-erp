@@ -28,6 +28,8 @@ const ConfigModule    = lazy(() => import('@modules/config/pages/ConfigLayout'))
 const TMModule        = lazy(() => import('@modules/tm/pages/TMLayout'))
 const AMModule        = lazy(() => import('@modules/am/pages/AMLayout'))
 const CivilModule     = lazy(() => import('@modules/civil/pages/CivilLayout'))
+const EduModule       = lazy(() => import('@modules/edu/pages/EduLayout'))
+const TabletSupervisor= lazy(() => import('@modules/civil/pages/TabletHome'))
 const VMModule        = lazy(() => import('@modules/vm/pages/VMLayout'))
 const CNModule        = lazy(() => import('@modules/cn/pages/CNLayout'))
 const ReportsModule   = lazy(() => import('@modules/reports/pages/ReportsLayout'))
@@ -67,12 +69,16 @@ export default function App() {
               <Route path="/tm/*"      element={<MR mod="tm"      el={<TMModule />} />} />
               <Route path="/am/*"      element={<MR mod="am"      el={<AMModule />} />} />
               <Route path="/civil/*"   element={<MR mod="civil"   el={<CivilModule />} />} />
+              <Route path="/edu/*"     element={<MR mod="edu"     el={<EduModule />} />} />
               <Route path="/vm/*"      element={<MR mod="vm"      el={<VMModule />} />} />
               <Route path="/cn/*"      element={<MR mod="cn"      el={<CNModule />} />} />
               <Route path="/reports/*" element={<MR mod="reports" el={<ReportsModule />} />} />
               <Route path="/mdm/*"     element={<MR mod="mdm"     el={<MDMModule />} />} />
               <Route path="/kpi/*"     element={<MR mod="kpi"     el={<KPIModule />} />} />
             </Route>
+
+            {/* Tablet Supervisor View — full screen, outside AppShell */}
+            <Route path="/civil/tablet" element={<ProtectedRoute><Suspense fallback={null}><TabletSupervisor /></Suspense></ProtectedRoute>} />
 
             {/* Print routes — outside AppShell (no sidebar/navbar) */}
             <Route path="/sd/invoices/:id/print" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />

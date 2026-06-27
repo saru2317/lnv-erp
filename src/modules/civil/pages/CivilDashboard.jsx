@@ -1,63 +1,170 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-const PROJECTS = [
-  { id:'PRJ-2026-001', name:'New Production Block — Phase 2', type:'Civil Construction', budget:12000000, spent:7440000, progress:62, pm:'Admin Kumar',   status:'active',    end:'30 Jun 2026' },
-  { id:'PRJ-2026-002', name:'Canteen Extension',               type:'Civil Work',         budget:1800000,  spent:1080000, progress:60, pm:'Site Engineer', status:'active',    end:'30 Apr 2026' },
-  { id:'PRJ-2026-003', name:'Solar Panel Installation',        type:'Electrical',         budget:4200000,  spent:420000,  progress:10, pm:'Admin Kumar',   status:'started',   end:'15 May 2026' },
-  { id:'PRJ-2026-004', name:'Borewell — Unit II',              type:'Civil',              budget:350000,   spent:350000,  progress:100,pm:'Site Engineer', status:'completed', end:'15 Jan 2026' },
-]
-const ST={active:{label:'In Progress',bg:'#D1ECF1',color:'#0C5460'},started:{label:'Started',bg:'#FFF3CD',color:'#856404'},completed:{label:'Completed',bg:'#D4EDDA',color:'#155724'}}
-const fmt=n=>'₹'+(n/100000).toFixed(1)+'L'
+import toast from 'react-hot-toast'
+
+const BASE = import.meta.env.VITE_API_URL || '/api'
+const tok  = () => localStorage.getItem('lnv_token') || ''
+const hdr  = () => ({ Authorization:`Bearer ${tok()}` })
+const fmtC = n => '₹' + Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0})
+const fmtD = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'
+
+const STATUS_COLORS = {
+  ACTIVE:    { bg:'#E8F5E9', color:'#1E8449', label:'Active' },
+  PLANNING:  { bg:'#EBF5FB', color:'#1A5276', label:'Planning' },
+  ON_HOLD:   { bg:'#FEF9E7', color:'#B8860B', label:'On Hold' },
+  COMPLETED: { bg:'#F0EBF0', color:'#714B67', label:'Completed' },
+  CANCELLED: { bg:'#FDEDEC', color:'#C0392B', label:'Cancelled' },
+}
+
 export default function CivilDashboard() {
-  const nav=useNavigate()
+  const nav = useNavigate()
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${BASE}/civil/dashboard`, { headers:hdr() })
+      .then(r=>r.json()).then(d=>{ setData(d.data); setLoading(false) })
+      .catch(()=>setLoading(false))
+  }, [])
+
+  if (loading) return <div style={{padding:40,textAlign:'center',color:'#aaa'}}>⏳ Loading Civil Dashboard...</div>
+
   return (
-    <div>
-      <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Civil / Project Dashboard</div>
-        <div className="fi-lv-actions"><button className="btn btn-p sd-bsm" onClick={()=>nav('/civil/projects')}>+ New Project</button></div>
+    <div style={{background:'#F9F6F8',minHeight:'100vh',fontFamily:'DM Sans,Arial,sans-serif'}}>
+
+      {/* Header Bar — tight, no gap */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+        background:'#fff',borderBottom:'1px solid #E8E0E8',
+        padding:'10px 16px',marginBottom:12}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{fontSize:20,fontWeight:800,color:'#6E2C00'}}>🏗️ Civil Dashboard</div>
+          <div style={{fontSize:11,color:'#aaa',paddingLeft:8,borderLeft:'1px solid #E8E0E8'}}>Construction Project Management</div>
+        </div>
+        <button onClick={()=>nav('/civil/projects/new')}
+          style={{padding:'7px 18px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
+          + New Project
+        </button>
       </div>
-      <div className="fi-kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:16}}>
+
+      {/* Stats Strip */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:12,padding:'0 4px'}}>
         {[
-          {cls:'purple',l:'Active Projects', v:'3',       s:'In progress'},
-          {cls:'green', l:'Total Budget',    v:'₹1.83Cr', s:'All projects'},
-          {cls:'orange',l:'Total Spent',     v:'₹88.9L',  s:'48% utilised'},
-          {cls:'blue',  l:'Pending Bills',   v:'₹12.5L',  s:'Contractor bills'},
-        ].map(k=>(<div key={k.l} className={`fi-kpi-card ${k.cls}`}><div className="fi-kpi-label">{k.l}</div><div className="fi-kpi-value">{k.v}</div><div className="fi-kpi-sub">{k.s}</div></div>))}
+          ['Total Projects',  data?.total||0,                   '#6E2C00'],
+          ['Active Sites',    data?.active||0,                  '#1E8449'],
+          ['Contract Value',  fmtC(data?.contractValue||0),     '#1A5276'],
+          ['RA Billed',       fmtC(data?.totalBilled||0),       '#D35400'],
+          ['Planning',        data?.planning||0,                '#B8860B'],
+          ['Completed',       data?.completed||0,               '#714B67'],
+          ['Workers Today',   data?.todayWorkers||0,            '#117A65'],
+        ].map(([l,v,c])=>(
+          <div key={l} style={{background:'#fff',borderRadius:10,padding:'12px 14px',
+            boxShadow:'0 1px 4px rgba(0,0,0,.06)',borderLeft:`3px solid ${c}`}}>
+            <div style={{fontSize:20,fontWeight:700,color:c}}>{v}</div>
+            <div style={{fontSize:11,color:'#888',marginTop:2}}>{l}</div>
+          </div>
+        ))}
       </div>
-      <div style={{background:'#fff',borderRadius:8,border:'1px solid var(--odoo-border)',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-        <div style={{padding:'12px 16px',borderBottom:'1px solid var(--odoo-border)',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700}}> Active Projects</div>
-        <table style={{width:'100%',borderCollapse:'collapse'}}>
-          <thead><tr style={{background:'#F8F9FA'}}>{['Project No.','Name','Type','Budget','Spent','Progress','PM','End Date','Status','Action'].map(h=>(<th key={h} style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:'var(--odoo-gray)',textAlign:'left',borderBottom:'1px solid var(--odoo-border)'}}>{h}</th>))}</tr></thead>
-          <tbody>
-            {PROJECTS.map(p=>{
-              const st=ST[p.status]
-              const pct = p.progress
-              return (<tr key={p.id} style={{borderBottom:'1px solid var(--odoo-border)'}}>
-                <td style={{padding:'10px 12px',fontFamily:'DM Mono,monospace',fontSize:11,color:'var(--odoo-purple)',fontWeight:600}}>{p.id}</td>
-                <td style={{padding:'10px 12px',fontSize:12,fontWeight:700,maxWidth:200}}>{p.name}</td>
-                <td style={{padding:'10px 12px',fontSize:11}}>{p.type}</td>
-                <td style={{padding:'10px 12px',fontFamily:'DM Mono,monospace',fontSize:12}}>{fmt(p.budget)}</td>
-                <td style={{padding:'10px 12px',fontFamily:'DM Mono,monospace',fontSize:12,color:'var(--odoo-orange)'}}>{fmt(p.spent)}</td>
-                <td style={{padding:'10px 12px',minWidth:140}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <div style={{flex:1,height:6,background:'var(--odoo-border)',borderRadius:3}}>
-                      <div style={{height:'100%',borderRadius:3,background:pct>80?'var(--odoo-green)':pct>50?'var(--odoo-purple)':'var(--odoo-orange)',width:`${pct}%`,transition:'width .5s'}}/>
-                    </div>
-                    <span style={{fontSize:11,fontWeight:700,color:'var(--odoo-dark)',minWidth:28}}>{pct}%</span>
+
+      {/* Projects Grid */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12,padding:'0 4px'}}>
+        {(data?.projects||[]).map(p => {
+          const sc  = STATUS_COLORS[p.status] || STATUS_COLORS.PLANNING
+          const pct = p.progress || 0
+          const labourCost     = Number(p.labourCost||0)
+          const contractorCost = Number(p.contractorCost||0)
+          const materialCost   = Number(p.materialCost||0)
+          const actualCost     = labourCost + contractorCost + materialCost
+          const overBudget     = actualCost > Number(p.contractValue||0) * 0.95
+          return (
+            <div key={p.id} onClick={()=>nav(`/civil/projects/${p.id}`)}
+              style={{background:'#fff',borderRadius:12,padding:18,cursor:'pointer',
+                boxShadow:'0 1px 6px rgba(0,0,0,.07)',border:`1px solid ${overBudget?'#C0392B':'#F0E8EC'}`,
+                transition:'box-shadow .15s'}}
+              onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'}
+              onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 6px rgba(0,0,0,.07)'}>
+
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:15,fontWeight:700,color:'#6E2C00'}}>{p.projectName}</div>
+                  <div style={{fontSize:12,color:'#888',marginTop:2}}>{p.projectCode} · {p.clientName}</div>
+                </div>
+                <span style={{padding:'3px 10px',borderRadius:12,fontSize:11,fontWeight:700,
+                  background:sc.bg,color:sc.color}}>{sc.label}</span>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{marginBottom:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <div style={{fontSize:12,color:'#555'}}>Overall Progress</div>
+                  <div style={{fontSize:13,fontWeight:700,color:pct>=80?'#1E8449':pct>=50?'#B8860B':'#C0392B'}}>{pct}%</div>
+                </div>
+                <div style={{height:8,background:'#F0E8EC',borderRadius:4,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${pct}%`,background:pct>=80?'#1E8449':pct>=50?'#B8860B':'#C0392B',borderRadius:4,transition:'width .3s'}} />
+                </div>
+              </div>
+
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                {[
+                  ['📍',p.siteLocation||'—','Site'],
+                  ['💰',fmtC(p.contractValue),'Contract'],
+                  ['📅',fmtD(p.targetDate),'Target'],
+                ].map(([icon,val,label])=>(
+                  <div key={label} style={{background:'#F9F6F8',borderRadius:6,padding:'6px 10px',textAlign:'center'}}>
+                    <div style={{fontSize:10,color:'#888'}}>{icon} {label}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:'#2C3E50',marginTop:2}}>{val}</div>
                   </div>
-                </td>
-                <td style={{padding:'10px 12px',fontSize:11}}>{p.pm}</td>
-                <td style={{padding:'10px 12px',fontSize:11}}>{p.end}</td>
-                <td style={{padding:'10px 12px'}}><span style={{padding:'3px 8px',borderRadius:10,fontSize:11,fontWeight:600,background:st.bg,color:st.color}}>{st.label}</span></td>
-                <td style={{padding:'10px 12px'}}><div style={{display:'flex',gap:4}}>
-                  <button className="btn-xs" onClick={()=>nav('/civil/progress')}>Progress</button>
-                  <button className="btn-xs" onClick={()=>nav('/civil/bills')}>Bills</button>
-                </div></td>
-              </tr>)
-            })}
-          </tbody>
-        </table>
+                ))}
+              </div>
+
+              {p.supervisor && (
+                <div style={{marginTop:10,fontSize:12,color:'#888'}}>
+                  👷 Supervisor: <strong style={{color:'#555'}}>{p.supervisor}</strong>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
+
+      {/* Recent DPRs */}
+      {(data?.recentDPRs||[]).length > 0 && (
+        <div style={{background:'#fff',borderRadius:8,padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)',margin:'0 4px 12px'}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#6E2C00',marginBottom:14}}>📅 Recent Daily Progress Reports</div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead>
+              <tr style={{background:'#6E2C00',color:'#fff'}}>
+                {['DPR No','Project','Date','Supervisor','Issues'].map(h=>(
+                  <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:12,fontWeight:600}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.recentDPRs.map((d,i)=>(
+                <tr key={d.id} style={{background:i%2===0?'#fff':'#FDF2E9',borderBottom:'1px solid #F5EDE0'}}>
+                  <td style={{padding:'8px 12px',fontFamily:'monospace',fontSize:12,color:'#6E2C00',fontWeight:700}}>{d.dprNo}</td>
+                  <td style={{padding:'8px 12px',fontWeight:600}}>{d.project?.projectName||'—'}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:'#888'}}>{fmtD(d.date)}</td>
+                  <td style={{padding:'8px 12px'}}>{d.supervisor}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:d.issues?'#C0392B':'#888'}}>{d.issues||'No issues'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {(!data?.projects || data.projects.length === 0) && (
+        <div style={{textAlign:'center',padding:40,background:'#fff',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.06)',margin:'0 4px'}}>
+          <div style={{fontSize:56,marginBottom:16}}>🏗️</div>
+          <div style={{fontSize:18,fontWeight:700,color:'#6E2C00',marginBottom:8}}>No Projects Yet</div>
+          <div style={{fontSize:13,color:'#888',marginBottom:20}}>Create your first construction project to get started</div>
+          <button onClick={()=>nav('/civil/projects/new')}
+            style={{padding:'10px 24px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontWeight:700,fontSize:14}}>
+            + Create First Project
+          </button>
+        </div>
+      )}
     </div>
   )
 }

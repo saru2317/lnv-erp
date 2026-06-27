@@ -1,22 +1,22 @@
 // ── LNV ERP — Config Module Master Data ──────────────────────────────────────
 
 export const COMPANY = {
-  name:        'LNV Manufacturing Pvt. Ltd.',
+  name:        'LNV Infotech Soft Solutions Pvt. Ltd.',
   shortName:   'LNV',
-  legalName:   'LNV Manufacturing Private Limited',
-  cin:         'U28910TN2018PTC123456',
-  gstin:       '33AABCL1234F1Z5',
-  pan:         'AABCL1234F',
-  industry:    'Injection Moulding',
+  legalName:   'LNV Infotech Soft Solutions Private Limited',
+  cin:         'U72900TN2020PTC123456',
+  gstin:       '33AABCL9876F1Z5',
+  pan:         'AABCL9876F',
+  industry:    'IT / Software Services',
   type:        'Private Limited',
-  founded:     '2018',
-  email:       'info@lnvmfg.com',
+  founded:     '2020',
+  email:       'info@lnverp.com',
   phone:       '+91 99440 01234',
-  website:     'www.lnvmfg.com',
-  address:     'Plot No. 42, SIDCO Industrial Estate',
-  city:        'Ranipet',
+  website:     'www.lnverp.com',
+  address:     'Coimbatore, Tamil Nadu',
+  city:        'Coimbatore',
   state:       'Tamil Nadu',
-  pincode:     '632401',
+  pincode:     '641001',
   country:     'India',
   logo:        'LNV',
   fiscalStart: 'April',
@@ -26,9 +26,7 @@ export const COMPANY = {
 }
 
 export const BRANCHES = [
-  { id:'BR-001', name:'Ranipet Plant',   type:'Manufacturing', address:'Plot 42, SIDCO, Ranipet', gstin:'33AABCL1234F1Z5', phone:'04172-234567', head:'Saravana Kumar', status:'Active',  isHQ:true  },
-  { id:'BR-002', name:'Chennai Office',  type:'Sales Office',  address:'Anna Salai, Chennai-2',    gstin:'33AABCL1234F2Z4', phone:'044-28456789',  head:'Vijay T.',      status:'Active',  isHQ:false },
-  { id:'BR-003', name:'Coimbatore Depot',type:'Warehouse',     address:'Ganapathy, Coimbatore',    gstin:'33AABCL1234F3Z3', phone:'0422-2345678',  head:'Karthik M.',    status:'Inactive',isHQ:false },
+  { id:'BR-001', name:'Coimbatore HQ',   type:'Head Office',   address:'Coimbatore, Tamil Nadu',   gstin:'33AABCL9876F1Z5', phone:'+91 99440 01234', head:'Saravanan',     status:'Active',  isHQ:true  },
 ]
 
 export const ALL_MODULES = [
@@ -130,18 +128,16 @@ export const FISCAL_YEARS = [
 ]
 
 export const NUMBER_SERIES = [
-  { id:'NS-001', module:'SD',   docType:'Sales Order',      prefix:'SO/',   next:1042, padding:4, suffix:'',     example:'SO/1042',     status:'Active' },
-  { id:'NS-002', module:'SD',   docType:'Sales Invoice',    prefix:'INV/',  next:2218, padding:4, suffix:'',     example:'INV/2218',    status:'Active' },
-  { id:'NS-003', module:'SD',   docType:'Delivery Note',    prefix:'DN/',   next:889,  padding:4, suffix:'',     example:'DN/0889',     status:'Active' },
-  { id:'NS-004', module:'MM',   docType:'Purchase Order',   prefix:'PO/',   next:567,  padding:4, suffix:'',     example:'PO/0567',     status:'Active' },
-  { id:'NS-005', module:'MM',   docType:'GRN',              prefix:'GRN/',  next:445,  padding:4, suffix:'',     example:'GRN/0445',    status:'Active' },
-  { id:'NS-006', module:'PP',   docType:'Job Card',         prefix:'JC-',   next:43,   padding:4, suffix:'',     example:'JC-0043',     status:'Active' },
-  { id:'NS-007', module:'PP',   docType:'Work Order',       prefix:'WO/',   next:128,  padding:4, suffix:'',     example:'WO/0128',     status:'Active' },
-  { id:'NS-008', module:'FI',   docType:'Payment Voucher',  prefix:'PV/',   next:334,  padding:4, suffix:'',     example:'PV/0334',     status:'Active' },
-  { id:'NS-009', module:'FI',   docType:'Receipt Voucher',  prefix:'RV/',   next:412,  padding:4, suffix:'',     example:'RV/0412',     status:'Active' },
-  { id:'NS-010', module:'QM',   docType:'Quality Report',   prefix:'QR/',   next:89,   padding:4, suffix:'',     example:'QR/0089',     status:'Active' },
-  { id:'NS-011', module:'HCM',  docType:'Employee ID',      prefix:'EMP-',  next:35,   padding:3, suffix:'',     example:'EMP-035',     status:'Active' },
-  { id:'NS-012', module:'CRM',  docType:'Lead',             prefix:'LEAD-', next:156,  padding:4, suffix:'',     example:'LEAD-0156',   status:'Active' },
+  { id:'NS-001', module:'SD',   docType:'Sales Proposal',   prefix:'PRO/',  next:1,    padding:4, suffix:'',     example:'PRO/0001',    status:'Active' },
+  { id:'NS-002', module:'SD',   docType:'Sales Invoice',    prefix:'INV/',  next:1,    padding:4, suffix:'',     example:'INV/0001',    status:'Active' },
+  { id:'NS-003', module:'PM',   docType:'Project',          prefix:'PROJ/', next:1,    padding:4, suffix:'',     example:'PROJ/0001',   status:'Active' },
+  { id:'NS-004', module:'PM',   docType:'Task',             prefix:'TASK/', next:1,    padding:4, suffix:'',     example:'TASK/0001',   status:'Active' },
+  { id:'NS-005', module:'FI',   docType:'Payment Voucher',  prefix:'PV/',   next:1,    padding:4, suffix:'',     example:'PV/0001',     status:'Active' },
+  { id:'NS-006', module:'FI',   docType:'Receipt Voucher',  prefix:'RV/',   next:1,    padding:4, suffix:'',     example:'RV/0001',     status:'Active' },
+  { id:'NS-007', module:'HCM',  docType:'Employee ID',      prefix:'EMP-',  next:1,    padding:3, suffix:'',     example:'EMP-001',     status:'Active' },
+  { id:'NS-008', module:'CRM',  docType:'Lead',             prefix:'LEAD-', next:1,    padding:4, suffix:'',     example:'LEAD-0001',   status:'Active' },
+  { id:'NS-009', module:'CRM',  docType:'Demo',             prefix:'DEMO-', next:1,    padding:4, suffix:'',     example:'DEMO-0001',   status:'Active' },
+  { id:'NS-010', module:'SD',   docType:'License Key',      prefix:'LIC/',  next:1,    padding:4, suffix:'',     example:'LIC/0001',    status:'Active' },
 ]
 
 export const EMAIL_CONFIG = {

@@ -1,9 +1,47 @@
 import React, { useState } from 'react'
 import { COMPANY } from './_configData'
 import { useAuth } from '@context/AuthContext'
+import { INDUSTRY_WORKFLOWS } from './_workflowConfig'
 
 const INDUSTRIES = ['Surface Treatment / Coating','Heat Treatment','Injection Moulding','Fabrication / Sheet Metal',
-  'Metal Manufacturing','Textile / Spinning','Food Processing','Pharma','Chemical / Coating','Assembly Job Work','Printing','General Manufacturing']
+  'Metal Manufacturing','Textile / Spinning','Food Processing','Pharma','Chemical / Coating','Assembly Job Work','Printing','General Manufacturing',
+  'Construction / Civil Works','Trading / Distribution','Auto Ancillary','Electronics / PCB','Rubber / Plastic',
+  'IT / Software Services','Computer Service & Repair','School / CBSE / State Board','College / University','Healthcare / Hospital']
+
+// Industry → default modules mapping
+const INDUSTRY_MODULES = {
+  // Manufacturing
+  'Injection Moulding':             ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  'Fabrication / Sheet Metal':      ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  'Metal Manufacturing':            ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  'Surface Treatment / Coating':    ['sd','mm','wm','fi','pp','qm','hcm','crm'],
+  'Textile / Spinning':             ['sd','mm','wm','fi','pp','qm','hcm','crm'],
+  'Food Processing':                ['sd','mm','wm','fi','pp','qm','hcm','crm'],
+  'Pharma':                         ['sd','mm','wm','fi','pp','qm','pm','hcm','crm','am'],
+  'Auto Ancillary':                 ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  'Electronics / PCB':              ['sd','mm','wm','fi','pp','qm','hcm','crm'],
+  'General Manufacturing':          ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  'Plastic / Rubber':               ['sd','mm','wm','fi','pp','qm','pm','hcm','crm'],
+  // Trading
+  'Trading / Distribution':         ['sd','mm','wm','fi','hcm','crm'],
+  'Wholesale / Retail':             ['sd','mm','wm','fi','hcm','crm'],
+  // Job Work
+  'Job Work / Contract Mfg':        ['sd','mm','wm','fi','pp','qm','hcm','crm'],
+  // Construction
+  'Construction / Civil Works':     ['sd','mm','wm','fi','hcm','civil','crm','am'],
+  'Real Estate / Developer':        ['sd','mm','wm','fi','hcm','civil','crm','am'],
+  'Interior Decoration':            ['sd','mm','wm','fi','hcm','civil','crm'],
+  // Education
+  'School / CBSE / State Board':    ['fi','hcm','crm','edu'],
+  'College / University':           ['fi','hcm','crm','edu'],
+  'Coaching Center / Institute':    ['sd','fi','hcm','crm','edu'],
+  'Polytechnic / ITI':              ['sd','mm','fi','hcm','crm','edu'],
+  // Service
+  'IT / Software Services':         ['sd','fi','hcm','crm','pm'],
+  'Computer Service & Repair':       ['sd','mm','wm','fi','hcm','crm'],
+  'Healthcare / Hospital':          ['sd','mm','fi','hcm','crm','am'],
+  'Logistics / Transport':          ['sd','mm','fi','hcm','crm','tm'],
+}
 const COMPANY_TYPES = ['Private Limited','Public Limited','LLP','Partnership','Proprietorship','OPC']
 const FISCAL_STARTS = ['January','April','July','October']
 const DATE_FORMATS = ['DD-MM-YYYY','MM-DD-YYYY','YYYY-MM-DD','DD/MM/YYYY']
@@ -32,6 +70,7 @@ const ALL_MODULES = [
   { k:'vm',    icon:'🪪', name:'Visitor (VM)',      desc:'Gate Pass, Visitor Log'           },
   { k:'cn',    icon:'🍽️', name:'Canteen (CN)',      desc:'Meal Tracking, Subsidy'           },
   { k:'civil', icon:'👷', name:'Civil',             desc:'Site Projects, Materials'         },
+  { k:'edu',   icon:'🎓', name:'Education',          desc:'Students, Attendance, Fees, Bus'  },
   { k:'kpi',   icon:'🎯', name:'KPI / KRA',         desc:'Performance, Targets'             },
 ]
 
@@ -40,11 +79,39 @@ export default function CompanyProfile() {
   const [form,    setForm]    = useState(COMPANY)
   const [tab,     setTab]     = useState('basic')
   const [saved,   setSaved]   = useState(false)
+  const [workflowApplied, setWorkflowApplied] = useState('')
   const [modules, setModules] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('lnv_active_modules') || 'null') || ALL_MODULES.map(m=>m.k) }
-    catch { return ALL_MODULES.map(m=>m.k) }
+    try {
+      const stored = JSON.parse(localStorage.getItem('lnv_active_modules') || 'null')
+      if (stored) return stored
+      // Default for LNV Infotech = IT / Software Services modules
+      const alwaysOn = ['home','admin','config','reports','mdm']
+      const itModules = ['sd','fi','hcm','crm','pm']
+      return [...new Set([...alwaysOn, ...itModules])]
+    }
+    catch { return ['home','admin','config','reports','mdm','sd','fi','hcm','crm','pm'] }
   })
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k, v) => {
+    setForm(f => ({ ...f, [k]: v }))
+    // Auto-suggest modules + apply workflow when industry changes
+    if (k === 'industry' && INDUSTRY_MODULES[v]) {
+      const suggested = INDUSTRY_MODULES[v]
+      const always    = ALWAYS_ON_MODULES.map(m=>m.k)
+      // ✅ ONLY always-on + suggested — everything else DESELECTED
+      const activeModules = [...new Set([...always, ...suggested])]
+      setModules(activeModules)
+      localStorage.setItem('lnv_active_modules', JSON.stringify(activeModules))
+
+      // Apply industry workflow config
+      const workflow = INDUSTRY_WORKFLOWS[v]
+      if (workflow) {
+        localStorage.setItem('lnv_industry_workflow', v)
+        localStorage.setItem('lnv_workflow_config', JSON.stringify(workflow))
+        setWorkflowApplied(workflow.label)
+        setTimeout(() => setWorkflowApplied(''), 3000)
+      }
+    }
+  }
 
   const toggleModule = (k) => {
     setModules(prev => {
@@ -134,6 +201,13 @@ export default function CompanyProfile() {
               </div>
               <div className="sd-field">
                 <label>Industry / Sector</label>
+                {workflowApplied && (
+                  <div style={{marginBottom:6,padding:'5px 10px',background:'#E8F5E9',
+                    border:'1px solid #A9DFBF',borderRadius:5,fontSize:11,
+                    color:'#1E8449',fontWeight:600}}>
+                    ✅ {workflowApplied} workflow loaded — modules, flows & defaults configured!
+                  </div>
+                )}
                 <select value={form.industry} onChange={e => set('industry', e.target.value)}>
                   {INDUSTRIES.map(i => <option key={i}>{i}</option>)}
                 </select>
