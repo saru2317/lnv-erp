@@ -65,13 +65,14 @@ export default function StaffMaster(){
       if(statusFilter==='INACTIVE') params.set('status','INACTIVE')
       params.set('page',page)
       params.set('limit',PAGE_SIZE)
+      if(instId) params.set('institutionId',instId)
       const r=await fetch(`${BASE}/edu/staff?${params}`,{headers:hdr2()})
       const d=await r.json()
       setStaff(d.data||[])
       if(d.stats) setStats(d.stats)
       if(d.pagination){setTotalPages(d.pagination.totalPages||1);setTotalCount(d.pagination.totalCount||0)}
     }catch{}finally{setLoading(false)}
-  },[search,typeFilter,statusFilter,page])
+  },[search,typeFilter,statusFilter,page,instId])
   useEffect(()=>{load()},[load])
   useEffect(()=>{setPage(1)},[search,typeFilter,statusFilter,instId])
 
@@ -448,7 +449,7 @@ export default function StaffMaster(){
               <button onClick={()=>setShowAdd(false)}
                 style={{background:'#f0f0f0',border:'none',borderRadius:6,padding:'5px 12px',cursor:'pointer',fontWeight:700,fontSize:14}}>✕</button>
             </div>
-            <FormFields/>
+            {FormFields()}
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:20}}>
               <button onClick={()=>setShowAdd(false)}
                 style={{padding:'8px 18px',background:'#f0f0f0',border:'none',borderRadius:5,cursor:'pointer',fontWeight:600}}>Cancel</button>
@@ -476,7 +477,7 @@ export default function StaffMaster(){
               <button onClick={()=>setShowEdit(false)}
                 style={{background:'#f0f0f0',border:'none',borderRadius:6,padding:'5px 12px',cursor:'pointer',fontWeight:700,fontSize:14}}>✕</button>
             </div>
-            <FormFields/>
+            {FormFields()}
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:20}}>
               <button onClick={()=>setShowEdit(false)}
                 style={{padding:'8px 18px',background:'#f0f0f0',border:'none',borderRadius:5,cursor:'pointer',fontWeight:600}}>Cancel</button>

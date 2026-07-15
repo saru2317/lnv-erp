@@ -16,7 +16,7 @@ const STATUS_CFG = {
   COMPLETED: { bg:'#F0EBF0', color:'#714B67', label:'Completed' },
   CANCELLED: { bg:'#FDEDEC', color:'#C0392B', label:'Cancelled' },
 }
-const TABS = ['Overview','BOQ','DPR Log','Labour','Contractors','RA Bills','Materials','Specs & VO']
+const TABS = ['Overview','Houses','BOQ','DPR Log','Labour','Contractors','RA Bills','Materials','Specs & VO']
 
 export default function ProjectDetail() {
   const { id }  = useParams()
@@ -32,6 +32,45 @@ export default function ProjectDetail() {
   const [editStatus,setEditStatus]=useState(false)
   const [contractorWOs,setContractorWOs]=useState([])
   const [materials,    setMaterials]    =useState([])
+  const [units,        setUnits]        =useState([])
+  const [showUnitForm, setShowUnitForm] =useState(false)
+  const [unitForm, setUnitForm] = useState({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'' })
+  const [roomsFor, setRoomsFor] = useState(null)
+  const [roomForm, setRoomForm] = useState({ roomName:'', roomType:'OTHER', areaSqft:'' })
+
+  const loadUnits = useCallback(async () => {
+    const r = await fetch(`${BASE}/civil/units?projectId=${id}`, { headers:hdr2() }).then(r=>r.json())
+    setUnits(r.data||[])
+  }, [id])
+
+  const getShareLink = async (u) => {
+    try {
+      const r = await fetch(`${BASE}/civil/units/${u.id}/share-link`, { headers:hdr2() })
+      const d = await r.json()
+      if (d.error) { toast.error(d.error); return null }
+      return `${window.location.origin}/status/${d.data.token}`
+    } catch { toast.error('Could not get link'); return null }
+  }
+
+  const copyLink = async (u) => {
+    const link = await getShareLink(u)
+    if (!link) return
+    navigator.clipboard.writeText(link)
+    toast.success(`✅ Link copied for ${u.unitNo}`)
+  }
+
+  const whatsappUpdate = async (u) => {
+    const link = await getShareLink(u)
+    if (!link) return
+    if (!u.ownerPhone) { toast.error(`No phone number saved for ${u.unitNo} — add one first`); return }
+    const message =
+      `Hi ${u.ownerName||''}, here's the latest construction update for your house ${u.unitNo}:\n\n` +
+      `Progress: ${u.progress}% complete\n\n` +
+      `View live status anytime: ${link}`
+    // Strip non-digits, same click-to-chat pattern as LNV POS — zero API cost
+    const phone = u.ownerPhone.replace(/\D/g,'')
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+  }
 
   const load = useCallback(async () => {
     try {
@@ -43,20 +82,60 @@ export default function ProjectDetail() {
         fetch(`${BASE}/civil/specs/${id}`,           {headers:hdr2()}).then(r=>r.json()),
         fetch(`${BASE}/civil/variation-orders/${id}`,{headers:hdr2()}).then(r=>r.json()),
         fetch(`${BASE}/civil-ext/contractor-wo?projectId=${id}`,{headers:hdr2()}).then(r=>r.json()),
-        fetch(`${BASE}/civil/stock/${id}`,           {headers:hdr2()}).then(r=>r.json()),
+        fetch(`${BASE}/civil/stock?projectId=${id}`,     {headers:hdr2()}).then(r=>r.json()),
       ])
       setProj(pr.data); setBOQ(bq.data||[]); setDPRs(dp.data||[])
       setRaBills(ra.data||[]); setSpecs(sp.data||[]); setVOs(vo.data||[])
       setContractorWOs(cwo.data||[]); setMaterials(mat.data||[])
+      loadUnits()
     } catch(e){ toast.error('Load failed') }
     finally { setLoading(false) }
-  },[id])
+  },[id, loadUnits])
 
   useEffect(()=>{ load() },[load])
 
   const updateStatus = async (status) => {
     await fetch(`${BASE}/civil/projects/${id}`,{method:'PATCH',headers:hdr(),body:JSON.stringify({status})})
     toast.success('Status updated'); setEditStatus(false); load()
+  }
+
+  const saveUnit = async () => {
+    if (!unitForm.unitNo) return toast.error('House/Unit No is required')
+    try {
+      const r = await fetch(`${BASE}/civil/units`, { method:'POST', headers:hdr(),
+        body: JSON.stringify({ ...unitForm, projectId:id }) })
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      toast.success(`✅ ${d.data.unitNo} added`)
+      setShowUnitForm(false)
+      setUnitForm({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'' })
+      loadUnits()
+    } catch { toast.error('Save failed') }
+  }
+
+  const addRoom = async () => {
+    if (!roomForm.roomName) return toast.error('Room name required')
+    try {
+      const r = await fetch(`${BASE}/civil/rooms`, { method:'POST', headers:hdr(),
+        body: JSON.stringify({ ...roomForm, unitId: roomsFor.id }) })
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      toast.success('✅ Room added')
+      await loadUnits()
+      const fresh = await fetch(`${BASE}/civil/units?projectId=${id}`, { headers:hdr2() }).then(r=>r.json())
+      setRoomsFor((fresh.data||[]).find(u=>u.id===roomsFor.id))
+      setRoomForm({ roomName:'', roomType:'OTHER', areaSqft:'' })
+    } catch { toast.error('Failed to add room') }
+  }
+
+  const removeRoom = async (roomId) => {
+    try {
+      await fetch(`${BASE}/civil/rooms/${roomId}`, { method:'DELETE', headers:hdr2() })
+      const fresh = await fetch(`${BASE}/civil/units?projectId=${id}`, { headers:hdr2() }).then(r=>r.json())
+      setUnits(fresh.data||[])
+      setRoomsFor((fresh.data||[]).find(u=>u.id===roomsFor.id))
+      toast.success('Room removed')
+    } catch { toast.error('Failed to remove room') }
   }
 
   if (loading) return <div style={{padding:40,textAlign:'center',color:'#aaa'}}>⏳ Loading project...</div>
@@ -177,6 +256,186 @@ export default function ProjectDetail() {
               ))}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* HOUSES TAB */}
+      {tab==='Houses' && (
+        <div>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}>
+            <button onClick={()=>setShowUnitForm(true)}
+              style={{padding:'8px 18px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:7,cursor:'pointer',fontWeight:700,fontSize:12}}>
+              + New House
+            </button>
+          </div>
+
+          {units.length===0 ? (
+            <div style={{padding:60,textAlign:'center',background:'#fff',borderRadius:12,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+              <div style={{fontSize:40,marginBottom:10}}>🏘️</div>
+              <div style={{fontSize:14,fontWeight:700,color:'#6E2C00'}}>No houses added yet</div>
+              <div style={{fontSize:12,color:'#888',marginTop:4}}>Only relevant for multi-unit projects (Apartment Building, Villa Complex, Row Houses)</div>
+            </div>
+          ) : (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
+              {units.map(u => (
+                <div key={u.id} style={{background:'#fff',borderRadius:12,boxShadow:'0 1px 4px rgba(0,0,0,.06)',overflow:'hidden'}}>
+                  <div style={{padding:'12px 16px',background:'#FDF2E9',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <div style={{fontWeight:800,color:'#6E2C00',fontSize:14}}>{u.unitNo}</div>
+                      <div style={{fontSize:11,color:'#888'}}>{u.unitType||'—'}{u.floorNo?` · Floor ${u.floorNo}`:''}</div>
+                    </div>
+                    <div style={{fontSize:20,fontWeight:800,color:'#1E8449'}}>{u.progress}%</div>
+                  </div>
+                  <div style={{padding:'8px 16px'}}>
+                    <div style={{height:6,background:'#F0E8EC',borderRadius:3,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${u.progress}%`,background:'#1E8449',borderRadius:3}}/>
+                    </div>
+                  </div>
+                  <div style={{padding:'10px 16px',fontSize:12,color:'#555'}}>
+                    <div>👤 {u.ownerName||'—'} {u.ownerPhone?`(${u.ownerPhone})`:''}</div>
+                    <div style={{marginTop:4}}>💰 {fmtC(u.totalContractValue)} contract value</div>
+                    <div style={{marginTop:4,color:'#888'}}>🚪 {(u.rooms||[]).length} room(s) tracked</div>
+                  </div>
+                  <div style={{padding:'10px 16px',borderTop:'1px solid #F0F0F0',display:'flex',flexDirection:'column',gap:6}}>
+                    <button onClick={()=>setRoomsFor(u)}
+                      style={{width:'100%',padding:'7px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',
+                        borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
+                      🚪 Manage Rooms
+                    </button>
+                    <div style={{display:'flex',gap:6}}>
+                      <button onClick={()=>copyLink(u)}
+                        style={{flex:1,padding:'6px',background:'#EBF5FB',color:'#1A5276',border:'none',
+                          borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:11}}>
+                        📋 Copy Link
+                      </button>
+                      <button onClick={()=>whatsappUpdate(u)}
+                        style={{flex:1,padding:'6px',background:'#E8F5E9',color:'#1E8449',border:'none',
+                          borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:11}}>
+                        💬 WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* New House modal */}
+      {showUnitForm && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',
+          display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:'#fff',borderRadius:8,padding:20,width:420,maxHeight:'85vh',overflow:'auto'}}>
+            <div style={{fontSize:15,fontWeight:800,color:'#6E2C00',marginBottom:14}}>New House / Unit</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>House/Unit No *</label>
+                  <input value={unitForm.unitNo} onChange={e=>setUnitForm({...unitForm,unitNo:e.target.value})}
+                    placeholder='A-101' style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>Type</label>
+                  <input value={unitForm.unitType} onChange={e=>setUnitForm({...unitForm,unitType:e.target.value})}
+                    placeholder='2BHK / 3BHK / Villa' style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>Floor</label>
+                  <input value={unitForm.floorNo} onChange={e=>setUnitForm({...unitForm,floorNo:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>Built-up Area (sqft)</label>
+                  <input value={unitForm.builtUpArea} onChange={e=>setUnitForm({...unitForm,builtUpArea:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+              </div>
+              <div>
+                <label style={{fontSize:11,color:'#888'}}>Owner Name</label>
+                <input value={unitForm.ownerName} onChange={e=>setUnitForm({...unitForm,ownerName:e.target.value})}
+                  style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>Owner Phone</label>
+                  <input value={unitForm.ownerPhone} onChange={e=>setUnitForm({...unitForm,ownerPhone:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>Owner Email</label>
+                  <input value={unitForm.ownerEmail} onChange={e=>setUnitForm({...unitForm,ownerEmail:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+              </div>
+              <div>
+                <label style={{fontSize:11,color:'#888'}}>This Owner's Contract Value (₹)</label>
+                <input value={unitForm.totalContractValue} onChange={e=>setUnitForm({...unitForm,totalContractValue:e.target.value})}
+                  style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:18}}>
+              <button onClick={()=>setShowUnitForm(false)}
+                style={{padding:'6px 12px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>Cancel</button>
+              <button onClick={saveUnit}
+                style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Rooms modal */}
+      {roomsFor && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',
+          display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:'#fff',borderRadius:8,padding:20,width:520,maxHeight:'85vh',overflow:'auto'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <div style={{fontSize:15,fontWeight:800,color:'#6E2C00'}}>🚪 Rooms — {roomsFor.unitNo}</div>
+              <button onClick={()=>setRoomsFor(null)}
+                style={{padding:'4px 10px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>✕ Close</button>
+            </div>
+            <table style={{width:'100%',borderCollapse:'collapse',marginBottom:16,fontSize:12}}>
+              <thead><tr style={{background:'#FDF2E9'}}>
+                {['Room','Type','Area (sqft)','Progress',''].map(h=>(
+                  <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,color:'#6E2C00'}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {(roomsFor.rooms||[]).map(r => (
+                  <tr key={r.id} style={{borderBottom:'1px solid #F0F0F0'}}>
+                    <td style={{padding:'7px 10px'}}>{r.roomName}</td>
+                    <td style={{padding:'7px 10px'}}>{r.roomType}</td>
+                    <td style={{padding:'7px 10px'}}>{r.areaSqft||'—'}</td>
+                    <td style={{padding:'7px 10px',color:'#1E8449',fontWeight:700}}>{r.progress}%</td>
+                    <td style={{padding:'7px 10px'}}>
+                      <button onClick={()=>removeRoom(r.id)}
+                        style={{padding:'4px 9px',background:'#fdecea',color:'#C0392B',border:'none',borderRadius:4,cursor:'pointer',fontSize:11}}>Remove</button>
+                    </td>
+                  </tr>
+                ))}
+                {(roomsFor.rooms||[]).length===0 && <tr><td colSpan={5} style={{padding:'12px',textAlign:'center',color:'#aaa'}}>No rooms yet</td></tr>}
+              </tbody>
+            </table>
+            <div style={{background:'#FAF8FA',border:'1px solid #E8E0E8',borderRadius:6,padding:12}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>+ Add Room</div>
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr',gap:8,marginBottom:8}}>
+                <input placeholder='Room name (e.g. Kitchen)' value={roomForm.roomName}
+                  onChange={e=>setRoomForm({...roomForm,roomName:e.target.value})}
+                  style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12}} />
+                <select value={roomForm.roomType} onChange={e=>setRoomForm({...roomForm,roomType:e.target.value})}
+                  style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12}}>
+                  {['LIVING','KITCHEN','BEDROOM','STUDY','POOJA','BATHROOM','BALCONY','OTHER'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input placeholder='Area sqft' value={roomForm.areaSqft}
+                  onChange={e=>setRoomForm({...roomForm,areaSqft:e.target.value})}
+                  style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12}} />
+              </div>
+              <button onClick={addRoom}
+                style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>+ Add Room</button>
+            </div>
+          </div>
         </div>
       )}
 

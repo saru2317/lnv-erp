@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
   }
 
   // ── hasAccess helper ─────────────────────────────────────
-  const ALL_MODS = ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','admin','config','tm','am','civil','vm','cn','reports','kpi','mdm']
+  const ALL_MODS = ['home','sd','mm','wm','fi','pp','qm','pm','hcm','crm','admin','config','tm','am','civil','vm','cn','reports','kpi','mdm','ai']
 
   const MODULE_ACCESS = {
     SUPER_ADMIN: ALL_MODS,
@@ -62,6 +62,7 @@ export function AuthProvider({ children }) {
     ACCOUNTS:    ['home','fi','mm','sd','am','reports','kpi'],
     PRODUCTION:  ['home','pp','qm','pm','wm','mm','tm','reports'],
     OPERATIONS:  ['home','pp','qm','pm','wm','mm','tm','reports'],
+    PLANNER:     ['home','pp','qm','pm','wm','mm','tm','reports'],
     HR:          ['home','hcm','cn','vm','reports'],
     SALES:       ['home','sd','crm','reports','kpi'],
     TRANSPORT:   ['home','tm','wm','reports'],
@@ -85,7 +86,7 @@ export function AuthProvider({ children }) {
                        (user?.role || '').toUpperCase() === 'SUPER_ADMIN'
 
   // ── Module activation — reads from CompanyProfile config ──
-  const ALWAYS_ON = ['home', 'config', 'admin', 'reports', 'mdm'] // core — never hidden
+  const ALWAYS_ON = ['home', 'config', 'admin', 'reports', 'mdm', 'ai'] // core — never hidden
   const isModuleEnabled = (moduleKey) => {
     if (ALWAYS_ON.includes(moduleKey?.toLowerCase())) return true // always visible
     try {

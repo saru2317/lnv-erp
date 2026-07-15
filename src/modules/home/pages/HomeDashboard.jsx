@@ -31,6 +31,7 @@ const SIDEBAR_GROUPS = [
     { label:'Transport',         icon:'🚛', path:'/tm',    mod:'tm',      desc:'Trips · Fleet' },
     { label:'Assets',            icon:'🏗️', path:'/am',    mod:'am',      desc:'Fixed Assets' },
     { label:'Civil',             icon:'👷', path:'/civil', mod:'civil',   desc:'Projects' },
+    { label:'Education',         icon:'🎓', path:'/edu',   mod:'edu',     desc:'Students · Staff' },
     { label:'Visitor',           icon:'🪪', path:'/vm',    mod:'vm',      desc:'Gate Entry' },
     { label:'Canteen',           icon:'🍽️', path:'/cn',    mod:'cn',      desc:'Meals' },
   ]},
@@ -61,10 +62,10 @@ const ALL_TILES = [
     { icon:'🔧', name:'Production Orders', sub:'In progress',    path:'/pp/wo',        ck:'prodOrders'    },
   ]},
   { mod:'fi',      color:'#1A5276', label:'FI · Finance', items:[
-    { icon:'📒', name:'Journal Entries',  sub:'Posted today',    path:'/fi/journals',  ck:'invoices'      },
-    { icon:'💳', name:'AR / AP',          sub:'Outstanding',     path:'/fi/ar-ap',     ck:'salesOrders'   },
-    { icon:'📊', name:'P&L Report',       sub:'This period',     path:'/fi/reports',   ck:'customers'     },
-    { icon:'🏦', name:'Bank & Cash',      sub:'Accounts',        path:'/fi/day-book',  ck:'grns'          },
+    { icon:'📒', name:'Journal Entries',  sub:'Posted today',    path:'/fi/journals',  ck:'journalEntriesToday' },
+    { icon:'💳', name:'AR / AP',          sub:'Outstanding (₹)', path:'/fi/ar-ap',     ck:'totalAR'          },
+    { icon:'📊', name:'P&L Report',       sub:'EBITDA this month', path:'/fi/reports',   ck:'plEbitda'       },
+    { icon:'🏦', name:'Bank & Cash',      sub:'Accounts',        path:'/fi/day-book',  ck:'bankCashNotBuilt' },
   ]},
   { mod:'wm',      color:'#1F618D', label:'WM · Warehouse', items:[
     { icon:'📦', name:'Stock List',       sub:'Material items',  path:'/wm/stock',     ck:'stockItems'    },
@@ -80,9 +81,9 @@ const ALL_TILES = [
     { icon:'📅', name:'PM Schedule',      sub:'Planned',         path:'/pm/schedule',  ck:'boms'          },
   ]},
   { mod:'hcm',     color:'#2E86C1', label:'HR · HCM', items:[
-    { icon:'👥', name:'Employees',        sub:'Active',          path:'/hcm/employees',ck:'customers'     },
-    { icon:'📅', name:'Leave',            sub:'Pending approval',path:'/hcm/leave',    ck:'salesOrders'   },
-    { icon:'💰', name:'Payroll',          sub:'This month',      path:'/hcm/payroll',  ck:'invoices'      },
+    { icon:'👥', name:'Employees',        sub:'Active',          path:'/hcm/employees',ck:'employeeCount'   },
+    { icon:'📅', name:'Leave',            sub:'Pending approval',path:'/hcm/leave',    ck:'pendingLeave'    },
+    { icon:'💰', name:'Payroll',          sub:'Slips this month',path:'/hcm/payroll',  ck:'payrollThisMonth'},
   ]},
   { mod:'crm',     color:'#1A5276', label:'CRM', items:[
     { icon:'🤝', name:'Leads',            sub:'Active pipeline', path:'/crm/leads',    ck:'salesOrders'   },
@@ -92,9 +93,13 @@ const ALL_TILES = [
     { icon:'🚛', name:'Trips',            sub:'In transit',      path:'/tm/trips',     ck:'workOrders'    },
     { icon:'🚗', name:'Vehicles',         sub:'Fleet',           path:'/tm/vehicles',  ck:'boms'          },
   ]},
+  { mod:'civil',   color:'#E06F39', label:'Civil · Projects', items:[
+    { icon:'👷', name:'Active Projects',  sub:'In progress',     path:'/civil/projects', ck:'civilProjects' },
+  ]},
 ]
 
 const ALL_QUICK = [
+  { icon:'📝', label:'Raise Purchase Indent', path:'/purchase-indent/new', mod:'home' },
   { icon:'➕', label:'New Sales Order',    path:'/sd/sales/new',    mod:'sd'      },
   { icon:'📦', label:'New Purchase Order', path:'/mm/po/new',       mod:'mm'      },
   { icon:'🧾', label:'Create Invoice',     path:'/sd/invoices/new', mod:'sd'      },
@@ -134,9 +139,44 @@ const KPI_META = {
   prodOrders:    { icon:'🔧', bg:'#FFF3CD', label:'Production Orders',   sub:'Released',           up:true,  fmt:'num'},
 }
 
+// Which module "owns" each KPI — used to hide sales/production-specific KPIs
+// when that module isn't enabled for this company (e.g. a College shouldn't
+// see "This Month Revenue" / "Open Orders" from the Sales module up top)
+const KPI_MODULE = {
+  monthRevenue:'sd', openOrders:'sd', activeCust:'sd', totalAR:'fi',
+  purchaseOrders:'mm', stockItems:'wm', vendors:'mm', grns:'mm',
+  workOrders:'pp', boms:'pp', prodOrders:'pp',
+}
 
 
 
+
+
+// Shared with the sidebar ordering below — one saved order drives everything
+function getSavedModuleOrder() {
+  try { return JSON.parse(localStorage.getItem('lnv_module_order') || 'null') || [] } catch { return [] }
+}
+function moduleRank(savedOrder, k) {
+  const i = savedOrder.indexOf(k)
+  return i === -1 ? 999 : i
+}
+
+// Reorders both the groups and the items within each group using the same
+// Company Profile → Module Order setting the top nav uses. A group's rank is
+// the best (lowest) rank among its own items, so e.g. ranking Finance ahead
+// of Warehouse moves the whole Finance group ahead of Operations if needed.
+function getOrderedSidebarGroups() {
+  const savedOrder = getSavedModuleOrder()
+  if (!savedOrder.length) return SIDEBAR_GROUPS
+
+  const rank = (k) => moduleRank(savedOrder, k)
+  const withSortedItems = SIDEBAR_GROUPS.map(grp => ({
+    ...grp,
+    items: [...grp.items].sort((a, b) => rank(a.mod) - rank(b.mod)),
+  }))
+  const groupRank = (grp) => Math.min(...grp.items.map(it => rank(it.mod)))
+  return [...withSortedItems].sort((a, b) => groupRank(a) - groupRank(b))
+}
 
 // ── Sidebar Component ─────────────────────────────────────
 function Sidebar({ open, onClose, navigate, hasAccess }) {
@@ -146,7 +186,7 @@ function Sidebar({ open, onClose, navigate, hasAccess }) {
   if (!open) return null
 
   // Filter groups and items by role
-  const visibleGroups = SIDEBAR_GROUPS
+  const visibleGroups = getOrderedSidebarGroups()
     .map(grp => ({ ...grp, items: grp.items.filter(item => hasAccess(item.mod)) }))
     .filter(grp => grp.items.length > 0)
 
@@ -216,7 +256,7 @@ function Sidebar({ open, onClose, navigate, hasAccess }) {
 // ── Bar Chart ──────────────────────────────────────────────
 // ── Main Component ────────────────────────────────────────
 export default function HomeDashboard() {
-  const { user, hasAccess } = useAuth()
+  const { user, hasAccess, isModuleEnabled } = useAuth()
   const navigate  = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const now = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'})
@@ -245,12 +285,20 @@ export default function HomeDashboard() {
   const role = (user?.role || '').toUpperCase()
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'MANAGER'
 
-  // Filter tiles to only modules this role can access
-  const TILES = ALL_TILES.filter(sec => hasAccess(sec.mod))
-  const QUICK = ALL_QUICK.filter(q => hasAccess(q.mod))
+  // Visible only if the role has access AND the industry config (Company Profile) has this
+  // module turned on — hasAccess alone ignores Company Profile entirely, which is why Super
+  // Admin (hasAccess = true for everything) saw every module regardless of industry setup.
+  const canSee = (mod) => hasAccess(mod) && isModuleEnabled(mod)
 
-  // KPI strip — role specific
-  const kpiKeys = ROLE_KPIS[role] || ROLE_KPIS['ADMIN']
+  // Filter tiles to only modules this role can access, then order them the
+  // same way as the top nav / sidebar (Company Profile → Module Order)
+  const savedOrder = getSavedModuleOrder()
+  const TILES = ALL_TILES.filter(sec => canSee(sec.mod))
+    .sort((a, b) => moduleRank(savedOrder, a.mod) - moduleRank(savedOrder, b.mod))
+  const QUICK = ALL_QUICK.filter(q => canSee(q.mod))
+
+  // KPI strip — role specific, then narrowed to modules actually enabled for this company
+  const kpiKeys = (ROLE_KPIS[role] || ROLE_KPIS['ADMIN']).filter(k => canSee(KPI_MODULE[k]))
   const tc = exec?.tileCounts || {}
   const kpiValues = {
     monthRevenue:   exec?.kpis?.monthRevenue,
@@ -270,7 +318,7 @@ export default function HomeDashboard() {
     <div style={{ display:'flex', height:'100%', background:'#F0EEEB' }}>
 
       {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navigate={navigate} hasAccess={hasAccess} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navigate={navigate} hasAccess={canSee} />
 
       {/* Main content */}
       <div style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column' }}>
@@ -492,7 +540,7 @@ export default function HomeDashboard() {
                 {sec.label}
               </div>
               <div style={{ display:'grid', gridTemplateColumns:`repeat(${sec.items.length},1fr)`, gap:12 }}>
-                {sec.items.filter(t => !t.mod || hasAccess(t.mod)).map((t, j) => {
+                {sec.items.filter(t => !t.mod || canSee(t.mod)).map((t, j) => {
                   const count = exec?.tileCounts?.[t.ck]
                   return (
                     <div key={j} onClick={() => navigate(t.path)}
@@ -511,7 +559,7 @@ export default function HomeDashboard() {
                           textTransform:'uppercase', letterSpacing:.5 }}>{t.name}</div>
                         <div style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:700,
                           color: sec.color, lineHeight:1.2 }}>
-                          {count !== undefined ? count : '—'}
+                          {count === undefined ? '—' : t.ck === 'plEbitda' ? '₹'+count.toLocaleString('en-IN') : count}
                         </div>
                         <div style={{ fontSize:11, color:'#6C757D' }}>{t.sub}</div>
                       </div>
@@ -579,7 +627,7 @@ export default function HomeDashboard() {
               </div>
               <div style={{ padding:'14px 18px' }}>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                  {QUICK.filter(qa => hasAccess(qa.mod)).map(qa => (
+                  {QUICK.filter(qa => canSee(qa.mod)).map(qa => (
                     <div key={qa.label} onClick={() => navigate(qa.path)}
                       style={{ display:'flex', alignItems:'center', gap:8,
                         padding:'10px 12px', background:'#F8F9FA',

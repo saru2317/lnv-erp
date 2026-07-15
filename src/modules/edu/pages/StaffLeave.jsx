@@ -5,6 +5,17 @@ const BASE=import.meta.env.VITE_API_URL||'/api'
 const tok=()=>localStorage.getItem('lnv_token')||''
 const hdr=()=>({'Content-Type':'application/json',Authorization:`Bearer ${tok()}`})
 const hdr2=()=>({Authorization:`Bearer ${tok()}`})
+// Mirrors backend canApprove() in config/approvalRoles.js — HR/Manager/Admin/Super
+// Admin roles own the HCM module and can approve LEAVE. Kept in sync manually
+// since this is a different app (frontend vs backend); if you add an approver
+// role on the backend, add it here too.
+const LEAVE_APPROVER_ROLES=['HR','MANAGER','ADMIN','SUPER_ADMIN']
+const canApproveLeave=()=>{
+  try{
+    const role=(JSON.parse(localStorage.getItem('lnv_user')||'{}').role||'').toUpperCase().trim()
+    return LEAVE_APPROVER_ROLES.some(r=>role.includes(r))
+  }catch{return false}
+}
 const fmtD=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'
 const inp={padding:'7px 10px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,outline:'none',boxSizing:'border-box'}
 const lbl={fontSize:10,fontWeight:700,color:'#6C757D',display:'block',marginBottom:3,textTransform:'uppercase'}
@@ -26,7 +37,7 @@ const MONTHS=[['01','January'],['02','February'],['03','March'],['04','April'],
   ['09','September'],['10','October'],['11','November'],['12','December']]
 const YEARS=Array.from({length:5},(_,i)=>String(new Date().getFullYear()-i))
 const EMPTY={staffId:'',staffCode:'',staffName:'',department:'EDUCATION',
-  leaveType:'',fromDate:'',toDate:'',days:'1',reason:'',isHalfDay:false}
+  leaveType:'',fromDate:'',toDate:'',days:'1',reason:'',isHalfDay:false,halfDaySession:''}
 
 export default function StaffLeave(){
   const [leaves,   setLeaves]   = useState([])
@@ -56,15 +67,14 @@ export default function StaffLeave(){
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
 
   // Load staff + HR leave types on mount
+  const instId = localStorage.getItem('lnv_edu_inst') || ''
   useEffect(()=>{
     // Get education staff
-    fetch(`${BASE}/edu/staff?limit=200`,{headers:hdr2()})
+    fetch(`${BASE}/edu/staff?limit=200&institutionId=${instId}`,{headers:hdr2()})
       .then(r=>r.json()).then(d=>setStaffList(d.data||[])).catch(()=>{})
-    // Get HR leave types
-    fetch(`${BASE}/leave/balance/DUMMY`,{headers:hdr2()})
-      .catch(()=>{})
-    // Direct from LeaveType
-    fetch(`${BASE}/api/leave/types`,{headers:hdr2()})
+    // Get leave types (LeaveType is a company-wide HR master — same policy
+    // for Education staff as everyone else, not Education-specific data)
+    fetch(`${BASE}/leave/types`,{headers:hdr2()})
       .then(r=>r.json()).then(d=>setLeaveTypes(d.data||[])).catch(()=>{
         // Fallback: hardcoded from HR schema
         setLeaveTypes([
@@ -131,6 +141,7 @@ export default function StaffLeave(){
     if(!form.fromDate||!form.toDate)return toast.error('Select leave dates')
     if(new Date(form.toDate)<new Date(form.fromDate))return toast.error('To date must be after from date')
     if(!form.reason.trim())return toast.error('Reason is required')
+    if(form.isHalfDay && !form.halfDaySession)return toast.error('Select 1st Half or 2nd Half')
     // Check balance
     const bal=balance.find(b=>b.code===form.leaveType)
     if(bal&&bal.balance<parseFloat(form.days||1)&&form.leaveType!=='LOP'){
@@ -149,6 +160,7 @@ export default function StaffLeave(){
           days:      parseFloat(form.days||1),
           reason:    form.reason,
           isHalfDay: form.isHalfDay,
+          halfDaySession: form.isHalfDay ? form.halfDaySession : null,
         })})
       const d=await r.json()
       if(d.error)return toast.error(d.error)
@@ -336,7 +348,7 @@ export default function StaffLeave(){
                     </td>
                     <td style={{padding:'9px 12px'}}>
                       <div style={{fontWeight:700,color:'#6E2C00'}}>{l.leaveType}</div>
-                      {l.isHalfDay&&<div style={{fontSize:10,color:'#714B67'}}>Half Day</div>}
+                      {l.isHalfDay&&<div style={{fontSize:10,color:'#714B67'}}>Half Day — {l.halfDaySession==='SECOND_HALF'?'2nd Half':'1st Half'}</div>}
                     </td>
                     <td style={{padding:'9px 12px',whiteSpace:'nowrap',fontSize:11}}>{fmtD(l.fromDate)}</td>
                     <td style={{padding:'9px 12px',whiteSpace:'nowrap',fontSize:11}}>{fmtD(l.toDate)}</td>
@@ -354,7 +366,7 @@ export default function StaffLeave(){
                     </td>
                     <td style={{padding:'9px 12px'}}>
                       <div style={{display:'flex',gap:4}}>
-                        {isPending&&(<>
+                        {isPending&&canApproveLeave()&&(<>
                           <button onClick={()=>setConfirmAction({leave:l,action:'APPROVE'})}
                             style={{padding:'4px 8px',background:'#E8F5E9',color:'#1E8449',
                               border:'1px solid #A9DFBF',borderRadius:4,cursor:'pointer',fontSize:10,fontWeight:700}}>
@@ -462,9 +474,31 @@ export default function StaffLeave(){
                 }} style={{...inp,width:'100%'}}/></div>
               <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:8}}>
                 <input type='checkbox' id='halfday' checked={form.isHalfDay}
-                  onChange={e=>{set('isHalfDay',e.target.checked);if(e.target.checked)set('days','0.5')}}
+                  onChange={e=>{
+                    set('isHalfDay',e.target.checked)
+                    if(e.target.checked)set('days','0.5')
+                    else set('halfDaySession','')
+                  }}
                   style={{width:16,height:16,accentColor:'#6E2C00'}}/>
                 <label htmlFor='halfday' style={{fontSize:12,fontWeight:600,cursor:'pointer'}}>Half Day Leave</label>
+                {form.isHalfDay && (
+                  <div style={{display:'flex',gap:14,marginLeft:10}}>
+                    <label style={{display:'flex',alignItems:'center',gap:5,fontSize:12,cursor:'pointer'}}>
+                      <input type='radio' name='halfDaySession' value='FIRST_HALF'
+                        checked={form.halfDaySession==='FIRST_HALF'}
+                        onChange={()=>set('halfDaySession','FIRST_HALF')}
+                        style={{accentColor:'#6E2C00'}}/>
+                      1st Half
+                    </label>
+                    <label style={{display:'flex',alignItems:'center',gap:5,fontSize:12,cursor:'pointer'}}>
+                      <input type='radio' name='halfDaySession' value='SECOND_HALF'
+                        checked={form.halfDaySession==='SECOND_HALF'}
+                        onChange={()=>set('halfDaySession','SECOND_HALF')}
+                        style={{accentColor:'#6E2C00'}}/>
+                      2nd Half
+                    </label>
+                  </div>
+                )}
               </div>
               <div style={{gridColumn:'1/-1'}}><label style={lbl}>Reason *</label>
                 <input value={form.reason} onChange={e=>set('reason',e.target.value)}

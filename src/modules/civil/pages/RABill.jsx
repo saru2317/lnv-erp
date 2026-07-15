@@ -22,6 +22,8 @@ export default function RABill() {
   const [projects,   setProjects]   = useState([])
   const [bills,      setBills]      = useState([])
   const [selProject, setSelProject] = useState('')
+  const [units,      setUnits]      = useState([])
+  const [selUnit,    setSelUnit]    = useState('') // '' = whole project
   const [boq,        setBOQ]        = useState([])
   const [loading,    setLoading]    = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -32,25 +34,38 @@ export default function RABill() {
     fetch(`${BASE}/civil/projects`,{headers:hdr2()}).then(r=>r.json()).then(d=>setProjects(d.data||[])).catch(()=>{})
   },[])
 
-  const loadBills = async (pid='') => {
+  const loadBills = async (pid='', uid='') => {
     setLoading(true)
-    const url = pid ? `${BASE}/civil/ra-bills/${pid}` : `${BASE}/civil/ra-bills/0`
     if (!pid) { setBills([]); setLoading(false); return }
-    const r = await fetch(url,{headers:hdr2()})
+    const q = uid ? `?unitId=${uid}` : ''
+    const r = await fetch(`${BASE}/civil/ra-bills/${pid}${q}`,{headers:hdr2()})
     const d = await r.json()
     setBills(d.data||[])
     setLoading(false)
   }
 
   const selectProject = async (pid) => {
-    setSelProject(pid)
-    if (!pid) { setBOQ([]); setBills([]); return }
+    setSelProject(pid); setSelUnit(''); setBOQ([])
+    if (!pid) { setUnits([]); setBills([]); return }
     loadBills(pid)
+    const u = await fetch(`${BASE}/civil/units?projectId=${pid}`,{headers:hdr2()}).then(r=>r.json())
+    setUnits(u.data||[])
+    await loadBoqAndPrevious(pid, '')
+  }
+
+  const selectUnit = async (uid) => {
+    setSelUnit(uid)
+    loadBills(selProject, uid)
+    await loadBoqAndPrevious(selProject, uid)
+  }
+
+  const loadBoqAndPrevious = async (pid, uid) => {
     const r = await fetch(`${BASE}/civil/boq/${pid}`,{headers:hdr2()})
     const d = await r.json()
-    setBOQ(d.data||[])
-    // Auto-fill previous billed
-    const prev = await fetch(`${BASE}/civil/ra-bills/${pid}`,{headers:hdr2()}).then(r=>r.json())
+    const allBoq = d.data||[]
+    setBOQ(uid ? allBoq.filter(b=>b.unitId===parseInt(uid)) : allBoq.filter(b=>!b.unitId))
+    // Auto-fill previous billed — read-only display, backend recomputes authoritatively on submit
+    const prev = await fetch(`${BASE}/civil/ra-bills/${pid}${uid?`?unitId=${uid}`:''}`,{headers:hdr2()}).then(r=>r.json())
     const prevBills = (prev.data||[]).filter(b=>b.status!=='DRAFT')
     const prevTotal = prevBills.reduce((s,b)=>s+Number(b.thisBillAmt||0),0)
     setForm(f=>({...f, previousBilled:prevTotal.toString()}))
@@ -58,7 +73,7 @@ export default function RABill() {
   }
 
   const calcPreview = () => {
-    if (!selProject || boq.length===0) return toast.error('Select project with BOQ first')
+    if (!selProject || boq.length===0) return toast.error(selUnit ? 'This house has no BOQ items yet' : 'Select project with BOQ first')
     const runningTotal = boq.reduce((s,b)=>s+Number(b.doneAmt||0),0)
     const prev         = parseFloat(form.previousBilled||0)
     const thisBill     = runningTotal - prev
@@ -67,7 +82,8 @@ export default function RABill() {
     const lessRet      = thisBill * retention / 100
     const lessAdv      = parseFloat(form.advanceRecovery||0)
     const netPayable   = thisBill - lessRet - lessAdv
-    setPreview({ runningTotal, thisBill, lessRet, lessAdv, netPayable, retention, proj })
+    const unitObj      = selUnit ? units.find(u=>u.id===parseInt(selUnit)) : null
+    setPreview({ runningTotal, thisBill, lessRet, lessAdv, netPayable, retention, proj, unitObj })
     setView('preview')
   }
 
@@ -75,13 +91,13 @@ export default function RABill() {
     setGenerating(true)
     try {
       const r = await fetch(`${BASE}/civil/ra-bills`,{method:'POST',headers:hdr(),
-        body:JSON.stringify({ projectId:selProject, previousBilled:form.previousBilled,
+        body:JSON.stringify({ projectId:selProject, unitId:selUnit||null,
           periodFrom:form.periodFrom, periodTo:form.periodTo,
           advanceRecovery:form.advanceRecovery, remarks:form.remarks })})
       const d = await r.json()
       if (d.error) return toast.error(d.error)
       toast.success(`✅ ${d.data.raBillNo} generated!`)
-      setView('list'); loadBills(selProject)
+      setView('list'); loadBills(selProject, selUnit)
     } catch { toast.error('Failed') }
     finally { setGenerating(false) }
   }
@@ -126,7 +142,8 @@ export default function RABill() {
 </div>
 <div class="info-grid">
   <div class="info-box"><label>Project</label><span>${proj?.projectName||'—'}</span></div>
-  <div class="info-box"><label>Client / Owner</label><span>${proj?.clientName||'—'}</span></div>
+  <div class="info-box"><label>${b.unit ? 'House Owner' : 'Client / Owner'}</label><span>${b.unit?.ownerName || proj?.clientName || '—'}</span></div>
+  ${b.unit ? `<div class="info-box"><label>House No.</label><span>${b.unit.unitNo}</span></div>` : ''}
   <div class="info-box"><label>Site Location</label><span>${proj?.siteLocation||'—'}</span></div>
   <div class="info-box"><label>Period</label><span>${b.periodFrom?fmtD(b.periodFrom)+' to '+fmtD(b.periodTo):'—'}</span></div>
 </div>
@@ -169,12 +186,19 @@ export default function RABill() {
       </div>
 
       {/* Project selector */}
-      <div style={{background:'#fff',borderRadius:10,padding:'12px 16px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+      <div style={{background:'#fff',borderRadius:10,padding:'12px 16px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)',display:'flex',gap:12,flexWrap:'wrap'}}>
         <select value={selProject} onChange={e=>selectProject(e.target.value)}
           style={{width:400,padding:'9px 12px',border:'1.5px solid #E8D5C4',borderRadius:8,fontSize:13,background:'#FFFAF7',outline:'none'}}>
           <option value=''>— Select Project —</option>
           {projects.map(p=><option key={p.id} value={p.id}>{p.projectCode} — {p.projectName} ({p.clientName})</option>)}
         </select>
+        {selProject && units.length>0 && (
+          <select value={selUnit} onChange={e=>selectUnit(e.target.value)}
+            style={{width:260,padding:'9px 12px',border:'1.5px solid #E8D5C4',borderRadius:8,fontSize:13,background:'#FFFAF7',outline:'none'}}>
+            <option value=''>Bill For: Whole Project</option>
+            {units.map(u=><option key={u.id} value={u.id}>Bill For: {u.unitNo} {u.ownerName?`(${u.ownerName})`:''}</option>)}
+          </select>
+        )}
       </div>
 
       {/* NEW RA BILL FORM */}
@@ -233,9 +257,10 @@ export default function RABill() {
                   style={{width:'100%',padding:'9px 12px',border:'1.5px solid #E8D5C4',borderRadius:8,fontSize:13,background:'#FFFAF7',outline:'none',boxSizing:'border-box'}} />
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:'#6E2C00',marginBottom:5,textTransform:'uppercase'}}>Previous Billed (₹)</div>
-                <input type='number' value={form.previousBilled} onChange={e=>setForm(f=>({...f,previousBilled:e.target.value}))}
-                  style={{width:'100%',padding:'9px 12px',border:'1.5px solid #E8D5C4',borderRadius:8,fontSize:13,background:'#FFFAF7',outline:'none',boxSizing:'border-box'}} />
+                <div style={{fontSize:11,fontWeight:700,color:'#6E2C00',marginBottom:5,textTransform:'uppercase'}}>Previous Billed (₹) — auto-calculated</div>
+                <input type='number' value={form.previousBilled} readOnly disabled
+                  title="Calculated automatically from prior bills for this project/house — not editable, protects against billing errors"
+                  style={{width:'100%',padding:'9px 12px',border:'1.5px solid #E8D5C4',borderRadius:8,fontSize:13,background:'#F0EBE5',outline:'none',boxSizing:'border-box',color:'#888',cursor:'not-allowed'}} />
               </div>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'#C0392B',marginBottom:5,textTransform:'uppercase'}}>Advance Recovery (₹)</div>
@@ -265,6 +290,11 @@ export default function RABill() {
             <div style={{background:'#6E2C00',padding:'18px 24px',color:'#fff'}}>
               <div style={{fontSize:18,fontWeight:800}}>Running Account Bill</div>
               <div style={{fontSize:13,color:'#FDEBD0',marginTop:4}}>{preview.proj?.projectName} — {preview.proj?.clientName}</div>
+              {preview.unitObj && (
+                <div style={{fontSize:13,color:'#FDEBD0',marginTop:2,fontWeight:700}}>
+                  🏠 House: {preview.unitObj.unitNo}{preview.unitObj.ownerName?` — ${preview.unitObj.ownerName}`:''}
+                </div>
+              )}
             </div>
             <div style={{padding:24}}>
               {[
@@ -317,7 +347,7 @@ export default function RABill() {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
               <thead>
                 <tr style={{background:'#6E2C00',color:'#fff'}}>
-                  {['RA Bill No','Date','Running Total','This Bill','Retention','Advance','Net Payable','Status','Action'].map(h=>(
+                  {['RA Bill No','House','Date','Running Total','This Bill','Retention','Advance','Net Payable','Status','Action'].map(h=>(
                     <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:12,fontWeight:600,whiteSpace:'nowrap'}}>{h}</th>
                   ))}
                 </tr>
@@ -328,6 +358,7 @@ export default function RABill() {
                   return (
                     <tr key={b.id} style={{background:i%2===0?'#fff':'#FDF9F7',borderBottom:'1px solid #F5EDE0'}}>
                       <td style={{padding:'9px 12px',fontFamily:'monospace',fontSize:11,color:'#6E2C00',fontWeight:700}}>{b.raBillNo}</td>
+                      <td style={{padding:'9px 12px',fontSize:12}}>{b.unit ? `${b.unit.unitNo}${b.unit.ownerName?` (${b.unit.ownerName})`:''}` : <span style={{color:'#888'}}>Whole Project</span>}</td>
                       <td style={{padding:'9px 12px',fontSize:12}}>{fmtD(b.billDate)}</td>
                       <td style={{padding:'9px 12px',textAlign:'right'}}>{fmtC(b.runningTotal)}</td>
                       <td style={{padding:'9px 12px',textAlign:'right',fontWeight:700,color:'#1A5276'}}>{fmtC(b.thisBillAmt)}</td>

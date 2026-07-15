@@ -15,7 +15,11 @@ const SubjectMaster     = lazy(() => import('./SubjectMaster'))
 const AcademicYear      = lazy(() => import('./AcademicYear'))
 const Timetable         = lazy(() => import('./Timetable'))
 const StudentAttendance = lazy(() => import('./StudentAttendance'))
+const AttendanceRegister = lazy(() => import('./AttendanceRegister'))
 const StaffAttendance   = lazy(() => import('./StaffAttendance'))
+const StaffAttendanceRegister = lazy(() => import('./StaffAttendanceRegister'))
+const StudentAttendanceHistory = lazy(() => import('./StudentAttendanceHistory'))
+const StaffAttendanceHistory   = lazy(() => import('./StaffAttendanceHistory'))
 const StaffLeave        = lazy(() => import('./StaffLeave'))
 const ExamMaster        = lazy(() => import('./ExamMaster'))
 const MarkEntry         = lazy(() => import('./MarkEntry'))
@@ -62,7 +66,11 @@ const SCHOOL_SIDEBAR = [
   ]},
   { label:'Attendance', items:[
     { to:'/edu/attendance/student', label:'✅ Student Attendance' },
+    { to:'/edu/attendance/register', label:'📋 Attendance Register' },
+    { to:'/edu/attendance/student-history', label:'🔍 Student Attendance History' },
     { to:'/edu/attendance/staff',   label:'👤 Staff Attendance' },
+    { to:'/edu/attendance/staff-register', label:'📋 Staff Attendance Register' },
+    { to:'/edu/attendance/staff-history', label:'🔍 Staff Attendance History' },
   ]},
   { label:'Examination', items:[
     { to:'/edu/exams',              label:'📝 Exam Master' },
@@ -123,7 +131,11 @@ const COLLEGE_SIDEBAR = [
   ]},
   { label:'Attendance', items:[
     { to:'/edu/attendance/student', label:'✅ Student Attendance' },
+    { to:'/edu/attendance/register', label:'📋 Attendance Register' },
+    { to:'/edu/attendance/student-history', label:'🔍 Student Attendance History' },
     { to:'/edu/attendance/staff',   label:'👤 Staff Attendance' },
+    { to:'/edu/attendance/staff-register', label:'📋 Staff Attendance Register' },
+    { to:'/edu/attendance/staff-history', label:'🔍 Staff Attendance History' },
   ]},
   { label:'Examination', items:[
     { to:'/edu/exams',              label:'📝 Semester Exam Master' },
@@ -191,6 +203,8 @@ const COACHING_SIDEBAR = [
   ]},
   { label:'Attendance', items:[
     { to:'/edu/attendance/student', label:'✅ Student Attendance' },
+    { to:'/edu/attendance/register', label:'📋 Attendance Register' },
+    { to:'/edu/attendance/student-history', label:'🔍 Student Attendance History' },
   ]},
   { label:'Tests', items:[
     { to:'/edu/exams',              label:'📝 Test Master' },
@@ -285,7 +299,11 @@ export default function EduLayout() {
           <Route path="timetable"  element={<Timetable />} />
           {/* Attendance */}
           <Route path="attendance/student" element={<StudentAttendance />} />
+          <Route path="attendance/register" element={<AttendanceRegister />} />
+          <Route path="attendance/student-history" element={<StudentAttendanceHistory />} />
           <Route path="attendance/staff"   element={<StaffAttendance />} />
+          <Route path="attendance/staff-register" element={<StaffAttendanceRegister />} />
+          <Route path="attendance/staff-history" element={<StaffAttendanceHistory />} />
           {/* Examination */}
           <Route path="exams"      element={<ExamMaster />} />
           <Route path="marks"      element={<MarkEntry />} />

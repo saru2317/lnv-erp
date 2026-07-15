@@ -56,7 +56,7 @@ const ROLE_PERM = {
   sales:      ['view','create','edit','export'],
   viewer:     ['view'],
 }
-const ROLE_LABELS = {admin:' Super Admin',manager:' Plant Manager',accounts:' Accounts',operations:' Operations',hr:' HR Manager',sales:' Sales Officer',viewer:' Viewer'}
+const ROLE_LABELS = {admin:' Super Admin',manager:' Plant Manager',accounts:' Accounts',operations:' Operations',planner:' Production Planner',hr:' HR Manager',sales:' Sales Officer',transport:' Transport Head',civil:' Civil Engineer',viewer:' Viewer'}
 const ROLE_BG     = {admin:'#F7F0F5',manager:'#FDF0EA',accounts:'#E6F7F7',operations:'#E6F4F5',hr:'#F4ECF7',sales:'#E6F4F5',viewer:'#F5F5F5'}
 const ROLE_CLR    = {admin:'#714B67',manager:'#E06F39',accounts:'#00A09D',operations:'#017E84',hr:'#8E44AD',sales:'#015E63',viewer:'#6C757D'}
 const ROLE_DESC   = {admin:'Full system access — all modules and settings',manager:'Production, quality, maintenance oversight',accounts:'Finance, GST, payables & receivables',operations:'Production execution, QC, maintenance tasks',hr:'Employee management, payroll, leave approval',sales:'Sales orders, CRM leads and follow-ups',viewer:'Read-only access — no edit or approve rights'}

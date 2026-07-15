@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const BASE = import.meta.env.VITE_API_URL || '/api'
@@ -8,7 +9,8 @@ const hdr2 = () => ({ Authorization:`Bearer ${tok()}` })
 const toDay = () => new Date().toISOString().slice(0,10)
 
 export default function StudentAttendance() {
-  const [date,     setDate]     = useState(toDay())
+  const [searchParams] = useSearchParams()
+  const [date,     setDate]     = useState(searchParams.get('date') || toDay())
   const [classes,  setClasses]  = useState([])
   const [sections, setSections] = useState([])
   const [selClass, setSelClass] = useState('')
@@ -17,29 +19,62 @@ export default function StudentAttendance() {
   const [rows,     setRows]     = useState([])
   const [saving,   setSaving]   = useState(false)
   const [loading,  setLoading]  = useState(false)
+  const [alreadyMarked, setAlreadyMarked] = useState(false)
 
   useEffect(()=>{
     const instId=localStorage.getItem('lnv_edu_inst')||''
-    fetch(`${BASE}/edu/classes?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setClasses(d.data||[])).catch(()=>{})
+    fetch(`${BASE}/edu/classes?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>{
+      const cls = d.data||[]
+      setClasses(cls)
+      // Deep-link from Register: find which class owns the target section
+      const targetSec = searchParams.get('sectionId')
+      if (targetSec) {
+        const owner = cls.find(c => (c.sections||[]).some(s => String(s.id)===targetSec))
+        if (owner) setSelClass(String(owner.id))
+      }
+    }).catch(()=>{})
   },[])
 
   useEffect(()=>{
     if (!selClass) return
     const cls = classes.find(c=>String(c.id)===selClass)
     setSections(cls?.sections||[])
-    setSelSec('')
+    // Preserve the deep-linked section from the Register (only on the
+    // first pass, when selSec hasn't been set yet) — otherwise every
+    // class change should clear the section as before.
+    const targetSec = searchParams.get('sectionId')
+    if (targetSec && !selSec && (cls?.sections||[]).some(s=>String(s.id)===targetSec)) {
+      setSelSec(targetSec)
+    } else if (!targetSec) {
+      setSelSec('')
+    }
   },[selClass,classes])
 
   useEffect(()=>{
     if (!selSec) return
     setLoading(true)
-    fetch(`${BASE}/edu/students?sectionId=${selSec}`,{headers:hdr2()})
-      .then(r=>r.json()).then(d=>{
-        const s = d.data||[]
+    Promise.all([
+      fetch(`${BASE}/edu/students?sectionId=${selSec}`,{headers:hdr2()}).then(r=>r.json()),
+      fetch(`${BASE}/edu/attendance/student?sectionId=${selSec}&date=${date}`,{headers:hdr2()}).then(r=>r.json()),
+    ]).then(([studentsRes, attRes])=>{
+        const s = studentsRes.data||[]
         setStudents(s)
-        setRows(s.map(st=>({ studentId:st.id, name:st.name, rollNo:st.rollNo, status:'PRESENT', remarks:'' })))
+        // If attendance already exists for this date, show what was actually
+        // saved (and let it be reviewed/corrected) — not a blank form that
+        // hides whether the day was ever marked at all.
+        const byStudentId = {}
+        ;(attRes.data||[]).forEach(a => { byStudentId[a.studentId] = a })
+        setAlreadyMarked((attRes.data||[]).length > 0)
+        setRows(s.map(st => {
+          const existing = byStudentId[st.id]
+          return {
+            studentId:st.id, name:st.name, rollNo:st.rollNo,
+            status: existing?.status || 'PRESENT',
+            remarks: existing?.remarks || '',
+          }
+        }))
       }).catch(()=>{}).finally(()=>setLoading(false))
-  },[selSec])
+  },[selSec, date])
 
   const setRow = (idx,k,v) => setRows(prev=>{ const n=[...prev]; n[idx]={...n[idx],[k]:v}; return n })
 
@@ -66,7 +101,16 @@ export default function StudentAttendance() {
     <div style={{fontFamily:'DM Sans,sans-serif'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
         background:'#fff',borderBottom:'1px solid #E8E0E8',padding:'10px 16px',marginBottom:12}}>
-        <div style={{fontSize:18,fontWeight:800,color:'#6E2C00'}}>✅ Student Attendance</div>
+        <div style={{fontSize:18,fontWeight:800,color:'#6E2C00',display:'flex',alignItems:'center',gap:10}}>
+          ✅ Student Attendance
+          {rows.length > 0 && (
+            <span style={{fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:12,
+              background: alreadyMarked ? '#EBF5FB' : '#FEF9E7',
+              color: alreadyMarked ? '#1A5276' : '#B8860B'}}>
+              {alreadyMarked ? '📋 Reviewing saved attendance' : '🆕 Not yet marked'}
+            </span>
+          )}
+        </div>
         {rows.length > 0 && (
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <span style={{fontSize:12,color:'#1E8449',fontWeight:700}}>✅ {present} Present</span>

@@ -5,16 +5,23 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const tok  = () => localStorage.getItem('lnv_token')
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${tok()}` })
 const hdr2 = () => ({ Authorization:`Bearer ${tok()}` })
 
+// Modules with real tool-calling analytics wired up on the backend
+// (routes/ai.js TOOL_REGISTRY) — grows as more modules get their own
+// tool sets. Everything else still uses the older /chat context-stuffing
+// endpoint until it gets its own tools built.
+const ANALYTICAL_MODULES = ['FI']
+
 // ── Detect current module from URL ───────────────────────────────
 const getModule = (pathname) => {
   const seg = pathname.split('/')[1]?.toUpperCase()
-  const map = { SD:'SD', MM:'MM', PP:'PP', FI:'FI', QM:'QM', WM:'WM', HCM:'HCM', CRM:'CRM' }
+  const map = { SD:'SD', MM:'MM', PP:'PP', FI:'FI', QM:'QM', WM:'WM', HCM:'HCM', CRM:'CRM', EDU:'EDU', CIVIL:'CIVIL' }
   return map[seg] || 'GENERAL'
 }
 
@@ -28,6 +35,8 @@ const QUICK_PROMPTS = {
   WM:      ['FG stock available?', 'Stock below reorder level?'],
   HCM:     ['Attendance today?', 'Pending leave requests?'],
   CRM:     ['Open leads count?', 'Follow-ups due today?'],
+  EDU:     ['Attendance today?', 'Fee dues pending?', 'Any upcoming exams?'],
+  CIVIL:   ['Active projects?', 'Any payment overdue?', 'RA billed vs paid this month?'],
   GENERAL: ['Show today\'s summary', 'What\'s pending approval?', 'Any alerts?'],
 }
 
@@ -48,9 +57,22 @@ const LNVLogo = ({ size=36 }) => (
   </svg>
 )
 
+// ── Turns a flat P&L result into chart-ready bars ──────────────────
+function plToChartData(d) {
+  if (!d) return null
+  return [
+    { name:'Revenue',   value:Math.round(d.revenue) },
+    { name:'Gross P.',  value:Math.round(d.grossProfit) },
+    { name:'EBITDA',    value:Math.round(d.ebitda) },
+    { name:'Net Profit',value:Math.round(d.netProfit) },
+  ]
+}
+
 // ── Message bubble ────────────────────────────────────────────────
 const Bubble = ({ msg }) => {
   const isUser = msg.role === 'user'
+  const chartData = msg.chartData
+  const deviation = msg.deviation
   return (
     <div style={{ display:'flex', justifyContent: isUser?'flex-end':'flex-start',
       marginBottom:10, alignItems:'flex-end', gap:6 }}>
@@ -61,7 +83,7 @@ const Bubble = ({ msg }) => {
         </div>
       )}
       <div style={{
-        maxWidth:'80%', padding:'9px 13px', borderRadius: isUser?'14px 14px 4px 14px':'14px 14px 14px 4px',
+        maxWidth: chartData ? '92%' : '80%', padding:'9px 13px', borderRadius: isUser?'14px 14px 4px 14px':'14px 14px 14px 4px',
         background: isUser ? '#714B67' : '#F3EEF3',
         color: isUser ? '#fff' : '#2D3748',
         fontSize:12, lineHeight:'1.55',
@@ -70,6 +92,29 @@ const Bubble = ({ msg }) => {
       }}>
         {msg.content}
         {msg.typing && <span style={{ opacity:.5 }}>▊</span>}
+
+        {deviation && (
+          <div style={{ marginTop:8, padding:'6px 10px', borderRadius:8,
+            background: deviation.flag==='IMPROVED' ? '#E8F5E9' : '#FDEDEC',
+            color: deviation.flag==='IMPROVED' ? '#1E8449' : '#C0392B',
+            fontSize:11, fontWeight:700 }}>
+            {deviation.flag==='IMPROVED' ? '📈' : '📉'} {deviation.field.toUpperCase()} {deviation.flag==='IMPROVED'?'up':'down'} {Math.abs(deviation.pctChange)}% vs prior month
+          </div>
+        )}
+
+        {chartData && (
+          <div style={{ marginTop:10, background:'#fff', borderRadius:8, padding:'8px 4px 2px' }}>
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={chartData} margin={{top:4,right:8,left:-24,bottom:0}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis dataKey="name" tick={{fontSize:9}} />
+                <YAxis tick={{fontSize:9}} tickFormatter={v=>`${Math.round(v/1000)}k`} />
+                <Tooltip formatter={v=>'₹'+Number(v).toLocaleString('en-IN')} />
+                <Bar dataKey="value" fill="#714B67" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -137,14 +182,17 @@ export default function LNVAssistant({ config }) {
     setHistory(h => [...h, { role:'assistant', content:'', typing:true }])
 
     try {
-      const r = await fetch(`${BASE}/ai/chat`, {
+      const useAnalytics = ANALYTICAL_MODULES.includes(currentModule)
+      const r = await fetch(`${BASE}/ai/${useAnalytics ? 'analyze' : 'chat'}`, {
         method:'POST', headers:hdr(),
-        body: JSON.stringify({
-          message:     msg,
-          module:      currentModule,
-          currentPath: location.pathname,
-          history:     history.filter(h=>!h.typing).slice(-6),
-        })
+        body: JSON.stringify(useAnalytics
+          ? { question: msg, module: currentModule }
+          : {
+              message:     msg,
+              module:      currentModule,
+              currentPath: location.pathname,
+              history:     history.filter(h=>!h.typing).slice(-6),
+            })
       })
       const d = await r.json()
 
@@ -152,7 +200,9 @@ export default function LNVAssistant({ config }) {
         const filtered = h.filter(x => !x.typing)
         return [...filtered, {
           role: 'assistant',
-          content: d.error ? `⚠️ ${d.error}` : (d.answer || 'I could not process that.')
+          content: d.error ? `⚠️ ${d.error}` : (d.answer || 'I could not process that.'),
+          chartData: useAnalytics && d.data ? plToChartData(d.data) : null,
+          deviation: useAnalytics ? d.deviation : null,
         }]
       })
     } catch(e) {
@@ -172,7 +222,8 @@ export default function LNVAssistant({ config }) {
   // Module badge color
   const modColors = {
     SD:'#714B67', MM:'#196F3D', PP:'#6C3483', FI:'#784212',
-    QM:'#117864', WM:'#1F618D', HCM:'#2E86C1', CRM:'#1A5276', GENERAL:'#495057'
+    QM:'#117864', WM:'#1F618D', HCM:'#2E86C1', CRM:'#1A5276',
+    EDU:'#6E2C00', CIVIL:'#B8860B', GENERAL:'#495057'
   }
   const modColor = modColors[currentModule] || '#714B67'
 

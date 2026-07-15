@@ -26,7 +26,8 @@ const STATES = ['Tamil Nadu','Karnataka','Kerala','Andhra Pradesh','Telangana',
   'Maharashtra','Gujarat','Rajasthan','Delhi','Uttar Pradesh','West Bengal',
   'Madhya Pradesh','Punjab','Haryana','Odisha','Bihar','Goa']
 
-const PROJECT_TYPES = ['Building Construction','Road / Infrastructure','Interior Works',
+const PROJECT_TYPES = ['Building Construction','Apartment Building','Villa Complex','Row Houses',
+  'Road / Infrastructure','Interior Works',
   'Renovation / Repair','Industrial Building','Commercial Complex',
   'Residential Complex','Bridge / Flyover','Water / Drainage Work','Landscaping']
 

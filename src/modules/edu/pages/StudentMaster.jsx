@@ -102,7 +102,7 @@ export default function StudentMaster() {
       name: s.name||'', gender: s.gender||'',
       dob: s.dob ? new Date(s.dob).toISOString().slice(0,10) : '',
       bloodGroup: s.bloodGroup||'', aadhar: s.aadhar||'',
-      fatherName: s.fatherName||'', fatherPhone: s.fatherPhone||'',
+      fatherName: s.fatherName||'', fatherPhone: s.fatherPhone||'', fatherEmail: s.fatherEmail||'',
       fatherOccupation: s.fatherOccupation||'',
       motherName: s.motherName||'', motherPhone: s.motherPhone||'',
       address: s.address||'', city: s.city||'', pincode: s.pincode||'',
@@ -445,6 +445,8 @@ export default function StudentMaster() {
                 <input value={form.fatherName} onChange={e=>set('fatherName',e.target.value)} style={{...inp,width:'100%'}}/></div>
               <div><label style={lbl}>Father Phone</label>
                 <input value={form.fatherPhone} onChange={e=>set('fatherPhone',e.target.value)} style={{...inp,width:'100%'}}/></div>
+              <div><label style={lbl}>Father Email <span style={{fontWeight:400,color:'#aaa'}}>(used for portal login)</span></label>
+                <input value={form.fatherEmail||''} onChange={e=>set('fatherEmail',e.target.value)} style={{...inp,width:'100%'}}/></div>
               <div><label style={lbl}>Father Occupation</label>
                 <input value={form.fatherOccupation} onChange={e=>set('fatherOccupation',e.target.value)} style={{...inp,width:'100%'}}/></div>
               <div><label style={lbl}>Mother Name</label>

@@ -4,6 +4,7 @@ import { AuthProvider } from '@context/AuthContext'
 import { ThemeProvider } from '@context/ThemeContext'
 import ProtectedRoute from '@components/layout/ProtectedRoute'
 import ModuleRoute from '@components/layout/ModuleRoute'
+import UniversalRoute from '@components/layout/UniversalRoute'
 import AppShell from '@components/layout/AppShell'
 import PageLoader from '@components/ui/PageLoader'
 import DemoGate from '@components/DemoGate'
@@ -11,11 +12,15 @@ import DemoGate from '@components/DemoGate'
 
 // ── Eager loaded (always needed) ──
 import LoginPage from '@modules/auth/pages/LoginPage'
+const PublicUnitStatus = lazy(() => import('@modules/civil/pages/PublicUnitStatus'))
+const PortalLogin = lazy(() => import('@modules/edu/pages/PortalLogin'))
+const PortalFees  = lazy(() => import('@modules/edu/pages/PortalFees'))
 
 // ── Lazy loaded (code-split per module) ──
 const HomeDashboard   = lazy(() => import('@modules/home/pages/HomeDashboard'))
 const SDModule        = lazy(() => import('@modules/sd/pages/SDLayout'))
 const MMModule        = lazy(() => import('@modules/mm/pages/MMLayout'))
+const PRNewStandalone = lazy(() => import('@modules/mm/pages/PRNew'))
 const PPModule        = lazy(() => import('@modules/pp/pages/PPLayout'))
 const FIModule        = lazy(() => import('@modules/fi/pages/FILayout'))
 const QMModule        = lazy(() => import('@modules/qm/pages/QMLayout'))
@@ -33,6 +38,7 @@ const TabletSupervisor= lazy(() => import('@modules/civil/pages/TabletHome'))
 const VMModule        = lazy(() => import('@modules/vm/pages/VMLayout'))
 const CNModule        = lazy(() => import('@modules/cn/pages/CNLayout'))
 const ReportsModule   = lazy(() => import('@modules/reports/pages/ReportsLayout'))
+const AiAnalyticsModule = lazy(() => import('@modules/ai/pages/AiAnalyticsDashboard'))
 const MDMModule       = lazy(() => import('@modules/mdm/pages/MDMLayout'))
 const KPIModule       = lazy(() => import('@modules/kpi/pages/KPILayout'))
 const PrintPreview    = lazy(() => import('@modules/print/pages/PrintPreview'))
@@ -50,12 +56,19 @@ export default function App() {
           <Routes>
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/status/:token" element={<PublicUnitStatus />} />
+            <Route path="/portal/login" element={<PortalLogin />} />
+            <Route path="/portal/fees" element={<PortalFees />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* Protected — all inside AppShell */}
             <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
               <Route path="/home"      element={<HomeDashboard />} />
               <Route path="/sd/*"      element={<MR mod="sd"      el={<SDModule />} />} />
+              {/* Universal — any logged-in employee, not gated by 'mm' module access.
+                  More specific than /mm/*, so React Router matches this first regardless
+                  of declaration order. Full MM screens (PO/GRN/Vendors) stay restricted. */}
+              <Route path="/purchase-indent/new" element={<UniversalRoute><PRNewStandalone standalone /></UniversalRoute>} />
               <Route path="/mm/*"      element={<MR mod="mm"      el={<MMModule />} />} />
               <Route path="/pp/*"      element={<MR mod="pp"      el={<PPModule />} />} />
               <Route path="/fi/*"      element={<MR mod="fi"      el={<FIModule />} />} />
@@ -73,6 +86,7 @@ export default function App() {
               <Route path="/vm/*"      element={<MR mod="vm"      el={<VMModule />} />} />
               <Route path="/cn/*"      element={<MR mod="cn"      el={<CNModule />} />} />
               <Route path="/reports/*" element={<MR mod="reports" el={<ReportsModule />} />} />
+              <Route path="/ai/*" element={<MR mod="ai" el={<AiAnalyticsModule />} />} />
               <Route path="/mdm/*"     element={<MR mod="mdm"     el={<MDMModule />} />} />
               <Route path="/kpi/*"     element={<MR mod="kpi"     el={<KPIModule />} />} />
             </Route>

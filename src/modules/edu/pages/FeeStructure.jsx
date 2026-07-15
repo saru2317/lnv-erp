@@ -22,7 +22,7 @@ export default function FeeStructure(){
 
   useEffect(()=>{
     fetch(`${BASE}/edu/classes?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setClasses(d.data||[]))
-    fetch(`${BASE}/edu/fee-types`,{headers:hdr2()}).then(r=>r.json()).then(d=>setFeeTypes(d.data||[]))
+    fetch(`${BASE}/edu/fee-types?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setFeeTypes(d.data||[]))
   },[])
 
   useEffect(()=>{

@@ -116,13 +116,13 @@ export default function EstVsActual(){
           </select>
           {data&&(
             <div style={{display:'flex',gap:6}}>
-              {['BOQ','Cost','Timeline'].map(t=>(
+              {['BOQ','ByHouse','Cost','Timeline'].map(t=>(
                 <button key={t} onClick={()=>setActiveTab(t)}
                   style={{padding:'6px 14px',border:'none',borderRadius:5,cursor:'pointer',
                     fontSize:12,fontWeight:700,
                     background:activeTab===t?'#6E2C00':'#F0EBF0',
                     color:activeTab===t?'#fff':'#6E2C00'}}>
-                  {t==='BOQ'?'📐 BOQ Analysis':t==='Cost'?'💰 Cost Breakdown':'📅 Timeline'}
+                  {t==='BOQ'?'📐 BOQ Analysis':t==='ByHouse'?'🏠 By House':t==='Cost'?'💰 Cost Breakdown':'📅 Timeline'}
                 </button>
               ))}
             </div>
@@ -193,6 +193,61 @@ export default function EstVsActual(){
               <ProgressBar pct={s.overallPct} height={12}/>
             </div>
           </div>
+
+          {/* ── BY HOUSE TAB ── */}
+          {activeTab==='ByHouse'&&(
+            <div style={{background:'#fff',border:'1px solid #E8E0E8',borderRadius:8,overflow:'hidden'}}>
+              <div style={{padding:'10px 16px',background:'#6E2C00',color:'#fff',fontWeight:700}}>
+                🏠 Estimate vs Actual — By House
+              </div>
+              {(data?.commonAreaWork && (data.commonAreaWork.estTotal>0 || data.commonAreaWork.doneTotal>0)) && (
+                <div style={{padding:'10px 16px',background:'#FAF8FA',borderBottom:'1px solid #E8E0E8',fontSize:12}}>
+                  <b>Common Area Work</b> (foundation, compound wall, shared structure — not tied to any single house):
+                  {' '}Estimated {fmtC(data.commonAreaWork.estTotal)} · Actual {fmtC(data.commonAreaWork.doneTotal)} ·
+                  Variance <span style={{color:data.commonAreaWork.variance>0?'#C0392B':'#1E8449',fontWeight:700}}>
+                    {fmtC(data.commonAreaWork.variance)}
+                  </span>
+                </div>
+              )}
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                  <thead>
+                    <tr style={{background:'#FDF2E9'}}>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontSize:11,color:'#6E2C00',fontWeight:700}}>House</th>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontSize:11,color:'#6E2C00',fontWeight:700}}>Owner</th>
+                      <th style={{padding:'8px 12px',textAlign:'right',fontSize:11,color:'#1A5276',fontWeight:700}}>Estimated</th>
+                      <th style={{padding:'8px 12px',textAlign:'right',fontSize:11,color:'#1E8449',fontWeight:700}}>Actual</th>
+                      <th style={{padding:'8px 12px',textAlign:'right',fontSize:11,color:'#B8860B',fontWeight:700}}>Variance</th>
+                      <th style={{padding:'8px 12px',textAlign:'center',fontSize:11,color:'#6E2C00',fontWeight:700}}>Progress</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data?.byUnit||[]).length===0?(
+                      <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#aaa'}}>
+                        No houses set up for this project yet — add units under Project Detail first.
+                      </td></tr>
+                    ):data.byUnit.map(u=>(
+                      <tr key={u.unitId} style={{borderBottom:'1px solid #F0EBF0'}}>
+                        <td style={{padding:'8px 12px',fontWeight:700}}>{u.unitNo}<div style={{fontSize:10,color:'#888',fontWeight:400}}>{u.unitType}</div></td>
+                        <td style={{padding:'8px 12px'}}>{u.ownerName||'—'}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right'}}>{fmtC(u.estTotal)}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right'}}>{fmtC(u.doneTotal)}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right',fontWeight:700,
+                          color:u.variance>0?'#C0392B':u.variance<0?'#1E8449':'#888'}}>
+                          {fmtC(u.variance)}
+                        </td>
+                        <td style={{padding:'8px 12px',width:140}}><ProgressBar pct={u.progressPct} showLabel/></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{padding:'10px 16px',background:'#FEF9E7',fontSize:11,color:'#B8860B'}}>
+                💡 This covers BOQ-tracked construction costs only. Labour, contractor, and material costs are
+                still tracked at the whole-project level — not yet split per house.
+              </div>
+            </div>
+          )}
 
           {/* ── BOQ ANALYSIS TAB ── */}
           {activeTab==='BOQ'&&(

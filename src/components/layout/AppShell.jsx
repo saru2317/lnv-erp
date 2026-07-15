@@ -29,7 +29,25 @@ const ALL_MODULES = [
   { key:'reports', label:'Reports',     icon:'📊' },
   { key:'kpi',     label:'KPI / KRA',   icon:'🎯' },
   { key:'mdm',     label:'MDM',         icon:'🗄️'  },
+  { key:'ai',      label:'AI Analytics',icon:'🤖' },
 ]
+
+// Home/Admin/Config/Reports/MDM/AI are core — they stay in their fixed slot.
+// Everything else gets reordered per Company Profile → Module Order (Super Admin).
+const FIXED_NAV_KEYS = ['home','admin','config','reports','mdm','ai']
+
+function getOrderedModules() {
+  let savedOrder = []
+  try { savedOrder = JSON.parse(localStorage.getItem('lnv_module_order') || 'null') || [] } catch {}
+  if (!savedOrder.length) return ALL_MODULES
+
+  const rank = (k) => { const i = savedOrder.indexOf(k); return i === -1 ? 999 : i }
+  const reorderable = ALL_MODULES.filter(m => !FIXED_NAV_KEYS.includes(m.key))
+    .sort((a, b) => rank(a.key) - rank(b.key))
+
+  let ptr = 0
+  return ALL_MODULES.map(m => FIXED_NAV_KEYS.includes(m.key) ? m : reorderable[ptr++])
+}
 
 // Route → human label map for recent tracking
 const ROUTE_LABELS = {
@@ -51,7 +69,7 @@ const ROUTE_LABELS = {
   '/hcm/payroll':'Payroll', '/hcm/leave':'Leave', '/hcm/attendance':'Attendance',
   '/crm':'CRM', '/crm/leads':'Leads', '/tm':'Transport', '/tm/vehicles':'Vehicles',
   '/am':'Assets', '/civil':'Civil', '/vm':'Visitor', '/cn':'Canteen',
-  '/reports':'Reports', '/kpi':'KPI / KRA', '/mdm':'MDM',
+  '/reports':'Reports', '/kpi':'KPI / KRA', '/mdm':'MDM', '/ai':'AI Analytics',
   '/admin':'Admin Dashboard', '/config':'Config', '/config/users':'User Management',
   '/admin/support':'🎫 Support', '/admin/billing':'💰 LNV Billing',
   '/admin/users':'User Management', '/admin/approvals':'Approval Inbox',
@@ -217,7 +235,7 @@ export default function AppShell() {
 
       {/* Module Nav Bar */}
       <nav className={styles.modNav}>
-        {ALL_MODULES.map(m => {
+        {getOrderedModules().map(m => {
           if (!hasAccess(m.key)) return null
           if (!isModuleEnabled(m.key)) return null  // hidden if disabled in Company Profile
           return (

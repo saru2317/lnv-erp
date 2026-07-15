@@ -21,15 +21,19 @@ export default function MarkEntry(){
   const instId=localStorage.getItem('lnv_edu_inst')||''
 
   useEffect(()=>{
-    fetch(`${BASE}/edu/exams`,{headers:hdr2()}).then(r=>r.json()).then(d=>setExams(d.data||[]))
+    fetch(`${BASE}/edu/exams?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setExams(d.data||[]))
     fetch(`${BASE}/edu/classes?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setClasses(d.data||[]))
-    fetch(`${BASE}/edu/subjects`,{headers:hdr2()}).then(r=>r.json()).then(d=>setSubjects(d.data||[]))
   },[])
 
   useEffect(()=>{
-    if(!selClass)return
+    if(!selClass){ setSections([]); setSubjects([]); return }
     const cls=classes.find(c=>String(c.id)===selClass)
     setSections(cls?.sections||[]);setSelSec('')
+    // Subjects scoped to this class (not the whole institution) — a college running
+    // multiple streams under one roof needs this, see Subject Master → Class Mapping
+    fetch(`${BASE}/edu/class-subjects?classId=${selClass}`,{headers:hdr2()})
+      .then(r=>r.json())
+      .then(d=>setSubjects((d.data||[]).map(cs=>cs.subject)))
   },[selClass,classes])
 
   useEffect(()=>{

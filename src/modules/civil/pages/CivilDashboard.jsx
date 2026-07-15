@@ -65,6 +65,113 @@ export default function CivilDashboard() {
         ))}
       </div>
 
+      {/* 🚨 Payment Overdue */}
+      {(data?.paymentOverdue||[]).length > 0 && (
+        <div style={{background:'#fff',borderRadius:8,padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)',margin:'0 4px 12px',border:'1px solid #F1948A'}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#C0392B',marginBottom:4}}>
+            🚨 Payment Overdue ({data.paymentOverdue.length})
+          </div>
+          <div style={{fontSize:11,color:'#888',marginBottom:14}}>Billed more than 30 days ago, still not fully paid</div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead>
+              <tr style={{background:'#FDEDEC',color:'#C0392B'}}>
+                {['Bill No','Project','House','Owner','Bill Date','Days Overdue','Pending'].map(h=>(
+                  <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:11,fontWeight:700}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.paymentOverdue.map((o,i)=>(
+                <tr key={o.raBillNo} style={{background:i%2===0?'#fff':'#FEF5F4',borderBottom:'1px solid #FADBD8'}}>
+                  <td style={{padding:'8px 12px',fontFamily:'monospace',fontWeight:700,color:'#6E2C00'}}>{o.raBillNo}</td>
+                  <td style={{padding:'8px 12px'}}>{o.projectName}</td>
+                  <td style={{padding:'8px 12px'}}>{o.unitNo || <span style={{color:'#888'}}>Whole Project</span>}</td>
+                  <td style={{padding:'8px 12px'}}>{o.ownerName||'—'}{o.ownerPhone?` (${o.ownerPhone})`:''}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:'#888'}}>{fmtD(o.billDate)}</td>
+                  <td style={{padding:'8px 12px',fontWeight:700,color:'#C0392B'}}>{o.daysOverdue} days</td>
+                  <td style={{padding:'8px 12px',fontWeight:800,color:'#C0392B'}}>{fmtC(o.pendingAmt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 🚨 Schedule Overdue */}
+      {(data?.scheduleOverdue||[]).length > 0 && (
+        <div style={{background:'#fff',borderRadius:8,padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)',margin:'0 4px 12px',border:'1px solid #F9C74F'}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#B8860B',marginBottom:4}}>
+            📅 Schedule Overdue ({data.scheduleOverdue.length})
+          </div>
+          <div style={{fontSize:11,color:'#888',marginBottom:14}}>Past target completion date, not yet marked complete</div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead>
+              <tr style={{background:'#FEF9E7',color:'#B8860B'}}>
+                {['Project','Target Date','Days Overdue','Progress','Status','PM / Supervisor'].map(h=>(
+                  <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:11,fontWeight:700}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.scheduleOverdue.map((p,i)=>(
+                <tr key={p.id} onClick={()=>nav(`/civil/projects/${p.id}`)}
+                  style={{background:i%2===0?'#fff':'#FFFBF0',borderBottom:'1px solid #FCF3CF',cursor:'pointer'}}>
+                  <td style={{padding:'8px 12px',fontWeight:700,color:'#6E2C00'}}>{p.projectName}<div style={{fontSize:10,color:'#888',fontWeight:400}}>{p.projectCode}</div></td>
+                  <td style={{padding:'8px 12px',fontSize:12}}>{fmtD(p.targetDate)}</td>
+                  <td style={{padding:'8px 12px',fontWeight:700,color:'#B8860B'}}>{p.daysOverdue} days</td>
+                  <td style={{padding:'8px 12px'}}>{p.progress}%</td>
+                  <td style={{padding:'8px 12px',fontSize:12}}>{p.status}</td>
+                  <td style={{padding:'8px 12px',fontSize:12,color:'#888'}}>{p.pm||'—'}{p.supervisorPhone?` · ${p.supervisorPhone}`:''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Company-wide Estimate vs Actual */}
+      {data?.companyEstVsActual && (
+        <div style={{background:'#fff',borderRadius:8,padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)',margin:'0 4px 12px'}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#6E2C00',marginBottom:14}}>📊 Estimate vs Actual — All Projects</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}>
+            <div style={{background:'#EBF5FB',borderRadius:8,padding:'12px 14px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:'#1A5276',fontWeight:700}}>TOTAL ESTIMATED (BOQ)</div>
+              <div style={{fontSize:18,fontWeight:800,color:'#1A5276'}}>{fmtC(data.companyEstVsActual.estTotal)}</div>
+            </div>
+            <div style={{background:'#E8F5E9',borderRadius:8,padding:'12px 14px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:'#1E8449',fontWeight:700}}>TOTAL ACTUAL (DONE)</div>
+              <div style={{fontSize:18,fontWeight:800,color:'#1E8449'}}>{fmtC(data.companyEstVsActual.doneTotal)}</div>
+            </div>
+            <div style={{background:data.companyEstVsActual.variance>0?'#FDEDEC':'#F0EBF0',borderRadius:8,padding:'12px 14px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:data.companyEstVsActual.variance>0?'#C0392B':'#714B67',fontWeight:700}}>VARIANCE</div>
+              <div style={{fontSize:18,fontWeight:800,color:data.companyEstVsActual.variance>0?'#C0392B':'#714B67'}}>{fmtC(data.companyEstVsActual.variance)}</div>
+            </div>
+          </div>
+          {(data?.projectEstVsActual||[]).length > 0 && (
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+              <thead>
+                <tr style={{background:'#FDF2E9'}}>
+                  {['Project','Estimated','Actual','Variance'].map(h=>(
+                    <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#6E2C00'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.projectEstVsActual.map((p,i)=>(
+                  <tr key={p.id} onClick={()=>nav(`/civil/projects/${p.id}`)}
+                    style={{background:i%2===0?'#fff':'#FDF9F7',borderBottom:'1px solid #F5EDE0',cursor:'pointer'}}>
+                    <td style={{padding:'7px 12px',fontWeight:600}}>{p.projectName}<div style={{fontSize:10,color:'#888',fontWeight:400}}>{p.projectCode}</div></td>
+                    <td style={{padding:'7px 12px'}}>{fmtC(p.estTotal)}</td>
+                    <td style={{padding:'7px 12px'}}>{fmtC(p.doneTotal)}</td>
+                    <td style={{padding:'7px 12px',fontWeight:700,color:p.variance>0?'#C0392B':'#1E8449'}}>{fmtC(p.variance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
       {/* Projects Grid */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12,padding:'0 4px'}}>
         {(data?.projects||[]).map(p => {

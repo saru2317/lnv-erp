@@ -18,6 +18,8 @@ const MODULES = [
   { key:'WM',  label:'Warehouse',             icon:'🏭', color:'#1F618D' },
   { key:'HCM', label:'HR & Payroll',          icon:'👥', color:'#2E86C1' },
   { key:'CRM', label:'CRM',                   icon:'🤝', color:'#1A5276' },
+  { key:'EDU', label:'Education',             icon:'🎓', color:'#6E2C00' },
+  { key:'CIVIL', label:'Civil',               icon:'🏗️', color:'#B8860B' },
 ]
 
 export default function AISettings() {

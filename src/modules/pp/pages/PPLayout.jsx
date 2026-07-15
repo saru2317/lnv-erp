@@ -34,7 +34,10 @@ const EfficiencyReport = lazy(() => import('./EfficiencyReport'))
 
 // ── Role check ────────────────────────────────────────────────────
 // Role check — case insensitive, includes all admin variants
-const OPERATOR_ONLY_ROLES = ['worker','operator','floor','production_worker','line_operator']
+// 'operations' is your real shop-floor role (see _configData.js ROLES) — the
+// old list here checked for role names that don't exist anywhere in the
+// actual role catalogue, so isPlanner() was always true for every real user.
+const OPERATOR_ONLY_ROLES = ['operations','worker','operator','floor','production_worker','line_operator']
 const getRole    = () => { try { return (JSON.parse(localStorage.getItem('lnv_user')||'{}').role || '').toLowerCase().trim() } catch { return '' } }
 // Show PLANNER sidebar unless role is explicitly an operator-only role
 const isPlanner  = () => !OPERATOR_ONLY_ROLES.includes(getRole())

@@ -12,6 +12,7 @@ const STATUS_CLR={UPCOMING:{bg:'#EBF5FB',color:'#1A5276'},ONGOING:{bg:'#E8F5E9',
 const TYPE_CLR={INTERNAL:{bg:'#FEF9E7',color:'#B8860B'},BOARD:{bg:'#FDEDEC',color:'#C0392B'},ENTRANCE:{bg:'#EBF5FB',color:'#1A5276'}}
 
 export default function ExamMaster(){
+  const [instId,setInstId]=useState(localStorage.getItem('lnv_edu_inst')||'')
   const [exams,setExams]=useState([])
   const [loading,setLoading]=useState(true)
   const [showAdd,setShowAdd]=useState(false)
@@ -19,19 +20,25 @@ export default function ExamMaster(){
   const [form,setForm]=useState({examName:'',examCode:'',term:'1',examType:'INTERNAL',startDate:'',endDate:'',resultDate:''})
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
 
+  useEffect(()=>{
+    const onStorage=()=>setInstId(localStorage.getItem('lnv_edu_inst')||'')
+    window.addEventListener('storage',onStorage)
+    return ()=>window.removeEventListener('storage',onStorage)
+  },[])
+
   const load=async()=>{
     setLoading(true)
-    const r=await fetch(`${BASE}/edu/exams`,{headers:hdr2()})
+    const r=await fetch(`${BASE}/edu/exams?institutionId=${instId}`,{headers:hdr2()})
     const d=await r.json();setExams(d.data||[]);setLoading(false)
   }
-  useEffect(()=>{load()},[])
+  useEffect(()=>{load()},[instId])
 
   const save=async()=>{
     if(!form.examName.trim())return toast.error('Exam name required')
     if(!form.examCode.trim())return toast.error('Exam code required')
     setSaving(true)
     try{
-      const r=await fetch(`${BASE}/edu/exams`,{method:'POST',headers:hdr(),body:JSON.stringify({...form,term:parseInt(form.term||1)})})
+      const r=await fetch(`${BASE}/edu/exams`,{method:'POST',headers:hdr(),body:JSON.stringify({...form,term:parseInt(form.term||1),institutionId:instId})})
       const d=await r.json()
       if(d.error)return toast.error(d.error)
       toast.success(`✅ ${d.data.examName} created!`)

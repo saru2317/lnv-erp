@@ -101,7 +101,7 @@ export default function ContractorBill(){
         method:'PATCH',headers:hdr(),body:JSON.stringify({status})
       }).catch(()=>
         // fallback if individual bill PATCH not wired
-        fetch(`${BASE}/civil/contractor-bill/${billId}`,{method:'PATCH',headers:hdr(),body:JSON.stringify({status})})
+        fetch(`${BASE}/civil-ext/contractor-bills/${billId}`,{method:'PATCH',headers:hdr(),body:JSON.stringify({status})})
       )
       toast.success(`Status → ${status}`)
       loadWO(selWO)

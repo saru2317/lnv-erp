@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { mmApi } from '../services/mmApi'
+import { useAuth } from '@context/AuthContext'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const getToken = () => localStorage.getItem('lnv_token')
@@ -18,14 +19,20 @@ const EMPTY_LINE = {
   estimatedRate:'', purpose:'', remarks:''
 }
 
-export default function PRNew() {
+// standalone=true → reached via the universal "Raise Purchase Indent" entry point
+// that any employee can use, not just Purchase team members. Full MM screens
+// (PO/GRN/Vendors/etc.) stay restricted — this is the one page carved out of
+// that gate. See ModuleRoute.jsx / App.jsx for how the route itself is opened up.
+export default function PRNew({ standalone=false }) {
   const nav = useNavigate()
+  const { user } = useAuth()
   const [items,   setItems]   = useState([])
   const [saving,  setSaving]  = useState(false)
   const [prNo,    setPrNo]    = useState('PR-AUTO')
   const [lines,   setLines]   = useState([{...EMPTY_LINE}])
   const [hdr,     setHdr]     = useState({
-    department:'', requestedBy:'', requestedByName:'',
+    department:'', requestedBy: standalone ? (user?.name || '') : '',
+    requestedByName: standalone ? (user?.name || '') : '',
     priority:'Normal', remarks:''
   })
 
@@ -71,7 +78,9 @@ export default function PRNew() {
       } else {
         toast.success(data.message)
       }
-      nav('/mm/pr')
+      // Standalone (universal) users don't have access to the full PR list —
+      // that's still a Purchase-team-only screen — so send them somewhere they can see
+      nav(standalone ? '/home' : '/mm/pr')
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
 
@@ -83,7 +92,7 @@ export default function PRNew() {
         </div>
         <div className="fi-lv-actions">
           <button className="btn btn-s sd-bsm"
-            onClick={()=>nav('/mm/pr')}>✕ Cancel</button>
+            onClick={()=>nav(standalone ? '/home' : '/mm/pr')}>✕ Cancel</button>
           <button className="btn btn-s sd-bsm"
             disabled={saving} onClick={()=>save(false)}>
             💾 Save Draft

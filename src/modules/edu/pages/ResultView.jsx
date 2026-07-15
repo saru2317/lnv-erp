@@ -20,7 +20,7 @@ export default function ResultView(){
   const instId=localStorage.getItem('lnv_edu_inst')||''
 
   useEffect(()=>{
-    fetch(`${BASE}/edu/exams`,{headers:hdr2()}).then(r=>r.json()).then(d=>setExams(d.data||[]))
+    fetch(`${BASE}/edu/exams?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setExams(d.data||[]))
     fetch(`${BASE}/edu/classes?institutionId=${instId}`,{headers:hdr2()}).then(r=>r.json()).then(d=>setClasses(d.data||[]))
   },[])
 

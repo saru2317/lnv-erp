@@ -91,6 +91,24 @@ export default function CompanyProfile() {
     }
     catch { return ['home','admin','config','reports','mdm','sd','fi','hcm','crm','pm'] }
   })
+  const [moduleOrder, setModuleOrder] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('lnv_module_order') || 'null')
+      if (stored) return stored
+    } catch {}
+    return ALL_MODULES.map(m => m.k) // default = current catalog order
+  })
+  const saveModuleOrder = (next) => {
+    setModuleOrder(next)
+    localStorage.setItem('lnv_module_order', JSON.stringify(next))
+  }
+  const moveModule = (index, dir) => {
+    const target = index + dir
+    if (target < 0 || target >= moduleOrder.length) return
+    const next = [...moduleOrder]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    saveModuleOrder(next)
+  }
   const set = (k, v) => {
     setForm(f => ({ ...f, [k]: v }))
     // Auto-suggest modules + apply workflow when industry changes
@@ -134,6 +152,7 @@ export default function CompanyProfile() {
     { key:'statutory',label:' Statutory'    },
     { key:'settings', label:' Preferences'  },
     { key:'modules',  label:'⚙️ Modules', superAdminOnly:true },
+    { key:'order',    label:'↕️ Module Order', superAdminOnly:true },
   ]
 
   return (
@@ -401,6 +420,65 @@ export default function CompanyProfile() {
               <div style={{marginTop:14,padding:10,background:'#FFF3CD',borderRadius:6,fontSize:11,color:'#856404'}}>
                 ⚠️ Disabling a module only hides it from the UI — existing data is preserved.
                 Re-enable anytime to restore access.
+              </div>
+              </>
+              )}
+            </div>
+          )}
+
+          {tab === 'order' && (
+            <div>
+              {!isSuperAdmin ? (
+                <div style={{padding:60,textAlign:'center'}}>
+                  <div style={{fontSize:48,marginBottom:12}}>🔒</div>
+                  <div style={{fontSize:18,fontWeight:700,color:'#1C1C1C',marginBottom:8}}>Super Admin Only</div>
+                  <div style={{fontSize:13,color:'#6C757D',maxWidth:360,margin:'0 auto'}}>
+                    Module ordering is controlled by <strong>LNV Infotech</strong>.<br/>
+                    Contact <code>admin@lnverp.com</code> to change the layout order.
+                  </div>
+                </div>
+              ) : (
+              <>
+              <div style={{marginBottom:14,color:'#6C757D',fontSize:12}}>
+                This order controls both the top navigation bar and the Home Dashboard sidebar —
+                use ↑ / ↓ to set the sequence you or your customer wants
+                (e.g. Sales, Purchase, Warehouse, Finance...). Disabled modules can still be
+                reordered here; they just stay hidden until enabled in the Modules tab.
+              </div>
+              <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+                {moduleOrder.map((k, i) => {
+                  const m = ALL_MODULES.find(x => x.k === k)
+                  if (!m) return null
+                  const active = modules.includes(k)
+                  return (
+                    <div key={k} style={{
+                      display:'flex', alignItems:'center', gap:12, padding:'10px 14px',
+                      background: i%2===0 ? '#fff' : '#FAF8FA',
+                      borderBottom: i<moduleOrder.length-1 ? '1px solid #F0EBF0' : 'none',
+                      opacity: active ? 1 : 0.5,
+                    }}>
+                      <span style={{fontSize:11,color:'#9B8EA0',fontWeight:700,width:22}}>{i+1}</span>
+                      <span style={{fontSize:18}}>{m.icon}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'#333'}}>
+                          {m.name}{!active && <span style={{fontSize:10,color:'#C0392B',marginLeft:6}}>(disabled)</span>}
+                        </div>
+                        <div style={{fontSize:10,color:'#9B8EA0'}}>{m.desc}</div>
+                      </div>
+                      <button onClick={()=>moveModule(i,-1)} disabled={i===0}
+                        style={{padding:'4px 10px',background:'#fff',border:'1.5px solid #E0D5E0',
+                          borderRadius:5,cursor:i===0?'not-allowed':'pointer',opacity:i===0?0.4:1,fontSize:12}}>↑</button>
+                      <button onClick={()=>moveModule(i,1)} disabled={i===moduleOrder.length-1}
+                        style={{padding:'4px 10px',background:'#fff',border:'1.5px solid #E0D5E0',
+                          borderRadius:5,cursor:i===moduleOrder.length-1?'not-allowed':'pointer',
+                          opacity:i===moduleOrder.length-1?0.4:1,fontSize:12}}>↓</button>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{marginTop:14,padding:10,background:'#EBF5FB',borderRadius:6,fontSize:11,color:'#1A5276'}}>
+                💡 Home and Admin/Config/Reports/MDM stay fixed in their usual position (always-on core) —
+                this order applies to everything else.
               </div>
               </>
               )}

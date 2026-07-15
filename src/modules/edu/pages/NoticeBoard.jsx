@@ -18,6 +18,7 @@ const TYPE_COLORS={
 }
 
 export default function NoticeBoard(){
+  const [instId,setInstId]=useState(localStorage.getItem('lnv_edu_inst')||'')
   const [notices,setNotices]=useState([])
   const [loading,setLoading]=useState(true)
   const [showAdd,setShowAdd]=useState(false)
@@ -26,21 +27,27 @@ export default function NoticeBoard(){
   const [form,setForm]=useState({title:'',content:'',type:'GENERAL',targetAudience:'ALL',sendSMS:false,sendWhatsApp:false})
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
 
+  useEffect(()=>{
+    const onStorage=()=>setInstId(localStorage.getItem('lnv_edu_inst')||'')
+    window.addEventListener('storage',onStorage)
+    return ()=>window.removeEventListener('storage',onStorage)
+  },[])
+
   const load=async()=>{
     setLoading(true)
-    const r=await fetch(`${BASE}/edu/notices`,{headers:hdr2()})
+    const r=await fetch(`${BASE}/edu/notices?institutionId=${instId}`,{headers:hdr2()})
     const d=await r.json()
     setNotices(d.data||[])
     setLoading(false)
   }
-  useEffect(()=>{load()},[])
+  useEffect(()=>{load()},[instId])
 
   const save=async()=>{
     if(!form.title.trim())return toast.error('Title required')
     if(!form.content.trim())return toast.error('Content required')
     setSaving(true)
     try{
-      const r=await fetch(`${BASE}/edu/notices`,{method:'POST',headers:hdr(),body:JSON.stringify(form)})
+      const r=await fetch(`${BASE}/edu/notices`,{method:'POST',headers:hdr(),body:JSON.stringify({...form,institutionId:instId})})
       const d=await r.json()
       if(d.error)return toast.error(d.error)
       toast.success(`✅ Notice published!${form.sendSMS?' SMS sending...':''}${form.sendWhatsApp?' WhatsApp sending...':''}`)
