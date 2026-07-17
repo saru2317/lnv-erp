@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 
 const BASE=import.meta.env.VITE_API_URL||'/api'
 const tok=()=>localStorage.getItem('lnv_token')||''
+const hdr=()=>({'Content-Type':'application/json',Authorization:`Bearer ${tok()}`})
 const hdr2=()=>({Authorization:`Bearer ${tok()}`})
 const fmtC=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0})
 const fmtD=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'
@@ -49,6 +50,22 @@ export default function EstVsActual(){
   const [loading,  setLoading]  = useState(false)
   const [activeTab,setActiveTab]=useState('BOQ')
   const [search,   setSearch]   = useState('')
+  const [houseFilter, setHouseFilter] = useState('ALL')
+  const [unitsWithRooms, setUnitsWithRooms] = useState([])
+  const [roomHistoryFor, setRoomHistoryFor] = useState(null) // room object, or null when modal closed
+  const [roomHistory, setRoomHistory] = useState([])
+  const [roomHistoryLoading, setRoomHistoryLoading] = useState(false)
+  const [roomAddonsView, setRoomAddonsView] = useState([])
+
+  useEffect(() => {
+    if (!roomHistoryFor) return
+    setRoomHistoryLoading(true)
+    fetch(`${BASE}/civil/rooms/${roomHistoryFor.id}/progress-history`, { headers:hdr2() })
+      .then(r=>r.json()).then(d => setRoomHistory(d.data||[]))
+      .finally(() => setRoomHistoryLoading(false))
+    fetch(`${BASE}/civil/rooms/${roomHistoryFor.id}/addons`, { headers:hdr2() })
+      .then(r=>r.json()).then(d => setRoomAddonsView(d.data||[]))
+  }, [roomHistoryFor])
 
   useEffect(()=>{
     fetch(`${BASE}/civil/projects`,{headers:hdr2()})
@@ -63,6 +80,10 @@ export default function EstVsActual(){
       const d=await r.json()
       if(d.error)return toast.error(d.error)
       setData(d.data)
+      // Units already come with rooms nested — reused here for the
+      // room-wise drill-down, not a separate/duplicate fetch.
+      const ur = await fetch(`${BASE}/civil/units?projectId=${selProject}`,{headers:hdr2()}).then(r=>r.json())
+      setUnitsWithRooms(ur.data||[])
     }catch{toast.error('Failed to load')}finally{setLoading(false)}
   },[selProject])
 
@@ -70,10 +91,16 @@ export default function EstVsActual(){
 
   const s=data?.summary||{}
   const proj=data?.project||{}
+  const unitMap = Object.fromEntries((data?.byUnit||[]).map(u=>[u.unitId, u.unitNo]))
   const boqItems=(data?.boqItems||[]).filter(b=>
-    !search || b.activity?.toLowerCase().includes(search.toLowerCase())
-      || b.description?.toLowerCase().includes(search.toLowerCase())
+    (!search || b.activity?.toLowerCase().includes(search.toLowerCase())
+      || b.description?.toLowerCase().includes(search.toLowerCase()))
+    && (houseFilter==='ALL' || (houseFilter==='COMMON' ? !b.unitId : b.unitId===parseInt(houseFilter)))
   )
+
+  const filteredEstTotal  = boqItems.reduce((sum,b)=>sum+Number(b.estAmt||0),0)
+  const filteredDoneTotal = boqItems.reduce((sum,b)=>sum+Number(b.doneAmt||0),0)
+  const filteredPct = filteredEstTotal>0 ? Math.round(filteredDoneTotal/filteredEstTotal*100) : 0
 
   // Print report
   const printReport=()=>{
@@ -108,23 +135,35 @@ export default function EstVsActual(){
         {/* Project selector */}
         <div style={{padding:'8px 16px',background:'#FAFAFA',borderTop:'1px solid #F0EDE8',
           display:'flex',gap:10,alignItems:'center'}}>
-          <select value={selProject} onChange={e=>setSelProject(e.target.value)}
+          <select value={selProject} onChange={e=>{setSelProject(e.target.value); setHouseFilter('ALL')}}
             style={{padding:'7px 10px',border:'1.5px solid #DDD',borderRadius:5,
               fontSize:12,outline:'none',width:320}}>
             <option value=''>Select Project</option>
             {projects.map(p=><option key={p.id} value={p.id}>{p.projectCode} — {p.projectName} ({p.clientName})</option>)}
           </select>
           {data&&(
-            <div style={{display:'flex',gap:6}}>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
               {['BOQ','ByHouse','Cost','Timeline'].map(t=>(
                 <button key={t} onClick={()=>setActiveTab(t)}
                   style={{padding:'6px 14px',border:'none',borderRadius:5,cursor:'pointer',
                     fontSize:12,fontWeight:700,
                     background:activeTab===t?'#6E2C00':'#F0EBF0',
                     color:activeTab===t?'#fff':'#6E2C00'}}>
-                  {t==='BOQ'?'📐 BOQ Analysis':t==='ByHouse'?'🏠 By House':t==='Cost'?'💰 Cost Breakdown':'📅 Timeline'}
+                  {t==='BOQ'?'📐 BOQ Analysis':t==='ByHouse'?'🏠 By House':t==='Cost'?'💰 Cost Breakdown':'📅 Plan vs Actual'}
                 </button>
               ))}
+              {(data?.byUnit||[]).length > 0 && (
+                <select value={houseFilter} onChange={e=>setHouseFilter(e.target.value)}
+                  style={{padding:'6px 10px',border:'1.5px solid #E8D5C4',borderRadius:5,fontSize:11,
+                    marginLeft:6,outline:'none',fontWeight:houseFilter!=='ALL'?700:400,
+                    background:houseFilter!=='ALL'?'#FDF2E9':'#fff',color:'#6E2C00'}}>
+                  <option value='ALL'>🏘️ All Houses (Consolidated)</option>
+                  <option value='COMMON'>Common Area Only</option>
+                  {(data?.byUnit||[]).map(u=>(
+                    <option key={u.unitId} value={u.unitId}>🏠 {u.unitNo}{u.ownerName?` — ${u.ownerName}`:''}</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
         </div>
@@ -222,11 +261,16 @@ export default function EstVsActual(){
                     </tr>
                   </thead>
                   <tbody>
-                    {(data?.byUnit||[]).length===0?(
-                      <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#aaa'}}>
-                        No houses set up for this project yet — add units under Project Detail first.
-                      </td></tr>
-                    ):data.byUnit.map(u=>(
+                    {(() => {
+                      const filteredUnits = (data?.byUnit||[]).filter(u =>
+                        houseFilter==='ALL' || houseFilter==='COMMON' || String(u.unitId)===String(houseFilter))
+                      if (filteredUnits.length===0) return (
+                        <tr><td colSpan={6} style={{padding:40,textAlign:'center',color:'#aaa'}}>
+                          {houseFilter==='COMMON' ? 'Room-wise breakdown applies to houses, not common area — switch the filter to a specific house.'
+                            : 'No houses set up for this project yet — add units under Project Detail first.'}
+                        </td></tr>
+                      )
+                      return filteredUnits.map(u=>(
                       <tr key={u.unitId} style={{borderBottom:'1px solid #F0EBF0'}}>
                         <td style={{padding:'8px 12px',fontWeight:700}}>{u.unitNo}<div style={{fontSize:10,color:'#888',fontWeight:400}}>{u.unitType}</div></td>
                         <td style={{padding:'8px 12px'}}>{u.ownerName||'—'}</td>
@@ -238,10 +282,41 @@ export default function EstVsActual(){
                         </td>
                         <td style={{padding:'8px 12px',width:140}}><ProgressBar pct={u.progressPct} showLabel/></td>
                       </tr>
-                    ))}
+                      ))
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Room-wise drill-down — only meaningful once narrowed to one house */}
+              {houseFilter!=='ALL' && houseFilter!=='COMMON' && (() => {
+                const unit = unitsWithRooms.find(u=>String(u.id)===String(houseFilter))
+                const rooms = unit?.rooms || []
+                return (
+                  <div style={{borderTop:'2px solid #E8D5C4',padding:'14px 16px',background:'#FDF9F7'}}>
+                    <div style={{fontWeight:700,color:'#6E2C00',marginBottom:10,fontSize:13}}>
+                      🚪 Room-Wise Status — {unit?.unitNo}
+                    </div>
+                    {rooms.length===0 ? (
+                      <div style={{padding:20,textAlign:'center',color:'#aaa',fontSize:12}}>
+                        No rooms set up for this house yet — add rooms under Project Detail → Manage Rooms.
+                      </div>
+                    ) : (
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
+                        {rooms.map(r => (
+                          <div key={r.id} onClick={()=>setRoomHistoryFor(r)}
+                            style={{background:'#fff',border:'1px solid #E8D5C4',borderRadius:6,padding:'10px 12px',cursor:'pointer'}}>
+                            <div style={{fontSize:11,color:'#888',marginBottom:2}}>{r.roomType} <span style={{color:'#1A5276'}}>🔍</span></div>
+                            <div style={{fontWeight:700,color:'#333',fontSize:12,marginBottom:6}}>{r.roomName}</div>
+                            <ProgressBar pct={r.progress||0} showLabel/>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               <div style={{padding:'10px 16px',background:'#FEF9E7',fontSize:11,color:'#B8860B'}}>
                 💡 This covers BOQ-tracked construction costs only. Labour, contractor, and material costs are
                 still tracked at the whole-project level — not yet split per house.
@@ -255,15 +330,18 @@ export default function EstVsActual(){
               <div style={{padding:'10px 16px',background:'#6E2C00',color:'#fff',
                 display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div style={{fontWeight:700}}>📐 BOQ — Estimated vs Actual</div>
-                <input value={search} onChange={e=>setSearch(e.target.value)}
-                  placeholder='🔍 Search activity...'
-                  style={{padding:'5px 10px',border:'none',borderRadius:4,fontSize:11,width:200,outline:'none'}}/>
+                <div style={{display:'flex',gap:8}}>
+                  <input value={search} onChange={e=>setSearch(e.target.value)}
+                    placeholder='🔍 Search activity...'
+                    style={{padding:'5px 10px',border:'none',borderRadius:4,fontSize:11,width:180,outline:'none'}}/>
+                </div>
               </div>
               <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                 <thead>
                   <tr style={{background:'#FDF2E9'}}>
                     <th style={{padding:'8px 12px',textAlign:'left',fontSize:11,color:'#6E2C00',fontWeight:700,whiteSpace:'nowrap'}}>#</th>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontSize:11,color:'#6E2C00',fontWeight:700}}>🏠 House</th>
                     <th style={{padding:'8px 12px',textAlign:'left',fontSize:11,color:'#6E2C00',fontWeight:700}}>Activity / Description</th>
                     <th style={{padding:'8px 12px',textAlign:'center',fontSize:11,color:'#6E2C00',fontWeight:700}}>Unit</th>
                     {/* Estimated */}
@@ -287,6 +365,7 @@ export default function EstVsActual(){
                     <th style={{padding:'5px 12px'}}></th>
                     <th style={{padding:'5px 12px'}}></th>
                     <th style={{padding:'5px 12px'}}></th>
+                    <th style={{padding:'5px 12px'}}></th>
                     <th style={{padding:'5px 12px',textAlign:'right',background:'#EBF5FB',borderLeft:'2px solid #AED6F1'}}>Qty</th>
                     <th style={{padding:'5px 12px',textAlign:'right',background:'#EBF5FB'}}>Rate</th>
                     <th style={{padding:'5px 12px',textAlign:'right',background:'#EBF5FB'}}>Amount</th>
@@ -300,7 +379,7 @@ export default function EstVsActual(){
                 </thead>
                 <tbody>
                   {boqItems.length===0?(
-                    <tr><td colSpan={12} style={{padding:40,textAlign:'center',color:'#aaa'}}>
+                    <tr><td colSpan={13} style={{padding:40,textAlign:'center',color:'#aaa'}}>
                       No BOQ items found. Add BOQ items to the project first.
                     </td></tr>
                   ):boqItems.map((b,i)=>{
@@ -312,6 +391,11 @@ export default function EstVsActual(){
                         onMouseEnter={e=>e.currentTarget.style.background='#FEF9F5'}
                         onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#FAFAFA'}>
                         <td style={{padding:'8px 12px',color:'#aaa',fontSize:11}}>{b.slNo}</td>
+                        <td style={{padding:'8px 12px',fontSize:11}}>
+                          {b.unitId
+                            ? <span style={{color:'#6E2C00',fontWeight:700}}>🏠 {unitMap[b.unitId]||'—'}</span>
+                            : <span style={{color:'#888'}}>Common Area</span>}
+                        </td>
                         <td style={{padding:'8px 12px'}}>
                           <div style={{fontWeight:700,color:'#333',fontSize:12}}>{b.activity}</div>
                           <div style={{fontSize:10,color:'#888'}}>{b.description}</div>
@@ -362,21 +446,23 @@ export default function EstVsActual(){
                 {/* Totals */}
                 <tfoot>
                   <tr style={{background:'#FDF2E9',fontWeight:700,fontSize:13}}>
-                    <td colSpan={3} style={{padding:'10px 12px',color:'#6E2C00'}}>TOTAL</td>
+                    <td colSpan={4} style={{padding:'10px 12px',color:'#6E2C00'}}>
+                      TOTAL {houseFilter!=='ALL' && <span style={{fontSize:10,fontWeight:400,color:'#888'}}>(filtered view)</span>}
+                    </td>
                     <td colSpan={2} style={{padding:'10px 12px',background:'#EBF5FB',
                       borderLeft:'2px solid #AED6F1'}}></td>
                     <td style={{padding:'10px 12px',textAlign:'right',background:'#EBF5FB',
-                      color:'#1A5276',fontSize:14}}>{fmtC(s.estTotal)}</td>
+                      color:'#1A5276',fontSize:14}}>{fmtC(filteredEstTotal)}</td>
                     <td colSpan={2} style={{padding:'10px 12px',background:'#E8F5E9',
                       borderLeft:'2px solid #A9DFBF',textAlign:'right',color:'#1E8449'}}>
-                      {s.overallPct}%
+                      {filteredPct}%
                     </td>
                     <td style={{padding:'10px 12px',textAlign:'right',background:'#E8F5E9',
-                      color:'#1E8449',fontSize:14}}>{fmtC(s.doneTotal)}</td>
+                      color:'#1E8449',fontSize:14}}>{fmtC(filteredDoneTotal)}</td>
                     <td style={{padding:'10px 12px',background:'#FEF9E7',
                       borderLeft:'2px solid #F9E79F'}}></td>
                     <td style={{padding:'10px 12px',textAlign:'right',background:'#FEF9E7'}}>
-                      <VarBadge var={s.doneTotal-s.estTotal} isAmt/>
+                      <VarBadge var={filteredDoneTotal-filteredEstTotal} isAmt/>
                     </td>
                     <td></td>
                   </tr>
@@ -387,8 +473,97 @@ export default function EstVsActual(){
           )}
 
           {/* ── COST BREAKDOWN TAB ── */}
-          {activeTab==='Cost'&&(
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+          {activeTab==='Cost'&&(() => {
+            const selectedUnit = houseFilter!=='ALL' && houseFilter!=='COMMON'
+              ? (data?.byUnit||[]).find(u=>String(u.unitId)===String(houseFilter)) : null
+            const unitWithRooms = selectedUnit ? unitsWithRooms.find(u=>String(u.id)===String(selectedUnit.unitId)) : null
+            return (
+            <div>
+              {/* House tiles — click one to drill down; real BOQ-based cost per house */}
+              {(data?.byUnit||[]).length > 0 && (
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>🏠 Cost by House — click a house to drill down</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:10}}>
+                    <div onClick={()=>setHouseFilter('ALL')}
+                      style={{background: houseFilter==='ALL' ? '#6E2C00' : '#fff', color: houseFilter==='ALL' ? '#fff' : '#333',
+                        border:'1px solid #E8D5C4', borderRadius:8, padding:'10px 12px', cursor:'pointer'}}>
+                      <div style={{fontSize:11,fontWeight:700,opacity:0.85}}>🏘️ Whole Project</div>
+                      <div style={{fontSize:15,fontWeight:800,marginTop:4}}>{fmtC(s.actualTotal)}</div>
+                      <div style={{fontSize:10,opacity:0.75,marginTop:2}}>Consolidated</div>
+                    </div>
+                    {data.byUnit.map(u=>(
+                      <div key={u.unitId} onClick={()=>setHouseFilter(String(u.unitId))}
+                        style={{background: String(houseFilter)===String(u.unitId) ? '#6E2C00' : '#fff',
+                          color: String(houseFilter)===String(u.unitId) ? '#fff' : '#333',
+                          border:'1px solid #E8D5C4', borderRadius:8, padding:'10px 12px', cursor:'pointer'}}>
+                        <div style={{fontSize:11,fontWeight:700,opacity:0.85}}>🏠 {u.unitNo}</div>
+                        <div style={{fontSize:15,fontWeight:800,marginTop:4}}>{fmtC(u.doneTotal)}</div>
+                        <div style={{fontSize:10,opacity:0.75,marginTop:2}}>{u.progressPct}% done · {u.ownerName||'—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedUnit ? (
+                /* ── Single-house drill-down ── */
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div style={{background:'#fff',border:'1px solid #E8E0E8',borderRadius:8,overflow:'hidden'}}>
+                    <div style={{padding:'12px 16px',background:'#6E2C00',color:'#fff',fontWeight:700}}>
+                      💰 {selectedUnit.unitNo} — Estimated vs Actual
+                    </div>
+                    <div style={{padding:16}}>
+                      {[
+                        {label:'BOQ Estimated', val:selectedUnit.estTotal, color:'#1A5276'},
+                        {label:'Actual Done Value', val:selectedUnit.doneTotal, color:'#1E8449'},
+                        {label:'Variance', val:selectedUnit.variance, color:selectedUnit.variance>0?'#C0392B':'#1E8449'},
+                      ].map(({label,val,color})=>(
+                        <div key={label} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid #F5EDE0'}}>
+                          <span style={{fontSize:12,color:'#666'}}>{label}</span>
+                          <span style={{fontSize:14,fontWeight:800,color}}>{fmtC(val)}</span>
+                        </div>
+                      ))}
+                      <div style={{marginTop:14}}>
+                        <div style={{fontSize:11,color:'#888',marginBottom:6}}>Progress</div>
+                        <ProgressBar pct={selectedUnit.progressPct} showLabel/>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room-wise PROGRESS (not cost — no BOQ line is ever tagged
+                      to an individual room today, only to the house as a
+                      whole, so this is honestly labeled as progress, not
+                      a room-level cost breakdown that doesn't exist) */}
+                  <div style={{background:'#fff',border:'1px solid #E8E0E8',borderRadius:8,padding:16}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#6E2C00',marginBottom:4}}>🚪 Room-Wise Progress — {selectedUnit.unitNo}</div>
+                    <div style={{fontSize:10,color:'#B8860B',marginBottom:12}}>
+                      Shown as progress %, not cost — BOQ costs are tracked per house, not yet per individual room.
+                    </div>
+                    {(unitWithRooms?.rooms||[]).length===0 ? (
+                      <div style={{padding:20,textAlign:'center',color:'#aaa',fontSize:12}}>
+                        No rooms set up yet — add rooms under Project Detail → Manage Rooms.
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                        {unitWithRooms.rooms.map(r=>(
+                          <div key={r.id} onClick={()=>setRoomHistoryFor(r)}
+                            style={{cursor:'pointer',padding:'4px 6px',borderRadius:4}}
+                            onMouseEnter={e=>e.currentTarget.style.background='#FAF8FA'}
+                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                              <span style={{fontSize:12,fontWeight:700,color:'#333'}}>{r.roomName} <span style={{fontSize:9,color:'#1A5276',fontWeight:400}}>🔍 click for history</span></span>
+                              <span style={{fontSize:10,color:'#888'}}>{r.roomType}</span>
+                            </div>
+                            <ProgressBar pct={r.progress||0} showLabel/>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* ── Consolidated whole-project view (unchanged) ── */
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
               {/* Left: Cost comparison */}
               <div style={{background:'#fff',border:'1px solid #E8E0E8',borderRadius:8,overflow:'hidden'}}>
@@ -489,19 +664,48 @@ export default function EstVsActual(){
                 </div>
               </div>
             </div>
-          )}
+              )}
+            </div>
+          )})()}
 
           {/* ── TIMELINE TAB ── */}
-          {activeTab==='Timeline'&&(
+          {activeTab==='Timeline'&&(() => {
+            // House-aware: when a specific house is selected, compare THIS
+            // house's own progress against the shared project timeline —
+            // dates themselves are project-level (no per-house schedule
+            // exists yet), but the "work done" side of the comparison
+            // becomes house-specific instead of the whole project's.
+            const selectedUnit = houseFilter!=='ALL' && houseFilter!=='COMMON'
+              ? (data?.byUnit||[]).find(u=>String(u.unitId)===String(houseFilter)) : null
+            const workPct = selectedUnit ? selectedUnit.progressPct : s.overallPct
+            const workLabel = selectedUnit ? `${selectedUnit.unitNo} Progress` : 'Overall Project Progress'
+            // Use this house's own dates if set, otherwise fall back to the
+            // project's shared dates — and be explicit about which one is
+            // actually driving the numbers, since a silently-wrong
+            // assumption here is worse than no number at all.
+            const usingHouseDates = selectedUnit && (selectedUnit.startDate || selectedUnit.targetDate)
+            const effStartDate  = usingHouseDates ? (selectedUnit.startDate || proj.startDate) : proj.startDate
+            const effTargetDate = usingHouseDates ? (selectedUnit.targetDate || proj.targetDate) : proj.targetDate
+            const effActualEnd  = selectedUnit ? selectedUnit.actualEndDate : proj.actualEnd
+            return (
             <div style={{background:'#fff',border:'1px solid #E8E0E8',borderRadius:8,padding:20}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#6E2C00',marginBottom:20}}>
-                📅 Project Timeline
+              <div style={{fontSize:14,fontWeight:700,color:'#6E2C00',marginBottom:8}}>
+                📅 {selectedUnit ? `${selectedUnit.unitNo} — Plan vs Actual` : 'Project Timeline'}
               </div>
+              {selectedUnit && (
+                <div style={{fontSize:11,color: usingHouseDates?'#1E8449':'#B8860B',marginBottom:16,padding:'6px 10px',
+                  background: usingHouseDates?'#E8F5E9':'#FEF9E7',borderRadius:6,
+                  border:`1px solid ${usingHouseDates?'#A9DFBF':'#F9E79F'}`}}>
+                  {usingHouseDates
+                    ? `✅ Using ${selectedUnit.unitNo}'s own schedule dates — set under Project Detail → Edit Details & Dates.`
+                    : `⚠️ ${selectedUnit.unitNo} has no dates of its own yet — showing the whole project's shared schedule instead. Set individual dates under Edit Details & Dates for an accurate house-specific duration.`}
+                </div>
+              )}
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
                 {[
-                  ['🚀 Start Date',  fmtD(proj.startDate),  '#1E8449'],
-                  ['🎯 Target Date', fmtD(proj.targetDate), '#B8860B'],
-                  ['✅ Actual End',  proj.actualEnd?fmtD(proj.actualEnd):'In Progress', '#1A5276'],
+                  ['🚀 Start Date',  fmtD(effStartDate),  '#1E8449'],
+                  ['🎯 Target Date', fmtD(effTargetDate), '#B8860B'],
+                  ['✅ Actual End',  effActualEnd?fmtD(effActualEnd):'In Progress', '#1A5276'],
                 ].map(([l,v,c])=>(
                   <div key={l} style={{background:'#FAFAFA',borderRadius:8,padding:'12px 16px',
                     borderLeft:`4px solid ${c}`,textAlign:'center'}}>
@@ -512,9 +716,9 @@ export default function EstVsActual(){
               </div>
 
               {/* Days calculation */}
-              {proj.startDate&&proj.targetDate&&(()=>{
-                const start=new Date(proj.startDate)
-                const target=new Date(proj.targetDate)
+              {effStartDate&&effTargetDate&&(()=>{
+                const start=new Date(effStartDate)
+                const target=new Date(effTargetDate)
                 const today=new Date()
                 const totalDays=Math.ceil((target-start)/(1000*60*60*24))
                 const elapsed=Math.ceil((today-start)/(1000*60*60*24))
@@ -528,8 +732,8 @@ export default function EstVsActual(){
                         ['Total Duration', `${totalDays} days`, '#6E2C00'],
                         ['Elapsed',`${elapsed} days (${timePct}%)`, '#1A5276'],
                         ['Remaining', isOverdue?`${Math.abs(remaining)} days OVERDUE`:`${remaining} days`, isOverdue?'#C0392B':'#1E8449'],
-                        ['Progress vs Time', `Work: ${s.overallPct}% | Time: ${timePct}%`,
-                          s.overallPct>=timePct?'#1E8449':'#C0392B'],
+                        ['Progress vs Time', `Work: ${workPct}% | Time: ${timePct}%`,
+                          workPct>=timePct?'#1E8449':'#C0392B'],
                       ].map(([l,v,c])=>(
                         <div key={l} style={{background:'#FAFAFA',borderRadius:6,padding:'10px 14px',
                           borderLeft:`3px solid ${c}`}}>
@@ -547,12 +751,12 @@ export default function EstVsActual(){
                         <div style={{height:'100%',width:`${timePct}%`,background:'#1A5276',borderRadius:6}}/>
                         {/* Work progress overlay */}
                         <div style={{position:'absolute',top:0,left:0,height:'100%',
-                          width:`${s.overallPct}%`,background:'rgba(30,132,73,0.4)',borderRadius:6}}/>
+                          width:`${workPct}%`,background:'rgba(30,132,73,0.4)',borderRadius:6}}/>
                       </div>
                       <div style={{display:'flex',gap:16,marginTop:6,fontSize:10,color:'#888'}}>
                         <span>🔵 Time elapsed: {timePct}%</span>
-                        <span>🟢 Work done: {s.overallPct}%</span>
-                        {s.overallPct>=timePct
+                        <span>🟢 {workLabel}: {workPct}%</span>
+                        {workPct>=timePct
                           ?<span style={{color:'#1E8449',fontWeight:700}}>✅ Ahead of schedule</span>
                           :<span style={{color:'#C0392B',fontWeight:700}}>⚠️ Behind schedule</span>}
                       </div>
@@ -561,9 +765,93 @@ export default function EstVsActual(){
                 )
               })()}
             </div>
-          )}
+          )})()}
         </>)}
       </div>
+
+      {/* ── Room History Modal — read-only drill-down: real progress log
+           over time, plus this house's cost context. No editing here —
+           updates only happen through DPR / Manage Rooms, this is a
+           report. ── */}
+      {roomHistoryFor && (
+        <div onClick={()=>setRoomHistoryFor(null)}
+          style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.45)',
+            display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:'#fff',borderRadius:10,width:520,maxHeight:'80vh',overflow:'auto',padding:20}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
+              <div>
+                <div style={{fontSize:16,fontWeight:800,color:'#6E2C00'}}>🚪 {roomHistoryFor.roomName}</div>
+                <div style={{fontSize:11,color:'#888'}}>{roomHistoryFor.roomType} · Current progress: <b style={{color:'#1E8449'}}>{roomHistoryFor.progress||0}%</b></div>
+              </div>
+              <button onClick={()=>setRoomHistoryFor(null)}
+                style={{padding:'4px 10px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>✕ Close</button>
+            </div>
+
+            {/* House cost context — genuinely house-level, labeled honestly since no BOQ line is ever tagged to an individual room */}
+            {(() => {
+              const selectedUnit = (data?.byUnit||[]).find(u=>String(u.unitId)===String(roomHistoryFor.unitId))
+              return selectedUnit && (
+                <div style={{background:'#FAF8FA',border:'1px solid #E8E0E8',borderRadius:8,padding:'10px 14px',marginBottom:16}}>
+                  <div style={{fontSize:10,color:'#888',marginBottom:6}}>💰 {selectedUnit.unitNo}'s overall cost (house-level — no cost is tracked per individual room)</div>
+                  <div style={{display:'flex',gap:16}}>
+                    <div><div style={{fontSize:9,color:'#1A5276'}}>Estimated</div><div style={{fontSize:13,fontWeight:700,color:'#1A5276'}}>{fmtC(selectedUnit.estTotal)}</div></div>
+                    <div><div style={{fontSize:9,color:'#1E8449'}}>Actual</div><div style={{fontSize:13,fontWeight:700,color:'#1E8449'}}>{fmtC(selectedUnit.doneTotal)}</div></div>
+                    <div><div style={{fontSize:9,color:selectedUnit.variance>0?'#C0392B':'#1E8449'}}>Variance</div><div style={{fontSize:13,fontWeight:700,color:selectedUnit.variance>0?'#C0392B':'#1E8449'}}>{fmtC(selectedUnit.variance)}</div></div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Selected add-ons — read-only here, managed from Manage Rooms */}
+            {roomAddonsView.length > 0 && (
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#B8860B',marginBottom:8}}>🎨 Upgrades Selected (on top of base construction)</div>
+                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                  {roomAddonsView.map(a => (
+                    <div key={a.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                      padding:'8px 10px',background:'#FEF9E7',borderRadius:6,border:'1px solid #F9E79F'}}>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:'#333'}}>{a.addonMaster?.addonName} <span style={{fontSize:9,color:'#B8860B'}}>({a.addonMaster?.grade})</span></div>
+                        <div style={{fontSize:10,color:'#888'}}>{fmtC(a.amount)}</div>
+                      </div>
+                      <div style={{fontSize:11,fontWeight:700,color:'#1E8449'}}>{a.progress}%</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Progress history — real logged changes, work dimension */}
+            <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:10}}>📋 Progress History (Work)</div>
+            {roomHistoryLoading ? (
+              <div style={{padding:30,textAlign:'center',color:'#aaa'}}>⏳ Loading...</div>
+            ) : roomHistory.length===0 ? (
+              <div style={{padding:30,textAlign:'center',color:'#aaa',fontSize:12}}>
+                No progress updates logged yet for this room — updates get recorded here once someone changes this room's % under Project Detail → Manage Rooms.
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                {roomHistory.map(h => (
+                  <div key={h.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                    padding:'10px 12px',background:'#FAFAFA',borderRadius:6,border:'1px solid #F0EBF0'}}>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:'#333'}}>
+                        {h.oldProgress}% → <span style={{color:'#1E8449'}}>{h.newProgress}%</span>
+                      </div>
+                      <div style={{fontSize:10,color:'#888'}}>by {h.updatedBy||'Site Team'}{h.remarks?` · ${h.remarks}`:''}</div>
+                    </div>
+                    <div style={{fontSize:11,color:'#888',textAlign:'right'}}>
+                      {new Date(h.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}
+                      <div style={{fontSize:9}}>{new Date(h.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

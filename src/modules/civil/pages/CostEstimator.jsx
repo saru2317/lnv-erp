@@ -70,6 +70,7 @@ export default function CostEstimator() {
   const [saving,    setSaving]    = useState(false)
   const [result,    setResult]    = useState(null)
   const [savedEstId,setSavedEstId]= useState(null)
+  const [editingId, setEditingId] = useState(null) // null = creating new; set = editing this estimate
 
   const [form, setForm] = useState({
     clientName:'', clientPhone:'', clientEmail:'', projectLocation:'', projectType:'Residential Villa',
@@ -111,18 +112,75 @@ export default function CostEstimator() {
     finally { setLoading(false) }
   }
 
+  const loadForEdit = (e) => {
+    if (e.projectId) return toast.error('This estimate has already been converted to a project and can\'t be edited.')
+    setForm({
+      clientName:e.clientName||'', clientPhone:e.clientPhone||'', clientEmail:e.clientEmail||'',
+      projectLocation:e.projectLocation||'', projectType:e.projectType||'Residential Villa',
+      builtupAreaSqft:String(e.builtupAreaSqft||''), areaType:e.areaType||'BUILTUP',
+      floors:String(e.floors||'1'), basement:e.basement||false,
+      specId:e.specId?String(e.specId):'', customRate:e.customRate?String(e.customRate):'',
+      foundationType:e.foundationType||'NORMAL', soilType:e.soilType||'NORMAL',
+      siteLevelExtra:String(e.siteLevelExtra||'0'), locationFactor:e.locationFactor||'COIMBATORE',
+      boundaryWall:e.boundaryWall||false, boundaryWallRmt:'',
+      waterSump:e.waterSump||false, waterSumpLitres:'',
+      septicTank:e.septicTank||false, borewell:e.borewell||false,
+      parking:e.parking||false, parkingSqft:'',
+      landscaping:e.landscaping||false, landscapingSqft:'',
+      generator:e.generator||false, overheadTank:e.overheadTank||false,
+      architectFeesPct:String(e.architectFeesPct||'3'), structuralFeesPct:String(e.structuralFeesPct||'1'),
+      gstPct:String(e.gstPct||'5'), contingencyPct:String(e.contingencyPct||'5'), notes:e.notes||'',
+    })
+    setEditingId(e.id)
+    setSavedEstId(e.id)
+    setResult(null)
+    setStep(0)
+    setView('new')
+    toast(`Editing ${e.estimateNo} — recalculate and save to update`, {icon:'✏️'})
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null); setSavedEstId(null); setResult(null); setStep(0)
+    setView('new')
+    setForm({
+      clientName:'', clientPhone:'', clientEmail:'', projectLocation:'', projectType:'Residential Villa',
+      builtupAreaSqft:'', areaType:'BUILTUP', floors:'1', basement:false,
+      specId:'', customRate:'',
+      foundationType:'NORMAL', soilType:'NORMAL', siteLevelExtra:'0', locationFactor:'COIMBATORE',
+      boundaryWall:false, boundaryWallRmt:'', waterSump:false, waterSumpLitres:'',
+      septicTank:false, borewell:false, parking:false, parkingSqft:'',
+      landscaping:false, landscapingSqft:'', generator:false, overheadTank:false,
+      architectFeesPct:'3', structuralFeesPct:'1', gstPct:'5', contingencyPct:'5', notes:'',
+    })
+  }
+
+  const deleteEstimate = async (e) => {
+    if (e.projectId) return toast.error('Can\'t delete — already converted to a project.')
+    if (!window.confirm(`Delete estimate ${e.estimateNo} for ${e.clientName}? This cannot be undone.`)) return
+    try {
+      const r = await fetch(`${BASE}/civil-ext/estimates/${e.id}`,{method:'DELETE',headers:hdr()})
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      toast.success(d.message||'Deleted')
+      setEstimates(prev=>prev.filter(x=>x.id!==e.id))
+    } catch { toast.error('Delete failed') }
+  }
+
   const saveEstimate = async () => {
     if (!form.clientName.trim()) return toast.error('Client name required')
     if (!result) return
     setSaving(true)
     try {
-      const r = await fetch(`${BASE}/civil-ext/estimates`,{method:'POST',headers:hdr(),
-        body:JSON.stringify({ ...form, ...result, totalCost:result.grandTotal, grandTotal:result.grandTotal, baseCost:result.baseCost, extrasCost:result.extrasCost })})
+      const payload = { ...form, ...result, totalCost:result.grandTotal, grandTotal:result.grandTotal, baseCost:result.baseCost, extrasCost:result.extrasCost }
+      const r = editingId
+        ? await fetch(`${BASE}/civil-ext/estimates/${editingId}`,{method:'PATCH',headers:hdr(),body:JSON.stringify(payload)})
+        : await fetch(`${BASE}/civil-ext/estimates`,{method:'POST',headers:hdr(),body:JSON.stringify(payload)})
       const d = await r.json()
       if (d.error) return toast.error(d.error)
-      toast.success(`✅ ${d.data.estimateNo} saved!`)
+      toast.success(editingId ? `✅ ${d.data.estimateNo} updated!` : `✅ ${d.data.estimateNo} saved!`)
       setSavedEstId(d.data.id)
-      setEstimates(prev=>[d.data,...prev])
+      setEstimates(prev => editingId ? prev.map(x=>x.id===d.data.id?d.data:x) : [d.data,...prev])
+      if (editingId) setEditingId(null)
     } catch { toast.error('Failed') }
     finally { setSaving(false) }
   }
@@ -611,7 +669,7 @@ export default function CostEstimator() {
 
           {/* Actions */}
           <div className='no-print' style={{display:'flex',gap:10,justifyContent:'flex-end',marginBottom:20}}>
-            <button onClick={()=>{setView('new');setStep(0)}} style={{padding:'9px 16px',background:'#fff',border:'1px solid #ddd',borderRadius:6,cursor:'pointer',fontWeight:600,color:'#555'}}>← New</button>
+            <button onClick={cancelEdit} style={{padding:'9px 16px',background:'#fff',border:'1px solid #ddd',borderRadius:6,cursor:'pointer',fontWeight:600,color:'#555'}}>← New</button>
             <button onClick={saveEstimate} disabled={saving} style={{padding:'9px 16px',background:'#1A5276',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700}}>{saving?'⏳...':'💾 Save'}</button>
             <button onClick={convertToProject} style={{padding:'9px 16px',background:'#1E8449',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700}}>🏗️ Convert to Project</button>
             <button onClick={()=>window.print()} style={{padding:'9px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700}}>🖨️ Print</button>
@@ -626,12 +684,12 @@ export default function CostEstimator() {
           {estimates.length===0 ? (
             <div style={{padding:50,textAlign:'center'}}>
               <div style={{fontSize:40,marginBottom:12}}>🧮</div>
-              <button onClick={()=>setView('new')} style={{padding:'9px 20px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700}}>Create First Estimate</button>
+              <button onClick={cancelEdit} style={{padding:'9px 20px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700}}>Create First Estimate</button>
             </div>
           ) : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead><tr style={{background:'#6E2C00',color:'#fff'}}>
-                {['Est. No','Client','Location','Area','Spec','Grand Total','Status','Date'].map(h=>(
+                {['Est. No','Client','Location','Area','Spec','Grand Total','Status','Date','Actions'].map(h=>(
                   <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:11,fontWeight:600}}>{h}</th>
                 ))}
               </tr></thead>
@@ -648,6 +706,27 @@ export default function CostEstimator() {
                       <td style={{padding:'9px 12px',fontWeight:700,color:'#1E8449',fontSize:13}}>{fmtC(e.grandTotal||e.totalCost)}</td>
                       <td style={{padding:'9px 12px'}}><span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:s.bg,color:s.color}}>{e.status}</span></td>
                       <td style={{padding:'9px 12px',fontSize:11,color:'#888'}}>{new Date(e.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+                      <td style={{padding:'9px 12px'}}>
+                        <div style={{display:'flex',gap:5}}>
+                          {e.projectId ? (
+                            <span title="Already converted to a project — figures are locked as that project's costing basis"
+                              style={{padding:'3px 8px',background:'#EBF5FB',color:'#1A5276',borderRadius:4,fontSize:10,fontWeight:700}}>
+                              🔒 In Project
+                            </span>
+                          ) : (
+                            <>
+                              <button onClick={()=>loadForEdit(e)}
+                                style={{padding:'3px 8px',background:'#FEF9E7',color:'#B8860B',border:'1px solid #F9E79F',borderRadius:4,cursor:'pointer',fontSize:10,fontWeight:700}}>
+                                ✏️ Edit
+                              </button>
+                              <button onClick={()=>deleteEstimate(e)}
+                                style={{padding:'3px 8px',background:'#FDEDEC',color:'#C0392B',border:'1px solid #F1948A',borderRadius:4,cursor:'pointer',fontSize:10,fontWeight:700}}>
+                                🗑 Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   )
                 })}

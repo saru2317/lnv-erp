@@ -21,6 +21,8 @@ const SiteStock       = lazy(() => import('./SiteStock'))
 const IssueSip        = lazy(() => import('./IssueSip'))
 const ContractorWO    = lazy(() => import('./ContractorWO'))
 const BOQMaster       = lazy(() => import('./BOQMaster'))
+const BOQTemplateRates = lazy(() => import('./BOQTemplateRates'))
+const RoomAddonRates = lazy(() => import('./RoomAddonRates'))
 const CostEstimator   = lazy(() => import('./CostEstimator'))
 const MaterialRateMaster = lazy(() => import('./MaterialRateMaster'))
 
@@ -58,6 +60,8 @@ const SIDEBAR_GROUPS = [
   ]},
   { label:'Settings', items:[
     { to:'/civil/boq-master',       label:'📐 BOQ Activity Master' },
+    { to:'/civil/boq-template-rates', label:'💰 BOQ Template Rates' },
+    { to:'/civil/room-addon-rates', label:'🎨 Room Add-on Rates' },
     { to:'/civil/materials',        label:'📦 Material Master' },
     { to:'/civil/material-rates',   label:'📈 Material Rate Master' },
   ]},
@@ -89,6 +93,8 @@ export default function CivilLayout() {
           <Route path="issue-slip"        element={<IssueSip />} />
           <Route path="contractor-wo"     element={<ContractorWO />} />
           <Route path="boq-master"         element={<BOQMaster />} />
+          <Route path="boq-template-rates" element={<BOQTemplateRates />} />
+          <Route path="room-addon-rates" element={<RoomAddonRates />} />
           <Route path="estimator"          element={<CostEstimator />} />
           <Route path="material-rates"      element={<MaterialRateMaster />} />
           <Route path="*"                 element={<Navigate to="/civil" replace />} />

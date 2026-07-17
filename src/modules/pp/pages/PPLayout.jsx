@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react'
+import React, { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ModuleLayout from '@components/layout/ModuleLayout'
 import PageLoader from '@components/ui/PageLoader'
@@ -29,8 +29,8 @@ const BOMList          = lazy(() => import('./BOMList'))
 const BOMNew           = lazy(() => import('./BOMNew'))
 const WorkCenterBoard  = lazy(() => import('./WorkCenterDashboard'))
 const MOList           = lazy(() => import('./MOList'))
+const MONew            = lazy(() => import('./MONew'))
 const PPReport         = lazy(() => import('./PPReport'))
-const EfficiencyReport = lazy(() => import('./EfficiencyReport'))
 
 // ── Role check ────────────────────────────────────────────────────
 // Role check — case insensitive, includes all admin variants
@@ -41,8 +41,13 @@ const OPERATOR_ONLY_ROLES = ['operations','worker','operator','floor','productio
 const getRole    = () => { try { return (JSON.parse(localStorage.getItem('lnv_user')||'{}').role || '').toLowerCase().trim() } catch { return '' } }
 // Show PLANNER sidebar unless role is explicitly an operator-only role
 const isPlanner  = () => !OPERATOR_ONLY_ROLES.includes(getRole())
-// MO enabled check — reads from sessionStorage (set on app load from pp/config API)
-const isMOEnabled = () => { try { return JSON.parse(sessionStorage.getItem('pp_config')||'{}').moEnabled === true } catch { return false } }
+// MO enabled check now lives as real component state (see PPLayout below),
+// fetched directly from /pp/config — NOT from sessionStorage, which only
+// ever got populated as a side-effect of visiting WONew.jsx, meaning the
+// sidebar could show/hide incorrectly depending on which pages had been
+// visited in that browser tab, regardless of the actual saved config.
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
 
 // ── PLANNER sidebar ───────────────────────────────────────────────
 // WO New is NOT here — accessed only via Plan → [Create WO] button
@@ -84,7 +89,6 @@ const PLANNER_SIDEBAR = [
   ]},
   { label:'Reports', icon:'📈', items:[
     { to:'/pp/report',       label:'Production Report'  },
-    { to:'/pp/efficiency',   label:'Machine Efficiency' },
   ]},
   { label:'PP Setup', icon:'⚙️', items:[
     { to:'/pp/process-master',  label:'Process Master (CA80)'   },
@@ -133,10 +137,19 @@ function PlannerGuard({ children }) {
 }
 
 export default function PPLayout() {
+  const [moEnabled, setMoEnabled] = useState(null) // null = still loading, don't show/hide yet
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/pp/config`, { headers:{ Authorization:`Bearer ${getToken()}` } })
+      .then(r => r.json())
+      .then(d => setMoEnabled(d?.data?.moEnabled === true))
+      .catch(() => setMoEnabled(false))
+  }, [])
+
   return (
     <ModuleLayout moduleName="PP" sidebarGroups={
       (isPlanner() ? PLANNER_SIDEBAR : OPERATOR_SIDEBAR)
-        .filter(g => !g.moOnly || isMOEnabled())  // hide MO group if not enabled
+        .filter(g => !g.moOnly || moEnabled === true)  // hide MO group until we KNOW it's actually enabled — never guess from stale cache
     }>
       <Suspense fallback={<PageLoader text="Loading PP…" />}>
         <Routes>
@@ -144,7 +157,7 @@ export default function PPLayout() {
 
           {/* Manufacturing Orders — shown when moEnabled */}
           <Route path="mo"              element={<PlannerGuard><MOList /></PlannerGuard>}          />
-          <Route path="mo/new"          element={<PlannerGuard><MOList /></PlannerGuard>}          />
+          <Route path="mo/new"          element={<PlannerGuard><MONew /></PlannerGuard>}          />
           <Route path="mo/:id"          element={<PlannerGuard><MOList /></PlannerGuard>}          />
 
           {/* Planning — planner only */}
@@ -194,7 +207,7 @@ export default function PPLayout() {
 
           {/* Reports */}
           <Route path="report"          element={<PPReport />}         />
-          <Route path="efficiency"      element={<EfficiencyReport />} />
+          <Route path="efficiency"      element={<Navigate to="/pp/report" replace />} />
 
           <Route path="*"               element={<Navigate to="/pp" replace />} />
         </Routes>

@@ -4,6 +4,7 @@ import { useAuth } from '@hooks/useAuth'
 
 const DEMO_USERS = [
   { email:'admin@lnverp.com',      password:'admin123', label:'Super Admin'   },
+  { email:'saravanan@lnvmfg.com',  password:'lnv@2025', label:'Admin'         },
   { email:'manager@lnverp.com',    password:'lnv@2025', label:'Plant Manager' },
   { email:'accounts@lnverp.com',   password:'lnv@2025', label:'Accounts'      },
   { email:'operations@lnverp.com', password:'lnv@2025', label:'Operations'    },

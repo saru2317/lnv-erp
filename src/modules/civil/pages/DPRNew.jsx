@@ -20,6 +20,8 @@ export default function DPRNew() {
     date: today(), supervisor:'', weather:'Clear', issues:'', remarks:''
   })
   const [activities, setActivities] = useState([])
+  const [units, setUnits] = useState([])
+  const [houseFilter, setHouseFilter] = useState('ALL')
   const [labourRows, setLabourRows] = useState([
     { trade:'Mason',       type:'Skilled',    count:'', rate:700 },
     { trade:'Carpenter',   type:'Skilled',    count:'', rate:700 },
@@ -43,6 +45,7 @@ export default function DPRNew() {
     setBOQItems(boq)
     setActivities(boq.map(b=>({
       boqId:     b.id,
+      unitId:    b.unitId||null,
       activity:  b.activity,
       description:b.description,
       unit:      b.unit,
@@ -52,6 +55,9 @@ export default function DPRNew() {
       cumulativePct: Number(b.donePct||0),
       remarks:   ''
     })))
+    const u = await fetch(`${BASE}/civil/units?projectId=${pid}`,{headers:hdr2()}).then(r=>r.json())
+    setUnits(u.data||[])
+    setHouseFilter('ALL')
   }
 
   const setAct = (idx,k,v) => {
@@ -80,6 +86,16 @@ export default function DPRNew() {
   }
 
   const totalWorkers = labourRows.reduce((s,l)=>s+parseInt(l.count||0),0)
+  const unitMap = Object.fromEntries(units.map(u=>[u.id, u.unitNo]))
+
+  // Same safety pattern as BOQ.jsx — track each activity's REAL index in
+  // the full array, so typing into a filtered row always updates the
+  // correct underlying activity, never a wrong one based on the filtered
+  // list's own position.
+  const visibleActivities = activities
+    .map((a, originalIndex) => ({ a, originalIndex }))
+    .filter(({a}) => houseFilter==='ALL'
+      || (houseFilter==='COMMON' ? !a.unitId : a.unitId===parseInt(houseFilter)))
 
   const save = async () => {
     if (!selProject)        return toast.error('Select a project')
@@ -169,19 +185,35 @@ export default function DPRNew() {
       {/* Activity Progress */}
       {selProject && activities.length > 0 && (
         <div style={{background:'#fff',borderRadius:12,padding:20,marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#6E2C00',marginBottom:14}}>📊 Activity-wise Progress</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div style={{fontSize:15,fontWeight:700,color:'#6E2C00'}}>📊 Activity-wise Progress</div>
+            {units.length > 0 && (
+              <select value={houseFilter} onChange={e=>setHouseFilter(e.target.value)}
+                style={{padding:'7px 12px',border:'1.5px solid #E8D5C4',borderRadius:6,fontSize:12,
+                  background:houseFilter!=='ALL'?'#FDF2E9':'#FFFAF7',outline:'none',fontWeight:houseFilter!=='ALL'?700:400,color:'#6E2C00'}}>
+                <option value='ALL'>🏘️ All Houses (mixed — careful of wrong-row entry)</option>
+                <option value='COMMON'>Common Area Only</option>
+                {units.map(u=><option key={u.id} value={u.id}>🏠 {u.unitNo}{u.ownerName?` — ${u.ownerName}`:''}</option>)}
+              </select>
+            )}
+          </div>
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:700}}>
               <thead>
                 <tr style={{background:'#FDF2E9'}}>
-                  {['Activity','Description','Unit','Total Qty','Prev %','Today Qty','Cumulative %','Remarks'].map(h=>(
+                  {['House','Activity','Description','Unit','Total Qty','Prev %','Today Qty','Cumulative %','Remarks'].map(h=>(
                     <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,fontWeight:700,color:'#6E2C00'}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {activities.map((a,idx)=>(
-                  <tr key={idx} style={{background:idx%2===0?'#fff':'#FDF9F7',borderBottom:'1px solid #F5EDE0'}}>
+                {visibleActivities.map(({a,originalIndex:idx},i)=>(
+                  <tr key={idx} style={{background:i%2===0?'#fff':'#FDF9F7',borderBottom:'1px solid #F5EDE0'}}>
+                    <td style={{padding:'8px 10px',fontSize:11}}>
+                      {a.unitId
+                        ? <span style={{color:'#6E2C00',fontWeight:700}}>🏠 {unitMap[a.unitId]||'—'}</span>
+                        : <span style={{color:'#888'}}>Common</span>}
+                    </td>
                     <td style={{padding:'8px 10px',fontWeight:700,color:'#6E2C00'}}>{a.activity}</td>
                     <td style={{padding:'8px 10px',fontSize:12,color:'#555'}}>{a.description}</td>
                     <td style={{padding:'8px 10px',color:'#888'}}>{a.unit}</td>

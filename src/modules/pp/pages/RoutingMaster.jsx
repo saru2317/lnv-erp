@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 // ── Industry Subtypes — self-contained, no cross-module import ────────────────
@@ -737,6 +738,9 @@ function RoutingDetail({ routing, wcListFromDB, onClose, onEdit }) {
 
 // ── MAIN LIST ─────────────────────────────────────────────
 export default function RoutingMaster() {
+  const [searchParams] = useSearchParams()
+  const preselectItemCode = searchParams.get('itemCode')
+  const [autoOpenHandled, setAutoOpenHandled] = useState(false)
   const [routings,  setRoutings]  = useState([])
   const [items,     setItems]     = useState([])
   const [wcList,    setWcList]    = useState(WORK_CENTERS) // start with local, replace from API
@@ -810,6 +814,25 @@ export default function RoutingMaster() {
     fetchWCs()
     fetchRoutings()
   }, [])
+
+  // Direct navigation from Item Master's BOM/Routing tiles — once data
+  // has loaded, jump straight into this item's routing instead of
+  // making the user manually search the list themselves.
+  useEffect(() => {
+    if (!preselectItemCode || autoOpenHandled) return
+    if (routings.length === 0 && items.length === 0) return // still loading
+    setAutoOpenHandled(true)
+    const match = routings.find(r => r.itemCode === preselectItemCode)
+    if (match) {
+      setEditRt(match); setShowForm(true)
+    } else {
+      const item = items.find(i => i.code === preselectItemCode)
+      // No .id on this object — RoutingForm's isEdit check naturally
+      // treats this as a fresh create, just pre-filled with the item.
+      setEditRt({ itemCode: preselectItemCode, itemName: item?.name || preselectItemCode })
+      setShowForm(true)
+    }
+  }, [routings, items, preselectItemCode, autoOpenHandled])
 
   // Fetch Work Centers from DB — replaces local WORK_CENTERS constant
   const fetchWCs = async () => {

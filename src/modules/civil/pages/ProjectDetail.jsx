@@ -34,8 +34,52 @@ export default function ProjectDetail() {
   const [materials,    setMaterials]    =useState([])
   const [units,        setUnits]        =useState([])
   const [showUnitForm, setShowUnitForm] =useState(false)
-  const [unitForm, setUnitForm] = useState({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'' })
+  const [unitForm, setUnitForm] = useState({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'', startDate:'', targetDate:'' })
+  const [editingUnitId, setEditingUnitId] = useState(null) // null = creating new house; set = editing existing
   const [roomsFor, setRoomsFor] = useState(null)
+  const [addonsFor, setAddonsFor] = useState(null) // room object, or null when add-ons modal closed
+  const [addonCatalog, setAddonCatalog] = useState([])
+  const [roomAddons, setRoomAddons] = useState([])
+  const [addonPick, setAddonPick] = useState('')
+
+  useEffect(() => {
+    if (!addonsFor) return
+    fetch(`${BASE}/civil/room-addon-master`, { headers:hdr2() }).then(r=>r.json()).then(d=>setAddonCatalog(d.data||[]))
+    fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { headers:hdr2() }).then(r=>r.json()).then(d=>setRoomAddons(d.data||[]))
+  }, [addonsFor])
+
+  const addRoomAddon = async () => {
+    if (!addonPick) return toast.error('Pick an add-on first')
+    try {
+      const r = await fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { method:'POST', headers:hdr(),
+        body: JSON.stringify({ addonCode: addonPick }) })
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      toast.success(d.message||'Added')
+      setAddonPick('')
+      const fresh = await fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { headers:hdr2() }).then(r=>r.json())
+      setRoomAddons(fresh.data||[])
+      loadUnits()
+    } catch { toast.error('Failed to add') }
+  }
+
+  const updateAddonProgress = async (addonId, progress) => {
+    try {
+      await fetch(`${BASE}/civil/room-addons/${addonId}`, { method:'PATCH', headers:hdr(), body:JSON.stringify({ progress }) })
+      const fresh = await fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { headers:hdr2() }).then(r=>r.json())
+      setRoomAddons(fresh.data||[])
+    } catch { toast.error('Failed to update') }
+  }
+
+  const removeRoomAddon = async (addonId) => {
+    try {
+      await fetch(`${BASE}/civil/room-addons/${addonId}`, { method:'DELETE', headers:hdr2() })
+      const fresh = await fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { headers:hdr2() }).then(r=>r.json())
+      setRoomAddons(fresh.data||[])
+      loadUnits()
+      toast.success('Removed')
+    } catch { toast.error('Failed to remove') }
+  }
   const [roomForm, setRoomForm] = useState({ roomName:'', roomType:'OTHER', areaSqft:'' })
 
   const loadUnits = useCallback(async () => {
@@ -99,16 +143,32 @@ export default function ProjectDetail() {
     toast.success('Status updated'); setEditStatus(false); load()
   }
 
+  const toDateInput = (d) => d ? new Date(d).toISOString().slice(0,10) : ''
+
+  const editUnit = (u) => {
+    setUnitForm({
+      unitNo:u.unitNo||'', unitType:u.unitType||'', floorNo:u.floorNo||'',
+      builtUpArea:u.builtUpArea?String(u.builtUpArea):'', ownerName:u.ownerName||'',
+      ownerPhone:u.ownerPhone||'', ownerEmail:u.ownerEmail||'',
+      totalContractValue:u.totalContractValue?String(u.totalContractValue):'',
+      startDate:toDateInput(u.startDate), targetDate:toDateInput(u.targetDate),
+    })
+    setEditingUnitId(u.id)
+    setShowUnitForm(true)
+  }
+
   const saveUnit = async () => {
     if (!unitForm.unitNo) return toast.error('House/Unit No is required')
     try {
-      const r = await fetch(`${BASE}/civil/units`, { method:'POST', headers:hdr(),
-        body: JSON.stringify({ ...unitForm, projectId:id }) })
+      const r = editingUnitId
+        ? await fetch(`${BASE}/civil/units/${editingUnitId}`, { method:'PATCH', headers:hdr(), body: JSON.stringify(unitForm) })
+        : await fetch(`${BASE}/civil/units`, { method:'POST', headers:hdr(), body: JSON.stringify({ ...unitForm, projectId:id }) })
       const d = await r.json()
       if (d.error) return toast.error(d.error)
-      toast.success(`✅ ${d.data.unitNo} added`)
+      toast.success(editingUnitId ? `✅ ${d.data.unitNo} updated` : `✅ ${d.data.unitNo} added`)
       setShowUnitForm(false)
-      setUnitForm({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'' })
+      setEditingUnitId(null)
+      setUnitForm({ unitNo:'', unitType:'', floorNo:'', builtUpArea:'', ownerName:'', ownerPhone:'', ownerEmail:'', totalContractValue:'', startDate:'', targetDate:'' })
       loadUnits()
     } catch { toast.error('Save failed') }
   }
@@ -136,6 +196,30 @@ export default function ProjectDetail() {
       setRoomsFor((fresh.data||[]).find(u=>u.id===roomsFor.id))
       toast.success('Room removed')
     } catch { toast.error('Failed to remove room') }
+  }
+
+  const updateRoomProgress = async (roomId, progress) => {
+    try {
+      const r = await fetch(`${BASE}/civil/rooms/${roomId}`, { method:'PATCH', headers:hdr(),
+        body: JSON.stringify({ progress }) })
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      const fresh = await fetch(`${BASE}/civil/units?projectId=${id}`, { headers:hdr2() }).then(r=>r.json())
+      setUnits(fresh.data||[])
+      setRoomsFor((fresh.data||[]).find(u=>u.id===roomsFor.id))
+    } catch { toast.error('Failed to update progress') }
+  }
+
+  const updateRoomArea = async (roomId, areaSqft) => {
+    try {
+      const r = await fetch(`${BASE}/civil/rooms/${roomId}`, { method:'PATCH', headers:hdr(),
+        body: JSON.stringify({ areaSqft }) })
+      const d = await r.json()
+      if (d.error) return toast.error(d.error)
+      const fresh = await fetch(`${BASE}/civil/units?projectId=${id}`, { headers:hdr2() }).then(r=>r.json())
+      setUnits(fresh.data||[])
+      setRoomsFor((fresh.data||[]).find(u=>u.id===roomsFor.id))
+    } catch { toast.error('Failed to update area') }
   }
 
   if (loading) return <div style={{padding:40,textAlign:'center',color:'#aaa'}}>⏳ Loading project...</div>
@@ -263,7 +347,7 @@ export default function ProjectDetail() {
       {tab==='Houses' && (
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}>
-            <button onClick={()=>setShowUnitForm(true)}
+            <button onClick={()=>{setEditingUnitId(null);setShowUnitForm(true)}}
               style={{padding:'8px 18px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:7,cursor:'pointer',fontWeight:700,fontSize:12}}>
               + New House
             </button>
@@ -302,6 +386,11 @@ export default function ProjectDetail() {
                         borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
                       🚪 Manage Rooms
                     </button>
+                    <button onClick={()=>editUnit(u)}
+                      style={{width:'100%',padding:'7px',background:'#FEF9E7',color:'#B8860B',border:'1.5px solid #F9E79F',
+                        borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
+                      ✏️ Edit Details &amp; Dates
+                    </button>
                     <div style={{display:'flex',gap:6}}>
                       <button onClick={()=>copyLink(u)}
                         style={{flex:1,padding:'6px',background:'#EBF5FB',color:'#1A5276',border:'none',
@@ -327,7 +416,7 @@ export default function ProjectDetail() {
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',
           display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
           <div style={{background:'#fff',borderRadius:8,padding:20,width:420,maxHeight:'85vh',overflow:'auto'}}>
-            <div style={{fontSize:15,fontWeight:800,color:'#6E2C00',marginBottom:14}}>New House / Unit</div>
+            <div style={{fontSize:15,fontWeight:800,color:'#6E2C00',marginBottom:14}}>{editingUnitId ? 'Edit House / Unit' : 'New House / Unit'}</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <div style={{display:'flex',gap:8}}>
                 <div style={{flex:1}}>
@@ -375,9 +464,24 @@ export default function ProjectDetail() {
                 <input value={unitForm.totalContractValue} onChange={e=>setUnitForm({...unitForm,totalContractValue:e.target.value})}
                   style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
               </div>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>This House's Start Date</label>
+                  <input type='date' value={unitForm.startDate} onChange={e=>setUnitForm({...unitForm,startDate:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:'#888'}}>This House's Target Date</label>
+                  <input type='date' value={unitForm.targetDate} onChange={e=>setUnitForm({...unitForm,targetDate:e.target.value})}
+                    style={{padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12,width:'100%',boxSizing:'border-box'}} />
+                </div>
+              </div>
+              <div style={{fontSize:10,color:'#B8860B',background:'#FEF9E7',padding:'6px 10px',borderRadius:5}}>
+                💡 Leave blank if this house follows the whole project's schedule — only set these if this specific house has its own handover promise (e.g. Block A by March, Block B by June).
+              </div>
             </div>
             <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:18}}>
-              <button onClick={()=>setShowUnitForm(false)}
+              <button onClick={()=>{setShowUnitForm(false);setEditingUnitId(null)}}
                 style={{padding:'6px 12px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>Cancel</button>
               <button onClick={saveUnit}
                 style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>Save</button>
@@ -398,7 +502,7 @@ export default function ProjectDetail() {
             </div>
             <table style={{width:'100%',borderCollapse:'collapse',marginBottom:16,fontSize:12}}>
               <thead><tr style={{background:'#FDF2E9'}}>
-                {['Room','Type','Area (sqft)','Progress',''].map(h=>(
+                {['Room','Type','Area (sqft)','Progress','Add-ons',''].map(h=>(
                   <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,color:'#6E2C00'}}>{h}</th>
                 ))}
               </tr></thead>
@@ -407,15 +511,40 @@ export default function ProjectDetail() {
                   <tr key={r.id} style={{borderBottom:'1px solid #F0F0F0'}}>
                     <td style={{padding:'7px 10px'}}>{r.roomName}</td>
                     <td style={{padding:'7px 10px'}}>{r.roomType}</td>
-                    <td style={{padding:'7px 10px'}}>{r.areaSqft||'—'}</td>
-                    <td style={{padding:'7px 10px',color:'#1E8449',fontWeight:700}}>{r.progress}%</td>
+                    <td style={{padding:'7px 10px'}}>
+                      <input type='number' min='0' defaultValue={r.areaSqft||''}
+                        placeholder='—'
+                        onBlur={e=>{
+                          const v = e.target.value ? parseFloat(e.target.value) : null
+                          if (v !== (r.areaSqft?Number(r.areaSqft):null)) updateRoomArea(r.id, v)
+                        }}
+                        style={{width:64,padding:'4px 6px',border:'1.5px solid #DDD',borderRadius:4,fontSize:12}} />
+                    </td>
+                    <td style={{padding:'7px 10px'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:4}}>
+                        <input type='number' min='0' max='100' defaultValue={r.progress}
+                          onBlur={e=>{
+                            const v = Math.max(0,Math.min(100,parseInt(e.target.value)||0))
+                            if (v !== r.progress) updateRoomProgress(r.id, v)
+                          }}
+                          style={{width:48,padding:'4px 6px',border:'1.5px solid #A9DFBF',borderRadius:4,
+                            fontSize:12,fontWeight:700,color:'#1E8449',textAlign:'right'}} />
+                        <span style={{color:'#1E8449',fontWeight:700,fontSize:12}}>%</span>
+                      </div>
+                    </td>
+                    <td style={{padding:'7px 10px'}}>
+                      <button onClick={()=>setAddonsFor(r)}
+                        style={{padding:'4px 9px',background:'#FEF9E7',color:'#B8860B',border:'1px solid #F9E79F',borderRadius:4,cursor:'pointer',fontSize:11,fontWeight:700}}>
+                        🎨 Add-ons {(r.addons||[]).length>0?`(${r.addons.length})`:''}
+                      </button>
+                    </td>
                     <td style={{padding:'7px 10px'}}>
                       <button onClick={()=>removeRoom(r.id)}
                         style={{padding:'4px 9px',background:'#fdecea',color:'#C0392B',border:'none',borderRadius:4,cursor:'pointer',fontSize:11}}>Remove</button>
                     </td>
                   </tr>
                 ))}
-                {(roomsFor.rooms||[]).length===0 && <tr><td colSpan={5} style={{padding:'12px',textAlign:'center',color:'#aaa'}}>No rooms yet</td></tr>}
+                {(roomsFor.rooms||[]).length===0 && <tr><td colSpan={6} style={{padding:'12px',textAlign:'center',color:'#aaa'}}>No rooms yet</td></tr>}
               </tbody>
             </table>
             <div style={{background:'#FAF8FA',border:'1px solid #E8E0E8',borderRadius:6,padding:12}}>
@@ -434,6 +563,74 @@ export default function ProjectDetail() {
               </div>
               <button onClick={addRoom}
                 style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>+ Add Room</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Add-ons modal — Modular Kitchen, False Ceiling, Wardrobe etc.
+          Pure upgrades on top of base BOQ, cost auto-calculated from the
+          room's own area, each tracked with its own progress. */}
+      {addonsFor && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.45)',
+          display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100}}>
+          <div style={{background:'#fff',borderRadius:8,padding:20,width:480,maxHeight:'85vh',overflow:'auto'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div style={{fontSize:15,fontWeight:800,color:'#6E2C00'}}>🎨 Add-ons — {addonsFor.roomName}</div>
+              <button onClick={()=>setAddonsFor(null)}
+                style={{padding:'4px 10px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>✕ Close</button>
+            </div>
+            <div style={{fontSize:11,color:'#888',marginBottom:14}}>
+              {addonsFor.areaSqft ? `${addonsFor.areaSqft} sqft` : '⚠️ No area set for this room — set it in the room table first, cost can\'t be calculated without it.'}
+              {' '}· Upgrades on top of base construction, not replacements for it.
+            </div>
+
+            {roomAddons.length > 0 && (
+              <div style={{marginBottom:16,display:'flex',flexDirection:'column',gap:8}}>
+                {roomAddons.map(a => (
+                  <div key={a.id} style={{background:'#FAF8FA',border:'1px solid #E8E0E8',borderRadius:6,padding:'10px 12px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:'#333'}}>{a.addonMaster?.addonName} <span style={{fontSize:10,color:'#B8860B'}}>({a.addonMaster?.grade})</span></div>
+                        <div style={{fontSize:10,color:'#888'}}>{a.qty} sqft × ₹{Number(a.rate).toLocaleString('en-IN')} = <b style={{color:'#1E8449'}}>₹{Number(a.amount).toLocaleString('en-IN')}</b></div>
+                      </div>
+                      <button onClick={()=>removeRoomAddon(a.id)}
+                        style={{padding:'3px 8px',background:'#fdecea',color:'#C0392B',border:'none',borderRadius:4,cursor:'pointer',fontSize:10}}>Remove</button>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:10,color:'#888'}}>Progress</span>
+                      <input type='number' min='0' max='100' defaultValue={a.progress}
+                        onBlur={e=>{
+                          const v = Math.max(0,Math.min(100,parseInt(e.target.value)||0))
+                          if (v !== a.progress) updateAddonProgress(a.id, v)
+                        }}
+                        style={{width:44,padding:'3px 5px',border:'1.5px solid #A9DFBF',borderRadius:4,fontSize:11,fontWeight:700,color:'#1E8449',textAlign:'right'}} />
+                      <span style={{fontSize:11,color:'#1E8449',fontWeight:700}}>%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{background:'#FAF8FA',border:'1px solid #E8E0E8',borderRadius:6,padding:12}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>+ Add an upgrade</div>
+              <div style={{display:'flex',gap:8}}>
+                <select value={addonPick} onChange={e=>setAddonPick(e.target.value)}
+                  style={{flex:1,padding:'7px 9px',border:'1.5px solid #DDD',borderRadius:5,fontSize:12}}>
+                  <option value=''>Select an upgrade...</option>
+                  {Object.entries(addonCatalog.reduce((acc,c)=>{
+                    if(!acc[c.addonName]) acc[c.addonName]=[]
+                    acc[c.addonName].push(c)
+                    return acc
+                  },{})).map(([name,grades])=>(
+                    <optgroup key={name} label={name}>
+                      {grades.map(g=><option key={g.code} value={g.code}>{g.grade} — ₹{Number(g.ratePerSqft).toLocaleString('en-IN')}/sqft</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+                <button onClick={addRoomAddon}
+                  style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>Add</button>
+              </div>
             </div>
           </div>
         </div>

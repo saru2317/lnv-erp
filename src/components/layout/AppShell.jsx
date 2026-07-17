@@ -112,6 +112,17 @@ export default function AppShell() {
   const now = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
   const [aiConfig, setAiConfig] = React.useState(null)
 
+  // Forces a re-render when active modules change elsewhere (Company
+  // Profile page) — isModuleEnabled() itself always reads fresh from
+  // localStorage, but nothing normally tells THIS component to call it
+  // again, so the nav stayed stale until a full page reload without this.
+  const [, forceModulesRefresh] = React.useReducer(x => x + 1, 0)
+  React.useEffect(() => {
+    const onModulesUpdated = () => forceModulesRefresh()
+    window.addEventListener('lnv-modules-updated', onModulesUpdated)
+    return () => window.removeEventListener('lnv-modules-updated', onModulesUpdated)
+  }, [])
+
   // ── Favorites state (per user) ───────────────────────────
   const userId = user?.id || 'guest'
   const [pinned,  setPinned]  = React.useState(() => loadJSON(storageKey(userId,'pinned'), []))

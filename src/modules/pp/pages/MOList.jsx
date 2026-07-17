@@ -19,13 +19,6 @@ const STATUS_STYLE = {
   CANCELLED:   ['#F8D7DA','#721C24'],
 }
 
-const SEED = [
-  { id:1, moNo:'MO-2026-0001', soNo:'SO-2026-042', customerName:'Kovai Auto Components', itemName:'Brake Bracket', itemCode:'BRK-001', plannedQty:500, uom:'Nos', producedQty:320, status:'IN_PROGRESS', dueDate:'2026-04-18', priority:'High',   workOrders:[{woNo:'WO-2026-0001',status:'IN_PROGRESS'},{woNo:'WO-2026-0002',status:'COMPLETED'}] },
-  { id:2, moNo:'MO-2026-0002', soNo:'SO-2026-043', customerName:'Apex Auto Parts',       itemName:'Engine Mount',  itemCode:'ENG-006', plannedQty:300, uom:'Nos', producedQty:300, status:'DONE',        dueDate:'2026-04-15', priority:'Normal', workOrders:[{woNo:'WO-2026-0003',status:'COMPLETED'}] },
-  { id:3, moNo:'MO-2026-0003', soNo:'SO-2026-044', customerName:'Delta Engineering',     itemName:'Gear Housing',  itemCode:'GER-A2',  plannedQty:150, uom:'Nos', producedQty:0,   status:'CONFIRMED',   dueDate:'2026-04-22', priority:'High',   workOrders:[] },
-  { id:4, moNo:'MO-2026-0004', soNo:'',            customerName:'—',                     itemName:'PP Cap 20ml',   itemCode:'CAP-20ML',plannedQty:10000,uom:'Nos',producedQty:0,   status:'DRAFT',       dueDate:'2026-04-25', priority:'Normal', workOrders:[] },
-]
-
 export function MOList() {
   const nav = useNavigate()
   const [mos,     setMos]     = useState([])
@@ -38,8 +31,12 @@ export function MOList() {
     try {
       const res  = await fetch(`${BASE_URL}/pp/mo`, { headers: hdr2() })
       const data = await res.json()
-      setMos(data.data?.length ? data.data : SEED)
-    } catch { setMos(SEED) }
+      // No fallback to fake demo data — a genuinely empty result means
+      // this customer has no Manufacturing Orders yet, which is a real,
+      // honest state to show, not something to paper over with fictional
+      // companies that have nothing to do with their actual business.
+      setMos(data.data || [])
+    } catch { setMos([]) }
     finally { setLoading(false) }
   }, [])
   useEffect(() => { load() }, [load])

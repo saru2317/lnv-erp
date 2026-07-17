@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useAuth } from '@hooks/useAuth'
 
 const BASE   = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const tok    = () => localStorage.getItem('lnv_token')
@@ -11,6 +12,7 @@ const fmtQ   = (n,u) => `${Number(n||0).toLocaleString('en-IN',{maximumFractionD
 
 export default function WOComplete() {
   const nav   = useNavigate()
+  const { isModuleEnabled } = useAuth()
   const { id: paramId } = useParams()
   const [params]        = useSearchParams()
   const woId = paramId || params.get('woId')
@@ -238,7 +240,7 @@ export default function WOComplete() {
 
     // Final confirmation
     const confirmMsg = closeType === 'partial'
-      ? `Post ${producedQty} ${wo.uom} to QC and FG Stock? (WO stays open)`
+      ? `Post ${producedQty} ${wo.uom} to FG Stock? (WO stays open)`
       : closeType === 'final'
       ? `Final close WO-${wo.woNo}? This cannot be undone.`
       : `Short close with variance? This cannot be undone.`
@@ -275,7 +277,7 @@ export default function WOComplete() {
         })
       }
 
-      toast.success(`✅ WO updated. Navigating to QC Inspection for FG quality check...`)
+      toast.success(`✅ ${wo.itemName} — ${newProduced} ${wo.uom} completed and posted to stock`)
       setClosed(true)
     } catch(e) { toast.error(e.message) }
     finally { setSaving(false); submitting.current = false }
@@ -287,19 +289,18 @@ export default function WOComplete() {
       padding:'60px 20px', gap:16 }}>
       <div style={{ fontSize:56 }}>✅</div>
       <div style={{ fontFamily:'Syne,sans-serif', fontSize:20, fontWeight:800,
-        color:'#856404' }}>
-        {wo.woNo} — Ready for QC Inspection
+        color:'#155724' }}>
+        {wo.woNo} — Completed
       </div>
       <div style={{ fontSize:13, color:'#6C757D', textAlign:'center', lineHeight:1.8 }}>
         <strong>{fmtQ(totalProduced, wo.uom)}</strong> {wo.itemName} produced
         &nbsp;·&nbsp; Rejected: {fmtQ(totalRejected, wo.uom)}
         &nbsp;·&nbsp; Yield: <strong>{yieldPct}%</strong>
       </div>
-      <div style={{ padding:'12px 20px', background:'#FFF3CD', borderRadius:8,
-        fontSize:13, color:'#856404', fontWeight:600, textAlign:'center',
-        border:'1px solid #FFE69C' }}>
-        ⚠️ FG stock not yet posted — Complete QC Inspection first.<br/>
-        FG will be posted to stock automatically after QC PASS.
+      <div style={{ padding:'12px 20px', background:'#D4EDDA', borderRadius:8,
+        fontSize:13, color:'#155724', fontWeight:600, textAlign:'center',
+        border:'1px solid #C3E6CB' }}>
+        ✅ {fmtQ(totalProduced, wo.uom)} {wo.itemName} posted to stock — ready to sell or issue
       </div>
       <div style={{ padding:'10px 20px', background:'#D4EDDA',
         borderRadius:8, fontSize:13, color:'#155724', fontWeight:600 }}>
@@ -310,10 +311,12 @@ export default function WOComplete() {
       </div>
       <div style={{ display:'flex', gap:10 }}>
         <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/wo')}>← Work Orders</button>
-        <button className="btn btn-p sd-bsm"
-          onClick={() => nav(`/qm/inspection/new?woId=${woId}&woNo=${wo.woNo}&itemCode=${wo.itemCode||''}&itemName=${encodeURIComponent(wo.itemName||'')}&qty=${totalProduced}`)}>
-          🔬 Start QC Inspection →
-        </button>
+        {isModuleEnabled('qm') && (
+          <button className="btn btn-p sd-bsm"
+            onClick={() => nav(`/qm/inspection/new?woId=${woId}&woNo=${wo.woNo}&itemCode=${wo.itemCode||''}&itemName=${encodeURIComponent(wo.itemName||'')}&qty=${totalProduced}`)}>
+            🔬 Send for QC Inspection (optional)
+          </button>
+        )}
       </div>
     </div>
   )

@@ -20,6 +20,7 @@ export default function StockList() {
   const [chip,    setChip]    = useState('all')
   const [search,  setSearch]  = useState('')
   const [location,setLocation]= useState('ALL')
+  const [ownerType, setOwnerType] = useState('ALL') // ALL | OWN | CUSTOMER
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo,   setDateTo]   = useState('')
 
@@ -29,6 +30,7 @@ export default function StockList() {
       const activeLoc = forceLoc !== undefined ? forceLoc : location
       const params = new URLSearchParams()
       if (activeLoc && activeLoc !== 'ALL') params.set('location', activeLoc)
+      if (ownerType && ownerType !== 'ALL') params.set('ownerType', ownerType)
       if (dateFrom) params.set('from', dateFrom)
       if (dateTo)   params.set('to',   dateTo)
       const param = params.toString() ? `?${params.toString()}` : ''
@@ -38,9 +40,9 @@ export default function StockList() {
       setStocks(data.data||[])
     } catch(e){ toast.error(e.message) }
     finally { setLoading(false) }
-  },[location])
+  },[location, ownerType])
 
-  useEffect(()=>{ fetchStock() },[])
+  useEffect(()=>{ fetchStock() },[ownerType])
 
 
   const filtered = stocks.filter(s => {
@@ -87,6 +89,24 @@ export default function StockList() {
                     border:'none', cursor:'pointer',
                     background: location===t.k ? '#714B67' : '#fff',
                     color:      location===t.k ? '#fff'    : '#6C757D' }}>
+                  {t.l}
+                </button>
+              ))}
+            </div>
+            {/* Ownership tabs — Own vs Job-Work/Customer-Owned material.
+                Same screen, filtered, not a separate module. */}
+            <div style={{ display:'flex', border:'1.5px solid #E0D5E0',
+              borderRadius:6, overflow:'hidden' }}>
+              {[
+                {k:'ALL',      l:'All Stock'},
+                {k:'OWN',      l:'🏠 Own'},
+                {k:'CUSTOMER', l:'🤝 Job-Work (Customer)'},
+              ].map(t => (
+                <button key={t.k} onClick={() => setOwnerType(t.k)}
+                  style={{ padding:'5px 10px', fontSize:11, fontWeight:700,
+                    border:'none', cursor:'pointer',
+                    background: ownerType===t.k ? '#B8860B' : '#fff',
+                    color:      ownerType===t.k ? '#fff'    : '#6C757D' }}>
                   {t.l}
                 </button>
               ))}

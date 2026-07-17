@@ -5,6 +5,7 @@ import PageLoader from '@components/ui/PageLoader'
 
 const MDMDashboard       = lazy(() => import('./MDMDashboard'))
 const ItemMaster         = lazy(() => import('./ItemMaster'))
+const CostPricing        = lazy(() => import('./CostPricing'))
 const CustomerMaster     = lazy(() => import('./CustomerMaster'))
 const VendorMaster       = lazy(() => import('./VendorMaster'))
 const ChartOfAccounts    = lazy(() => import('./ChartOfAccounts'))
@@ -66,6 +67,7 @@ export default function MDMLayout() {
         <Routes>
           <Route index                        element={<MDMDashboard />}       />
           <Route path="items"                 element={<ItemMaster />}         />
+          <Route path="cost-pricing"          element={<CostPricing />}        />
           <Route path="item-group"            element={<ItemGroupMaster />}    />
           <Route path="item-type"             element={<ItemTypeMaster />}     />
           <Route path="material-type"         element={<MaterialTypeMaster />} />

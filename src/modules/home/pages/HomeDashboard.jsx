@@ -374,60 +374,71 @@ export default function HomeDashboard() {
           {/* Executive Charts — Admin/Manager only */}
           {isAdmin && exec && !loading && (<>
 
-          {/* Row 1: Sales Trend + Purchase Trend */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+          {/* Row 1: Sales Trend + Purchase Trend — each gated by its own module */}
+          {(() => {
+            const showSales = canSee('sd')
+            const showPurchase = canSee('mm')
+            if (!showSales && !showPurchase) return null
+            const cols = showSales && showPurchase ? '1fr 1fr' : '1fr'
+            return (
+              <div style={{ display:'grid', gridTemplateColumns:cols, gap:16, marginBottom:16 }}>
 
-            {/* Sales Trend */}
-            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📈 Sales Trend — Last 6 Months</div>
-              {(() => {
-                const data  = exec.salesTrend || []
-                const max   = Math.max(...data.map(d=>d.sales), 1)
-                return (
-                  <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
-                    {data.map((d,i) => {
-                      const h = Math.round((d.sales/max)*100)
-                      return (
-                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                          <div style={{ fontSize:9, color:'#714B67', fontWeight:700 }}>{d.sales>0?CR(d.sales):''}</div>
-                          <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#714B67':'#EDE0EA',
-                            borderRadius:'4px 4px 0 0', minHeight:4, transition:'height .3s',
-                            position:'relative' }}/>
-                          <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
-            </div>
+                {showSales && (
+                <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📈 Sales Trend — Last 6 Months</div>
+                  {(() => {
+                    const data  = exec.salesTrend || []
+                    const max   = Math.max(...data.map(d=>d.sales), 1)
+                    return (
+                      <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
+                        {data.map((d,i) => {
+                          const h = Math.round((d.sales/max)*100)
+                          return (
+                            <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                              <div style={{ fontSize:9, color:'#714B67', fontWeight:700 }}>{d.sales>0?CR(d.sales):''}</div>
+                              <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#714B67':'#EDE0EA',
+                                borderRadius:'4px 4px 0 0', minHeight:4, transition:'height .3s',
+                                position:'relative' }}/>
+                              <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                </div>
+                )}
 
-            {/* Purchase Trend */}
-            <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📦 Purchase Trend — Last 6 Months</div>
-              {(() => {
-                const data = exec.purchaseTrend || []
-                const max  = Math.max(...data.map(d=>d.purchase), 1)
-                return (
-                  <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
-                    {data.map((d,i) => {
-                      const h = Math.round((d.purchase/max)*100)
-                      return (
-                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                          <div style={{ fontSize:9, color:'#1A5276', fontWeight:700 }}>{d.purchase>0?CR(d.purchase):''}</div>
-                          <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#1A5276':'#CCE5FF',
-                            borderRadius:'4px 4px 0 0', minHeight:4 }}/>
-                          <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
-            </div>
-          </div>
+                {showPurchase && (
+                <div style={{ background:'#fff', borderRadius:10, padding:'16px 18px', border:'1px solid #E0D5E0' }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>📦 Purchase Trend — Last 6 Months</div>
+                  {(() => {
+                    const data = exec.purchaseTrend || []
+                    const max  = Math.max(...data.map(d=>d.purchase), 1)
+                    return (
+                      <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
+                        {data.map((d,i) => {
+                          const h = Math.round((d.purchase/max)*100)
+                          return (
+                            <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                              <div style={{ fontSize:9, color:'#1A5276', fontWeight:700 }}>{d.purchase>0?CR(d.purchase):''}</div>
+                              <div style={{ width:'100%', height:`${h||4}px`, background: i===data.length-1?'#1A5276':'#CCE5FF',
+                                borderRadius:'4px 4px 0 0', minHeight:4 }}/>
+                              <div style={{ fontSize:9, color:'#6C757D', fontWeight:600 }}>{d.month}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                </div>
+                )}
+              </div>
+            )
+          })()}
 
-          {/* Row 2: Top Customers + Top Products */}
+          {/* Row 2: Top Customers + Top Products — both sales-performance metrics */}
+          {canSee('sd') && (
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
 
             {/* Top Customers */}
@@ -481,19 +492,22 @@ export default function HomeDashboard() {
               })}
             </div>
           </div>
+          )}
 
-          {/* Row 3: Receivable vs Payable */}
-          {(() => {
+          {/* Row 3: Receivable vs Payable — AR needs Sales, AP needs Purchase */}
+          {(canSee('sd') || canSee('mm')) && (() => {
             const rv  = exec.receivableVsPayable || {}
             const max = Math.max(rv.totalAR||0, rv.totalAP||0, 1)
+            const items = [
+              canSee('sd') && { label:'Accounts Receivable (AR)', total:rv.totalAR||0, overdue:rv.overdueAR||0, color:'#155724', bg:'#D4EDDA', icon:'📥' },
+              canSee('mm') && { label:'Accounts Payable (AP)',    total:rv.totalAP||0, overdue:rv.overdueAP||0, color:'#721C24', bg:'#F8D7DA', icon:'📤' },
+            ].filter(Boolean)
+            const showBoth = items.length === 2
             return (
               <div style={{ background:'#fff', borderRadius:10, padding:'16px 20px', border:'1px solid #E0D5E0', marginBottom:16 }}>
                 <div style={{ fontSize:13, fontWeight:800, color:'#1C1C1C', marginBottom:14 }}>⚖️ Receivable vs Payable</div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                  {[
-                    { label:'Accounts Receivable (AR)', total:rv.totalAR||0, overdue:rv.overdueAR||0, color:'#155724', bg:'#D4EDDA', icon:'📥' },
-                    { label:'Accounts Payable (AP)',    total:rv.totalAP||0, overdue:rv.overdueAP||0, color:'#721C24', bg:'#F8D7DA', icon:'📤' },
-                  ].map(item => (
+                <div style={{ display:'grid', gridTemplateColumns:showBoth?'1fr 1fr':'1fr', gap:20 }}>
+                  {items.map(item => (
                     <div key={item.label}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                         <span style={{ fontSize:12, fontWeight:700, color:item.color }}>{item.icon} {item.label}</span>
@@ -511,7 +525,8 @@ export default function HomeDashboard() {
                     </div>
                   ))}
                 </div>
-                {/* Net position */}
+                {/* Net position — only makes sense when both AR and AP are actually shown */}
+                {showBoth && (
                 <div style={{ marginTop:12, paddingTop:10, borderTop:'1px solid #E0D5E0',
                   display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <span style={{ fontSize:12, color:'#6C757D' }}>Net Working Capital Position</span>
@@ -524,6 +539,7 @@ export default function HomeDashboard() {
                     </span>
                   </span>
                 </div>
+                )}
               </div>
             )
           })()}

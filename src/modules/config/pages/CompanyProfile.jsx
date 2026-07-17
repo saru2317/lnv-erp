@@ -119,6 +119,7 @@ export default function CompanyProfile() {
       const activeModules = [...new Set([...always, ...suggested])]
       setModules(activeModules)
       localStorage.setItem('lnv_active_modules', JSON.stringify(activeModules))
+      window.dispatchEvent(new Event('lnv-modules-updated'))
 
       // Apply industry workflow config
       const workflow = INDUSTRY_WORKFLOWS[v]
@@ -135,12 +136,17 @@ export default function CompanyProfile() {
     setModules(prev => {
       const next = prev.includes(k) ? prev.filter(m=>m!==k) : [...prev, k]
       localStorage.setItem('lnv_active_modules', JSON.stringify(next))
+      // localStorage changes don't trigger React re-renders in OTHER
+      // components — without this, the nav bar stays stale until a full
+      // page reload, even though the data itself is already correct.
+      window.dispatchEvent(new Event('lnv-modules-updated'))
       return next
     })
   }
 
   const handleSave = () => {
     localStorage.setItem('lnv_company', JSON.stringify(form))
+    window.dispatchEvent(new Event('lnv-modules-updated'))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }

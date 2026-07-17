@@ -122,7 +122,23 @@ const INDUSTRIES = {
   chemical:        { name:'Chemical / Coating',  color:'#196F3D', light:'#E9F7EF', desc:'Paint · Coating · Chemical Process', prodType:'batch', seqType:'sequence', defaultProcesses:[] },
   food:            { name:'Food Processing',      color:'#784212', light:'#FEF5E7', desc:'Processing · Packaging · FMCG', prodType:'batch', seqType:'sequence', defaultProcesses:[] },
   pharma:          { name:'Pharma / Medicine',    color:'#6C3483', light:'#F4ECF7', desc:'Tablets · Capsules · Liquid', prodType:'batch', seqType:'sequence', defaultProcesses:[] },
-  forging_casting: { name:'Forging / Casting',   color:'#784212', light:'#FEF5E7', desc:'Shot blast · Deburr · Trim', prodType:'batch', seqType:'sequence', defaultProcesses:[] },
+  forging_casting: {
+    name:'Forging / Casting', color:'#784212', light:'#FEF5E7',
+    desc:'Shot blast · Deburr · Trim', prodType:'batch', seqType:'sequence',
+    defaultProcesses:[
+      { id:'s1',name:'Pattern & Mould Preparation', machine:'MOULD-01',  isQC:false, isOptional:false, fields:['Pattern No.','Mould Type (Sand/Die/Investment)','Core Used','Qty Prepared','Prepared By'] },
+      { id:'s2',name:'Melting',                     machine:'FURNACE-01',isQC:false, isOptional:false, fields:['Metal Grade','Charge Weight (Kg)','Melting Temp (°C)','Furnace Type','Heat No.','Melter'] },
+      { id:'s3',name:'Pouring',                     machine:'POUR-01',   isQC:false, isOptional:false, fields:['Pour Temp (°C)','Pour Time (sec)','Mould No.','Qty Poured','Pourer'] },
+      { id:'s4',name:'Cooling / Shakeout',           machine:'COOL-01',   isQC:false, isOptional:false, fields:['Cooling Time (hrs)','Shakeout Method','Qty Shaken Out','Operator'] },
+      { id:'s5',name:'Shot Blasting',                machine:'BLAST-01',  isQC:false, isOptional:false, fields:['Media Type','Duration (min)','Qty Blasted','Surface Quality','Operator'] },
+      { id:'s6',name:'Fettling / Deburring',         machine:'FETTLE-01', isQC:false, isOptional:false, fields:['Gates Removed','Risers Removed','Flash Removed','Qty Fettled','Operator'] },
+      { id:'s7',name:'Trimming',                     machine:'TRIM-01',   isQC:false, isOptional:false, fields:['Trim Method','Qty Trimmed','Rejection (Kg)','Operator'] },
+      { id:'s7b',name:'Machining',                    machine:'MACH-01',   isQC:false, isOptional:true,  fields:['Machining Location (In-House/Subcontract)','Vendor Name (if Subcontract)','Sent Date (if Subcontract)','Received Date (if Subcontract)','Machine/Vendor','Operation Done','Qty Machined','Rejection','Cost (₹)'] },
+      { id:'s8',name:'Heat Treatment',                machine:'FURNACE-02',isQC:false, isOptional:true,  fields:['Process Type','Temp (°C)','Duration (hrs)','Cooling Method','Operator'] },
+      { id:'s9',name:'Dimensional & QC Inspection',  machine:'QC',        isQC:true,  isOptional:false, fields:['Sample Size','Dimension Check','Porosity Check','Hardness (HB)','Pass Qty','Fail Qty','Inspector'] },
+      { id:'s10',name:'Dispatch',                     machine:'DISPATCH',  isQC:false, isOptional:false, fields:['Qty Dispatched','Test Certificate No.','Heat No. Ref','DC No.','Dispatched By'] },
+    ]
+  },
 }
 
 const BIZ_TYPES = [
@@ -492,7 +508,17 @@ export default function PPConfigurator() {
           <div style={{fontWeight:700,color:'#333',marginBottom:8,fontSize:12}}>Select Industry:</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:20}}>
             {Object.entries(INDUSTRIES).map(([key, i]) => (
-              <div key={key} onClick={() => { setIndKey(key); setSeqType(i.seqType) }} style={{
+              <div key={key} onClick={() => {
+                  if (key === indKey) return // already selected, nothing to do
+                  const hasCustomProcesses = processes.length > 0 &&
+                    JSON.stringify(processes) !== JSON.stringify(INDUSTRIES[indKey]?.defaultProcesses || [])
+                  if (hasCustomProcesses && !window.confirm(
+                    `Switching industry replaces the current process list (Step 3) with ${i.name}'s defaults. Any custom changes made to the current list will be lost. Continue?`
+                  )) return
+                  setIndKey(key)
+                  setSeqType(i.seqType)
+                  setProcesses(i.defaultProcesses.map(p => ({ ...p }))) // fresh copies, not shared references
+                }} style={{
                 border: `2px solid ${indKey===key ? i.color : '#E0D5E0'}`,
                 background: indKey===key ? i.light : '#fff',
                 borderRadius:8, padding:'10px 14px', cursor:'pointer', transition:'all .15s'

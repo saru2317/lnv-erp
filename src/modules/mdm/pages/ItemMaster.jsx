@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import ImportModal from '@components/ImportModal'
 
@@ -108,6 +109,14 @@ export default function ItemMaster() {
   const [saving,   setSaving]  = useState(false)
   const [showForm, setShowForm]= useState(false)
   const [editCode, setEditCode]= useState(null)
+  const [showImport, setShowImport] = useState(false)
+  const nav = useNavigate()
+  // BOM/Routing existence check for the item currently being edited —
+  // only meaningful for FG/SFG items, since RM/Packing/Consumables never
+  // have a BOM or Routing of their own.
+  const [bomMatches, setBomMatches] = useState([])
+  const [routingMatches, setRoutingMatches] = useState([])
+  const [bomRoutingLoading, setBomRoutingLoading] = useState(false)
   const [form,     setForm]    = useState(BLANK)
   const [tab,      setTab]     = useState('basic')
   const [search,   setSearch]  = useState('')
@@ -315,6 +324,21 @@ export default function ItemMaster() {
     setEditCode(item.code)
     setShowForm(true)
     setTab('basic')
+
+    // Only FG/SFG items can meaningfully have a BOM/Routing — RM,
+    // Packing, and Consumables never do, so skip the fetch entirely
+    // for those rather than showing a permanently-zero, meaningless count.
+    setBomMatches([]); setRoutingMatches([])
+    if (detectedType === 'FG' || detectedType === 'SFG') {
+      setBomRoutingLoading(true)
+      Promise.all([
+        fetch(`${BASE_URL}/pp/bom?itemCode=${encodeURIComponent(item.code)}`, { headers: authHeaders() }).then(r=>r.json()).catch(()=>({data:[]})),
+        fetch(`${BASE_URL}/pp/routing?itemCode=${encodeURIComponent(item.code)}`, { headers: authHeaders() }).then(r=>r.json()).catch(()=>({data:[]})),
+      ]).then(([bomRes, routingRes]) => {
+        setBomMatches(bomRes.data || [])
+        setRoutingMatches(routingRes.data || [])
+      }).finally(() => setBomRoutingLoading(false))
+    }
   }
 
   // ── Auto-generate Item Code from Item Type prefix ───
@@ -503,6 +527,46 @@ export default function ItemMaster() {
           </button>
         </div>
       </div>
+
+      {/* BOM/Routing status — FG/SFG items only, since RM/Packing/Consumables
+          never have either. Shows count, clicking navigates straight to the
+          relevant screen for THIS item instead of leaving the user to
+          search for it manually elsewhere. */}
+      {editCode && (form.itemType === 'FG' || form.itemType === 'SFG') && (
+        <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+          <button
+            onClick={() => {
+              if (bomMatches.length === 1) nav(`/pp/bom/${bomMatches[0].id}`)
+              else if (bomMatches.length === 0) nav('/pp/bom/new')
+              else nav('/pp/bom')
+            }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:16, cursor:'pointer',
+              fontSize:12, fontWeight:600, whiteSpace:'nowrap',
+              border:`1.5px solid ${bomMatches.length>0?'#1E8449':'#DC3545'}`,
+              background: bomMatches.length>0 ? '#E8F5E9' : '#FDEDEC',
+              color: bomMatches.length>0?'#1E8449':'#C0392B' }}>
+            📐 BOM
+            {bomRoutingLoading ? '· ...' : bomMatches.length===0 ? '· none — create' : `· ${bomMatches.length} ✓`}
+          </button>
+          <button
+            onClick={() => nav(`/pp/routing-master?itemCode=${encodeURIComponent(editCode)}`)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:16, cursor:'pointer',
+              fontSize:12, fontWeight:600, whiteSpace:'nowrap',
+              border:`1.5px solid ${routingMatches.length>0?'#1E8449':'#DC3545'}`,
+              background: routingMatches.length>0 ? '#E8F5E9' : '#FDEDEC',
+              color: routingMatches.length>0?'#1E8449':'#C0392B' }}>
+            🛠️ Routing
+            {bomRoutingLoading ? '· ...' : routingMatches.length===0 ? '· none — create' : `· ${routingMatches.length} ✓`}
+          </button>
+          <button
+            onClick={() => nav(`/mdm/cost-pricing?itemCode=${encodeURIComponent(editCode)}`)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:16, cursor:'pointer',
+              fontSize:12, fontWeight:600, whiteSpace:'nowrap',
+              border:'1.5px solid #714B67', background:'#F3EAF1', color:'#714B67' }}>
+            💰 Cost & Pricing
+          </button>
+        </div>
+      )}
 
       {/* Tab bar — pill style with icons */}
       <div style={{ display:'flex', gap:4, overflowX:'auto', marginBottom:16,
@@ -1372,17 +1436,20 @@ export default function ItemMaster() {
         </tbody>
       </table>
       </div>
-    </div>
-  )
 
-  {showImport && (
-    <ImportModal templateKey="item"
-      onImport={async rows => {
-        const res = await fetch(`${BASE_URL}/mdm/items/bulk`, { method:'POST', headers: hdr(), body: JSON.stringify({ items: rows }) })
-        const d = await res.json()
-        return { imported: d.count||rows.length, failed: 0 }
-      }}
-      onClose={()=>{ setShowImport(false); load() }}
-    />
+      {showImport && (
+        <ImportModal templateKey="item"
+          onImport={async rows => {
+            const res = await fetch(`${BASE_URL}/mdm/items/bulk`, { method:'POST', headers: hdr(), body: JSON.stringify({ items: rows }) })
+            const d = await res.json()
+            return { imported: d.count||rows.length, failed: 0 }
+          }}
+          onClose={()=>{ setShowImport(false); load() }}
+        />
+      )}
+
+      {/* Cost & Pricing is now a dedicated page (/mdm/cost-pricing), not
+          a modal here — the modal wasn't rendering reliably, and a real
+          page matches how BOM/Routing already work anyway. */}
+    </div>
   )}
-}

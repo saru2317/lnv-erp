@@ -422,7 +422,7 @@ export default function BOMNew() {
               <div style={{display:'flex',gap:8,marginBottom:12}}>
                 <span style={{fontSize:11,fontWeight:700,color:'#444',alignSelf:'center'}}>BOM Type:</span>
                 {[
-                  {key:'moulding', label:'⚙️ Moulding BOM', desc:'SFG header → RM components'},
+                  {key:'moulding', label:'⚙️ Semi-Finished BOM', desc:'SFG header → RM components'},
                   {key:'assembly', label:'🔩 Assembly BOM', desc:'FG header → SFG + RM components'},
                 ].map(t=>(
                   <div key={t.key} onClick={()=>setH('bomType',t.key)}
@@ -474,7 +474,7 @@ export default function BOMNew() {
                   <span>Code: <strong style={{fontFamily:'DM Mono,monospace'}}>{hdr.itemCode}</strong></span>
                   <span>UOM: <strong>{hdr.uom}</strong></span>
                   <span style={{color:'#6C3483',fontWeight:700}}>
-                    {hdr.bomType==='assembly'?'🔩 Assembly BOM':'⚙️ Moulding BOM'}
+                    {hdr.bomType==='assembly'?'🔩 Assembly BOM':'⚙️ Semi-Finished BOM'}
                   </span>
                 </div>
               )}

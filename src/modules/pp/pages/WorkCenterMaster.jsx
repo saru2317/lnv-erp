@@ -81,9 +81,10 @@ function calcMHR(f) {
   const depr        = parseFloat(f.depreciation || 0)
   const maint       = parseFloat(f.maintenance || 0)
   const ovhd        = parseFloat(f.overhead || 0)
-  const totalMonthly = powerCost + laborCost + depr + maint + ovhd
+  const consumables = parseFloat(f.consumablesMonthly || 0)
+  const totalMonthly = powerCost + laborCost + depr + maint + ovhd + consumables
   const mhr          = monthlyHrs > 0 ? totalMonthly / monthlyHrs : 0
-  return { monthlyHrs, powerCost, laborCost, totalMonthly, mhr: mhr.toFixed(2) }
+  return { monthlyHrs, powerCost, laborCost, consumables, totalMonthly, mhr: mhr.toFixed(2) }
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -434,7 +435,7 @@ function WCForm({ wc, allWCs, onSave, onCancel }) {
                   {/* Other Costs */}
                   <div style={{ background: '#F8F4F8', border: '1px solid #E0D5E0', borderRadius: 8, padding: 14 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#714B67', marginBottom: 10 }}>🏭 Other Monthly Costs (₹)</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px 10px' }}>
                       <div>
                         <label style={lbl}>Depreciation</label>
                         <input style={inp} type="number" value={form.depreciation} onChange={e => set('depreciation', e.target.value)} placeholder="1200" />
@@ -446,6 +447,11 @@ function WCForm({ wc, allWCs, onSave, onCancel }) {
                       <div>
                         <label style={lbl}>Overhead</label>
                         <input style={inp} type="number" value={form.overhead} onChange={e => set('overhead', e.target.value)} placeholder="500" />
+                      </div>
+                      <div>
+                        <label style={lbl}>Consumables</label>
+                        <input style={inp} type="number" value={form.consumablesMonthly} onChange={e => set('consumablesMonthly', e.target.value)} placeholder="400" />
+                        <div style={{fontSize:9,color:'#888',marginTop:2}}>Gloves, goggles, grease, cotton waste — pooled, not per-piece</div>
                       </div>
                     </div>
                   </div>
@@ -465,6 +471,7 @@ function WCForm({ wc, allWCs, onSave, onCancel }) {
                       { label: 'Depreciation / Month',     val: parseFloat(form.depreciation || 0), color: '#F9E79F' },
                       { label: 'Maintenance / Month',      val: parseFloat(form.maintenance  || 0), color: '#F9E79F' },
                       { label: 'Overhead / Month',         val: parseFloat(form.overhead     || 0), color: '#F9E79F' },
+                      { label: 'Consumables / Month',      val: parseFloat(form.consumablesMonthly || 0), color: '#F9E79F' },
                     ].map(r => (
                       <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.1)', fontSize: 12 }}>
                         <span style={{ color: 'rgba(255,255,255,.75)' }}>{r.label}</span>
