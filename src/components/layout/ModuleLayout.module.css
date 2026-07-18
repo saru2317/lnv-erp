@@ -19,7 +19,9 @@
 .si.active::before { color:var(--odoo-purple); }
 .content { flex:1; overflow:auto; padding:16px; background:var(--odoo-bg); min-width:0; }
 
-/* Mobile hamburger toggle — hidden on desktop, only shown below 768px */
+/* Mobile hamburger toggle — hidden on desktop, only shown below 768px.
+   Sits in normal document flow (not position:fixed), so it can never
+   end up rendering underneath the app shell's sticky top bar again. */
 .mobileToggle { display:none; }
 
 /* Backdrop behind the sidebar overlay on mobile — click to close */
@@ -47,10 +49,10 @@
   .content { padding:10px; width:100%; }
 
   .mobileToggle {
-    display:flex; align-items:center; justify-content:center;
-    width:34px; height:34px; border-radius:6px; border:none; cursor:pointer;
-    background:#F0EEEB; color:var(--odoo-dark); font-size:16px; flex-shrink:0;
-    margin-right:6px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; padding:9px 0; border:none; cursor:pointer;
+    background:#F0EEEB; color:var(--odoo-dark); font-size:13px; font-weight:700;
+    border-bottom:1px solid var(--odoo-border); flex-shrink:0;
   }
 
   .subnav { padding:0 6px; }
