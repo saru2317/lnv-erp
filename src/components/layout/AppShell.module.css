@@ -29,3 +29,13 @@
 
 .body    { display:flex; flex:1; overflow:hidden; }
 .content { flex:1; overflow-y:auto; background:var(--odoo-bg); }
+
+@media (max-width: 768px) {
+  .logoSub { display:none; }
+  .shellDate { display:none; }
+  .userTextRole { display:none; }
+  .userTextName { max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .roleBadge { display:none; }
+  .topbar { padding:0 8px; gap:2px; }
+  .navItem { padding:0 8px; font-size:10px; }
+}

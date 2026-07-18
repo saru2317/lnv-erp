@@ -4,7 +4,7 @@
 .navItem { display:flex; align-items:center; gap:5px; padding:0 12px; cursor:pointer; color:var(--odoo-gray); font-size:12px; font-weight:500; border-bottom:3px solid transparent; transition:all .15s; white-space:nowrap; text-decoration:none; }
 .navItem:hover { color:var(--odoo-purple); background:#FDF8FC; }
 .navItem.active { color:var(--odoo-purple); border-bottom-color:var(--odoo-purple); font-weight:700; }
-.body    { display:flex; flex:1; }
+.body    { display:flex; flex:1; position:relative; }
 .sidebar { width:220px; background:#F8F9FA; border-right:1px solid var(--odoo-border); overflow-y:auto; flex-shrink:0; }
 .sgrp    { border-bottom:1px solid var(--odoo-border); }
 .sghd    { display:flex; align-items:center; gap:6px; padding:8px 12px; cursor:pointer; font-size:11px; font-weight:700; color:var(--odoo-dark); background:#F0EEEB; user-select:none; }
@@ -17,4 +17,42 @@
 .si.active { background:#EDE0EA; color:var(--odoo-purple); font-weight:600; }
 .si::before { content:'›'; font-size:12px; color:var(--odoo-border); }
 .si.active::before { color:var(--odoo-purple); }
-.content { flex:1; overflow:auto; padding:16px; background:var(--odoo-bg); }
+.content { flex:1; overflow:auto; padding:16px; background:var(--odoo-bg); min-width:0; }
+
+/* Mobile hamburger toggle — hidden on desktop, only shown below 768px */
+.mobileToggle { display:none; }
+
+/* Backdrop behind the sidebar overlay on mobile — click to close */
+.backdrop { display:none; }
+
+@media (max-width: 768px) {
+  /* Sidebar becomes a slide-in overlay instead of eating half the
+     screen permanently — this was the actual root cause of the app
+     not fitting mobile at all. */
+  .sidebar {
+    position:fixed; top:0; left:0; bottom:0; z-index:200;
+    transform:translateX(-100%); transition:transform .25s ease;
+    box-shadow:2px 0 12px rgba(0,0,0,.15);
+    width:min(78vw, 260px);
+  }
+  .sidebarOpen { transform:translateX(0); }
+
+  .backdrop {
+    display:block; position:fixed; inset:0; z-index:190;
+    background:rgba(0,0,0,.4); opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .backdropOpen { opacity:1; pointer-events:auto; }
+
+  .content { padding:10px; width:100%; }
+
+  .mobileToggle {
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:6px; border:none; cursor:pointer;
+    background:#F0EEEB; color:var(--odoo-dark); font-size:16px; flex-shrink:0;
+    margin-right:6px;
+  }
+
+  .subnav { padding:0 6px; }
+  .navItem { padding:0 9px; font-size:11px; }
+}

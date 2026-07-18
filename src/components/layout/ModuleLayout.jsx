@@ -3,10 +3,19 @@ import { NavLink, useLocation } from 'react-router-dom'
 import styles from './ModuleLayout.module.css'
 
 export default function ModuleLayout({ navItems = [], sidebarGroups = [], children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  // Auto-close the mobile sidebar overlay whenever the route changes —
+  // otherwise it stays open covering the page after navigating, which
+  // defeats the point of it being an overlay in the first place.
+  React.useEffect(() => { setSidebarOpen(false) }, [location.pathname])
+
   return (
     <div className={styles.wrap}>
       {navItems.length > 0 && (
         <nav className={styles.subnav}>
+          <button className={styles.mobileToggle} onClick={()=>setSidebarOpen(v=>!v)} aria-label="Toggle menu">☰</button>
           {navItems.map((item,idx) => (
             <NavLink key={`nav-${idx}-${item.to}`} to={item.to}
               className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
@@ -16,7 +25,14 @@ export default function ModuleLayout({ navItems = [], sidebarGroups = [], childr
         </nav>
       )}
       <div className={styles.body}>
-        <aside className={styles.sidebar}>
+        {sidebarGroups.length > 0 && navItems.length === 0 && (
+          // Some modules have a sidebar but no subnav row — still need
+          // a way to open the mobile menu, so add a standalone toggle
+          <button className={styles.mobileToggle} onClick={()=>setSidebarOpen(v=>!v)} aria-label="Toggle menu"
+            style={{position:'fixed',top:8,left:8,zIndex:210}}>☰</button>
+        )}
+        <div className={`${styles.backdrop} ${sidebarOpen ? styles.backdropOpen : ''}`} onClick={()=>setSidebarOpen(false)} />
+        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
           {sidebarGroups.map(g => <SidebarGroup key={g.label} group={g} />)}
         </aside>
         <div className={styles.content}>{children}</div>
