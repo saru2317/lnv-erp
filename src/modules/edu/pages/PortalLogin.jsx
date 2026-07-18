@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { registerPortalServiceWorker } from './portalPwa'
+import { registerPortalServiceWorker, registerPortalManifest } from './portalPwa'
 
 const BASE = import.meta.env.VITE_API_URL || '/api'
 
 export default function PortalLogin() {
   const nav = useNavigate()
-  useEffect(() => { registerPortalServiceWorker() }, [])
+  useEffect(() => { registerPortalServiceWorker(); return registerPortalManifest() }, [])
   const [step,     setStep]     = useState('email') // 'email' | 'otp'
   const [email,    setEmail]    = useState('')
   const [otp,      setOtp]      = useState('')

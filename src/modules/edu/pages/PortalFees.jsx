@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { registerPortalServiceWorker } from './portalPwa'
+import { registerPortalServiceWorker, registerPortalManifest } from './portalPwa'
 
 const BASE = import.meta.env.VITE_API_URL || '/api'
 const fmtC = n => '₹' + Number(n||0).toLocaleString('en-IN')
@@ -36,7 +36,7 @@ export default function PortalFees() {
   const [error,      setError]      = useState(null)
   const requestIdRef = React.useRef(0)
 
-  useEffect(() => { registerPortalServiceWorker() }, [])
+  useEffect(() => { registerPortalServiceWorker(); return registerPortalManifest() }, [])
 
   useEffect(() => {
     const token = localStorage.getItem('portal_token')
