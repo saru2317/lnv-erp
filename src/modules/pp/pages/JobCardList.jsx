@@ -1,120 +1,136 @@
-import ListViewToggle from '@components/ui/ListViewToggle'
-import { useListView } from '@hooks/useListView'
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { JOB_CARDS, JOB_STEPS, PRIORITY_COLORS } from './_ppConfig'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs2 = () => ({ Authorization:`Bearer ${getToken()}` })
+
+const STATUSES = ['PENDING','RECEIVED','IN_PROGRESS','COMPLETED','DISPATCHED','ON_HOLD']
+const STATUS_STYLE = {
+  PENDING:     { bg:'#FFF3CD', color:'#856404' },
+  RECEIVED:    { bg:'#D1ECF1', color:'#0C5460' },
+  IN_PROGRESS: { bg:'#CFE2FF', color:'#084298' },
+  COMPLETED:   { bg:'#D4EDDA', color:'#155724' },
+  DISPATCHED:  { bg:'#E2D9F3', color:'#4B2E83' },
+  ON_HOLD:     { bg:'#F8D7DA', color:'#721C24' },
+}
 
 export default function JobCardList() {
-  const { viewMode, toggleView } = useListView('PP-JobCardList')
   const nav = useNavigate()
-  const [search,   setSearch]   = useState('')
-  const [statusF,  setStatusF]  = useState('All')
-  const [priorityF,setPriorityF]= useState('All')
+  const [cards,   setCards]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search,  setSearch]  = useState('')
+  const [statusF, setStatusF] = useState('All')
 
-  const filtered = JOB_CARDS.filter(j=>{
-    const matchS = statusF==='All'||j.status===statusF
-    const matchP = priorityF==='All'||j.priority===priorityF
-    const matchQ = !search||j.id.toLowerCase().includes(search.toLowerCase())||
-                   j.customerName.toLowerCase().includes(search.toLowerCase())||
-                   j.item.toLowerCase().includes(search.toLowerCase())||
-                   j.dcNo.toLowerCase().includes(search.toLowerCase())
-    return matchS&&matchP&&matchQ
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${BASE_URL}/pp/job-cards`, { headers:authHdrs2() })
+      const d = await res.json()
+      setCards(d.data||[])
+    } catch(e){ toast.error(e.message) }
+    finally { setLoading(false) }
+  },[])
+  useEffect(()=>{ load() },[load])
+
+  const filtered = cards.filter(j => {
+    const matchS = statusF==='All' || j.status===statusF
+    const matchQ = !search ||
+      j.jcNo?.toLowerCase().includes(search.toLowerCase()) ||
+      j.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+      j.itemName?.toLowerCase().includes(search.toLowerCase())
+    return matchS && matchQ
   })
 
-  const STATUS_COUNTS = ['Pending','In Progress','Completed','On Hold'].map(s=>({
-    s, c:JOB_CARDS.filter(j=>j.status===s).length
-  }))
+  const progressPct = j => {
+    const total = Array.isArray(j.stages) ? j.stages.length : 0
+    if (!total) return 0
+    return Math.round((j.currentStage/total)*100)
+  }
 
-  const getStepCount = j => JOB_STEPS[j.id]?.length || 8
-  const progressPct  = j => Math.round(((j.currentStep-1)/getStepCount(j))*100)
-
-  const statusColor = s => ({
-    'In Progress':'var(--odoo-blue)','Completed':'var(--odoo-green)',
-    'Pending':'var(--odoo-orange)','On Hold':'var(--odoo-red)'
-  }[s]||'var(--odoo-gray)')
+  const counts = STATUSES.reduce((acc,s)=>({...acc, [s]: cards.filter(j=>j.status===s).length}), {})
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">Job Cards <small>{JOB_CARDS.length} total · {JOB_CARDS.filter(j=>j.status==='In Progress').length} active</small></div>
+        <div className="fi-lv-title">Job Cards <small>{cards.length} total · {counts.IN_PROGRESS||0} in progress</small></div>
         <div className="fi-lv-actions">
-          <input className="sd-search" style={{width:'180px'}} value={search} onChange={e=>setSearch(e.target.value)} placeholder=" Job ID / Customer / Item…" />
+          <input className="sd-search" style={{width:180}} value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder="JC No / Customer / Item..." />
           <select className="sd-select" value={statusF} onChange={e=>setStatusF(e.target.value)}>
-            <option>All</option>{['Pending','In Progress','Completed','On Hold'].map(s=><option key={s}>{s}</option>)}
+            <option>All</option>
+            {STATUSES.map(s=><option key={s}>{s}</option>)}
           </select>
-          <select className="sd-select" value={priorityF} onChange={e=>setPriorityF(e.target.value)}>
-            <option>All</option>{['High','Normal','Low'].map(p=><option key={p}>{p}</option>)}
-          </select>
-          <button className="btn btn-p btn-s" onClick={()=>nav('/pp/job-card/new')}>+ New Job Card</button>
+          <button className="btn btn-p sd-bsm" onClick={()=>nav('/pp/job-card/new')}>+ New Job Card</button>
         </div>
       </div>
 
-      {/* Status KPIs */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px',marginBottom:'14px'}}>
-        {STATUS_COUNTS.map(({s,c})=>(
-          <div key={s} className="crm-kpi-card" style={{borderLeftColor:statusColor(s),cursor:'pointer'}}
-               onClick={()=>setStatusF(statusF===s?'All':s)}>
-            <div className="crm-kpi-val" style={{color:statusColor(s)}}>{c}</div>
-            <div className="crm-kpi-lbl">{s}</div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:8, marginBottom:14 }}>
+        {STATUSES.map(s=>(
+          <div key={s} onClick={()=>setStatusF(statusF===s?'All':s)} style={{ cursor:'pointer',
+            background:STATUS_STYLE[s].bg, borderRadius:8, padding:'8px 10px',
+            border: statusF===s ? `2px solid ${STATUS_STYLE[s].color}` : '1px solid transparent' }}>
+            <div style={{ fontSize:9, color:STATUS_STYLE[s].color, fontWeight:700, textTransform:'uppercase' }}>{s.replace('_',' ')}</div>
+            <div style={{ fontSize:18, fontWeight:800, color:STATUS_STYLE[s].color, fontFamily:'Syne,sans-serif' }}>{counts[s]||0}</div>
           </div>
         ))}
       </div>
 
-      {/* Table */}
-      <div className="sd-table-wrap">
-        <table className="sd-table">
-          <thead>
-            <tr>
-              <th>Job ID</th><th>Customer</th><th>DC No.</th><th>Item</th>
-              <th>Qty</th><th>Priority</th><th>Current Step</th><th>Progress</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(j=>{
-              const pct   = progressPct(j)
-              return (
-                <tr key={j.id}>
-                  <td><strong style={{color:'var(--odoo-purple)',fontFamily:'DM Mono,monospace',fontSize:'12px'}}>{j.id}</strong></td>
-                  <td>
-                    <div style={{fontSize:'12px',fontWeight:'600'}}>{j.customerName}</div>
-                    <div style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{j.date}</div>
-                  </td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:'11px'}}>{j.dcNo}</td>
-                  <td style={{fontSize:'12px'}}>{j.item}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:'12px',fontWeight:'700'}}>{j.qty} {j.unit}</td>
-                  <td><span className={PRIORITY_COLORS[j.priority]||'crm-badge-new'}>{j.priority}</span></td>
-                  <td>
-                    <div style={{fontSize:'11px',fontWeight:'600',color:j.status==='Completed'?'var(--odoo-green)':'var(--odoo-blue)'}}>{JOB_STEPS[j.id]?.[j.currentStep-1]?.step||'—'}</div>
-                    <div style={{fontSize:'10px',color:'var(--odoo-gray)'}}>{j.currentStep}/{getStepCount(j)} steps</div>
-                  </td>
-                  <td style={{minWidth:'120px'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',fontSize:'10px',marginBottom:'3px'}}>
-                      <span style={{color:'var(--odoo-gray)'}}>{pct}%</span>
+      {loading ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D' }}>⏳ Loading...</div>
+      ) : filtered.length===0 ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D',
+          background:'#fff', borderRadius:8, border:'2px dashed #E0D5E0' }}>
+          No job cards {statusF!=='All'?`with status ${statusF}`:'yet'}.
+          <div style={{marginTop:12}}>
+            <button className="btn btn-p sd-bsm" onClick={()=>nav('/pp/job-card/new')}>+ New Job Card</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ border:'1px solid #E0D5E0', borderRadius:8, overflow:'hidden' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+            <thead style={{ background:'#F8F4F8' }}>
+              <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
+                {['JC No','Customer','Item','Received Qty','Progress','Priority','Status',''].map(h=>(
+                  <th key={h} style={{ padding:'8px 10px', fontSize:10, fontWeight:700,
+                    color:'#6C757D', textAlign:'left', textTransform:'uppercase', letterSpacing:.3 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((j,i)=>(
+                <tr key={j.id} style={{ borderBottom:'1px solid #F0EEF0', background:i%2===0?'#fff':'#FDFBFD' }}>
+                  <td style={{ padding:'8px 10px', fontFamily:'DM Mono,monospace', color:'#714B67', fontWeight:600 }}>{j.jcNo}</td>
+                  <td style={{ padding:'8px 10px' }}>{j.customerName}</td>
+                  <td style={{ padding:'8px 10px', fontWeight:600 }}>{j.itemCode?`${j.itemCode} — `:''}{j.itemName}</td>
+                  <td style={{ padding:'8px 10px', fontFamily:'DM Mono,monospace' }}>{Number(j.receivedQty).toFixed(2)} {j.uom}</td>
+                  <td style={{ padding:'8px 10px' }}>
+                    <div style={{ background:'#E9ECEF', borderRadius:6, height:6, width:80, overflow:'hidden' }}>
+                      <div style={{ background:'#714B67', height:'100%', width:`${progressPct(j)}%` }} />
                     </div>
-                    <div style={{background:'#F0EEEB',borderRadius:'3px',height:'5px'}}>
-                      <div style={{width:`${pct}%`,height:'100%',borderRadius:'3px',
-                        background:j.status==='Completed'?'var(--odoo-green)':'var(--odoo-purple)',transition:'width .3s'}}></div>
-                    </div>
+                    <span style={{ fontSize:10, color:'#6C757D' }}>{progressPct(j)}%</span>
                   </td>
-                  <td>
-                    <span style={{padding:'3px 8px',borderRadius:'10px',fontSize:'10px',fontWeight:'700',
-                      background:statusColor(j.status)+'22',color:statusColor(j.status)}}>{j.status}</span>
+                  <td style={{ padding:'8px 10px' }}>{j.priority}</td>
+                  <td style={{ padding:'8px 10px' }}>
+                    <span style={{ padding:'3px 8px', borderRadius:10, fontSize:10, fontWeight:700,
+                      background:STATUS_STYLE[j.status]?.bg, color:STATUS_STYLE[j.status]?.color }}>
+                      {j.status?.replace('_',' ')}
+                    </span>
                   </td>
-                  <td>
-                    <div style={{display:'flex',gap:'4px'}}>
-                      <button className="btn-act-view" onClick={()=>nav(`/pp/job-tracker?id=${j.id}`)}></button>
-                  <button className="btn-xs" onClick={()=>nav('/print/labourcard')}>Print</button>
-                      <button className="btn-act-edit" onClick={()=>nav(`/pp/process-execution?id=${j.id}`)}></button>
-                    </div>
+                  <td style={{ padding:'8px 10px' }}>
+                    <button className="btn btn-s sd-bsm" style={{padding:'3px 8px',fontSize:11}}
+                      onClick={()=>nav(`/pp/job-tracker?id=${j.id}`)}>Track</button>
+                    {' '}
+                    <button className="btn btn-s sd-bsm" style={{padding:'3px 8px',fontSize:11}}
+                      onClick={()=>nav(`/pp/process-exec?id=${j.id}`)}>Execute</button>
                   </td>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {filtered.length===0&&<div style={{textAlign:'center',padding:'40px',color:'var(--odoo-gray)'}}>No job cards found for the selected filters.</div>}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

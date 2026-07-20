@@ -8,399 +8,11 @@ const authHdrs = () => ({ 'Content-Type':'application/json',
   Authorization:`Bearer ${getToken()}` })
 const authHdrs2= () => ({ Authorization:`Bearer ${getToken()}` })
 
-const inp = { padding:'7px 10px', border:'1.5px solid #E0D5E0',
-  borderRadius:5, fontSize:12, outline:'none', width:'100%',
-  boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
-const lbl = { fontSize:10, fontWeight:700, color:'#495057',
-  display:'block', marginBottom:3, textTransform:'uppercase',
-  letterSpacing:.3 }
-
 const STATUS = {
   IN:       { bg:'#D4EDDA', color:'#155724', label:'Inside',   icon:'🔵' },
   OUT:      { bg:'#E9ECEF', color:'#6C757D', label:'Exited',   icon:'⚪' },
   GRN_DONE: { bg:'#EDE0EA', color:'#714B67', label:'GRN Done', icon:'✅' },
   RETURNED: { bg:'#FFF3CD', color:'#856404', label:'Returned', icon:'↩️' },
-}
-const PURPOSES = [
-  'Material Receipt','Material Return',
-  'Visitor','Contractor','Empty Vehicle',
-  'Sample Delivery','Courier'
-]
-
-// ── Gate Entry Form Modal ──────────────────────────────────
-function GateEntryModal({ onSave, onCancel }) {
-  const [pos,     setPOs]    = useState([])
-  const [vendors, setVendors]= useState([])
-  const [gateNo,  setGateNo] = useState('GE-AUTO')
-  const [saving,  setSaving] = useState(false)
-  const now = new Date()
-  const [form, setForm] = useState({
-    vehicleNo:'', vehicleType:'Truck',
-    driverName:'', driverPhone:'', driverLicense:'',
-    vendorCode:'', vendorName:'', dcNo:'', dcDate:'',
-    poNo:'', poId:'', purpose:'Material Receipt',
-    materialDesc:'', noOfPackages:'',
-    dcQty:'', dcUnit:'',
-    grossWeight:'', netWeight:'', weightUnit:'Kg',
-    securityName: JSON.parse(localStorage.getItem('lnv_user')||'{}')?.name||'',
-    entryTime: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
-    remarks:''
-  })
-
-  useEffect(()=>{
-    fetch(`${BASE_URL}/wm/gate-entry/next-no`,
-      { headers:authHdrs2() })
-      .then(r=>r.json()).then(d=>setGateNo(d.gateNo||'GE-AUTO'))
-      .catch(()=>{})
-    fetch(`${BASE_URL}/wm/vendors`,
-      { headers:authHdrs2() })
-      .then(r=>r.json()).then(d=>setVendors(d.data||[]))
-      .catch(()=>{})
-    fetch(`${BASE_URL}/wm/pending-pos`,
-      { headers:authHdrs2() })
-      .then(r=>r.json()).then(d=>setPOs(d.data||[]))
-      .catch(()=>{})
-  },[])
-
-  const onVendorChange = e => {
-    const v = vendors.find(v=>v.vendorCode===e.target.value)
-    setForm(p=>({ ...p,
-      vendorCode: e.target.value,
-      vendorName: v?.vendorName||'' }))
-  }
-
-  const onPOChange = e => {
-    const po = pos.find(p=>p.id===parseInt(e.target.value))
-    if (!po) return
-    // Auto load vendor details + material from PO lines
-    const matDesc = (po.lines||[])
-      .map(l=>l.itemName).filter(Boolean).join(', ')
-    const totalDCQty = (po.lines||[])
-      .reduce((s,l)=>s+parseFloat(l.qty||0), 0)
-    const unit = po.lines?.[0]?.unit||''
-    const vCode = vendors.find(v=>
-      v.vendorCode===po.vendorCode||
-      v.vendorName===po.vendorName)?.vendorCode||''
-    setForm(p=>({ ...p,
-      poId:        po.id,
-      poNo:        po.poNo||'',
-      vendorCode:  vCode||po.vendorCode||'',
-      vendorName:  po.vendorName||'',
-      materialDesc:matDesc,
-      dcQty:       totalDCQty,
-      dcUnit:      unit,
-    }))
-  }
-
-  const save = async () => {
-    if (!form.vehicleNo) return toast.error('Vehicle No required!')
-    if (!form.vendorName) return toast.error('Vendor required!')
-    setSaving(true)
-    try {
-      const res  = await fetch(`${BASE_URL}/wm/gate-entry`,
-        { method:'POST', headers:authHdrs(),
-          body:JSON.stringify(form) })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      toast.success(`${data.message} — Gate Pass: GP-${data.data.gateNo}`)
-      onSave()
-    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
-  }
-
-  const field = (label, field, type='text', placeholder='') => (
-    <div>
-      <label style={lbl}>{label}</label>
-      <input type={type} style={inp}
-        value={form[field]} placeholder={placeholder}
-        onChange={e=>setForm(p=>({...p,[field]:e.target.value}))} />
-    </div>
-  )
-
-  const grid3 = { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }
-  const grid2 = { display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }
-
-  const section = (title, icon, children) => (
-    <div style={{ border:'1px solid #E0D5E0', borderRadius:8,
-      overflow:'hidden', marginBottom:12 }}>
-      <div style={{ background:'linear-gradient(135deg,#714B67,#4A3050)',
-        padding:'7px 14px', display:'flex', gap:8, alignItems:'center' }}>
-        <span>{icon}</span>
-        <span style={{ color:'#fff', fontSize:12, fontWeight:700,
-          fontFamily:'Syne,sans-serif' }}>{title}</span>
-      </div>
-      <div style={{ padding:14, background:'#fff' }}>{children}</div>
-    </div>
-  )
-
-  return (
-    <div style={{ position:'fixed', inset:0,
-      background:'rgba(0,0,0,.55)', display:'flex',
-      alignItems:'center', justifyContent:'center', zIndex:9999 }}>
-      <div style={{ background:'#F0EEEB', borderRadius:10,
-        width:'92%', maxWidth:860, maxHeight:'94vh',
-        display:'flex', flexDirection:'column',
-        boxShadow:'0 20px 60px rgba(0,0,0,.3)' }}>
-
-        {/* Header */}
-        <div style={{ background:'linear-gradient(135deg,#155724,#0C5460)',
-          padding:'14px 20px', flexShrink:0,
-          display:'flex', justifyContent:'space-between',
-          alignItems:'center', borderRadius:'10px 10px 0 0' }}>
-          <div>
-            <h3 style={{ color:'#fff', margin:0,
-              fontFamily:'Syne,sans-serif',
-              fontSize:16, fontWeight:800 }}>
-              🚛 Gate Entry
-            </h3>
-            <p style={{ color:'rgba(255,255,255,.7)',
-              margin:'2px 0 0', fontSize:11 }}>
-              Gate No: <strong style={{ color:'#90EE90',
-                fontFamily:'DM Mono,monospace' }}>
-                {gateNo}
-              </strong>
-              &nbsp;|&nbsp;
-              Time: {form.entryTime}
-            </p>
-          </div>
-          <span onClick={onCancel}
-            style={{ color:'#fff', cursor:'pointer',
-              fontSize:22 }}>✕</span>
-        </div>
-
-        <div style={{ overflowY:'auto', flex:1, padding:16 }}>
-          {/* Purpose */}
-          <div style={{ marginBottom:12 }}>
-            <label style={lbl}>Purpose of Visit</label>
-            <div style={{ display:'flex', gap:6,
-              flexWrap:'wrap', marginTop:4 }}>
-              {PURPOSES.map(p=>(
-                <div key={p}
-                  onClick={()=>setForm(f=>({...f,purpose:p}))}
-                  style={{ padding:'5px 12px', borderRadius:20,
-                    cursor:'pointer', fontSize:12, fontWeight:600,
-                    border:`2px solid ${form.purpose===p
-                      ?'#155724':'#E0D5E0'}`,
-                    background:form.purpose===p?'#155724':'#fff',
-                    color:form.purpose===p?'#fff':'#6C757D',
-                    transition:'all .15s' }}>
-                  {p}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Vehicle & Driver */}
-          {section('Vehicle & Driver Details', '🚛',(
-            <>
-              <div style={{ ...grid3, marginBottom:12 }}>
-                <div>
-                  <label style={lbl}>Vehicle No *</label>
-                  <input style={{ ...inp, textTransform:'uppercase',
-                    fontWeight:700, letterSpacing:1 }}
-                    value={form.vehicleNo} placeholder="TN 01 AB 1234"
-                    onChange={e=>setForm(p=>({...p,
-                      vehicleNo:e.target.value.toUpperCase()}))} />
-                </div>
-                <div>
-                  <label style={lbl}>Vehicle Type</label>
-                  <select style={{ ...inp, cursor:'pointer' }}
-                    value={form.vehicleType}
-                    onChange={e=>setForm(p=>({...p,
-                      vehicleType:e.target.value}))}>
-                    {['Truck','Mini Truck','Tempo','Van',
-                      'Two Wheeler','Car','Auto'].map(t=>(
-                      <option key={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>Entry Time</label>
-                  <input type="time" style={inp}
-                    value={form.entryTime}
-                    onChange={e=>setForm(p=>({...p,
-                      entryTime:e.target.value}))} />
-                </div>
-              </div>
-              <div style={grid3}>
-                {field('Driver Name', 'driverName', 'text', 'Driver full name')}
-                {field('Driver Phone', 'driverPhone', 'tel', '9876543210')}
-                {field('License No.', 'driverLicense', 'text', 'DL No.')}
-              </div>
-            </>
-          ))}
-
-          {/* Supplier & PO */}
-          {section('Supplier / PO Details', '🏢', (
-            <>
-              <div style={{ ...grid3, marginBottom:12 }}>
-                <div>
-                  <label style={lbl}>Link PO (optional)</label>
-                  <select style={{ ...inp, cursor:'pointer' }}
-                    value={form.poId}
-                    onChange={onPOChange}>
-                    <option value="">-- Select PO --</option>
-                    {pos.map(p=>(
-                      <option key={p.id} value={p.id}>
-                        {p.poNo} · {p.vendorName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>Vendor / Supplier *</label>
-                  <select style={{ ...inp, cursor:'pointer' }}
-                    value={form.vendorCode}
-                    onChange={onVendorChange}>
-                    <option value="">-- Select Vendor --</option>
-                    {vendors.map(v=>(
-                      <option key={v.vendorCode} value={v.vendorCode}>
-                        {v.vendorCode} — {v.vendorName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>DC / Challan No.</label>
-                  <input style={inp} value={form.dcNo}
-                    placeholder="Delivery Challan No."
-                    onChange={e=>setForm(p=>({...p,
-                      dcNo:e.target.value}))} />
-                </div>
-              </div>
-              <div style={grid3}>
-                {field('DC Date', 'dcDate', 'date')}
-                {field('PO No. (manual)', 'poNo', 'text', 'PO-2026-0001')}
-                <div>
-                  <label style={lbl}>Vendor Name</label>
-                  <input style={{ ...inp, background:
-                    form.vendorCode?'#F8F9FA':'#fff' }}
-                    value={form.vendorName}
-                    readOnly={!!form.vendorCode}
-                    placeholder="Vendor name"
-                    onChange={e=>setForm(p=>({...p,
-                      vendorName:e.target.value}))} />
-                </div>
-              </div>
-            </>
-          ))}
-
-          {/* PO Items Preview */}
-          {form.poId && pos.find(p=>p.id===parseInt(form.poId)) && (
-            <div style={{ background:'#D1ECF1',
-              borderRadius:8, padding:'10px 14px',
-              marginBottom:12,
-              border:'1px solid #B8DAFF' }}>
-              <div style={{ fontSize:10, fontWeight:700,
-                color:'#0C5460', marginBottom:6,
-                textTransform:'uppercase' }}>
-                📋 Items from PO {form.poNo}
-              </div>
-              <div style={{ display:'flex', flexWrap:'wrap',
-                gap:6 }}>
-                {(pos.find(p=>p.id===parseInt(form.poId))
-                  ?.lines||[]).map((l,i)=>(
-                  <div key={i} style={{ background:'#fff',
-                    borderRadius:6, padding:'4px 10px',
-                    fontSize:11, fontWeight:600,
-                    color:'#0C5460',
-                    border:'1px solid #B8DAFF' }}>
-                    {l.itemName}
-                    <span style={{ color:'#6C757D',
-                      marginLeft:6 }}>
-                      {parseFloat(l.qty||0)} {l.unit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Material Details */}
-          {section('Material Details', '📦', (
-            <>
-              <div style={{ marginBottom:12 }}>
-                <label style={lbl}>Material Description</label>
-                <input style={inp} value={form.materialDesc}
-                  placeholder="Brief description of materials"
-                  onChange={e=>setForm(p=>({...p,
-                    materialDesc:e.target.value}))} />
-              </div>
-              <div style={{ ...grid3, marginBottom:12 }}>
-                <div>
-                  <label style={lbl}>DC / Challan Qty</label>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <input type="number" style={{ ...inp, flex:1 }}
-                      value={form.dcQty} placeholder="0"
-                      onChange={e=>setForm(p=>({...p,
-                        dcQty:e.target.value}))} />
-                    <input style={{ ...inp, width:60 }}
-                      value={form.dcUnit} placeholder="Unit"
-                      onChange={e=>setForm(p=>({...p,
-                        dcUnit:e.target.value}))} />
-                  </div>
-                </div>
-                {field('No. of Packages', 'noOfPackages',
-                  'number', '0')}
-                {field('Gross Weight', 'grossWeight',
-                  'number', '0.000')}
-              </div>
-              <div style={grid3}>
-                {field('Net Weight', 'netWeight',
-                  'number', '0.000')}
-                <div>
-                  <label style={lbl}>Weight Unit</label>
-                  <select style={{ ...inp, cursor:'pointer' }}
-                    value={form.weightUnit}
-                    onChange={e=>setForm(p=>({...p,
-                      weightUnit:e.target.value}))}>
-                    {['Kg','MT','Ltr','Nos','Box'].map(u=>(
-                      <option key={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </>
-          ))}
-
-          {/* Security */}
-          {section('Security / Remarks', '🔒', (
-            <div style={grid2}>
-              {field('Security Officer Name', 'securityName',
-                'text', 'Officer name')}
-              {field('Remarks', 'remarks', 'text',
-                'Any notes...')}
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding:'12px 20px',
-          borderTop:'1px solid #E0D5E0', flexShrink:0,
-          display:'flex', justifyContent:'space-between',
-          alignItems:'center', background:'#F8F7FA',
-          borderRadius:'0 0 10px 10px' }}>
-          <div style={{ fontSize:11, color:'#6C757D' }}>
-            Gate Pass will be auto-generated on save
-          </div>
-          <div style={{ display:'flex', gap:10 }}>
-            <button onClick={onCancel}
-              style={{ padding:'8px 20px', background:'#fff',
-                color:'#6C757D', border:'1.5px solid #E0D5E0',
-                borderRadius:6, fontSize:13, cursor:'pointer' }}>
-              Cancel
-            </button>
-            <button onClick={save} disabled={saving}
-              style={{ padding:'8px 28px',
-                background:saving?'#999':'#155724',
-                color:'#fff', border:'none', borderRadius:6,
-                fontSize:13, fontWeight:700, cursor:'pointer' }}>
-              {saving?'⏳ Saving...':'🚛 Record Entry'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // ── Gate Pass Print ────────────────────────────────────────
@@ -500,7 +112,6 @@ export default function GateEntryList() {
   const nav = useNavigate()
   const [entries, setEntries]  = useState([])
   const [loading, setLoading]  = useState(true)
-  const [showNew, setShowNew]  = useState(false)
   const [showPass,setShowPass] = useState(null)
   const [search,  setSearch]   = useState('')
   const [chip,    setChip]     = useState('all')
@@ -563,7 +174,7 @@ export default function GateEntryList() {
               border:'1px solid #E0D5E0',
               borderRadius:5, fontSize:12, width:200 }} />
           <button className="btn btn-p sd-bsm"
-            onClick={()=>setShowNew(true)}>
+            onClick={()=>nav('/wm/gate-entry/new')}>
             + Gate Entry
           </button>
         </div>
@@ -632,7 +243,7 @@ export default function GateEntryList() {
           <div style={{ fontWeight:700 }}>No gate entries</div>
           <button className="btn btn-p sd-bsm"
             style={{ marginTop:12 }}
-            onClick={()=>setShowNew(true)}>
+            onClick={()=>nav('/wm/gate-entry/new')}>
             + New Gate Entry
           </button>
         </div>
@@ -757,13 +368,31 @@ export default function GateEntryList() {
                           </button>
                         )}
                         {isIn &&
-                          e.purpose==='Material Receipt' && (
+                          ['Material Receipt','Subcontract Material Return'].includes(e.purpose) && (
                           <button className="btn-xs pri"
-                            onClick={()=>nav(
-                              `/wm/grn/new${
-                                e.poId?`?po=${e.poId}`:''
-                              }`)}>
+                            onClick={()=>nav(`/wm/grn/new?ge=${e.id}`)}>
                             GRN
+                          </button>
+                        )}
+                        {isIn && e.purpose==='General Material Receipt' && e.partyType==='SUPPLIER' && (
+                          <button className="btn-xs pri"
+                            onClick={()=>nav(`/wm/grn/new?ge=${e.id}`)}>
+                            GRN
+                          </button>
+                        )}
+                        {isIn && e.purpose==='General Material Receipt' && e.partyType==='CUSTOMER' && (
+                          <button className="btn-xs pri"
+                            onClick={async ()=>{
+                              try {
+                                const res = await fetch(`${BASE_URL}/wm/gate-entry/${e.id}/general-receipt`,
+                                  { method:'POST', headers:authHdrs() })
+                                const d = await res.json()
+                                if (!res.ok) throw new Error(d.error)
+                                toast.success(d.message)
+                                fetchEntries()
+                              } catch(err){ toast.error(err.message) }
+                            }}>
+                            ✅ Receive
                           </button>
                         )}
                       </div>
@@ -774,12 +403,6 @@ export default function GateEntryList() {
             </tbody>
           </table>
         </div>
-      )}
-
-      {showNew && (
-        <GateEntryModal
-          onSave={()=>{ setShowNew(false); fetchEntries() }}
-          onCancel={()=>setShowNew(false)} />
       )}
 
       {showPass && (

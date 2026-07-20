@@ -30,6 +30,9 @@ const CSNew         = lazy(() => import('./CSNew'))
 const GRNList       = lazy(() => import('./GRNList'))
 const GRNNew              = lazy(() => import('./GRNNew'))
 const VendorPaymentRequest = lazy(() => import('./VendorPaymentRequest'))
+const VendorRateCardMaster = lazy(() => import('./VendorRateCardMaster'))
+const SubcontractList      = lazy(() => import('./SubcontractList'))
+const Subcontracting       = lazy(() => import('./Subcontracting'))
 const MMApprovals   = lazy(() => import('@components/ui/MyApprovals'))
 
 const NAV_ITEMS = [
@@ -64,6 +67,14 @@ const SIDEBAR_GROUPS = [
     ]
   },
   {
+    label: 'Subcontracting', icon: '',
+    items: [
+      { to: '/mm/subcontract',     label: 'Outstanding at Vendor' },
+      { to: '/mm/subcontract/new', label: 'Send Out / Return' },
+      { to: '/mm/vendor-rate-card', label: 'Vendor Rate Card' },
+    ]
+  },
+  {
     label: 'Goods Receipt (GRN)', icon: '',
     items: [
       { to: '/mm/grn',       label: 'GRN List (MB51)' },
@@ -86,6 +97,7 @@ const SIDEBAR_GROUPS = [
       { to: '/mm/vendors',      label: 'Vendor List (MK03)' },
       { to: '/mm/vendors/new',  label: 'New Vendor' },
       { to: '/mm/materials',    label: 'Material Master' },
+      { to: '/mm/vendor-rate-card', label: 'Vendor Rate Card (Subcontract)' },
     ]
   },
   {
@@ -134,6 +146,9 @@ export default function MMLayout() {
           <Route path="vendors"     element={<VendorList />} />
           <Route path="vendors/new" element={<VendorNew />} />
           <Route path="vendors/ledger" element={<VendorLedger />} />
+          <Route path="vendor-rate-card" element={<VendorRateCardMaster />} />
+          <Route path="subcontract"     element={<SubcontractList />} />
+          <Route path="subcontract/new" element={<Subcontracting />} />
 
           {/* Others */}
           <Route path="payments"           element={<PaymentList />} />

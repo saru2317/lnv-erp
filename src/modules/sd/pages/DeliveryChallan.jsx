@@ -26,7 +26,7 @@ const BLANK = {
   customerId:'', customerName:'', customerGstin:'',
   billToAddress:'', shipToAddress:'', sameAddress: true,
   purpose:'Sales', vehicleNo:'', driverName:'', driverPhone:'',
-  payTerms:'', soRef:'', soId:'', ewbNo:'', remarks:'',
+  payTerms:'', soRef:'', soId:'', jcNo:'', jcId:'', ewbNo:'', remarks:'',
   termsConditions: `1. Goods once sold will not be taken back.
 2. All disputes subject to local jurisdiction.
 3. E&OE (Errors and Omissions Excepted).
@@ -45,6 +45,7 @@ export default function DeliveryChallan() {
   const [selected,   setSelected]  = useState(null)
   const [customers,  setCustomers] = useState([])
   const [openSOs,    setOpenSOs]   = useState([])
+  const [jobCards,   setJobCards]  = useState([])
   const [fgItems,    setFgItems]   = useState([])
   const [shipAddresses, setShipAddresses] = useState([])
   const [fgStock,       setFgStock]       = useState({})
@@ -237,6 +238,36 @@ export default function DeliveryChallan() {
       lines:         mappedLines
     }))
     toast.success(`SO ${so.soNo} loaded — ${soLines.length} items`)
+  }
+
+  useEffect(() => {
+    if (form.purpose === 'Job Work' && jobCards.length === 0) {
+      fetch(`${BASE}/pp/job-cards?status=COMPLETED`, { headers: hdr2() })
+        .then(r=>r.json()).then(d=>setJobCards(d.data||[])).catch(()=>{})
+    }
+  }, [form.purpose]) // eslint-disable-line
+
+  const onJCChange = async id => {
+    if (!id) { setForm(f => ({ ...f, jcId:'', jcNo:'' })); return }
+    const jc = jobCards.find(j => String(j.id) === id)
+    if (!jc) return
+    const cust = customers.find(c => String(c.id||c.customerId) === String(jc.customerId))
+    const addr = cust ? [cust.address, cust.city, cust.state, cust.pincode].filter(Boolean).join(', ') : ''
+    setForm(f => ({
+      ...f,
+      jcId: String(jc.id), jcNo: jc.jcNo,
+      customerId:    String(jc.customerId||''),
+      customerName:  jc.customerName || f.customerName,
+      customerGstin: cust?.gstin || f.customerGstin,
+      billToAddress: addr || f.billToAddress,
+      shipToAddress: addr || f.shipToAddress,
+      lines: [{
+        itemCode: jc.itemCode||'', itemName: jc.itemName||'',
+        qty: String(jc.processedQty||jc.receivedQty||0),
+        unit: jc.uom||'Nos', description: `Job work — ${jc.jcNo}`,
+      }],
+    }))
+    toast.success(`${jc.jcNo} loaded — ${jc.customerName}, ${Number(jc.processedQty||jc.receivedQty).toFixed(2)} ${jc.uom}`)
   }
 
   const updLine = (i, patch) => setForm(f => {
@@ -802,6 +833,26 @@ This will reverse the PGI and restore FG stock.`)) return
                 placeholder="EWB number (if applicable)" />
             </div>
           </div>
+
+          {form.purpose === 'Job Work' && (
+            <div style={{ marginTop:12, padding:12, background:'#F0EEEB', borderRadius:6 }}>
+              <label style={lbl}>Load from Job Card (completed, ready to dispatch)</label>
+              <select style={inp} value={form.jcId} onChange={e => onJCChange(e.target.value)}>
+                <option value="">-- Select Job Card --</option>
+                {jobCards.map(jc => (
+                  <option key={jc.id} value={jc.id}>
+                    {jc.jcNo} — {jc.itemName} · {jc.customerName} · {Number(jc.processedQty||jc.receivedQty).toFixed(2)} {jc.uom}
+                  </option>
+                ))}
+              </select>
+              {jobCards.length === 0 && (
+                <div style={{ fontSize:11, color:'#6C757D', marginTop:4 }}>No completed job cards ready to dispatch right now.</div>
+              )}
+              {form.jcNo && (
+                <div style={{ fontSize:11, color:'#155724', marginTop:4, fontWeight:600 }}>✓ Linked to {form.jcNo} — customer, address, and line auto-filled</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,85 +1,113 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Badge from '@components/ui/Badge'
-import ListViewToggle from '@components/ui/ListViewToggle'
-import { useListView } from '@hooks/useListView'
+import toast from 'react-hot-toast'
 
-const STATIC = [
-  { id:'CN-0012', date:'20 Jan 26', customer:'Sri Lakshmi Mills',   invRef:'INV-0120', amount:'38,200', type:'Credit Note Only',    status:'posted'  },
-  { id:'CN-0011', date:'15 Jan 26', customer:'Coimbatore Spinners', invRef:'INV-0115', amount:'12,800', type:'Material + Credit Note', status:'pending' },
-  { id:'CN-0010', date:'10 Jan 26', customer:'Rajesh Textiles',     invRef:'INV-0110', amount:'8,500',  type:'Material Return',       status:'posted'  },
-]
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
+const INR  = v => '₹' + Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2})
 
 export default function ReturnList() {
-  const navigate = useNavigate()
-  const { viewMode, toggleView } = useListView('SD-ReturnList')
+  const nav = useNavigate()
+  const [returns, setReturns] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [typeF, setTypeF] = useState('')
 
-  const filtered = STATIC.filter(r =>
-    r.id.toLowerCase().includes(search.toLowerCase()) ||
-    r.customer.toLowerCase().includes(search.toLowerCase())
-  )
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const q = new URLSearchParams()
+      if (search) q.set('search', search)
+      if (typeF)  q.set('returnType', typeF)
+      const res = await fetch(`${BASE_URL}/sd/returns?${q}`, { headers:hdr2() })
+      const d = await res.json()
+      setReturns(d.data||[])
+    } catch(e){ toast.error(e.message) }
+    finally { setLoading(false) }
+  },[search, typeF])
+
+  useEffect(()=>{ const t=setTimeout(load,300); return ()=>clearTimeout(t) },[load])
+
+  const totalValue = returns.reduce((s,r)=>s+parseFloat(r.totalAmt||0),0)
 
   return (
     <div>
-      <div className="lv-hdr">
-        <div className="lv-ttl">Returns / Credit Notes <small>{filtered.length} records</small></div>
-        <div className="lv-acts">
-          <ListViewToggle viewMode={viewMode} onToggle={toggleView} />
-          <button className="btn btn-p" onClick={() => navigate('/sd/returns/new')}>+ New Return</button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:18,color:'#714B67'}}>
+            Sales Returns <small style={{fontSize:11,fontWeight:400,color:'#6C757D',marginLeft:8}}>Credit Notes</small>
+          </div>
+          <div style={{fontSize:11,color:'#6C757D',marginTop:2}}>Goods returned by customers — auto-posts a credit note journal entry</div>
         </div>
+        <button onClick={()=>nav('/sd/returns/new')}
+          style={{padding:'7px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
+          + New Return
+        </button>
       </div>
 
-      <div className="sd-fb">
-        <div className="sd-fs">
-          <input placeholder="Search CN #, customer..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:12}}>
+        {[
+          { l:'Total Returns', v:returns.length, c:'#714B67', bg:'#EDE0EA' },
+          { l:'Total Value',   v:INR(totalValue), c:'#DC3545', bg:'#F8D7DA' },
+          { l:'This Month',    v:returns.filter(r=>{
+              const d=new Date(r.createdAt); const n=new Date()
+              return d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear()
+            }).length, c:'#0C5460', bg:'#D1ECF1' },
+        ].map(k=>(
+          <div key={k.l} style={{background:'#fff',borderRadius:8,padding:'10px 14px',border:'1px solid #E0D5E0',borderLeft:`4px solid ${k.c}`}}>
+            <div style={{fontSize:15,fontWeight:800,color:k.c,fontFamily:'Syne,sans-serif'}}>{k.v}</div>
+            <div style={{fontSize:10,color:'#6C757D',marginTop:2}}>{k.l}</div>
+          </div>
+        ))}
       </div>
 
-      {viewMode === 'normal' && (
-        <div className="dc">
-          <table className="sd-tbl">
-            <thead>
-              <tr><th>CN #</th><th>Date</th><th>Customer</th><th>Invoice Ref</th><th>Type</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+      <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search return no, customer..."
+          style={{padding:'7px 12px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none',width:220}} />
+        <select value={typeF} onChange={e=>setTypeF(e.target.value)}
+          style={{padding:'7px 10px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}}>
+          <option value="">All Types</option>
+          <option value="Full Return">Full Return</option>
+          <option value="Partial Return">Partial Return</option>
+        </select>
+        <span style={{marginLeft:'auto',fontSize:11,color:'#6C757D'}}>{returns.length} records</span>
+      </div>
+
+      {loading ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>⏳ Loading...</div>
+      ) : returns.length===0 ? (
+        <div style={{padding:40,textAlign:'center',color:'#6C757D',background:'#fff',borderRadius:8,border:'2px dashed #E0D5E0'}}>
+          No returns recorded yet.
+          <div style={{marginTop:12}}>
+            <button onClick={()=>nav('/sd/returns/new')} style={{padding:'7px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>+ New Return</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+            <thead style={{background:'#F8F4F8'}}>
+              <tr style={{borderBottom:'2px solid #E0D5E0'}}>
+                {['Return No','Customer','Invoice Ref','Type','Lines','Amount','Status'].map(h=>(
+                  <th key={h} style={{padding:'8px 10px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left',textTransform:'uppercase'}}>{h}</th>
+                ))}
+              </tr>
             </thead>
             <tbody>
-              {filtered.map(r => (
-                <tr key={r.id} style={{cursor:'pointer'}} onClick={() => navigate(`/sd/returns/${r.id}`)}>
-                  <td><strong style={{color:'#714B67',fontFamily:'DM Mono,monospace',fontSize:11}}>{r.id}</strong></td>
-                  <td style={{fontSize:12}}>{r.date}</td>
-                  <td style={{fontWeight:600}}>{r.customer}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontSize:11}}>{r.invRef}</td>
-                  <td style={{fontSize:11}}>{r.type}</td>
-                  <td style={{fontFamily:'DM Mono,monospace',fontWeight:600}}>Rs.{r.amount}</td>
-                  <td><Badge status={r.status}>{r.status.toUpperCase()}</Badge></td>
-                  <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:4}}>
-                    <button className="act-btn-view">View</button>
-                    <button className="act-btn-print">Print</button>
+              {returns.map((r,i)=>(
+                <tr key={r.id} style={{borderBottom:'1px solid #F0EEF0',background:i%2===0?'#fff':'#FDFBFD'}}>
+                  <td style={{padding:'8px 10px',fontFamily:'DM Mono,monospace',color:'#714B67',fontWeight:600}}>{r.returnNo}</td>
+                  <td style={{padding:'8px 10px'}}>{r.customerName}</td>
+                  <td style={{padding:'8px 10px',fontSize:11,color:'#6C757D'}}>{r.invoiceNo||'—'}</td>
+                  <td style={{padding:'8px 10px'}}>{r.returnType}</td>
+                  <td style={{padding:'8px 10px'}}>{r._count?.lines ?? '—'}</td>
+                  <td style={{padding:'8px 10px',fontFamily:'DM Mono,monospace',fontWeight:600,color:'#DC3545'}}>{INR(r.totalAmt)}</td>
+                  <td style={{padding:'8px 10px'}}>
+                    <span style={{padding:'3px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:'#D4EDDA',color:'#155724'}}>{r.status}</span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {viewMode === 'detail' && (
-        <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:4}}>
-          {filtered.map(r => (
-            <div key={r.id} style={{background:'#fff',border:'1px solid var(--odoo-border)',
-              borderRadius:8,padding:'12px 16px',cursor:'pointer'}}
-              onClick={() => navigate(`/sd/returns/${r.id}`)}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-                <span style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--odoo-purple)'}}>{r.id}</span>
-                <span style={{fontFamily:'DM Mono,monospace',fontWeight:700}}>Rs.{r.amount}</span>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'6px 12px',fontSize:11}}>
-                {[['Customer',r.customer],['Invoice',r.invRef],['Type',r.type],['Date',r.date]].map(([l,v]) => (
-                  <div key={l}><div style={{color:'var(--odoo-gray)',fontSize:9,textTransform:'uppercase',marginBottom:2}}>{l}</div><div style={{fontWeight:600}}>{v}</div></div>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>

@@ -30,6 +30,7 @@ export default function LabourInvoice() {
   const [priceBook,       setPriceBook]       = useState([])
   const [enabledProcs,    setEnabledProcs]    = useState([])
   const [customers, setCustomers] = useState([])
+  const [jobCards,  setJobCards]  = useState([])
   const [loading,   setLoading]   = useState(false)
   const [saving,    setSaving]    = useState(false)
   const [search,    setSearch]    = useState('')
@@ -44,7 +45,7 @@ export default function LabourInvoice() {
   const [form, setForm] = useState({
     customerName:'', customerGstin:'', customerState:'',
     invoiceDate: new Date().toISOString().split('T')[0],
-    dcRef:'', dueDate:'', paymentTerms:'NET30', notes:'',
+    dcRef:'', jcNo:'', jcId:'', dueDate:'', paymentTerms:'NET30', notes:'',
     lines:[{ ...BLANK_LINE }]
   })
 
@@ -68,6 +69,11 @@ export default function LabourInvoice() {
     // Load customers
     fetch(`${BASE_URL}/sd/customers`, { headers: hdr2() })
       .then(r=>r.json()).then(d=>setCustomers(d.data||d||[])).catch(()=>{})
+    // Load completed job cards — ready to invoice (COMPLETED or already
+    // DISPATCHED, since dispatch and invoicing don't have to happen the
+    // same day)
+    fetch(`${BASE_URL}/pp/job-cards?status=COMPLETED,DISPATCHED`, { headers: hdr2() })
+      .then(r=>r.json()).then(d=>setJobCards(d.data||[])).catch(()=>{})
     // Load labour invoices
     fetch(`${BASE_URL}/sd/labour-invoice`, { headers: hdr2() })
       .then(r=>r.json()).then(d=>setInvoices(d.data||[]))
@@ -76,6 +82,28 @@ export default function LabourInvoice() {
 
   const addLine    = () => setForm(p=>({...p,lines:[...p.lines,{...BLANK_LINE}]}))
   const removeLine = i => setForm(p=>({...p,lines:p.lines.filter((_,j)=>j!==i)}))
+
+  const onJCChange = id => {
+    if (!id) { setForm(p=>({...p, jcId:'', jcNo:''})); return }
+    const jc = jobCards.find(j=>String(j.id)===id)
+    if (!jc) return
+    const cust = customers.find(c=>c.name===jc.customerName)
+    setForm(p=>({
+      ...p,
+      jcId: String(jc.id), jcNo: jc.jcNo,
+      customerName: jc.customerName, customerGstin: cust?.gstin||p.customerGstin, customerState: cust?.state||p.customerState,
+      dcRef: p.dcRef, // DC ref stays manual — a JC can be dispatched via a DC raised separately in SD
+      lines: [{
+        ...BLANK_LINE,
+        description: `${jc.itemName} — ${jc.jcNo}`,
+        qty: String(jc.processedQty||jc.receivedQty||0),
+        unit: (jc.uom||'NOS').toUpperCase(),
+      }],
+    }))
+    setCustSearch(jc.customerName)
+    toast.success(`${jc.jcNo} loaded — process/rate still need selecting below`)
+  }
+
   const updateLine = (i,k,v) => {
     setForm(p=>({...p,lines:p.lines.map((l,j)=>{
       if(j!==i) return l
@@ -131,7 +159,7 @@ export default function LabourInvoice() {
       setTab('list')
       setForm({customerName:'',customerGstin:'',customerState:'',
         invoiceDate:new Date().toISOString().split('T')[0],
-        dcRef:'',dueDate:'',paymentTerms:'NET30',notes:'',
+        dcRef:'',jcNo:'',jcId:'',dueDate:'',paymentTerms:'NET30',notes:'',
         lines:[{...BLANK_LINE}]})
     } catch(e) { toast.error(e.message) }
     finally { setSaving(false) }
@@ -322,6 +350,25 @@ export default function LabourInvoice() {
               <div style={{marginTop:10,background:'#FFF3CD',borderRadius:6,padding:'6px 12px',fontSize:11,color:'#856404'}}>
                 <strong>HSN {HSN_CODE}</strong> — Manufacturing/processing services on physical goods owned by others (GST: 18%)
               </div>
+            </div>
+
+            {/* Load from Job Card */}
+            <div style={{background:'#F0EEEB',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
+              <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:8}}>Load from Job Card</div>
+              <select style={inp} value={form.jcId} onChange={e=>onJCChange(e.target.value)}>
+                <option value="">-- Select a completed Job Card, or fill in manually below --</option>
+                {jobCards.map(jc=>(
+                  <option key={jc.id} value={jc.id}>
+                    {jc.jcNo} — {jc.itemName} · {jc.customerName} · {Number(jc.processedQty||jc.receivedQty).toFixed(2)} {jc.uom}
+                  </option>
+                ))}
+              </select>
+              {jobCards.length===0 && (
+                <div style={{fontSize:11,color:'#6C757D',marginTop:4}}>No completed or dispatched job cards to bill right now.</div>
+              )}
+              {form.jcNo && (
+                <div style={{fontSize:11,color:'#155724',marginTop:4,fontWeight:600}}>✓ Linked to {form.jcNo} — pick process &amp; rate below, quantity is pre-filled</div>
+              )}
             </div>
 
             {/* Customer */}

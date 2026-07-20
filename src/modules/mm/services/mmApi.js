@@ -92,6 +92,11 @@ export const mmApi = {
 
   // ── Vendors & Items (master lookups) ──────────────
   getVendors:           ()            => req('GET',    '/vendors'),
+
+  // ── Vendor Rate Card (subcontract labour rates) ────
+  getVendorRateCards:   (q='')        => req('GET',    `/vendor-rate-card${q}`),
+  createVendorRateCard: (body)        => req('POST',   '/vendor-rate-card', body),
+  updateVendorRateCard: (id, body)    => req('PATCH',  `/vendor-rate-card/${id}`, body),
   getVendorNextCode:    ()            => req('GET',    '/vendors/next-code'),
   createVendor:         (body)        => req('POST',   '/vendors/create', body),
   getItems:             ()            => req('GET',    '/items'),

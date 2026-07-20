@@ -1,205 +1,238 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { PP_CUSTOMERS, ITEMS, INDUSTRIES, PRODUCTION_TYPES, JOB_CARDS, MOULDS, calcShotOutput } from './_ppConfig'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('lnv_token')
+const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` })
+const authHdrs2= () => ({ Authorization:`Bearer ${getToken()}` })
+
+const EMPTY_FORM = {
+  customerId:'', customerName:'', dcNo:'', loId:'', loNo:'',
+  itemCode:'', itemName:'', receivedQty:'', uom:'Nos',
+  priority:'Normal', dueDate:'', remarks:'',
+}
 
 export default function JobCardNew() {
   const nav = useNavigate()
-  const [form, setForm] = useState({
-    customerId:'', dcNo:'', date: new Date().toISOString().slice(0,10),
-    itemId:'', qty:'', priority:'Normal', remarks:''
-  })
-  const [submitted, setSubmitted] = useState(false)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [params] = useSearchParams()
+  const [customers, setCustomers] = useState([])
+  const [processes, setProcesses] = useState([])
+  const [linkedLO, setLinkedLO] = useState(null)
+  const [selectedStages, setSelectedStages] = useState([])
+  const [customStage, setCustomStage] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const set = (k,v) => setForm(f=>({...f,[k]:v}))
 
-  const customer = PP_CUSTOMERS.find(c => c.id === form.customerId)
-  const item     = ITEMS.find(i => i.id === form.itemId)
-  const ind      = item ? INDUSTRIES[item.industry] : null
-  const pt       = item ? PRODUCTION_TYPES[item.prodType] : null
-  const mould    = item?.mouldId ? MOULDS.find(m => m.id === item.mouldId) : null
-  const shotInfo = item?.prodType === 'mould' && item?.cavity && form.qty
-    ? calcShotOutput(parseInt(form.qty), item.cavity) : null
+  useEffect(()=>{
+    fetch(`${BASE_URL}/sd/customers`, { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setCustomers(d.data||[])).catch(()=>{})
+    // Real Process Master, synced from the active PP Configurator config —
+    // same source routing operations use, so stage names line up with
+    // whatever the shop actually calls each process.
+    fetch(`${BASE_URL}/pp/config`, { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setProcesses(d.data?.processes||[])).catch(()=>{})
 
-  const openBatches  = item ? JOB_CARDS.filter(j => j.itemId === item.id && j.status !== 'Done') : []
-  const batchSuggest = item?.prodType === 'batch' && openBatches.length > 0
-  const routeStages  = ind?.stages || []
+    const loId = params.get('loId')
+    if (loId) {
+      fetch(`${BASE_URL}/sd/labour-orders/${loId}`, { headers:authHdrs2() })
+        .then(r=>r.json()).then(d=>{
+          if (!d.data) return
+          const lo = d.data
+          setLinkedLO(lo)
+          setForm(f=>({ ...f,
+            loId: String(lo.id), loNo: lo.loNo,
+            customerId: lo.customerId?String(lo.customerId):'', customerName: lo.customerName,
+            itemCode: lo.itemCode||'', itemName: lo.itemName,
+            receivedQty: String(lo.orderedQty), uom: lo.uom,
+            dueDate: lo.expectedDeliveryDate ? lo.expectedDeliveryDate.slice(0,10) : '',
+          }))
+          if (lo.processName) setSelectedStages([lo.processName])
+        }).catch(()=>{})
+    }
+  },[]) // eslint-disable-line
 
-  const handleSubmit = () => {
-    if (!form.customerId || !form.itemId || !form.qty) { alert('Customer, Item and Qty required'); return }
-    setSubmitted(true)
-    setTimeout(() => nav('/pp/job-cards'), 1200)
+  const onCustomerChange = e => {
+    const id = e.target.value
+    const c = customers.find(c=>String(c.id)===id)
+    set('customerId', id); set('customerName', c?.name||c?.customerName||'')
+  }
+
+  const toggleStage = name => {
+    setSelectedStages(prev => prev.includes(name) ? prev.filter(s=>s!==name) : [...prev, name])
+  }
+
+  const addCustomStage = () => {
+    const name = customStage.trim()
+    if (!name) return
+    if (!selectedStages.includes(name)) setSelectedStages(prev=>[...prev, name])
+    setCustomStage('')
+  }
+
+  const removeStage = name => setSelectedStages(prev => prev.filter(s=>s!==name))
+
+  const moveStage = (idx, dir) => {
+    setSelectedStages(prev => {
+      const next = [...prev]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return prev
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return next
+    })
+  }
+
+  const save = async () => {
+    if (!form.customerName)  return toast.error('Select customer — this material belongs to them')
+    if (!form.itemName)      return toast.error('Item name required')
+    if (!form.receivedQty || parseFloat(form.receivedQty)<=0) return toast.error('Enter a valid received quantity')
+    if (selectedStages.length===0) return toast.error('Add at least one processing stage')
+    setSaving(true)
+    try {
+      const res = await fetch(`${BASE_URL}/pp/job-cards`, {
+        method:'POST', headers:authHdrs(),
+        body: JSON.stringify({
+          customerId: form.customerId||null, customerName: form.customerName, dcNo: form.dcNo||null,
+          loId: form.loId||null, loNo: form.loNo||null,
+          itemCode: form.itemCode||null, itemName: form.itemName,
+          receivedQty: form.receivedQty, uom: form.uom,
+          stages: selectedStages,
+          priority: form.priority, dueDate: form.dueDate||null, remarks: form.remarks||null,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(data.message)
+      nav('/pp/job-cards')
+    } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
 
   return (
     <div>
       <div className="fi-lv-hdr">
-        <div className="fi-lv-title">New Job Card <small>Route loaded from item — not customer</small></div>
+        <div className="fi-lv-title">New Job Card <small>Customer material intake — job work</small></div>
         <div className="fi-lv-actions">
-          <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/job-cards')}>← Back</button>
+          <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/job-cards')}>✕ Cancel</button>
+          <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
+            {saving?'⏳ Saving...':'Save Job Card'}
+          </button>
         </div>
       </div>
 
-      {submitted && (
-        <div style={{ padding:'12px 16px',background:'#E8F5E9',borderRadius:'8px',marginBottom:'14px',fontWeight:'700',color:'#2E7D32' }}>
-           Job Card created! Redirecting…
+      <div className="pp-alert" style={{marginBottom:14,background:'#D1ECF1',borderColor:'#BEE5EB',color:'#0C5460'}}>
+        This just creates the paperwork — it does <strong>not</strong> post any stock yet. Warehouse confirms the physical receipt separately (WM → Job Work Receipt), same way a GRN is separate from Goods Receipt.
+      </div>
+
+      {linkedLO && (
+        <div className="pp-alert" style={{marginBottom:14,background:'#D4EDDA',borderColor:'#C3E6CB',color:'#155724'}}>
+          ✓ Linked to <strong>{linkedLO.loNo}</strong> — customer, item, and quantity auto-filled from the agreed order (rate: {linkedLO.materialSupply==='with'?linkedLO.rateWithMat:linkedLO.rateWithoutMat}/{linkedLO.pricingBasis}, locked at order time).
         </div>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
-
-        {/* LEFT */}
-        <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>Job Header</h3></div>
-          <div className="fi-panel-body">
-            <div className="sd-form-grid">
-              <div className="sd-field">
-                <label>Customer *</label>
-                <select value={form.customerId} onChange={e => set('customerId', e.target.value)}>
-                  <option value="">Select Customer</option>
-                  {PP_CUSTOMERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="sd-field">
-                <label>DC / Challan No.</label>
-                <input value={form.dcNo} onChange={e => set('dcNo', e.target.value)} placeholder="e.g. KAC/DC/2025/113" />
-              </div>
-              <div className="sd-field">
-                <label>Date</label>
-                <input type="date" value={form.date} onChange={e => set('date', e.target.value)} />
-              </div>
-              <div className="sd-field">
-                <label>Priority</label>
-                <select value={form.priority} onChange={e => set('priority', e.target.value)}>
-                  {['Normal','High','Urgent'].map(p => <option key={p}>{p}</option>)}
-                </select>
-              </div>
+      <div className="wm-form-sec" style={{marginBottom:14}}>
+        <div className="wm-form-sec-hdr">Customer &amp; Material</div>
+        <div className="wm-form-sec-body">
+          <div className="wm-form-row2">
+            <div className="wm-form-grp"><label>Customer <span>*</span></label>
+              <select className="wm-form-ctrl" value={form.customerId} onChange={onCustomerChange} disabled={!!linkedLO}>
+                <option value="">-- Select Customer --</option>
+                {customers.map(c=>(
+                  <option key={c.id} value={c.id}>{c.name||c.customerName}</option>
+                ))}
+              </select>
             </div>
-            {customer && (
-              <div style={{ marginTop:'8px',padding:'8px 12px',background:'#F3F0FF',borderRadius:'6px',fontSize:'12px' }}>
-                 <strong>{customer.name}</strong> · {customer.entity} ·  {customer.phone} · Charge: <strong>{customer.chargeBy}</strong>
-              </div>
-            )}
-            <div className="sd-field" style={{ marginTop:'10px' }}>
-              <label>Remarks</label>
-              <textarea rows={2} value={form.remarks} onChange={e => set('remarks', e.target.value)} placeholder="Special instructions…" style={{resize:'vertical'}} />
+            <div className="wm-form-grp"><label>Customer's DC No.</label>
+              <input className="wm-form-ctrl" placeholder="Their delivery challan ref"
+                value={form.dcNo} onChange={e=>set('dcNo',e.target.value)}/>
             </div>
           </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="fi-panel">
-          <div className="fi-panel-hdr"><h3>Item & Quantity</h3></div>
-          <div className="fi-panel-body">
-            <div className="sd-form-grid">
-              <div className="sd-field" style={{ gridColumn:'1/-1' }}>
-                <label>Item * <span style={{fontSize:'10px',color:'var(--odoo-gray)',fontWeight:'400'}}>— routing auto-loads from item</span></label>
-                <select value={form.itemId} onChange={e => set('itemId', e.target.value)}>
-                  <option value="">Select Item</option>
-                  {ITEMS.map(i => {
-                    const iind = INDUSTRIES[i.industry]
-                    return <option key={i.id} value={i.id}>{iind?.icon} {i.name} ({i.code})</option>
-                  })}
-                </select>
-              </div>
-              <div className="sd-field">
-                <label>Quantity *</label>
-                <input type="number" value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="e.g. 500" />
-              </div>
-              {item && <div className="sd-field"><label>UOM</label><input value={item.uom} disabled /></div>}
+          <div className="wm-form-row4">
+            <div className="wm-form-grp"><label>Item Code</label>
+              <input className="wm-form-ctrl" placeholder="Optional"
+                value={form.itemCode} onChange={e=>set('itemCode',e.target.value)}/>
             </div>
-
-            {item && (
-              <div style={{ marginTop:'8px',padding:'10px 12px',background:ind?.light,borderRadius:'8px',borderLeft:`3px solid ${ind?.color}` }}>
-                <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-                  <span style={{ fontSize:'20px' }}>{ind?.icon}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:'800',fontSize:'13px' }}>{item.name}</div>
-                    <div style={{ fontSize:'10px',color:'var(--odoo-gray)',fontFamily:'DM Mono,monospace' }}>{item.code}</div>
-                    <div style={{ display:'flex',gap:'6px',marginTop:'3px' }}>
-                      <span style={{ padding:'2px 6px',background:ind?.color,color:'#fff',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>{ind?.name}</span>
-                      <span style={{ padding:'2px 6px',background:'var(--odoo-purple)',color:'#fff',borderRadius:'4px',fontSize:'10px',fontWeight:'700' }}>{pt?.icon} {pt?.label}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Shot calc */}
-            {shotInfo && (
-              <div style={{ marginTop:'10px',padding:'12px',background:'#FFF3CD',borderRadius:'8px',border:'1px solid #FFE082' }}>
-                <div style={{ fontWeight:'800',fontSize:'12px',color:'#E65100',marginBottom:'8px' }}> Shot Calculator</div>
-                <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px' }}>
-                  {[['Shots Needed',shotInfo.shots,'#E65100'],['Cavity',shotInfo.cavity,'#1A5276'],['Total Output',shotInfo.output,'var(--odoo-green)']].map(([l,v,c])=>(
-                    <div key={l} style={{ textAlign:'center',padding:'6px',background:'#fff',borderRadius:'6px' }}>
-                      <div style={{ fontWeight:'800',fontSize:'18px',color:c }}>{v}</div>
-                      <div style={{ fontSize:'9px',color:'var(--odoo-gray)' }}>{l}</div>
-                    </div>
-                  ))}
-                </div>
-                {mould && <div style={{ marginTop:'6px',fontSize:'10px',color:'var(--odoo-gray)' }}>
-                  {mould.name} · Life: <span style={{color:mould.shots/mould.maxShots>0.8?'var(--odoo-red)':'var(--odoo-green)',fontWeight:'700'}}>{((mould.shots/mould.maxShots)*100).toFixed(0)}% used</span>
-                </div>}
-              </div>
-            )}
-
-            {/* Batch suggest */}
-            {batchSuggest && (
-              <div style={{ marginTop:'10px',padding:'10px 12px',background:'#E3F2FD',borderRadius:'8px',border:'1px solid #90CAF9' }}>
-                <div style={{ fontWeight:'800',fontSize:'12px',color:'#1565C0',marginBottom:'4px' }}>🪣 Batch Clubbing Possible</div>
-                <div style={{ fontSize:'11px',color:'#1565C0',marginBottom:'6px' }}>{openBatches.length} open job(s) with same item — club to optimise batch capacity.</div>
-                <div style={{ display:'flex',gap:'4px',flexWrap:'wrap' }}>
-                  {openBatches.map(j=>(
-                    <span key={j.id} style={{ padding:'2px 7px',background:'#BBDEFB',borderRadius:'4px',fontSize:'10px',fontWeight:'700',color:'#1565C0' }}>{j.id}: {j.qty} {j.unit}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="wm-form-grp"><label>Item Name <span>*</span></label>
+              <input className="wm-form-ctrl" placeholder="What are they sending?" readOnly={!!linkedLO}
+                value={form.itemName} onChange={e=>set('itemName',e.target.value)}/>
+            </div>
+            <div className="wm-form-grp"><label>Received Qty <span>*</span></label>
+              <input type="number" className="wm-form-ctrl" placeholder="Qty" readOnly={!!linkedLO}
+                value={form.receivedQty} onChange={e=>set('receivedQty',e.target.value)}/>
+            </div>
+            <div className="wm-form-grp"><label>UOM</label>
+              <input className="wm-form-ctrl" value={form.uom} onChange={e=>set('uom',e.target.value)}/>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Route preview */}
-      {item && routeStages.length > 0 && (
-        <div className="fi-panel" style={{ marginTop:'14px' }}>
-          <div className="fi-panel-hdr">
-            <h3> Production Route — Loaded from Item </h3>
-            <span style={{ fontSize:'11px',color:'var(--odoo-gray)',fontWeight:'400' }}>Routing is item-specific · {routeStages.length} stages</span>
-          </div>
-          <div className="fi-panel-body">
-            <div style={{ display:'flex',gap:'0',alignItems:'center',flexWrap:'wrap',marginBottom:'12px' }}>
-              {routeStages.map((s,i)=>(
-                <React.Fragment key={s.id}>
-                  <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:'3px' }}>
-                    <div style={{ width:'34px',height:'34px',borderRadius:'50%',background:'var(--odoo-purple)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'15px' }}>{s.icon}</div>
-                    <div style={{ fontSize:'9px',fontWeight:'700',color:'var(--odoo-purple)',textAlign:'center',maxWidth:'56px',lineHeight:'1.2' }}>{s.name}</div>
-                    <div style={{ fontSize:'9px',color:'var(--odoo-gray)',textAlign:'center',maxWidth:'56px' }}>{s.machine}</div>
-                  </div>
-                  {i<routeStages.length-1&&<div style={{ width:'20px',height:'2px',background:'var(--odoo-purple)',marginBottom:'18px',opacity:.35 }} />}
-                </React.Fragment>
+      <div className="wm-form-sec" style={{marginBottom:14}}>
+        <div className="wm-form-sec-hdr">Processing Stages <span>*</span></div>
+        <div className="wm-form-sec-body">
+          {processes.length>0 && (
+            <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+              {processes.map(p=>(
+                <button key={p.id||p.name} type="button"
+                  onClick={()=>toggleStage(p.name)}
+                  className={selectedStages.includes(p.name)?'btn btn-p sd-bsm':'btn btn-s sd-bsm'}>
+                  {p.name}
+                </button>
               ))}
             </div>
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'6px' }}>
-              {routeStages.map((s,i)=>(
-                <div key={s.id} style={{ padding:'7px 10px',background:'#F8F9FA',borderRadius:'6px',border:'1px solid var(--odoo-border)' }}>
-                  <div style={{ display:'flex',alignItems:'center',gap:'5px',marginBottom:'3px' }}>
-                    <span style={{ fontSize:'13px' }}>{s.icon}</span>
-                    <strong style={{ fontSize:'10px',color:'var(--odoo-purple)' }}>{i+1}. {s.name}</strong>
-                  </div>
-                  <div style={{ display:'flex',gap:'2px',flexWrap:'wrap' }}>
-                    {(s.fields||[]).map((f,fi)=>(
-                      <span key={fi} style={{ padding:'1px 4px',background:'#EDE0EA',borderRadius:'3px',fontSize:'9px',color:'var(--odoo-purple)',fontWeight:'600' }}>{f}</span>
-                    ))}
-                  </div>
+          )}
+          <div style={{display:'flex',gap:8,marginBottom:12}}>
+            <input className="wm-form-ctrl" placeholder="Or type a custom stage name..."
+              value={customStage} onChange={e=>setCustomStage(e.target.value)}
+              onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addCustomStage() } }}/>
+            <button type="button" className="btn btn-s sd-bsm" onClick={addCustomStage}>+ Add</button>
+          </div>
+
+          {selectedStages.length>0 && (
+            <div>
+              <label style={{fontSize:11,color:'#6C757D',fontWeight:700}}>SEQUENCE (order matters)</label>
+              {selectedStages.map((s,i)=>(
+                <div key={s} style={{display:'flex',alignItems:'center',gap:8,
+                  padding:'8px 10px',background:i%2===0?'#fff':'#FDFBFD',
+                  border:'1px solid #E0D5E0',borderRadius:6,marginTop:6}}>
+                  <span style={{fontWeight:700,color:'#714B67',minWidth:20}}>{i+1}.</span>
+                  <span style={{flex:1}}>{s}</span>
+                  <button type="button" className="btn btn-s sd-bsm" style={{padding:'2px 8px'}}
+                    disabled={i===0} onClick={()=>moveStage(i,-1)}>↑</button>
+                  <button type="button" className="btn btn-s sd-bsm" style={{padding:'2px 8px'}}
+                    disabled={i===selectedStages.length-1} onClick={()=>moveStage(i,1)}>↓</button>
+                  <button type="button" className="btn btn-s sd-bsm" style={{padding:'2px 8px',color:'#DC3545'}}
+                    onClick={()=>removeStage(s)}>✕</button>
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      </div>
+
+      <div className="wm-form-sec">
+        <div className="wm-form-sec-hdr">Priority &amp; Notes</div>
+        <div className="wm-form-sec-body">
+          <div className="wm-form-row4">
+            <div className="wm-form-grp"><label>Priority</label>
+              <select className="wm-form-ctrl" value={form.priority} onChange={e=>set('priority',e.target.value)}>
+                <option>Normal</option><option>High</option><option>Urgent</option>
+              </select>
+            </div>
+            <div className="wm-form-grp"><label>Due Date</label>
+              <input type="date" className="wm-form-ctrl" value={form.dueDate} onChange={e=>set('dueDate',e.target.value)}/>
+            </div>
+            <div className="wm-form-grp" style={{gridColumn:'span 2'}}><label>Remarks</label>
+              <input className="wm-form-ctrl" placeholder="Optional notes..."
+                value={form.remarks} onChange={e=>set('remarks',e.target.value)}/>
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      <div style={{ display:'flex',gap:'10px',marginTop:'16px',justifyContent:'flex-end' }}>
-        <button className="btn btn-s sd-bsm" onClick={() => nav('/pp/job-cards')}>Cancel</button>
-        <button className="btn btn-p" onClick={handleSubmit} disabled={submitted}>
-          {submitted ? ' Creating…' : ' Create Job Card'}
+      <div className="wm-form-acts">
+        <button className="btn btn-s sd-bsm" onClick={()=>nav('/pp/job-cards')}>✕ Cancel</button>
+        <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>
+          {saving?'⏳ Saving...':'Save Job Card'}
         </button>
       </div>
     </div>

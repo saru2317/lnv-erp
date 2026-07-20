@@ -116,7 +116,7 @@ export default function GRNNew() {
       .then(r=>r.json()).then(d=>setPOs(d.data||[]))
       .catch(()=>{})
 
-    fetch(`${BASE_URL}/wm/gate-entry?status=IN`,
+    fetch(`${BASE_URL}/wm/gate-entry?status=IN&purpose=Material Receipt,Subcontract Material Return,General Material Receipt`,
       { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setGates(d.data||[]))
       .catch(()=>{})
@@ -144,14 +144,18 @@ export default function GRNNew() {
       setSelGE(ge)
       setHdr(p=>({...p,
         gateEntryId: ge.id,
-        gateEntryNo: ge.gateNo,
+        gateEntryNo: ge.geNo,
         vehicleNo:   ge.vehicleNo||'',
         vendorCode:  ge.vendorCode||p.vendorCode,
         vendorName:  ge.vendorName||p.vendorName,
         dcNo:        ge.dcNo||p.dcNo,
       }))
-      // If gate entry has PO linked
+      // If gate entry has PO linked, load it; otherwise this is a
+      // no-PO inward (emergency purchase, or a General Material Receipt
+      // from a supplier like getting serviced equipment back) — 121
+      // already exists for exactly this, just was never auto-selected.
       if (ge.poId) loadPO(ge.poId)
+      else setHdr(p=>({...p, movementType:'121'}))
     } catch(e){ console.error(e) }
   }
 
@@ -415,9 +419,9 @@ export default function GRNNew() {
                     if(id) loadGateEntry(id)
                   }}>
                   <option value="">-- Select Gate Entry --</option>
-                  {gates.map(g=>(
+                  {gates.filter(g=>g.partyType!=='CUSTOMER').map(g=>(
                     <option key={g.id} value={g.id}>
-                      {g.gateNo} · {g.vehicleNo} · {g.vendorName}
+                      {g.geNo} · {g.vehicleNo} · {g.vendorName}
                     </option>
                   ))}
                 </select>
@@ -553,7 +557,7 @@ export default function GRNNew() {
                     <span style={{ padding:'3px 10px',
                       borderRadius:8, fontSize:11, fontWeight:700,
                       background:'#D4EDDA', color:'#155724' }}>
-                      🚛 Gate Entry: {selGE.gateNo}
+                      🚛 Gate Entry: {selGE.geNo}
                     </span>
                   )}
                 </div>

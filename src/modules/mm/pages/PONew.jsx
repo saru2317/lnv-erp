@@ -19,10 +19,15 @@ const fmtC = n => '₹'+Number(n||0).toLocaleString('en-IN',
   {minimumFractionDigits:2,maximumFractionDigits:2})
 
 const PO_TYPES = [
-  { value:'PO',       label:'Purchase Order',  prefix:'PO'  },
-  { value:'SPO',      label:'Service PO',      prefix:'SPO' },
-  { value:'OPO',      label:'Open PO',         prefix:'OPO' },
-  { value:'DPO',      label:'Direct PO',       prefix:'DPO' },
+  { value:'PO',          label:'Purchase Order',  prefix:'PO'  },
+  { value:'SPO',         label:'Service PO',      prefix:'SPO' },
+  { value:'OPO',         label:'Open PO',         prefix:'OPO' },
+  { value:'DPO',         label:'Direct PO',       prefix:'DPO' },
+  // Our own material goes out (via Subcontracting screen), vendor
+  // processes it, sends it back. Lines here represent the labour/
+  // process charge only (HSN 9988) — never the material's own value,
+  // since we already own it and never bought it from this vendor.
+  { value:'SUBCONTRACT', label:'Subcontract PO',  prefix:'SCPO'},
 ]
 
 const EMPTY_LINE = {

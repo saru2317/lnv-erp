@@ -9,6 +9,7 @@ import PageLoader from '@components/ui/PageLoader'
 
 const WMDashboard       = lazy(() => import('./WMDashboard'))
 const GateEntryList     = lazy(() => import('./GateEntryList'))
+const GateEntryNew      = lazy(() => import('./GateEntryNew'))
 const GRNList           = lazy(() => import('./GRNList'))
 const GRNNew            = lazy(() => import('./GRNNew'))
 const GoodsReceipt      = lazy(() => import('./GoodsReceipt'))
@@ -17,6 +18,7 @@ const StockList         = lazy(() => import('./StockList'))
 const StockReport       = lazy(() => import('./StockReport'))
 const StockTransfer     = lazy(() => import('./StockTransfer'))
 const StockAdjustment   = lazy(() => import('./StockAdjustment'))
+const JobWorkReceipt    = lazy(() => import('./JobWorkReceipt'))
 const BinMaster         = lazy(() => import('./BinMaster'))
 const BinStock          = lazy(() => import('./BinStock'))
 const WHMap             = lazy(() => import('./WHMap'))
@@ -60,6 +62,7 @@ const SIDEBAR_GROUPS = [
       { to:'/wm/stock/bin',    label:'Bin-wise Stock'    },
       { to:'/wm/transfer',     label:'Stock Transfer'    },
       { to:'/wm/adjustment',   label:'Stock Adjustment'  },
+      { to:'/wm/job-work-receipt', label:'Job Work Receipt' },
       { to:'/wm/physical',     label:'Physical Inventory'},
       { to:'/wm/reorder',      label:'Reorder List'      },
       { to:'/wm/expiry',       label:'Expiry Tracking'   },
@@ -87,6 +90,7 @@ export default function WMLayout() {
         <Routes>
           <Route index                 element={<WMDashboard />}       />
           <Route path="gate-entry"     element={<GateEntryList />}     />
+          <Route path="gate-entry/new" element={<GateEntryNew />}      />
           <Route path="grn"            element={<GRNList />}           />
           <Route path="grn/new"        element={<GRNNew />}            />
           <Route path="goods-receipt"  element={<GoodsReceipt />}      />
@@ -95,6 +99,7 @@ export default function WMLayout() {
           <Route path="stock/bin"      element={<BinStock />}          />
           <Route path="transfer"       element={<StockTransfer />}     />
           <Route path="adjustment"     element={<StockAdjustment />}   />
+          <Route path="job-work-receipt" element={<JobWorkReceipt />}  />
           <Route path="physical"       element={<PhysicalInventory />} />
           <Route path="reorder"        element={<ReorderList />}       />
           <Route path="expiry"         element={<ExpiryTracking />}    />

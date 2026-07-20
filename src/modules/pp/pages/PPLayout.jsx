@@ -22,9 +22,9 @@ const MouldMaster      = lazy(() => import('./MouldMaster'))
 const BatchManager     = lazy(() => import('./BatchManager'))
 const JobCardList      = lazy(() => import('./JobCardList'))
 const JobCardNew       = lazy(() => import('./JobCardNew'))
+const JobQueueScheduler= lazy(() => import('./JobQueueScheduler'))
 const JobTracker       = lazy(() => import('./JobTracker'))
 const ProcessExecution = lazy(() => import('./ProcessExecution'))
-const JobWorkInvoice   = lazy(() => import('./JobWorkInvoice'))
 const BOMList          = lazy(() => import('./BOMList'))
 const BOMNew           = lazy(() => import('./BOMNew'))
 const WorkCenterBoard  = lazy(() => import('./WorkCenterDashboard'))
@@ -80,7 +80,14 @@ const PLANNER_SIDEBAR = [
   { label:'Job Work', icon:'🔧', items:[
     { to:'/pp/job-cards',    label:'Job Card Register' },
     { to:'/pp/job-card/new', label:'New Job Card'      },
-    { to:'/pp/job-invoice',  label:'Job Work Invoice'  },
+    { to:'/pp/job-queue',    label:'Job Queue (Board)' },
+    { to:'/pp/job-tracker',  label:'Job Tracker'       },
+    // Real Job Work / Labour Invoice screen lives in SD (rate-card
+    // driven, wired to /api/sd/labour-invoice). The old /pp/job-invoice
+    // page was a static mock (_ppConfig.js demo data, no API calls,
+    // "Save" just flipped a local flag) — removed rather than fixed,
+    // since a genuine working version already exists.
+    { to:'/sd/labour-invoice', label:'Job Work Invoice (SD)' },
   ]},
   { label:'BOM & Routing', icon:'📐', items:[
     { to:'/pp/bom',          label:'Bill of Materials (CS03)' },
@@ -114,6 +121,7 @@ const OPERATOR_SIDEBAR = [
     { to:'/pp/mould-master',  label:'Mould Status'   },
   ]},
   { label:'Job Work', icon:'🔧', items:[
+    { to:'/pp/job-queue',     label:'Job Queue (Board)' },
     { to:'/pp/job-tracker',   label:'Job Tracker'       },
     { to:'/pp/process-exec',  label:'Process Execution' },
   ]},
@@ -185,9 +193,9 @@ export default function PPLayout() {
           <Route path="job-cards"       element={<JobCardList />}      />
           <Route path="job-card/new"    element={<PlannerGuard><JobCardNew /></PlannerGuard>}          />
           <Route path="job-card/:id"    element={<JobCardNew />}       />
+          <Route path="job-queue"       element={<JobQueueScheduler />} />
           <Route path="job-tracker"     element={<JobTracker />}       />
           <Route path="process-exec"    element={<ProcessExecution />} />
-          <Route path="job-invoice"     element={<PlannerGuard><JobWorkInvoice /></PlannerGuard>}      />
 
           {/* BOM & Routing */}
           <Route path="bom"             element={<BOMList />}          />
