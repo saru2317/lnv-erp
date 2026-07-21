@@ -5,11 +5,11 @@ import toast from 'react-hot-toast'
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const hdr  = () => ({ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
 const hdr2 = () => ({ Authorization:`Bearer ${localStorage.getItem('lnv_token')}` })
-const INR  = v => '₹' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2})
+const fmtC = n => '₹' + Math.round(n||0).toLocaleString('en-IN')
 
-const inp = { width:'100%', padding:'7px 10px', fontSize:12, border:'1px solid #E0D5E0',
-  borderRadius:5, outline:'none', boxSizing:'border-box', fontFamily:'DM Sans,sans-serif' }
-const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:4, textTransform:'uppercase' }
+const inp = { padding:'7px 10px', border:'1.5px solid #E0D5E0',
+  borderRadius:5, fontSize:12, outline:'none', width:'100%', boxSizing:'border-box' }
+const lbl = { fontSize:10, fontWeight:700, color:'#495057', display:'block', marginBottom:3, textTransform:'uppercase' }
 
 const STATUS_STYLE = {
   OPEN:        { bg:'#FFF3CD', c:'#856404' },
@@ -19,16 +19,15 @@ const STATUS_STYLE = {
   CANCELLED:   { bg:'#F8D7DA', c:'#721C24' },
 }
 
-const BLANK = {
-  customerName:'', customerGstin:'', customerId:'',
-  itemCode:'', itemName:'', orderedQty:'', uom:'Nos',
-  processCode:'', processName:'', materialType:'', materialSupply:'without',
-  rateOverride:'', expectedDeliveryDate:'', remarks:'',
-}
+const newLine = () => ({
+  itemCode:'', itemName:'', orderedQty:1, uom:'Nos',
+  processCode:'', processName:'', materialSupply:'without',
+  rateOverride:'', remarks:'', _rateInfo:null,
+})
 
 export default function LabourOrder() {
   const nav = useNavigate()
-  const [tab, setTab] = useState('list')
+  const [view, setView] = useState('list') // 'list' | 'new'
   const [orders, setOrders] = useState([])
   const [customers, setCustomers] = useState([])
   const [processes, setProcesses] = useState([])
@@ -36,11 +35,12 @@ export default function LabourOrder() {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [statusF, setStatusF] = useState('')
-  const [custSearch, setCustSearch] = useState('')
-  const [showDrop, setShowDrop] = useState(false)
-  const [form, setForm] = useState(BLANK)
-  const [rateInfo, setRateInfo] = useState(null)
-  const set = (k,v) => setForm(f=>({...f,[k]:v}))
+
+  const [form, setForm] = useState({
+    customerId:'', customerName:'', customerGstin:'',
+    expectedDeliveryDate:'', remarks:'',
+  })
+  const [lines, setLines] = useState([newLine()])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -58,32 +58,64 @@ export default function LabourOrder() {
     fetch(`${BASE_URL}/process`, { headers:hdr2() }).then(r=>r.json()).then(d=>setProcesses(d.data||d||[])).catch(()=>{})
   },[load])
 
-  // Auto-lookup rate whenever process / material-supply / customer changes
-  useEffect(()=>{
-    if (!form.processName) { setRateInfo(null); return }
-    fetch(`${BASE_URL}/sd/labour-pricebook/get-rate`, {
-      method:'POST', headers:hdr(),
-      body: JSON.stringify({ processCode:form.processCode, processName:form.processName,
-        customerId:form.customerId, materialType:form.materialSupply })
-    }).then(r=>r.json()).then(d=>setRateInfo(d)).catch(()=>setRateInfo(null))
-  },[form.processName, form.processCode, form.materialSupply, form.customerId])
+  const resetForm = () => {
+    setForm({ customerId:'', customerName:'', customerGstin:'', expectedDeliveryDate:'', remarks:'' })
+    setLines([newLine()])
+  }
 
-  const reset = () => { setForm(BLANK); setCustSearch(''); setRateInfo(null) }
+  const onCustomerChange = id => {
+    const c = customers.find(c=>String(c.id)===id)
+    setForm(f=>({ ...f, customerId:id, customerName:c?.name||'', customerGstin:c?.gstin||'' }))
+    // Customer changed — every line's rate may differ (customer-specific
+    // price book overrides), refresh them all.
+    lines.forEach((l,i)=>{ if (l.processName) fetchRatePreview(i, l, id) })
+  }
+
+  const updLine = (i, changes) => setLines(prev => prev.map((l,idx)=> idx===i ? {...l,...changes} : l))
+
+  const fetchRatePreview = async (i, l, customerId=form.customerId) => {
+    if (!l.processName) return
+    try {
+      const res = await fetch(`${BASE_URL}/sd/labour-pricebook/get-rate`, {
+        method:'POST', headers:hdr(),
+        body: JSON.stringify({ processCode:l.processCode, processName:l.processName,
+          customerId, materialType:l.materialSupply })
+      })
+      const d = await res.json()
+      updLine(i, { _rateInfo: d })
+    } catch { updLine(i, { _rateInfo:null }) }
+  }
+
+  const lineCalc = l => {
+    const rate = l.rateOverride ? parseFloat(l.rateOverride) : (l._rateInfo?.rate||0)
+    const taxable = Math.max(rate * parseFloat(l.orderedQty||0), l._rateInfo?.minCharge||0)
+    const gstPct = l._rateInfo?.gstRate ?? 18
+    const gstAmt = taxable * gstPct / 100
+    return { rate, taxable, gst:gstAmt, total: taxable+gstAmt, gstPct }
+  }
+
+  const totals = lines.reduce((acc,l)=>{
+    const c = lineCalc(l)
+    return { taxable:acc.taxable+c.taxable, gst:acc.gst+c.gst, total:acc.total+c.total }
+  }, { taxable:0, gst:0, total:0 })
 
   const save = async () => {
     if (!form.customerName) return toast.error('Select customer')
-    if (!form.itemName)     return toast.error('Item name required')
-    if (!form.orderedQty || parseFloat(form.orderedQty)<=0) return toast.error('Enter a valid quantity')
-    if (!form.processName)  return toast.error('Select a process — used to look up the rate')
+    for (const [i,l] of lines.entries()) {
+      if (!l.itemName)    return toast.error(`Line ${i+1}: item required`)
+      if (!l.orderedQty || parseFloat(l.orderedQty)<=0) return toast.error(`Line ${i+1}: enter a valid quantity`)
+      if (!l.processName) return toast.error(`Line ${i+1}: select a process`)
+    }
     setSaving(true)
     try {
       const res = await fetch(`${BASE_URL}/sd/labour-orders`, {
-        method:'POST', headers:hdr(), body: JSON.stringify(form)
+        method:'POST', headers:hdr(),
+        body: JSON.stringify({ ...form, lines })
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error)
       toast.success(d.message)
-      reset(); setTab('list'); load()
+      resetForm(); setView('list'); load()
     } catch(e){ toast.error(e.message) } finally { setSaving(false) }
   }
 
@@ -97,11 +129,6 @@ export default function LabourOrder() {
     } catch(e){ toast.error(e.message) }
   }
 
-  const filtCust = customers.filter(c=>
-    c.name?.toLowerCase().includes(custSearch.toLowerCase()) ||
-    c.code?.toLowerCase().includes(custSearch.toLowerCase())
-  ).slice(0,8)
-
   const filtered = orders.filter(o=>{
     const matchS = !statusF || o.status===statusF
     const matchQ = !search ||
@@ -111,204 +138,233 @@ export default function LabourOrder() {
     return matchS && matchQ
   })
 
-  return (
+  if (view === 'list') return (
     <div>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-        <div>
-          <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:18,color:'#714B67'}}>
-            Labour Order
-            <small style={{fontSize:11,fontWeight:400,color:'#6C757D',marginLeft:8}}>Customer's job-work demand, rate locked in at agreement time</small>
-          </div>
-          <div style={{fontSize:11,color:'#6C757D',marginTop:2}}>
-            Created before material arrives — Job Cards can optionally be raised against one
-          </div>
+      <div className="lv-hdr">
+        <div className="lv-ttl">
+          Labour Order
+          <small>Customer's job-work demand · rate locked in at agreement time</small>
         </div>
-        <div style={{display:'flex',gap:8}}>
-          <button onClick={()=>setTab('list')}
-            style={{padding:'7px 14px',background:tab==='list'?'#714B67':'#fff',
-              color:tab==='list'?'#fff':'#6C757D',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>
-            List
-          </button>
-          <button onClick={()=>setTab('new')}
-            style={{padding:'7px 16px',background:tab==='new'?'#714B67':'#fff',
-              color:tab==='new'?'#fff':'#714B67',border:'1px solid #714B67',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
-            + New Labour Order
-          </button>
+        <div className="lv-acts">
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search LO, customer, item..."
+            style={{ ...inp, width:200 }} />
+          <select value={statusF} onChange={e=>setStatusF(e.target.value)} style={{ ...inp, width:140 }}>
+            <option value="">All Status</option>
+            {Object.keys(STATUS_STYLE).map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
+          </select>
+          <button className="btn btn-p sd-bsm" onClick={()=>{resetForm();setView('new')}}>+ New Labour Order</button>
         </div>
       </div>
 
-      {tab==='list' ? (
-        <div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:12}}>
-            {[
-              { l:'Total Orders', v:orders.length, c:'#714B67', bg:'#EDE0EA' },
-              { l:'Open',         v:orders.filter(o=>o.status==='OPEN').length, c:'#856404', bg:'#FFF3CD' },
-              { l:'In Progress',  v:orders.filter(o=>o.status==='IN_PROGRESS').length, c:'#084298', bg:'#CFE2FF' },
-              { l:'Completed',    v:orders.filter(o=>o.status==='COMPLETED'||o.status==='CLOSED').length, c:'#155724', bg:'#D4EDDA' },
-            ].map(k=>(
-              <div key={k.l} style={{background:'#fff',borderRadius:8,padding:'10px 14px',border:'1px solid #E0D5E0',borderLeft:`4px solid ${k.c}`}}>
-                <div style={{fontSize:15,fontWeight:800,color:k.c,fontFamily:'Syne,sans-serif'}}>{k.v}</div>
-                <div style={{fontSize:10,color:'#6C757D',marginTop:2}}>{k.l}</div>
-              </div>
-            ))}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:14 }}>
+        {[
+          { l:'Total Orders', v:orders.length, c:'#714B67', bg:'#EDE0EA' },
+          { l:'Open',         v:orders.filter(o=>o.status==='OPEN').length, c:'#856404', bg:'#FFF3CD' },
+          { l:'In Progress',  v:orders.filter(o=>o.status==='IN_PROGRESS').length, c:'#084298', bg:'#CFE2FF' },
+          { l:'Completed',    v:orders.filter(o=>o.status==='COMPLETED'||o.status==='CLOSED').length, c:'#155724', bg:'#D4EDDA' },
+        ].map(k=>(
+          <div key={k.l} style={{ background:'#fff', borderRadius:8, padding:'10px 14px', border:'1px solid #E0D5E0', borderLeft:`4px solid ${k.c}` }}>
+            <div style={{ fontSize:15, fontWeight:800, color:k.c, fontFamily:'Syne,sans-serif' }}>{k.v}</div>
+            <div style={{ fontSize:10, color:'#6C757D', marginTop:2 }}>{k.l}</div>
           </div>
+        ))}
+      </div>
 
-          <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search LO, customer, item..."
-              style={{padding:'7px 12px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none',width:220}} />
-            <select value={statusF} onChange={e=>setStatusF(e.target.value)}
-              style={{padding:'7px 10px',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,outline:'none'}}>
-              <option value="">All Status</option>
-              {Object.keys(STATUS_STYLE).map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
-            </select>
-            <span style={{marginLeft:'auto',fontSize:11,color:'#6C757D'}}>{filtered.length} of {orders.length} records</span>
+      {loading ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D' }}>⏳ Loading...</div>
+      ) : filtered.length===0 ? (
+        <div style={{ padding:40, textAlign:'center', color:'#6C757D', background:'#fff', borderRadius:8, border:'2px dashed #E0D5E0' }}>
+          No Labour Orders yet.
+          <div style={{ marginTop:12 }}>
+            <button className="btn btn-p sd-bsm" onClick={()=>{resetForm();setView('new')}}>+ New Labour Order</button>
           </div>
-
-          {loading ? (
-            <div style={{padding:40,textAlign:'center',color:'#6C757D'}}>⏳ Loading...</div>
-          ) : filtered.length===0 ? (
-            <div style={{padding:40,textAlign:'center',color:'#6C757D',background:'#fff',borderRadius:8,border:'2px dashed #E0D5E0'}}>
-              No Labour Orders yet.
-              <div style={{marginTop:12}}><button onClick={()=>setTab('new')} style={{padding:'7px 16px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>+ New Labour Order</button></div>
-            </div>
-          ) : (
-            <div style={{border:'1px solid #E0D5E0',borderRadius:8,overflow:'hidden'}}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-                <thead style={{background:'#F8F4F8'}}>
-                  <tr style={{borderBottom:'2px solid #E0D5E0'}}>
-                    {['LO No','Customer','Item','Qty','Rate','Process','Expected','Status',''].map(h=>(
-                      <th key={h} style={{padding:'8px 10px',fontSize:10,fontWeight:700,color:'#6C757D',textAlign:'left',textTransform:'uppercase'}}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((o,i)=>(
-                    <tr key={o.id} style={{borderBottom:'1px solid #F0EEF0',background:i%2===0?'#fff':'#FDFBFD'}}>
-                      <td style={{padding:'8px 10px',fontFamily:'DM Mono,monospace',color:'#714B67',fontWeight:600}}>{o.loNo}</td>
-                      <td style={{padding:'8px 10px'}}>{o.customerName}</td>
-                      <td style={{padding:'8px 10px',fontWeight:600}}>{o.itemCode?`${o.itemCode} — `:''}{o.itemName}</td>
-                      <td style={{padding:'8px 10px',fontFamily:'DM Mono,monospace'}}>{Number(o.orderedQty).toFixed(2)} {o.uom}</td>
-                      <td style={{padding:'8px 10px',fontFamily:'DM Mono,monospace'}}>{INR(o.materialSupply==='with'?o.rateWithMat:o.rateWithoutMat)}/{o.pricingBasis}</td>
-                      <td style={{padding:'8px 10px'}}>{o.processName}</td>
-                      <td style={{padding:'8px 10px',fontSize:11,color:'#6C757D'}}>{o.expectedDeliveryDate?new Date(o.expectedDeliveryDate).toLocaleDateString('en-IN'):'—'}</td>
-                      <td style={{padding:'8px 10px'}}>
-                        <span style={{padding:'3px 8px',borderRadius:10,fontSize:10,fontWeight:700,
-                          background:STATUS_STYLE[o.status]?.bg,color:STATUS_STYLE[o.status]?.c}}>{o.status?.replace('_',' ')}</span>
-                      </td>
-                      <td style={{padding:'8px 10px'}}>
-                        {o.status==='OPEN' && (
-                          <button onClick={()=>cancelOrder(o.id)} style={{padding:'3px 8px',fontSize:11,background:'#F8D7DA',color:'#721C24',border:'none',borderRadius:4,cursor:'pointer'}}>Cancel</button>
-                        )}
-                        {(o.status==='OPEN') && (
-                          <button onClick={()=>nav(`/pp/job-card/new?loId=${o.id}`)} style={{padding:'3px 8px',fontSize:11,background:'#714B67',color:'#fff',border:'none',borderRadius:4,cursor:'pointer',marginLeft:4}}>+ Job Card</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       ) : (
-        <div>
-          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
-            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Customer</div>
-            <div style={{position:'relative',maxWidth:400}}>
-              <label style={lbl}>Customer Name *</label>
-              <input style={inp} value={custSearch||form.customerName}
-                onChange={e=>{ setCustSearch(e.target.value); set('customerName',e.target.value); setShowDrop(true) }}
-                onFocus={()=>setShowDrop(true)} onBlur={()=>setTimeout(()=>setShowDrop(false),200)}
-                placeholder="Type to search..." />
-              {showDrop && filtCust.length>0 && (
-                <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:'#fff',
-                  border:'1px solid #E0D5E0',borderRadius:6,boxShadow:'0 4px 16px rgba(0,0,0,.12)',maxHeight:180,overflowY:'auto'}}>
-                  {filtCust.map(c=>(
-                    <div key={c.id} onClick={()=>{
-                        set('customerName',c.name); set('customerGstin',c.gstin||''); set('customerId',String(c.id))
-                        setCustSearch(c.name); setShowDrop(false)
-                      }}
-                      style={{padding:'8px 12px',cursor:'pointer',borderBottom:'1px solid #F0EEEB',fontSize:12}}>
-                      {c.name} {c.gstin && <span style={{color:'#6C757D',fontSize:11}}> · {c.gstin}</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
-            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Item &amp; Quantity</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 2fr 1fr 1fr',gap:12}}>
-              <div><label style={lbl}>Item Code</label>
-                <input style={inp} value={form.itemCode} onChange={e=>set('itemCode',e.target.value)} placeholder="Optional" /></div>
-              <div><label style={lbl}>Item Name *</label>
-                <input style={inp} value={form.itemName} onChange={e=>set('itemName',e.target.value)} /></div>
-              <div><label style={lbl}>Ordered Qty *</label>
-                <input type="number" style={inp} value={form.orderedQty} onChange={e=>set('orderedQty',e.target.value)} /></div>
-              <div><label style={lbl}>UOM</label>
-                <input style={inp} value={form.uom} onChange={e=>set('uom',e.target.value)} /></div>
-            </div>
-          </div>
-
-          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
-            <div style={{fontWeight:700,fontSize:13,color:'#714B67',marginBottom:12}}>Process &amp; Rate</div>
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12,marginBottom:10}}>
-              <div><label style={lbl}>Process *</label>
-                <select style={inp} value={form.processName}
-                  onChange={e=>{
-                    const p = processes.find(pr=>(pr.name||pr.processName)===e.target.value)
-                    set('processName', e.target.value); set('processCode', p?.code||p?.processCode||'')
-                  }}>
-                  <option value="">-- Select Process --</option>
-                  {processes.map(p=>(
-                    <option key={p.id||p.code||p.name} value={p.name||p.processName}>{p.name||p.processName}</option>
-                  ))}
-                </select>
-              </div>
-              <div><label style={lbl}>Material Supply</label>
-                <select style={inp} value={form.materialSupply} onChange={e=>set('materialSupply',e.target.value)}>
-                  <option value="without">Without Material (labour only)</option>
-                  <option value="with">With Material (we supply)</option>
-                </select>
-              </div>
-              <div><label style={lbl}>Expected Delivery</label>
-                <input type="date" style={inp} value={form.expectedDeliveryDate} onChange={e=>set('expectedDeliveryDate',e.target.value)} /></div>
-            </div>
-
-            {form.processName && (
-              <div style={{background: rateInfo?.found?'#D4EDDA':'#FFF3CD', borderRadius:6, padding:'10px 14px', marginBottom:10}}>
-                {rateInfo?.found ? (
-                  <div style={{fontSize:12,color:'#155724'}}>
-                    Rate from price book: <strong>{INR(rateInfo.rate)}/{rateInfo.basis}</strong>
-                    {rateInfo.minCharge>0 && <> · Min charge {INR(rateInfo.minCharge)}</>} · GST {rateInfo.gstRate}%
-                  </div>
-                ) : (
-                  <div style={{fontSize:12,color:'#856404'}}>No price book entry found for this process — enter a manual rate below or it'll be locked in at ₹0.</div>
-                )}
-              </div>
-            )}
-
-            <div style={{maxWidth:240}}>
-              <label style={lbl}>Manual Rate Override</label>
-              <input type="number" style={inp} value={form.rateOverride} onChange={e=>set('rateOverride',e.target.value)}
-                placeholder={rateInfo?.found ? `Leave blank to use ${rateInfo.rate}` : 'Required — no price book match'} />
-            </div>
-          </div>
-
-          <div style={{background:'#fff',border:'1px solid #E0D5E0',borderRadius:8,padding:16,marginBottom:12}}>
-            <label style={lbl}>Remarks</label>
-            <input style={inp} value={form.remarks} onChange={e=>set('remarks',e.target.value)} placeholder="Optional notes..." />
-          </div>
-
-          <div style={{display:'flex',justifyContent:'flex-end',gap:8}}>
-            <button onClick={()=>{reset();setTab('list')}} style={{padding:'8px 16px',background:'#fff',color:'#6C757D',border:'1px solid #E0D5E0',borderRadius:6,fontSize:12,cursor:'pointer'}}>Cancel</button>
-            <button disabled={saving} onClick={save} style={{padding:'8px 20px',background:'#714B67',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer'}}>
-              {saving?'⏳ Saving...':'Save Labour Order'}
-            </button>
-          </div>
+        <div style={{ border:'1px solid #E0D5E0', borderRadius:8, overflow:'hidden' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+            <thead>
+              <tr style={{ background:'#714B67', color:'#fff' }}>
+                {['LO No','Customer','Lines','Items','Total Value','Expected','Status',''].map(h=>(
+                  <th key={h} style={{ padding:'7px 10px', textAlign:'left', fontSize:10 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((o,i)=>(
+                <tr key={o.id} style={{ borderBottom:'1px solid #F0F0F0', background:i%2===0?'#fff':'#FAFAFA' }}>
+                  <td style={{ padding:'8px 10px', fontFamily:'DM Mono,monospace', color:'#714B67', fontWeight:600 }}>{o.loNo}</td>
+                  <td style={{ padding:'8px 10px' }}>{o.customerName}</td>
+                  <td style={{ padding:'8px 10px', fontFamily:'DM Mono,monospace' }}>{o.lines?.length||1}</td>
+                  <td style={{ padding:'8px 10px', fontWeight:600 }}>
+                    {o.lines?.length>1 ? `${o.lines[0].itemName} +${o.lines.length-1} more` : (o.itemCode?`${o.itemCode} — `:'')+o.itemName}
+                  </td>
+                  <td style={{ padding:'8px 10px', fontFamily:'DM Mono,monospace', fontWeight:600 }}>{fmtC(o.grandTotal||0)}</td>
+                  <td style={{ padding:'8px 10px', fontSize:11, color:'#6C757D' }}>{o.expectedDeliveryDate?new Date(o.expectedDeliveryDate).toLocaleDateString('en-IN'):'—'}</td>
+                  <td style={{ padding:'8px 10px' }}>
+                    <span style={{ padding:'3px 8px', borderRadius:10, fontSize:10, fontWeight:700,
+                      background:STATUS_STYLE[o.status]?.bg, color:STATUS_STYLE[o.status]?.c }}>{o.status?.replace('_',' ')}</span>
+                  </td>
+                  <td style={{ padding:'8px 10px' }}>
+                    {o.status==='OPEN' && (
+                      <button onClick={()=>cancelOrder(o.id)} style={{ padding:'3px 8px', fontSize:11, background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:4, cursor:'pointer' }}>Cancel</button>
+                    )}
+                    {o.status==='OPEN' && (
+                      <button onClick={()=>nav(`/pp/job-card/new?loId=${o.id}`)} style={{ padding:'3px 8px', fontSize:11, background:'#714B67', color:'#fff', border:'none', borderRadius:4, cursor:'pointer', marginLeft:4 }}>+ Job Card</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="lv-hdr">
+        <div className="lv-ttl">
+          New Labour Order
+          <small>Job Work · rate locked in at agreement, before material arrives</small>
+        </div>
+        <div className="lv-acts">
+          <button className="btn btn-s sd-bsm" onClick={()=>{resetForm();setView('list')}}>← Cancel</button>
+          <button className="btn btn-p sd-bsm" disabled={saving} onClick={save}>💾 Save Labour Order</button>
+        </div>
+      </div>
+
+      {/* Customer & Order Header */}
+      <div className="fi-form-sec">
+        <div className="fi-form-sec-hdr">👤 Customer &amp; Order Header</div>
+        <div className="fi-form-sec-body">
+          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:12, marginBottom:12 }}>
+            <div>
+              <label style={lbl}>Customer *</label>
+              <select style={inp} value={form.customerId} onChange={e=>onCustomerChange(e.target.value)}>
+                <option value="">-- Select Customer --</option>
+                {customers.map(c=>(
+                  <option key={c.id} value={c.id}>{c.code||c.customerCode} — {c.name||c.customerName}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>Customer GSTIN</label>
+              <input style={{ ...inp, background:'#F8F9FA', fontFamily:'DM Mono,monospace', fontSize:11 }} value={form.customerGstin} readOnly />
+            </div>
+            <div>
+              <label style={lbl}>Expected Delivery</label>
+              <input type="date" style={inp} value={form.expectedDeliveryDate} onChange={e=>setForm(f=>({...f,expectedDeliveryDate:e.target.value}))} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Line Items */}
+      <div className="fi-form-sec">
+        <div className="fi-form-sec-hdr" style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span>📦 Items &amp; Processes</span>
+          <button onClick={()=>setLines(p=>[...p,newLine()])}
+            style={{ padding:'3px 12px', fontSize:11, cursor:'pointer', background:'#fff', border:'1px solid #E0D5E0', borderRadius:4, color:'#714B67' }}>
+            + Add Row
+          </button>
+        </div>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+            <thead>
+              <tr style={{ background:'#714B67', color:'#fff' }}>
+                {['#','Item','Process','Material Supply','Qty','UOM','Rate','Taxable','GST','Total',''].map((h,i)=>(
+                  <th key={i} style={{ padding:'7px 10px', textAlign:'left', whiteSpace:'nowrap', fontSize:10 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((l,i)=>{
+                const c = lineCalc(l)
+                return (
+                  <tr key={i} style={{ borderBottom:'1px solid #F0F0F0', background:i%2===0?'#fff':'#FAFAFA' }}>
+                    <td style={{ padding:'5px 8px', color:'#6C757D', fontWeight:700, width:24 }}>{i+1}</td>
+                    <td style={{ padding:'4px 6px', minWidth:170 }}>
+                      <input style={{ ...inp, fontSize:11, marginBottom:2 }} placeholder="Item code (optional)"
+                        value={l.itemCode} onChange={e=>updLine(i,{itemCode:e.target.value})} />
+                      <input style={{ ...inp, fontSize:11 }} placeholder="Item name *"
+                        value={l.itemName} onChange={e=>updLine(i,{itemName:e.target.value})} />
+                    </td>
+                    <td style={{ padding:'4px 6px', minWidth:150 }}>
+                      <select style={{ ...inp, fontSize:11 }} value={l.processName}
+                        onChange={e=>{
+                          const p = processes.find(pr=>(pr.name||pr.processName)===e.target.value)
+                          updLine(i,{processName:e.target.value, processCode:p?.code||p?.processCode||''})
+                          setTimeout(()=>fetchRatePreview(i,{...l,processName:e.target.value,processCode:p?.code||p?.processCode||''}),0)
+                        }}>
+                        <option value="">-- Process --</option>
+                        {processes.map(p=>(
+                          <option key={p.id||p.code||p.name} value={p.name||p.processName}>{p.name||p.processName}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ padding:'4px 6px', width:120 }}>
+                      <select style={{ ...inp, fontSize:11 }} value={l.materialSupply}
+                        onChange={e=>{ updLine(i,{materialSupply:e.target.value}); setTimeout(()=>fetchRatePreview(i,{...l,materialSupply:e.target.value}),0) }}>
+                        <option value="without">Without Mat.</option>
+                        <option value="with">With Mat.</option>
+                      </select>
+                    </td>
+                    <td style={{ padding:'4px 6px', width:65 }}>
+                      <input type="number" style={{ ...inp, textAlign:'right' }} value={l.orderedQty} min={0}
+                        onChange={e=>updLine(i,{orderedQty:parseFloat(e.target.value)||0})} />
+                    </td>
+                    <td style={{ padding:'4px 6px', width:65 }}>
+                      <select style={inp} value={l.uom} onChange={e=>updLine(i,{uom:e.target.value})}>
+                        {['Nos','Kg','Mtr','Ltr','Sqft','Set','Pcs'].map(u=><option key={u}>{u}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding:'4px 6px', width:85 }}>
+                      <input type="number" style={{ ...inp, textAlign:'right' }} value={l.rateOverride}
+                        placeholder={l._rateInfo?.found?String(l._rateInfo.rate):'—'}
+                        onChange={e=>updLine(i,{rateOverride:e.target.value})} />
+                    </td>
+                    <td style={{ padding:'4px 8px', fontFamily:'DM Mono,monospace', textAlign:'right', background:'#F8F9FA' }}>{fmtC(c.taxable)}</td>
+                    <td style={{ padding:'4px 8px', fontFamily:'DM Mono,monospace', textAlign:'right', color:'#856404' }}>{fmtC(c.gst)}</td>
+                    <td style={{ padding:'4px 8px', fontFamily:'DM Mono,monospace', textAlign:'right', fontWeight:700 }}>{fmtC(c.total)}</td>
+                    <td style={{ padding:'4px 6px', textAlign:'center' }}>
+                      {lines.length>1 && (
+                        <button onClick={()=>setLines(p=>p.filter((_,idx)=>idx!==i))}
+                          style={{ background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:3, padding:'2px 6px', cursor:'pointer' }}>✕</button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            <tfoot>
+              <tr style={{ background:'#EDE0EA', fontWeight:700 }}>
+                <td colSpan={7} style={{ padding:'8px 10px', fontSize:12, color:'#714B67' }}>Totals</td>
+                <td style={{ padding:'8px 10px', textAlign:'right', fontFamily:'DM Mono,monospace' }}>{fmtC(totals.taxable)}</td>
+                <td style={{ padding:'8px 10px', textAlign:'right', fontFamily:'DM Mono,monospace', color:'#856404' }}>{fmtC(totals.gst)}</td>
+                <td style={{ padding:'8px 10px', textAlign:'right', fontFamily:'DM Mono,monospace', fontWeight:800, fontSize:14, color:'#714B67' }}>{fmtC(totals.total)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        {lines.some(l=>l.processName && !l._rateInfo?.found) && (
+          <div style={{ padding:'8px 14px', fontSize:11, color:'#856404', background:'#FFF3CD' }}>
+            One or more lines have no price book match — enter a manual rate for those, or they'll lock in at ₹0.
+          </div>
+        )}
+      </div>
+
+      {/* Remarks */}
+      <div className="fi-form-sec">
+        <div className="fi-form-sec-hdr">📋 Remarks</div>
+        <div className="fi-form-sec-body">
+          <textarea style={{ ...inp, resize:'vertical' }} rows={2} value={form.remarks}
+            onChange={e=>setForm(f=>({...f,remarks:e.target.value}))}
+            placeholder="Internal notes, delivery instructions..." />
+        </div>
+      </div>
     </div>
   )
 }

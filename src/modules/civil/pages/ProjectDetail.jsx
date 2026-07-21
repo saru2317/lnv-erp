@@ -38,6 +38,9 @@ export default function ProjectDetail() {
   const [editingUnitId, setEditingUnitId] = useState(null) // null = creating new house; set = editing existing
   const [roomsFor, setRoomsFor] = useState(null)
   const [addonsFor, setAddonsFor] = useState(null) // room object, or null when add-ons modal closed
+  const [detailFor, setDetailFor] = useState(null) // room object, or null when detail modal closed
+  const [roomDetail, setRoomDetail] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [addonCatalog, setAddonCatalog] = useState([])
   const [roomAddons, setRoomAddons] = useState([])
   const [addonPick, setAddonPick] = useState('')
@@ -47,6 +50,15 @@ export default function ProjectDetail() {
     fetch(`${BASE}/civil/room-addon-master`, { headers:hdr2() }).then(r=>r.json()).then(d=>setAddonCatalog(d.data||[]))
     fetch(`${BASE}/civil/rooms/${addonsFor.id}/addons`, { headers:hdr2() }).then(r=>r.json()).then(d=>setRoomAddons(d.data||[]))
   }, [addonsFor])
+
+  useEffect(() => {
+    if (!detailFor) { setRoomDetail(null); return }
+    setDetailLoading(true)
+    fetch(`${BASE}/civil/rooms/${detailFor.id}/detail`, { headers:hdr2() })
+      .then(r=>r.json()).then(d=>setRoomDetail(d.data||null))
+      .catch(()=>setRoomDetail(null))
+      .finally(()=>setDetailLoading(false))
+  }, [detailFor])
 
   const addRoomAddon = async () => {
     if (!addonPick) return toast.error('Pick an add-on first')
@@ -386,6 +398,11 @@ export default function ProjectDetail() {
                         borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
                       🚪 Manage Rooms
                     </button>
+                    <button onClick={()=>nav(`/civil/units/${u.id}/work-status`)}
+                      style={{width:'100%',padding:'7px',background:'#0f172a',color:'#fff',border:'none',
+                        borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
+                      📊 Daily Work Status
+                    </button>
                     <button onClick={()=>editUnit(u)}
                       style={{width:'100%',padding:'7px',background:'#FEF9E7',color:'#B8860B',border:'1.5px solid #F9E79F',
                         borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>
@@ -537,6 +554,11 @@ export default function ProjectDetail() {
                         style={{padding:'4px 9px',background:'#FEF9E7',color:'#B8860B',border:'1px solid #F9E79F',borderRadius:4,cursor:'pointer',fontSize:11,fontWeight:700}}>
                         🎨 Add-ons {(r.addons||[]).length>0?`(${r.addons.length})`:''}
                       </button>
+                      {' '}
+                      <button onClick={()=>setDetailFor(r)}
+                        style={{padding:'4px 9px',background:'#EBF5FB',color:'#1A5276',border:'1px solid #AED6F1',borderRadius:4,cursor:'pointer',fontSize:11,fontWeight:700}}>
+                        📊 Status
+                      </button>
                     </td>
                     <td style={{padding:'7px 10px'}}>
                       <button onClick={()=>removeRoom(r.id)}
@@ -632,6 +654,116 @@ export default function ProjectDetail() {
                   style={{padding:'7px 16px',background:'#6E2C00',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:12}}>Add</button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Detail modal — activity breakdown + real today-vs-yesterday delta */}
+      {detailFor && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',
+          display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
+          onClick={()=>setDetailFor(null)}>
+          <div style={{background:'#fff',borderRadius:8,padding:20,width:640,maxHeight:'85vh',overflow:'auto'}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <div style={{fontSize:15,fontWeight:800,color:'#6E2C00'}}>📊 {detailFor.roomName} — Work Status</div>
+              <button onClick={()=>setDetailFor(null)}
+                style={{padding:'4px 10px',background:'#fff',color:'#6E2C00',border:'1.5px solid #6E2C00',borderRadius:5,cursor:'pointer',fontWeight:700,fontSize:11}}>✕ Close</button>
+            </div>
+
+            {detailLoading ? (
+              <div style={{padding:40,textAlign:'center',color:'#aaa'}}>⏳ Loading...</div>
+            ) : !roomDetail ? (
+              <div style={{padding:40,textAlign:'center',color:'#aaa'}}>Could not load room detail.</div>
+            ) : (
+              <>
+                <div style={{background:'#FDF2E9',borderRadius:8,padding:14,marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontSize:11,color:'#888'}}>{roomDetail.unitNo} · {roomDetail.projectName}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#6E2C00',marginTop:2}}>{roomDetail.room.roomType} · {roomDetail.room.areaSqft||'—'} sqft</div>
+                  </div>
+                  <div style={{fontSize:24,fontWeight:900,color:'#1E8449'}}>{roomDetail.room.progress}%</div>
+                </div>
+
+                <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>Activities</div>
+                {roomDetail.activities.length===0 ? (
+                  <div style={{padding:20,textAlign:'center',color:'#aaa',background:'#FAF8FA',borderRadius:8,marginBottom:14}}>
+                    No BOQ activities assigned to this room yet — add them via BOQ setup with this room selected.
+                  </div>
+                ) : (
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,marginBottom:16}}>
+                    <thead>
+                      <tr style={{background:'#FDF2E9'}}>
+                        {['Activity','Description','Done %','Last Updated','Change'].map(h=>(
+                          <th key={h} style={{padding:'7px 8px',textAlign:'left',fontSize:10,color:'#6E2C00',fontWeight:700}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roomDetail.activities.map(a=>(
+                        <tr key={a.boqId} style={{borderBottom:'1px solid #F0F0F0'}}>
+                          <td style={{padding:'7px 8px',fontWeight:700,color:'#6E2C00'}}>{a.activity}</td>
+                          <td style={{padding:'7px 8px',color:'#555'}}>{a.description}</td>
+                          <td style={{padding:'7px 8px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <div style={{width:50,height:6,background:'#F0E8EC',borderRadius:3,overflow:'hidden'}}>
+                                <div style={{height:'100%',width:`${a.donePct}%`,background:'#1E8449',borderRadius:3}}/>
+                              </div>
+                              <span style={{fontWeight:700,color:'#1E8449'}}>{a.donePct.toFixed(0)}%</span>
+                            </div>
+                          </td>
+                          <td style={{padding:'7px 8px',fontSize:11,color:'#888'}}>
+                            {a.lastUpdated ? new Date(a.lastUpdated).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : 'Never'}
+                          </td>
+                          <td style={{padding:'7px 8px'}}>
+                            {a.deltaPct!=null ? (
+                              <span style={{fontWeight:700,color:a.deltaPct>0?'#1E8449':'#888'}}>
+                                {a.deltaPct>0?'+':''}{a.deltaPct.toFixed(0)}% since {new Date(a.priorDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}
+                              </span>
+                            ) : a.lastUpdated ? (
+                              <span style={{fontSize:11,color:'#aaa'}}>First entry</span>
+                            ) : (
+                              <span style={{fontSize:11,color:'#C0392B'}}>Not started</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                {roomDetail.addons?.length>0 && (
+                  <>
+                    <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>Add-ons</div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
+                      {roomDetail.addons.map((a,i)=>(
+                        <div key={i} style={{background:'#FEF9E7',border:'1px solid #F9E79F',borderRadius:6,padding:'6px 10px',fontSize:11}}>
+                          {a.name} — <strong>{a.progress}%</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div style={{fontSize:12,fontWeight:700,color:'#6E2C00',marginBottom:8}}>
+                  Workers on Site {roomDetail.lastDprDate && `(${new Date(roomDetail.lastDprDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})})`}
+                </div>
+                {roomDetail.lastDayLabour.length===0 ? (
+                  <div style={{fontSize:11,color:'#aaa'}}>No DPR labour entries recorded yet.</div>
+                ) : (
+                  <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                    {roomDetail.lastDayLabour.filter(l=>parseFloat(l.count||0)>0).map((l,i)=>(
+                      <div key={i} style={{background:'#EBF5FB',border:'1px solid #AED6F1',borderRadius:6,padding:'6px 10px',fontSize:11}}>
+                        {l.trade}: <strong>{l.count}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{fontSize:10,color:'#aaa',marginTop:10}}>
+                  Worker counts are project-wide for that day (site labour isn't tracked per room) — shown here for context.
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

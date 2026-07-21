@@ -58,7 +58,8 @@ function GatePassModal({ entry, onClose }) {
               ['Vehicle Type',  entry.vehicleType],
               ['Driver Name',   entry.driverName||'—'],
               ['Driver Phone',  entry.driverPhone||'—'],
-              ['Vendor',        entry.vendorName],
+              [entry.partyType==='CUSTOMER'?'Customer':'Vendor',
+                entry.partyType==='CUSTOMER'?entry.customerName:entry.vendorName],
               ['DC No.',        entry.dcNo||'—'],
               ['PO No.',        entry.poNo||'—'],
               ['Material',      entry.materialDesc||'—'],
@@ -115,6 +116,9 @@ export default function GateEntryList() {
   const [showPass,setShowPass] = useState(null)
   const [search,  setSearch]   = useState('')
   const [chip,    setChip]     = useState('all')
+  const [partyF,  setPartyF]   = useState('all')
+  const [dateFrom,setDateFrom] = useState('')
+  const [dateTo,  setDateTo]   = useState('')
 
   const fetchEntries = useCallback(async () => {
     setLoading(true)
@@ -143,12 +147,17 @@ export default function GateEntryList() {
 
   const filtered = entries.filter(e => {
     const matchChip = chip==='all' || e.status===chip
+    const matchParty = partyF==='all' || e.partyType===partyF
     const matchSearch = !search ||
       e.gateNo?.toLowerCase().includes(search.toLowerCase()) ||
       e.vehicleNo?.toLowerCase().includes(search.toLowerCase()) ||
       e.vendorName?.toLowerCase().includes(search.toLowerCase()) ||
+      e.customerName?.toLowerCase().includes(search.toLowerCase()) ||
       e.poNo?.toLowerCase().includes(search.toLowerCase())
-    return matchChip && matchSearch
+    const entryDate = (e.date || e.createdAt || '').slice(0,10)
+    const matchFrom = !dateFrom || entryDate >= dateFrom
+    const matchTo   = !dateTo   || entryDate <= dateTo
+    return matchChip && matchParty && matchSearch && matchFrom && matchTo
   })
 
   const inside = entries.filter(e=>e.status==='IN').length
@@ -167,7 +176,7 @@ export default function GateEntryList() {
           )}
         </div>
         <div className="lv-acts">
-          <input placeholder="Search Gate No., Vehicle, Vendor..."
+          <input placeholder="Search Gate No., Vehicle, Vendor, Customer..."
             value={search}
             onChange={e=>setSearch(e.target.value)}
             style={{ padding:'6px 12px',
@@ -232,6 +241,46 @@ export default function GateEntryList() {
         ))}
       </div>
 
+      {/* Party + Date filters */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:10,
+        alignItems:'center', marginBottom:14 }}>
+        <div className="mm-chips">
+          {[['all','All Parties'],['SUPPLIER','Supplier'],
+            ['CUSTOMER','Customer']].map(([k,l])=>(
+            <div key={k} className={`mm-chip${partyF===k?' on':''}`}
+              onClick={()=>setPartyF(k)}>
+              {l} <strong style={{ marginLeft:4 }}>
+                {k==='all'?entries.length
+                  :entries.filter(e=>e.partyType===k).length}
+              </strong>
+            </div>
+          ))}
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <label style={{ fontSize:11, color:'#6C757D', fontWeight:700 }}>From</label>
+          <input type="date" value={dateFrom}
+            onChange={e=>setDateFrom(e.target.value)}
+            style={{ padding:'5px 8px', border:'1px solid #E0D5E0',
+              borderRadius:5, fontSize:12 }} />
+          <label style={{ fontSize:11, color:'#6C757D', fontWeight:700 }}>To</label>
+          <input type="date" value={dateTo}
+            onChange={e=>setDateTo(e.target.value)}
+            style={{ padding:'5px 8px', border:'1px solid #E0D5E0',
+              borderRadius:5, fontSize:12 }} />
+          {(dateFrom || dateTo || partyF!=='all') && (
+            <button onClick={()=>{ setDateFrom(''); setDateTo(''); setPartyF('all') }}
+              style={{ padding:'5px 10px', background:'#fff',
+                border:'1px solid #E0D5E0', borderRadius:5,
+                fontSize:11, color:'#6C757D', cursor:'pointer' }}>
+              ✕ Clear
+            </button>
+          )}
+        </div>
+        <div style={{ marginLeft:'auto', fontSize:11, color:'#6C757D' }}>
+          {filtered.length} of {entries.length} entries
+        </div>
+      </div>
+
       {loading ? (
         <div style={{ padding:40, textAlign:'center',
           color:'#6C757D' }}>⏳ Loading...</div>
@@ -256,7 +305,7 @@ export default function GateEntryList() {
               position:'sticky', top:0 }}>
               <tr style={{ borderBottom:'2px solid #E0D5E0' }}>
                 {['Gate No.','Date/Time','Vehicle',
-                  'Driver','Vendor','PO Ref',
+                  'Driver','Vendor / Customer','PO Ref',
                   'Purpose','DC No.','Status',
                   'Actions'].map(h=>(
                   <th key={h} style={{ padding:'8px 10px',
@@ -290,7 +339,7 @@ export default function GateEntryList() {
                     <td style={{ padding:'8px 10px',
                       fontSize:11, color:'#6C757D' }}>
                       <div>
-                        {new Date(e.entryDate)
+                        {new Date(e.date)
                           .toLocaleDateString('en-IN')}
                       </div>
                       <div style={{ fontWeight:700,
@@ -320,7 +369,14 @@ export default function GateEntryList() {
                       </div>
                     </td>
                     <td style={{ padding:'8px 10px',
-                      fontWeight:600 }}>{e.vendorName}</td>
+                      fontWeight:600 }}>
+                      {e.partyType==='CUSTOMER' ? e.customerName : e.vendorName}
+                      {e.partyType && (
+                        <div style={{ fontSize:9, color:'#ADB5BD', fontWeight:400 }}>
+                          {e.partyType==='CUSTOMER'?'Customer':'Supplier'}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding:'8px 10px',
                       fontFamily:'DM Mono,monospace',
                       fontSize:11, color:'#714B67' }}>

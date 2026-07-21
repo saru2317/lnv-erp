@@ -47,6 +47,7 @@ export default function DeliveryChallan() {
   const [openSOs,    setOpenSOs]   = useState([])
   const [jobCards,   setJobCards]  = useState([])
   const [fgItems,    setFgItems]   = useState([])
+  const [customerItems, setCustomerItems] = useState([])
   const [shipAddresses, setShipAddresses] = useState([])
   const [fgStock,       setFgStock]       = useState({})
   const pendingEdit  = React.useRef(null) // store DC for edit
@@ -160,6 +161,11 @@ export default function DeliveryChallan() {
       sameAddress:     true,
       payTerms:        cust.paymentTerms || cust.payTerms || '',
     }))
+
+    // Only what THIS customer actually has with us — scopes the Job
+    // Work item picker so it can't show the whole Item Master.
+    fetch(`${BASE}/sd/customer-items?customerId=${id}`, { headers:hdr2() })
+      .then(r=>r.json()).then(d=>setCustomerItems(d.data||[])).catch(()=>setCustomerItems([]))
   }
 
   const onSOChange = async id => {
@@ -262,11 +268,17 @@ export default function DeliveryChallan() {
       billToAddress: addr || f.billToAddress,
       shipToAddress: addr || f.shipToAddress,
       lines: [{
-        itemCode: jc.itemCode||'', itemName: jc.itemName||'',
+        // outputItemCode/outputItemName is the billing FG (e.g. coated
+        // "Sprocket Bullet-H112317") when a BOM is linked — falls back
+        // to the received item when there isn't one (input == output,
+        // the common non-jobwork-BOM case).
+        itemCode: jc.outputItemCode||jc.itemCode||'', itemName: jc.outputItemName||jc.itemName||'',
         qty: String(jc.processedQty||jc.receivedQty||0),
         unit: jc.uom||'Nos', description: `Job work — ${jc.jcNo}`,
       }],
     }))
+    fetch(`${BASE}/sd/customer-items?customerId=${jc.customerId}`, { headers:hdr2() })
+      .then(r=>r.json()).then(d=>setCustomerItems(d.data||[])).catch(()=>setCustomerItems([]))
     toast.success(`${jc.jcNo} loaded — ${jc.customerName}, ${Number(jc.processedQty||jc.receivedQty).toFixed(2)} ${jc.uom}`)
   }
 
@@ -998,22 +1010,40 @@ This will reverse the PGI and restore FG stock.`)) return
                 <tr key={i} style={{ borderBottom:'1px solid #F0F0F0' }}>
                   <td style={{ padding:'4px 8px', color:'#6C757D', width:30 }}>{i+1}</td>
                   <td style={{ padding:'4px 6px', minWidth:200 }}>
-                    <select style={inp} value={l.itemCode}
-                      onChange={e => {
-                        const item = fgItems.find(it => (it.code||it.itemCode) === e.target.value)
-                        updLine(i, {
-                          itemCode: e.target.value,
-                          itemName: item?.name || item?.itemName || '',
-                          unit:     item?.uom || item?.unit || l.unit,
-                        })
-                      }}>
-                      <option value="">-- Select FG Item --</option>
-                      {fgItems.map(it => (
-                        <option key={it.code||it.itemCode} value={it.code||it.itemCode}>
-                          {it.code||it.itemCode} — {it.name||it.itemName}
-                        </option>
-                      ))}
-                    </select>
+                    {(() => {
+                      const isJobWork = form.purpose === 'Job Work'
+                      const source = isJobWork ? customerItems : fgItems
+                      return (
+                        <select style={inp} value={l.itemCode}
+                          onChange={e => {
+                            const item = source.find(it => (it.code||it.itemCode) === e.target.value)
+                            updLine(i, {
+                              itemCode: e.target.value,
+                              itemName: item?.name || item?.itemName || '',
+                              unit:     item?.uom || item?.unit || l.unit,
+                            })
+                          }}>
+                          <option value="">{isJobWork ? '-- Select Customer\'s Item --' : '-- Select FG Item --'}</option>
+                          {source.map(it => (
+                            <option key={it.code||it.itemCode} value={it.code||it.itemCode}>
+                              {it.code||it.itemCode} — {it.name||it.itemName}
+                              {isJobWork && it.balance!=null ? ` (${it.balance.toFixed(2)} ${it.uom||''} available)` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      )
+                    })()}
+                    {form.purpose==='Job Work' && customerItems.length===0 && form.customerId && (
+                      <div style={{ fontSize:10, color:'#856404', marginTop:2 }}>This customer has no material on record with us yet.</div>
+                    )}
+                    {form.purpose==='Job Work' && l.itemCode && customerItems.find(it=>(it.code||it.itemCode)===l.itemCode)?.referenceRate && (
+                      <div style={{ fontSize:10, color:'#155724', marginTop:2 }}>
+                        Ref. rate: ₹{(() => {
+                          const rr = customerItems.find(it=>(it.code||it.itemCode)===l.itemCode).referenceRate
+                          return form.materialSupply==='with' ? rr.withMat : rr.withoutMat
+                        })()}/{customerItems.find(it=>(it.code||it.itemCode)===l.itemCode).referenceRate.basis}
+                      </div>
+                    )}
                     {l.itemName && (
                       <div style={{ fontSize:10, color:'#714B67', marginTop:2 }}>{l.itemName}</div>
                     )}

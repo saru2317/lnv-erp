@@ -8,7 +8,7 @@ const authHdrs = () => ({ 'Content-Type':'application/json', Authorization:`Bear
 const authHdrs2= () => ({ Authorization:`Bearer ${getToken()}` })
 
 const EMPTY_FORM = {
-  customerId:'', customerName:'', dcNo:'', loId:'', loNo:'',
+  customerId:'', customerName:'', dcNo:'', loId:'', loNo:'', bomId:'', bomNo:'',
   itemCode:'', itemName:'', receivedQty:'', uom:'Nos',
   priority:'Normal', dueDate:'', remarks:'',
 }
@@ -18,7 +18,9 @@ export default function JobCardNew() {
   const [params] = useSearchParams()
   const [customers, setCustomers] = useState([])
   const [processes, setProcesses] = useState([])
+  const [boms, setBoms] = useState([])
   const [linkedLO, setLinkedLO] = useState(null)
+  const [loLines, setLoLines] = useState(null)
   const [selectedStages, setSelectedStages] = useState([])
   const [customStage, setCustomStage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -33,6 +35,11 @@ export default function JobCardNew() {
     // whatever the shop actually calls each process.
     fetch(`${BASE_URL}/pp/config`, { headers:authHdrs2() })
       .then(r=>r.json()).then(d=>setProcesses(d.data?.processes||[])).catch(()=>{})
+    // Job-work / hybrid BOMs only — a plain manufacturing BOM has
+    // nothing to do with a Job Card, since it assumes our own material.
+    fetch(`${BASE_URL}/pp/bom`, { headers:authHdrs2() })
+      .then(r=>r.json()).then(d=>setBoms((d.data||[]).filter(b=>b.bizType==='jobwork'||b.bizType==='hybrid')))
+      .catch(()=>{})
 
     const loId = params.get('loId')
     if (loId) {
@@ -41,22 +48,40 @@ export default function JobCardNew() {
           if (!d.data) return
           const lo = d.data
           setLinkedLO(lo)
+          const lns = lo.lines?.length ? lo.lines : [{ // legacy single-item order, no lines[] — treat header as one line
+            itemCode: lo.itemCode, itemName: lo.itemName, orderedQty: lo.orderedQty, uom: lo.uom,
+            processName: lo.processName, materialSupply: lo.materialSupply,
+            rateWithMat: lo.rateWithMat, rateWithoutMat: lo.rateWithoutMat, pricingBasis: lo.pricingBasis,
+          }]
+          setLoLines(lns)
           setForm(f=>({ ...f,
             loId: String(lo.id), loNo: lo.loNo,
             customerId: lo.customerId?String(lo.customerId):'', customerName: lo.customerName,
-            itemCode: lo.itemCode||'', itemName: lo.itemName,
-            receivedQty: String(lo.orderedQty), uom: lo.uom,
             dueDate: lo.expectedDeliveryDate ? lo.expectedDeliveryDate.slice(0,10) : '',
           }))
-          if (lo.processName) setSelectedStages([lo.processName])
+          if (lns.length === 1) applyLOLine(lns[0])
         }).catch(()=>{})
     }
   },[]) // eslint-disable-line
+
+  const applyLOLine = line => {
+    setForm(f=>({ ...f,
+      itemCode: line.itemCode||'', itemName: line.itemName,
+      receivedQty: String(line.orderedQty), uom: line.uom,
+    }))
+    if (line.processName) setSelectedStages([line.processName])
+  }
 
   const onCustomerChange = e => {
     const id = e.target.value
     const c = customers.find(c=>String(c.id)===id)
     set('customerId', id); set('customerName', c?.name||c?.customerName||'')
+  }
+
+  const onBOMChange = e => {
+    const id = e.target.value
+    const b = boms.find(b=>String(b.id)===id)
+    set('bomId', id); set('bomNo', b?.bomNo||'')
   }
 
   const toggleStage = name => {
@@ -94,6 +119,7 @@ export default function JobCardNew() {
         body: JSON.stringify({
           customerId: form.customerId||null, customerName: form.customerName, dcNo: form.dcNo||null,
           loId: form.loId||null, loNo: form.loNo||null,
+          bomId: form.bomId||null, bomNo: form.bomNo||null,
           itemCode: form.itemCode||null, itemName: form.itemName,
           receivedQty: form.receivedQty, uom: form.uom,
           stages: selectedStages,
@@ -123,9 +149,27 @@ export default function JobCardNew() {
         This just creates the paperwork — it does <strong>not</strong> post any stock yet. Warehouse confirms the physical receipt separately (WM → Job Work Receipt), same way a GRN is separate from Goods Receipt.
       </div>
 
-      {linkedLO && (
+      {linkedLO && loLines?.length > 1 && !form.itemName && (
+        <div className="wm-form-sec" style={{marginBottom:14}}>
+          <div className="wm-form-sec-hdr">{linkedLO.loNo} has {loLines.length} lines — pick which one this Job Card is for</div>
+          <div className="wm-form-sec-body">
+            {loLines.map((line,i)=>(
+              <div key={i} onClick={()=>applyLOLine(line)}
+                style={{padding:'10px 14px',border:'1px solid #E0D5E0',borderRadius:6,marginBottom:8,cursor:'pointer',
+                  background:i%2===0?'#fff':'#FDFBFD'}}>
+                <div style={{fontWeight:600,fontSize:13}}>{line.itemCode?`${line.itemCode} — `:''}{line.itemName}</div>
+                <div style={{fontSize:11,color:'#6C757D'}}>{Number(line.orderedQty).toFixed(2)} {line.uom} · {line.processName}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {linkedLO && form.itemName && (
         <div className="pp-alert" style={{marginBottom:14,background:'#D4EDDA',borderColor:'#C3E6CB',color:'#155724'}}>
-          ✓ Linked to <strong>{linkedLO.loNo}</strong> — customer, item, and quantity auto-filled from the agreed order (rate: {linkedLO.materialSupply==='with'?linkedLO.rateWithMat:linkedLO.rateWithoutMat}/{linkedLO.pricingBasis}, locked at order time).
+          ✓ Linked to <strong>{linkedLO.loNo}</strong> — customer, item, and quantity auto-filled{loLines?.length>1?` (line: ${form.itemName})`:''} from the agreed order.
+          {loLines?.length>1 && <button onClick={()=>setForm(f=>({...f,itemCode:'',itemName:'',receivedQty:''}))}
+            style={{marginLeft:10,fontSize:11,background:'none',border:'none',color:'#155724',textDecoration:'underline',cursor:'pointer'}}>change line</button>}
         </div>
       )}
 
@@ -152,16 +196,39 @@ export default function JobCardNew() {
                 value={form.itemCode} onChange={e=>set('itemCode',e.target.value)}/>
             </div>
             <div className="wm-form-grp"><label>Item Name <span>*</span></label>
-              <input className="wm-form-ctrl" placeholder="What are they sending?" readOnly={!!linkedLO}
+              <input className="wm-form-ctrl" placeholder="What are they sending?" readOnly={!!linkedLO && !!form.itemName}
                 value={form.itemName} onChange={e=>set('itemName',e.target.value)}/>
             </div>
             <div className="wm-form-grp"><label>Received Qty <span>*</span></label>
-              <input type="number" className="wm-form-ctrl" placeholder="Qty" readOnly={!!linkedLO}
+              <input type="number" className="wm-form-ctrl" placeholder="Qty" readOnly={!!linkedLO && !!form.itemName}
                 value={form.receivedQty} onChange={e=>set('receivedQty',e.target.value)}/>
             </div>
             <div className="wm-form-grp"><label>UOM</label>
               <input className="wm-form-ctrl" value={form.uom} onChange={e=>set('uom',e.target.value)}/>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="wm-form-sec" style={{marginBottom:14}}>
+        <div className="wm-form-sec-hdr">Bill of Material (optional)</div>
+        <div className="wm-form-sec-body">
+          <div className="wm-form-grp">
+            <label>Job Work BOM</label>
+            <select className="wm-form-ctrl" value={form.bomId} onChange={onBOMChange}>
+              <option value="">-- No BOM — just track stages, no material consumption --</option>
+              {boms.map(b=>(
+                <option key={b.id} value={b.id}>{b.bomNo} — {b.itemName}{b.customerName?` (${b.customerName})`:''}</option>
+              ))}
+            </select>
+            {boms.length===0 && (
+              <small style={{color:'#6C757D'}}>No Job Work / Hybrid BOMs exist yet — create one under PP → BOM if this job needs consumption tracked against specific components.</small>
+            )}
+            {form.bomId && (
+              <div className="pp-alert" style={{marginTop:10,background:'#D1ECF1',borderColor:'#BEE5EB',color:'#0C5460'}}>
+                Linking a BOM lets Process Execution post material consumption against the customer's (or our own) stock ledger as each stage completes, instead of just tracking output quantity.
+              </div>
+            )}
           </div>
         </div>
       </div>

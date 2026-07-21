@@ -137,7 +137,7 @@ export default function GateEntryNew() {
     if (!po) return
     // Auto load vendor details + material from PO lines
     const matDesc = (po.lines||[])
-      .map(l=>l.itemName).filter(Boolean).join(', ')
+      .map(l=>l.itemName).filter(Boolean).join('\n')
     const totalDCQty = (po.lines||[])
       .reduce((s,l)=>s+parseFloat(l.qty||0), 0)
     const unit = po.lines?.[0]?.unit||''
@@ -546,8 +546,10 @@ export default function GateEntryNew() {
             <>
               <div style={{ marginBottom:12 }}>
                 <label style={lbl}>Material Description</label>
-                <input style={inp} value={form.materialDesc}
-                  placeholder="Brief description of materials"
+                <textarea style={{ ...inp, minHeight:60, resize:'vertical',
+                    fontFamily:'DM Sans,sans-serif', lineHeight:1.6 }}
+                  value={form.materialDesc}
+                  placeholder="Brief description of materials — one per line when loaded from a PO"
                   onChange={e=>setForm(p=>({...p,
                     materialDesc:e.target.value}))} />
               </div>

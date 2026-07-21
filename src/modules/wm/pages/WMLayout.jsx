@@ -23,6 +23,7 @@ const BinMaster         = lazy(() => import('./BinMaster'))
 const BinStock          = lazy(() => import('./BinStock'))
 const WHMap             = lazy(() => import('./WHMap'))
 const MovementLog       = lazy(() => import('./MovementLog'))
+const DCReconciliation  = lazy(() => import('./DCReconciliation'))
 const PhysicalInventory = lazy(() => import('./PhysicalInventory'))
 const ReorderList       = lazy(() => import('./ReorderList'))
 const ExpiryTracking    = lazy(() => import('./ExpiryTracking'))
@@ -72,6 +73,7 @@ const SIDEBAR_GROUPS = [
     label:'Reports & Maps', icon:'📋',
     items:[
       { to:'/wm/movement',    label:'Movement Log'       },
+      { to:'/wm/dc-recon',    label:'DC Reconciliation'  },
       { to:'/wm/report',      label:'Stock Report'       },
       { to:'/wm/fsn',         label:'FSN Analysis'       },
       { to:'/wm/aging',       label:'Stock Aging'        },
@@ -104,6 +106,7 @@ export default function WMLayout() {
           <Route path="reorder"        element={<ReorderList />}       />
           <Route path="expiry"         element={<ExpiryTracking />}    />
           <Route path="movement"       element={<MovementLog />}       />
+          <Route path="dc-recon"       element={<DCReconciliation />}  />
           <Route path="report"         element={<StockReport />}       />
           <Route path="fsn"            element={<FSNAnalysis />}       />
           <Route path="aging"          element={<StockAging />}        />

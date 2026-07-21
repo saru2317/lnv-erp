@@ -95,7 +95,7 @@ export default function LabourInvoice() {
       dcRef: p.dcRef, // DC ref stays manual — a JC can be dispatched via a DC raised separately in SD
       lines: [{
         ...BLANK_LINE,
-        description: `${jc.itemName} — ${jc.jcNo}`,
+        description: `${jc.outputItemName||jc.itemName} — ${jc.jcNo}`,
         qty: String(jc.processedQty||jc.receivedQty||0),
         unit: (jc.uom||'NOS').toUpperCase(),
       }],

@@ -9,7 +9,8 @@ const hdr2 = () => ({ Authorization:`Bearer ${tok()}` })
 const fmtC = n => '₹' + Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0})
 
 const UNITS   = ['LS','SqM','SqFt','CuM','RMT','Nos','MT','Kg','Litre','Point','Month','KWP','Bag','Load','Acre','TR']
-const emptyRow = (unitId=null) => ({ activity:'', description:'', unit:'SqM', quantity:'', rate:'', remarks:'', doneQty:0, donePct:0, doneAmt:0, unitId, roomId:null })
+const TRADES  = ['Civil','Tile Work','Plumbing','Electrical','Wall Work','Painting','MEP','Finishing','General']
+const emptyRow = (unitId=null) => ({ activity:'', description:'', unit:'SqM', quantity:'', rate:'', remarks:'', doneQty:0, donePct:0, doneAmt:0, unitId, roomId:null, trade:'General' })
 
 export default function BOQ() {
   const nav = useNavigate()
@@ -40,7 +41,7 @@ export default function BOQ() {
         id:b.id, activity:b.activity, description:b.description,
         unit:b.unit, quantity:b.quantity, rate:b.rate, remarks:b.remarks||'',
         doneQty:b.doneQty||0, donePct:b.donePct||0, doneAmt:b.doneAmt||0,
-        unitId:b.unitId||null, roomId:b.roomId||null,
+        unitId:b.unitId||null, roomId:b.roomId||null, trade:b.trade||'General',
       })))
       setTotals(d.totals||{amount:0,doneAmt:0})
       setViewMode('view') // switch to view mode when saved BOQ exists
@@ -85,7 +86,7 @@ export default function BOQ() {
       setItems(d.data.map(row => ({
         activity:row.activity, description:row.description, unit:row.unit,
         quantity:row.quantity, rate:row.rate, remarks:'',
-        doneQty:0, donePct:0, doneAmt:0, unitId:null, roomId:null,
+        doneQty:0, donePct:0, doneAmt:0, unitId:null, roomId:null, trade:'General',
       })))
       setViewMode('edit')
       toast.success(d.message || `Loaded ${d.data.length} suggested activities — review before saving`, {duration:5000})
@@ -345,7 +346,7 @@ export default function BOQ() {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:900}}>
               <thead>
                 <tr style={{background:'#FDF2E9'}}>
-                  {['#','House','Activity','Description','Unit','Qty','Rate (₹)','Amount (₹)','Done %',''].map(h=>(
+                  {['#','House','Room','Trade','Activity','Description','Unit','Qty','Rate (₹)','Amount (₹)','Done %',''].map(h=>(
                     <th key={h} style={{padding:'9px 10px',textAlign:h==='Amount (₹)'||h==='Rate (₹)'?'right':'left',
                       fontSize:11,fontWeight:700,color:'#6E2C00',whiteSpace:'nowrap'}}>{h}</th>
                   ))}
@@ -356,10 +357,27 @@ export default function BOQ() {
                   <tr key={idx} style={{background:i%2===0?'#fff':'#FDF9F7',borderBottom:'1px solid #F5EDE0'}}>
                     <td style={{padding:'6px 10px',color:'#888',fontSize:11,fontWeight:700}}>{i+1}</td>
                     <td style={{padding:'4px 6px'}}>
-                      <select value={item.unitId||''} onChange={e=>setItem(idx,'unitId',e.target.value?parseInt(e.target.value):null)}
+                      <select value={item.unitId||''} onChange={e=>{
+                          const v = e.target.value?parseInt(e.target.value):null
+                          setItem(idx,'unitId',v); setItem(idx,'roomId',null)
+                        }}
                         style={{width:110,padding:'6px 8px',border:'1px solid #E8D5C4',borderRadius:5,fontSize:10,background:'#FFFAF7',outline:'none'}}>
                         <option value=''>Common</option>
                         {units.map(u=><option key={u.id} value={u.id}>🏠 {u.unitNo}</option>)}
+                      </select>
+                    </td>
+                    <td style={{padding:'4px 6px'}}>
+                      <select value={item.roomId||''} onChange={e=>setItem(idx,'roomId',e.target.value?parseInt(e.target.value):null)}
+                        disabled={!item.unitId}
+                        style={{width:100,padding:'6px 8px',border:'1px solid #E8D5C4',borderRadius:5,fontSize:10,background:item.unitId?'#FFFAF7':'#F0F0F0',outline:'none'}}>
+                        <option value=''>{item.unitId?'Whole house':'Pick house first'}</option>
+                        {(units.find(u=>u.id===item.unitId)?.rooms||[]).map(r=><option key={r.id} value={r.id}>🚪 {r.roomName}</option>)}
+                      </select>
+                    </td>
+                    <td style={{padding:'4px 6px'}}>
+                      <select value={item.trade||'General'} onChange={e=>setItem(idx,'trade',e.target.value)}
+                        style={{width:100,padding:'6px 8px',border:'1px solid #E8D5C4',borderRadius:5,fontSize:10,background:'#FFFAF7',outline:'none'}}>
+                        {TRADES.map(t=><option key={t} value={t}>{t}</option>)}
                       </select>
                     </td>
                     <td style={{padding:'4px 6px'}}>
@@ -367,7 +385,7 @@ export default function BOQ() {
                           setItem(idx,'activity',e.target.value)
                           // Auto-set default unit from master
                           const act = boqActivities.find(a=>a.activityName===e.target.value)
-                          if (act) setItem(idx,'unit',act.defaultUnit)
+                          if (act) { setItem(idx,'unit',act.defaultUnit); setItem(idx,'trade',act.category) }
                         }}
                         style={{width:'100%',padding:'6px 8px',border:'1px solid #E8D5C4',borderRadius:5,fontSize:11,background:'#FFFAF7',outline:'none'}}>
                         <option value=''>Select activity...</option>

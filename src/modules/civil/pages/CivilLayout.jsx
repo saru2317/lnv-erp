@@ -7,6 +7,7 @@ const CivilDashboard  = lazy(() => import('./CivilDashboard'))
 const ProjectList     = lazy(() => import('./ProjectList'))
 const ProjectNew      = lazy(() => import('./ProjectNew'))
 const ProjectDetail   = lazy(() => import('./ProjectDetail'))
+const UnitWorkStatus  = lazy(() => import('./UnitWorkStatus'))
 const BOQ             = lazy(() => import('./BOQ'))
 const SiteProgress    = lazy(() => import('./SiteProgress'))
 const DPRNew          = lazy(() => import('./DPRNew'))
@@ -79,6 +80,7 @@ export default function CivilLayout() {
           <Route path="projects"          element={<ProjectList />} />
           <Route path="projects/new"      element={<ProjectNew />} />
           <Route path="projects/:id"      element={<ProjectDetail />} />
+          <Route path="units/:unitId/work-status" element={<UnitWorkStatus />} />
           <Route path="boq"               element={<BOQ />} />
           <Route path="progress"          element={<SiteProgress />} />
           <Route path="dpr/new"           element={<DPRNew />} />

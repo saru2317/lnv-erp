@@ -11,8 +11,8 @@ const sel = { ...inp, cursor:'pointer' }
 const lbl = { fontSize:10, fontWeight:700, color:'#444', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:.5 }
 const UOM_LIST = ['Nos','Kg','Gram','Litre','ML','Metre','Set','Box','Roll','Sheet']
 
-const BLANK_LINE = { seqNo:'', itemGroupId:'', itemCode:'', itemName:'', qty:'', uom:'Kg', scrapPct:'0', stdCost:'', remarks:'' }
-const BLANK_HDR  = { itemCode:'', itemName:'', revision:'A', baseQty:'1', uom:'Nos', plant:'MAIN', status:'Active', remarks:'', bomType:'moulding' }
+const BLANK_LINE = { seqNo:'', itemGroupId:'', itemCode:'', itemName:'', qty:'', uom:'Kg', scrapPct:'0', stdCost:'', remarks:'', sourceOwnership:'OWN' }
+const BLANK_HDR  = { itemCode:'', itemName:'', revision:'A', baseQty:'1', uom:'Nos', plant:'MAIN', status:'Active', remarks:'', bomType:'moulding', bizType:'mfg', customerId:'', customerName:'' }
 
 // ── Searchable Dropdown ───────────────────────────────────────────────────────
 function SearchSelect({ value, onChange, options, placeholder, style={} }) {
@@ -91,6 +91,7 @@ export default function BOMNew() {
 
   // Master data
   const [allItems,   setAllItems]   = useState([])   // all items from API
+  const [customers,  setCustomers]  = useState([])
   const [rmItems,    setRmItems]    = useState([])   // RM/SFG/Packing items only (for component lines)
   const [itemGroups, setItemGroups] = useState([])   // item groups
 
@@ -119,6 +120,11 @@ export default function BOMNew() {
   }
 
   // ── Load master data ────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetch(`${BASE_URL}/sd/customers`, { headers: authHdrs() })
+      .then(r=>r.json()).then(d=>setCustomers(d.data||[])).catch(()=>{})
+  }, [])
+
   useEffect(() => {
     // Try multiple common item API endpoint patterns
     const tryEndpoints = async () => {
@@ -240,6 +246,9 @@ export default function BOMNew() {
             plant:     b.plant||'MAIN',
             status:    isEdit?b.status:'Draft',
             remarks:   isEdit?(b.remarks||''):`Copied from ${b.bomNo}`,
+            bizType:      b.bizType||'mfg',
+            customerId:   b.customerId?String(b.customerId):'',
+            customerName: b.customerName||'',
           })
           setLines(b.lines?.filter(l=>!l.isByProduct).map((l,i)=>({
             seqNo:       String(l.seqNo||(i+1)*10),
@@ -251,6 +260,7 @@ export default function BOMNew() {
             scrapPct:    String(l.scrapPct||'0'),
             stdCost:     String(l.stdCost||''),
             remarks:     l.remarks||'',
+            sourceOwnership: l.sourceOwnership||'OWN',
           }))||[{...BLANK_LINE,seqNo:'10'}])
           setByProducts(b.lines?.filter(l=>l.isByProduct).map((l,i)=>({
             seqNo:         String(l.seqNo||(i+1)*10),
@@ -340,6 +350,7 @@ export default function BOMNew() {
           seqNo:parseInt(l.seqNo||(i+1)*10), itemCode:l.itemCode, itemName:l.itemName,
           qty:parseFloat(l.qty||0), uom:l.uom,
           scrapPct:parseFloat(l.scrapPct||0), stdCost:parseFloat(l.stdCost||0), remarks:l.remarks||'',
+          sourceOwnership:l.sourceOwnership||'OWN',
         })),
         byProducts: byProducts.filter(b=>b.itemName&&b.qty).map((b,i)=>({
           seqNo:parseInt(b.seqNo||(i+1)*10), itemCode:b.itemCode||'', itemName:b.itemName,
@@ -479,6 +490,38 @@ export default function BOMNew() {
                 </div>
               )}
             </div>
+
+            {/* Business Type Selector — who owns the material */}
+            <div style={{display:'flex',gap:8,marginBottom:12,alignItems:'center',flexWrap:'wrap'}}>
+              <span style={{fontSize:11,fontWeight:700,color:'#444',alignSelf:'center'}}>Business Type:</span>
+              {[
+                {key:'mfg',     label:'🏭 Manufacturing', desc:'Our own material'},
+                {key:'jobwork', label:'🤝 Job Work',      desc:'Customer supplies components'},
+                {key:'hybrid',  label:'🔀 Hybrid',        desc:'Mix — set per line below'},
+              ].map(t=>(
+                <div key={t.key} onClick={()=>setH('bizType',t.key)}
+                  style={{padding:'6px 14px',borderRadius:6,cursor:'pointer',fontSize:11,fontWeight:700,
+                    border:`1.5px solid ${hdr.bizType===t.key?'#714B67':'#D0D7DE'}`,
+                    background:hdr.bizType===t.key?'#714B67':'#fff',
+                    color:hdr.bizType===t.key?'#fff':'#6C757D'}}>
+                  {t.label}
+                  <div style={{fontSize:9,fontWeight:400,opacity:.8,marginTop:1}}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+            {(hdr.bizType==='jobwork'||hdr.bizType==='hybrid') && (
+              <div style={{marginBottom:12}}>
+                <label style={lbl}>Customer (optional — leave blank if this BOM applies to any customer)</label>
+                <select style={sel} value={hdr.customerId}
+                  onChange={e=>{
+                    const c = customers.find(c=>String(c.id)===e.target.value)
+                    setH('customerId', e.target.value); setH('customerName', c?.name||'')
+                  }}>
+                  <option value="">-- Any Customer --</option>
+                  {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
 
             {/* Other header fields */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px 14px'}}>
@@ -626,6 +669,20 @@ export default function BOMNew() {
                         value={l.stdCost} onChange={e=>setL(i,'stdCost',e.target.value)} placeholder="0.00" min="0" step="0.01" />
                     </div>
                   </div>
+                  {(hdr.bizType==='jobwork'||hdr.bizType==='hybrid') && (
+                    <div style={{marginTop:8,display:'flex',gap:8,alignItems:'center'}}>
+                      <span style={{fontSize:10,fontWeight:700,color:'#6C757D',textTransform:'uppercase'}}>Source:</span>
+                      {[['OWN','🏭 Our Material'],['CUSTOMER','🤝 Customer Supplies']].map(([k,l2])=>(
+                        <div key={k} onClick={()=>setL(i,'sourceOwnership',k)}
+                          style={{padding:'3px 10px',borderRadius:12,cursor:'pointer',fontSize:10,fontWeight:700,
+                            border:`1px solid ${(l.sourceOwnership||'OWN')===k?'#714B67':'#D0D7DE'}`,
+                            background:(l.sourceOwnership||'OWN')===k?'#714B67':'#fff',
+                            color:(l.sourceOwnership||'OWN')===k?'#fff':'#6C757D'}}>
+                          {l2}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
